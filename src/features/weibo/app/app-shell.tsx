@@ -66,19 +66,21 @@ function ShellFrame({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto grid min-h-screen max-w-7xl grid-cols-[280px_minmax(0,1fr)_300px] gap-4 px-4 py-4">
-        <NavigationRail
-          pageKind={pageKind}
-          rewriteEnabled={rewriteEnabled}
-          theme={theme}
-          onRewriteEnabledChange={onRewriteEnabledChange}
-          onThemeChange={onThemeChange}
-        />
-        <div className="min-w-0">
-          {children}
+    <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
+      <div className="grid h-full grid-cols-[280px_minmax(0,1fr)_300px] gap-4 px-4 py-4">
+        <div className="contents">
+          <NavigationRail
+            pageKind={pageKind}
+            rewriteEnabled={rewriteEnabled}
+            theme={theme}
+            onRewriteEnabledChange={onRewriteEnabledChange}
+            onThemeChange={onThemeChange}
+          />
+          <main className="min-w-0 overflow-y-auto">
+            {children}
+          </main>
+          <RightRail />
         </div>
-        <RightRail />
       </div>
     </div>
   )
@@ -221,7 +223,6 @@ export function AppShell({
                   comments={statusComments}
                   hasNextPage={Boolean(statusCommentsQuery.hasNextPage)}
                   isFetchingNextPage={statusCommentsQuery.isFetchingNextPage}
-                  onCommentClick={navigateToStatusDetail}
                   onLoadNextPage={() => void statusCommentsQuery.fetchNextPage()}
                 />
               )

@@ -10,21 +10,19 @@ export function StatusDetailPage({
   comments,
   hasNextPage,
   isFetchingNextPage,
-  onCommentClick,
   onLoadNextPage,
 }: {
   detail: StatusDetail
   comments: FeedItem[]
   hasNextPage: boolean
   isFetchingNextPage: boolean
-  onCommentClick: (item: FeedItem) => void
   onLoadNextPage: () => void
 }) {
   return (
     <div className="flex flex-col gap-4">
-      <FeedCard item={detail.status} onCommentClick={onCommentClick} />
+      <FeedCard item={detail.status} />
       {comments.length > 0
-        ? comments.map((reply) => <FeedCard key={reply.id} item={reply} onCommentClick={onCommentClick} />)
+        ? comments.map((reply) => <FeedCard key={reply.id} item={reply} />)
         : <PageEmptyState label="No replies are available for this post yet." />}
       {hasNextPage ? (
         <Button variant="outline" onClick={onLoadNextPage} disabled={isFetchingNextPage}>

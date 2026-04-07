@@ -38,7 +38,6 @@ describe('StatusDetailPage', () => {
           ]}
         hasNextPage={false}
         isFetchingNextPage={false}
-        onCommentClick={() => {}}
         onLoadNextPage={() => {}}
         />
       </QueryClientProvider>,
