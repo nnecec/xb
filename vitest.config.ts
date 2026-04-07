@@ -6,6 +6,8 @@ export default defineConfig({
     environment: 'jsdom',
     passWithNoTests: true,
     setupFiles: ['./src/test/setup.ts'],
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    exclude: ['bewlycat/**', '.output/**', 'node_modules/**'],
   },
   resolve: {
     alias: {
