@@ -1,0 +1,3 @@
+[submodule "bewlycat"]
+	path = bewlycat
+	url = git@github.com:keleus/BewlyCat.git
