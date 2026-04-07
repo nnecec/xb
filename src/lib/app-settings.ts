@@ -1,82 +1,82 @@
-export type AppLanguage = 'en' | 'zh'
-export type AppAppearance = 'system' | 'light' | 'dark'
+import type { HomeTimelineTab } from '@/features/weibo/services/weibo-repository'
+
+export type AppTheme = 'system' | 'light' | 'dark'
 
 export interface AppSettings {
-  language: AppLanguage
-  appearance: AppAppearance
+  theme: AppTheme
+  rewriteEnabled: boolean
+  homeTimelineTab: HomeTimelineTab
 }
 
-export const APP_SETTINGS_STORAGE_KEY = 'appSettings'
-
-export const defaultAppSettings: AppSettings = {
-  language: 'en',
-  appearance: 'system',
+export interface AppSettingsStorageArea {
+  get: (keys?: string | string[] | Record<string, unknown>) => Promise<Record<string, unknown>>
+  set: (items: Record<string, unknown>) => Promise<void>
 }
 
-export function normalizeAppLanguage(value: unknown): AppLanguage {
-  return value === 'zh' ? 'zh' : 'en'
+export const APP_SETTINGS_STORAGE_KEY = 'loveforxb:app-settings'
+
+export const DEFAULT_APP_SETTINGS: AppSettings = {
+  theme: 'system',
+  rewriteEnabled: true,
+  homeTimelineTab: 'for-you',
 }
 
-export function normalizeAppAppearance(value: unknown): AppAppearance {
-  if (value === 'light' || value === 'dark') {
-    return value
-  }
-
-  return 'system'
+function isAppTheme(value: unknown): value is AppTheme {
+  return value === 'system' || value === 'light' || value === 'dark'
 }
 
-function normalizeAppSettings(value: unknown): AppSettings {
+function isHomeTimelineTab(value: unknown): value is HomeTimelineTab {
+  return value === 'for-you' || value === 'following'
+}
+
+export function normalizeAppSettings(value: unknown): AppSettings {
   if (!value || typeof value !== 'object') {
-    return defaultAppSettings
+    return { ...DEFAULT_APP_SETTINGS }
   }
 
-  const input = value as Partial<AppSettings>
+  const candidate = value as Partial<AppSettings>
 
   return {
-    language: normalizeAppLanguage(input.language),
-    appearance: normalizeAppAppearance(input.appearance),
+    theme: isAppTheme(candidate.theme)
+      ? candidate.theme
+      : DEFAULT_APP_SETTINGS.theme,
+    rewriteEnabled: typeof candidate.rewriteEnabled === 'boolean'
+      ? candidate.rewriteEnabled
+      : DEFAULT_APP_SETTINGS.rewriteEnabled,
+    homeTimelineTab: isHomeTimelineTab(candidate.homeTimelineTab)
+      ? candidate.homeTimelineTab
+      : DEFAULT_APP_SETTINGS.homeTimelineTab,
   }
 }
 
-export const appSettings = {
-  async get(): Promise<AppSettings> {
-    const result = await browser.storage.local.get(APP_SETTINGS_STORAGE_KEY)
-    const stored = result[APP_SETTINGS_STORAGE_KEY]
+export function resolveIsDarkMode(theme: AppTheme, prefersDark: boolean): boolean {
+  if (theme === 'dark') {
+    return true
+  }
 
-    if (!stored || typeof stored !== 'object') {
-      await this.set(defaultAppSettings)
-      return defaultAppSettings
-    }
+  if (theme === 'light') {
+    return false
+  }
 
-    const normalized = normalizeAppSettings(stored)
+  return prefersDark
+}
 
-    const storedInput = stored as Partial<AppSettings>
+export async function loadAppSettings(
+  storageArea: AppSettingsStorageArea = browser.storage.local,
+): Promise<AppSettings> {
+  const stored = await storageArea.get(APP_SETTINGS_STORAGE_KEY)
+  return normalizeAppSettings(stored[APP_SETTINGS_STORAGE_KEY])
+}
 
-    if (
-      normalized.language !== storedInput.language ||
-      normalized.appearance !== storedInput.appearance
-    ) {
-      await this.set(normalized)
-    }
+export async function persistAppSettings(
+  nextValue: AppSettings,
+  storageArea: AppSettingsStorageArea = browser.storage.local,
+): Promise<AppSettings> {
+  const normalized = normalizeAppSettings(nextValue)
 
-    return normalized
-  },
+  await storageArea.set({
+    [APP_SETTINGS_STORAGE_KEY]: normalized,
+  })
 
-  async set(nextSettings: AppSettings): Promise<void> {
-    await browser.storage.local.set({
-      [APP_SETTINGS_STORAGE_KEY]: normalizeAppSettings(nextSettings),
-    })
-  },
-
-  async update(patch: Partial<AppSettings>): Promise<AppSettings> {
-    const current = await this.get()
-    const nextSettings = normalizeAppSettings({
-      ...current,
-      ...patch,
-    })
-
-    await this.set(nextSettings)
-
-    return nextSettings
-  },
+  return normalized
 }

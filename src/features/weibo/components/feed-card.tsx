@@ -7,7 +7,7 @@ export function FeedCard({ item }: { item: FeedItem }) {
     <Card className="gap-4 rounded-[28px] border-border/70 bg-card/95 py-4 shadow-none">
       <CardHeader className="grid grid-cols-[48px_minmax(0,1fr)] gap-3 px-4">
         <div className="flex size-12 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
-          {item.author.name.slice(0, 1).toUpperCase() || '?'}
+          {item.author.name?.slice(0, 1).toUpperCase() || '?'}
         </div>
         <div className="flex min-w-0 flex-col gap-2">
           <div className="flex flex-wrap items-center gap-2">

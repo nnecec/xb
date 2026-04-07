@@ -1,13 +1,13 @@
-import { AppAppearance } from '@/lib/app-settings'
+import { AppTheme } from '@/lib/app-settings'
 
 export type ThemeMode = 'light' | 'dark'
 
-export function resolveThemeMode(appearance: AppAppearance, systemPrefersDark: boolean): ThemeMode {
-  if (appearance === 'light') {
+export function resolveThemeMode(theme: AppTheme, systemPrefersDark: boolean): ThemeMode {
+  if (theme === 'light') {
     return 'light'
   }
 
-  if (appearance === 'dark') {
+  if (theme === 'dark') {
     return 'dark'
   }
 

@@ -20,7 +20,7 @@ export function ProfilePage({
         <div className="h-32 bg-gradient-to-br from-muted via-muted/70 to-background" />
         <div className="flex flex-col gap-3 px-4 pb-4">
           <div className="-mt-10 flex size-20 items-center justify-center rounded-full border-4 border-background bg-muted text-xl font-semibold text-muted-foreground">
-            {profile.name.slice(0, 1).toUpperCase() || '?'}
+            {profile.name?.slice(0, 1).toUpperCase() || '?'}
           </div>
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold">{profile.name || 'Unknown profile'}</h1>

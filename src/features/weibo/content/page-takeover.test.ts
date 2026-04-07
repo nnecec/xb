@@ -6,7 +6,7 @@ import {
 } from '@/features/weibo/content/page-takeover'
 
 describe('applyPageTakeover', () => {
-  it('marks the original content root as hidden and restores it', () => {
+  it('marks the original host app root as hidden and restores it', () => {
     const node = document.createElement('div')
     node.style.display = 'grid'
 

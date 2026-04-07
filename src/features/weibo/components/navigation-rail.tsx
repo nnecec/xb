@@ -1,7 +1,7 @@
 import { Compass, House, MoonStar, Search, Sun, SunMoon, UserRound } from 'lucide-react'
 
-import type { RewriteSettings, RewriteTheme } from '@/features/weibo/settings/rewrite-settings'
 import type { WeiboPageDescriptor } from '@/features/weibo/route/page-descriptor'
+import type { AppTheme } from '@/lib/app-settings'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
@@ -16,7 +16,7 @@ const NAV_ITEMS = [
 const THEME_ITEMS: Array<{
   icon: typeof SunMoon
   label: string
-  value: RewriteTheme
+  value: AppTheme
 }> = [
   { icon: SunMoon, label: 'System', value: 'system' },
   { icon: Sun, label: 'Light', value: 'light' },
@@ -25,14 +25,16 @@ const THEME_ITEMS: Array<{
 
 export function NavigationRail({
   pageKind,
-  settings,
+  rewriteEnabled,
+  theme,
   onRewriteEnabledChange,
   onThemeChange,
 }: {
   pageKind: WeiboPageDescriptor['kind']
-  settings: RewriteSettings
+  rewriteEnabled: boolean
+  theme: AppTheme
   onRewriteEnabledChange: (enabled: boolean) => void
-  onThemeChange: (theme: RewriteTheme) => void
+  onThemeChange: (theme: AppTheme) => void
 }) {
   return (
     <Card className="rounded-[28px] border-border/70 bg-card/95 shadow-none">
@@ -73,7 +75,7 @@ export function NavigationRail({
               </p>
             </div>
             <Switch
-              checked={settings.enabled}
+              checked={rewriteEnabled}
               aria-label="Toggle LoveForXb rewrite"
               onCheckedChange={onRewriteEnabledChange}
             />
@@ -85,12 +87,12 @@ export function NavigationRail({
             </p>
             <ToggleGroup
               type="single"
-              value={settings.theme}
+              value={theme}
               variant="outline"
               className="grid w-full grid-cols-3"
               onValueChange={(value) => {
                 if (value) {
-                  onThemeChange(value as RewriteTheme)
+                  onThemeChange(value as AppTheme)
                 }
               }}
             >

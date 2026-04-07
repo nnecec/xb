@@ -10,14 +10,14 @@ import { HomeTimelinePage } from '@/features/weibo/pages/home-timeline-page'
 import { PageErrorState, PageLoadingState } from '@/features/weibo/components/page-state'
 import { ProfilePage } from '@/features/weibo/pages/profile-page'
 import { StatusDetailPage } from '@/features/weibo/pages/status-detail-page'
-import type { RewriteSettings, RewriteTheme } from '@/features/weibo/settings/rewrite-settings'
 import {
   loadHomeTimeline,
   loadProfileInfo,
   loadProfilePosts,
   loadStatusDetail,
-  type HomeTimelineTab,
 } from '@/features/weibo/services/weibo-repository'
+import type { AppTheme } from '@/lib/app-settings'
+import { useAppSettings } from '@/lib/app-settings-store'
 
 import {
   Card,
@@ -50,15 +50,17 @@ function describePage(page: WeiboPageDescriptor): string {
 
 function ShellFrame({
   pageKind,
-  settings,
+  rewriteEnabled,
+  theme,
   onRewriteEnabledChange,
   onThemeChange,
   children,
 }: {
   pageKind: WeiboPageDescriptor['kind']
-  settings: RewriteSettings
+  rewriteEnabled: boolean
+  theme: AppTheme
   onRewriteEnabledChange: (enabled: boolean) => void
-  onThemeChange: (theme: RewriteTheme) => void
+  onThemeChange: (theme: AppTheme) => void
   children: React.ReactNode
 }) {
   return (
@@ -66,7 +68,8 @@ function ShellFrame({
       <div className="mx-auto grid min-h-screen max-w-7xl grid-cols-[280px_minmax(0,1fr)_300px] gap-4 px-4 py-4">
         <NavigationRail
           pageKind={pageKind}
-          settings={settings}
+          rewriteEnabled={rewriteEnabled}
+          theme={theme}
           onRewriteEnabledChange={onRewriteEnabledChange}
           onThemeChange={onThemeChange}
         />
@@ -108,16 +111,15 @@ function RewritePausedCard({
 
 export function AppShell({
   page,
-  settings,
-  onRewriteEnabledChange,
-  onThemeChange,
 }: {
   page: WeiboPageDescriptor
-  settings: RewriteSettings
-  onRewriteEnabledChange: (enabled: boolean) => void
-  onThemeChange: (theme: RewriteTheme) => void
 }) {
-  const [activeTimelineTab, setActiveTimelineTab] = useState<HomeTimelineTab>('for-you')
+  const theme = useAppSettings((state) => state.theme)
+  const rewriteEnabled = useAppSettings((state) => state.rewriteEnabled)
+  const activeTimelineTab = useAppSettings((state) => state.homeTimelineTab)
+  const setRewriteEnabled = useAppSettings((state) => state.setRewriteEnabled)
+  const setHomeTimelineTab = useAppSettings((state) => state.setHomeTimelineTab)
+  const setTheme = useAppSettings((state) => state.setTheme)
   const [timelineRequestKey, setTimelineRequestKey] = useState(0)
   const [timelinePage, setTimelinePage] = useState<TimelinePage>({ items: [], nextCursor: null })
   const [timelineError, setTimelineError] = useState<string | null>(null)
@@ -131,15 +133,7 @@ export function AppShell({
   const [isProfileLoading, setIsProfileLoading] = useState(page.kind === 'profile')
 
   useEffect(() => {
-    if (page.kind !== 'home') {
-      return
-    }
-
-    setActiveTimelineTab(page.tab)
-  }, [page])
-
-  useEffect(() => {
-    if (!settings.enabled || page.kind !== 'profile') {
+    if (!rewriteEnabled || page.kind !== 'profile') {
       return
     }
 
@@ -181,10 +175,10 @@ export function AppShell({
     return () => {
       cancelled = true
     }
-  }, [page, settings.enabled])
+  }, [page, rewriteEnabled])
 
   useEffect(() => {
-    if (!settings.enabled || page.kind !== 'home') {
+    if (!rewriteEnabled || page.kind !== 'home') {
       return
     }
 
@@ -222,10 +216,10 @@ export function AppShell({
     return () => {
       cancelled = true
     }
-  }, [activeTimelineTab, page, settings.enabled, timelineRequestKey])
+  }, [activeTimelineTab, page, rewriteEnabled, timelineRequestKey])
 
   useEffect(() => {
-    if (!settings.enabled || page.kind !== 'status') {
+    if (!rewriteEnabled || page.kind !== 'status') {
       return
     }
 
@@ -263,7 +257,7 @@ export function AppShell({
     return () => {
       cancelled = true
     }
-  }, [page, settings.enabled])
+  }, [page, rewriteEnabled])
 
   const retryTimeline = () => {
     if (page.kind !== 'home') {
@@ -275,24 +269,25 @@ export function AppShell({
     setTimelineRequestKey((current) => current + 1)
   }
 
-  if (!settings.enabled) {
-    return <RewritePausedCard onResume={() => onRewriteEnabledChange(true)} />
+  if (!rewriteEnabled) {
+    return <RewritePausedCard onResume={() => void setRewriteEnabled(true)} />
   }
 
   if (page.kind === 'home') {
     return (
       <ShellFrame
         pageKind={page.kind}
-        settings={settings}
-        onRewriteEnabledChange={onRewriteEnabledChange}
-        onThemeChange={onThemeChange}
+        rewriteEnabled={rewriteEnabled}
+        theme={theme}
+        onRewriteEnabledChange={(enabled) => void setRewriteEnabled(enabled)}
+        onThemeChange={(nextTheme) => void setTheme(nextTheme)}
       >
         <HomeTimelinePage
           activeTab={activeTimelineTab}
           errorMessage={timelineError}
           isLoading={isTimelineLoading}
           onRetry={retryTimeline}
-          onTabChange={setActiveTimelineTab}
+          onTabChange={(tab) => void setHomeTimelineTab(tab)}
           page={timelinePage}
         />
       </ShellFrame>
@@ -303,9 +298,10 @@ export function AppShell({
     return (
       <ShellFrame
         pageKind={page.kind}
-        settings={settings}
-        onRewriteEnabledChange={onRewriteEnabledChange}
-        onThemeChange={onThemeChange}
+        rewriteEnabled={rewriteEnabled}
+        theme={theme}
+        onRewriteEnabledChange={(enabled) => void setRewriteEnabled(enabled)}
+        onThemeChange={(nextTheme) => void setTheme(nextTheme)}
       >
           {isStatusLoading
             ? <PageLoadingState label="Loading this Weibo post..." />
@@ -324,9 +320,10 @@ export function AppShell({
     return (
       <ShellFrame
         pageKind={page.kind}
-        settings={settings}
-        onRewriteEnabledChange={onRewriteEnabledChange}
-        onThemeChange={onThemeChange}
+        rewriteEnabled={rewriteEnabled}
+        theme={theme}
+        onRewriteEnabledChange={(enabled) => void setRewriteEnabled(enabled)}
+        onThemeChange={(nextTheme) => void setTheme(nextTheme)}
       >
           {isProfileLoading
             ? <PageLoadingState label="Loading this profile..." />
@@ -344,9 +341,10 @@ export function AppShell({
   return (
     <ShellFrame
       pageKind={page.kind}
-      settings={settings}
-      onRewriteEnabledChange={onRewriteEnabledChange}
-      onThemeChange={onThemeChange}
+      rewriteEnabled={rewriteEnabled}
+      theme={theme}
+      onRewriteEnabledChange={(enabled) => void setRewriteEnabled(enabled)}
+      onThemeChange={(nextTheme) => void setTheme(nextTheme)}
     >
         <Card className="rounded-[28px] border-border/70 bg-card/95 shadow-none">
           <CardHeader>
