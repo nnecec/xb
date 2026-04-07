@@ -27,8 +27,10 @@ describe('adaptTimelineResponse', () => {
       items: [
         {
           id: '501',
+          isLongText: false,
+          mblogId: null,
           text: 'hello world',
-          createdAtLabel: 'Tue Apr 08 10:00:00 +0800 2026',
+          createdAtLabel: '2026-04-08 10:00',
           author: {
             id: '1969776354',
             name: 'Alice',
@@ -39,6 +41,10 @@ describe('adaptTimelineResponse', () => {
             comments: 3,
             reposts: 1,
           },
+          images: [],
+          media: null,
+          regionName: '',
+          source: '',
         },
       ],
       nextCursor: '999',
@@ -67,6 +73,8 @@ describe('adaptTimelineResponse', () => {
       items: [
         {
           id: '777',
+          isLongText: false,
+          mblogId: null,
           text: 'nested payload',
           createdAtLabel: '',
           author: {
@@ -79,6 +87,10 @@ describe('adaptTimelineResponse', () => {
             comments: 0,
             reposts: 0,
           },
+          images: [],
+          media: null,
+          regionName: '',
+          source: '',
         },
       ],
       nextCursor: null,

@@ -20,7 +20,11 @@ describe('weibo-repository', () => {
     })
 
     expect(fetchWeiboJson).toHaveBeenCalledWith('/ajax/feed/friendstimeline', {
-      max_id: undefined,
+      count: 20,
+      fid: '110001768015440',
+      list_id: '110001768015440',
+      refresh: 4,
+      since_id: '0',
     })
   })
 
@@ -31,7 +35,7 @@ describe('weibo-repository', () => {
     })
 
     expect(fetchWeiboJson).toHaveBeenCalledWith('/ajax/feed/unreadfriendstimeline', {
-      max_id: undefined,
+      since_id: '0',
     })
   })
 })

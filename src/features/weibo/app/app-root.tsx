@@ -1,7 +1,10 @@
 import { useSyncExternalStore } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import { AppShell } from '@/features/weibo/app/app-shell'
 import type { PageStore } from '@/features/weibo/app/page-store'
+
+const queryClient = new QueryClient()
 
 export function AppRoot({
   pageStore,
@@ -10,5 +13,9 @@ export function AppRoot({
 }) {
   const page = useSyncExternalStore(pageStore.subscribe, pageStore.getSnapshot)
 
-  return <AppShell page={page} />
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppShell page={page} />
+    </QueryClientProvider>
+  )
 }

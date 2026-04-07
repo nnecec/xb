@@ -3,6 +3,8 @@ export const WEIBO_ENDPOINTS = {
   following: '/ajax/feed/friendstimeline',
   sideCards: '/ajax/side/cards',
   statusDetail: '/ajax/statuses/show',
+  statusComments: '/ajax/statuses/buildComments',
+  statusLongText: '/ajax/statuses/longtext',
   profileInfo: '/ajax/profile/info',
   profilePosts: '/ajax/statuses/mymblog',
 } as const

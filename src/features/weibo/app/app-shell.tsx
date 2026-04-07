@@ -1,4 +1,5 @@
-import { startTransition, useEffect, useState } from 'react'
+import { useMemo } from 'react'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 
 import type { TimelinePage } from '@/features/weibo/models/feed'
 import type { UserProfile } from '@/features/weibo/models/profile'
@@ -14,6 +15,7 @@ import {
   loadHomeTimeline,
   loadProfileInfo,
   loadProfilePosts,
+  loadStatusComments,
   loadStatusDetail,
 } from '@/features/weibo/services/weibo-repository'
 import type { AppTheme } from '@/lib/app-settings'
@@ -88,7 +90,7 @@ function RewritePausedCard({
   onResume: () => void
 }) {
   return (
-    <div className="fixed top-4 right-4 z-[2147483647] w-[min(24rem,calc(100vw-2rem))]">
+    <div className="fixed top-4 right-4 z-2147483647 w-[min(24rem,calc(100vw-2rem))]">
       <Card className="rounded-[28px] border-border/70 bg-card/95 shadow-lg shadow-black/5 backdrop-blur">
         <CardHeader>
           <CardTitle className="text-base">LoveForXb paused</CardTitle>
@@ -120,153 +122,52 @@ export function AppShell({
   const setRewriteEnabled = useAppSettings((state) => state.setRewriteEnabled)
   const setHomeTimelineTab = useAppSettings((state) => state.setHomeTimelineTab)
   const setTheme = useAppSettings((state) => state.setTheme)
-  const [timelineRequestKey, setTimelineRequestKey] = useState(0)
-  const [timelinePage, setTimelinePage] = useState<TimelinePage>({ items: [], nextCursor: null })
-  const [timelineError, setTimelineError] = useState<string | null>(null)
-  const [isTimelineLoading, setIsTimelineLoading] = useState(page.kind === 'home')
-  const [statusDetail, setStatusDetail] = useState<StatusDetail | null>(null)
-  const [statusError, setStatusError] = useState<string | null>(null)
-  const [isStatusLoading, setIsStatusLoading] = useState(page.kind === 'status')
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [profilePosts, setProfilePosts] = useState<TimelinePage>({ items: [], nextCursor: null })
-  const [profileError, setProfileError] = useState<string | null>(null)
-  const [isProfileLoading, setIsProfileLoading] = useState(page.kind === 'profile')
+  const timelineQuery = useInfiniteQuery({
+    queryKey: ['weibo', 'timeline', activeTimelineTab],
+    queryFn: ({ pageParam }) => loadHomeTimeline(activeTimelineTab, { cursor: pageParam }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    enabled: rewriteEnabled && page.kind === 'home',
+  })
 
-  useEffect(() => {
-    if (!rewriteEnabled || page.kind !== 'profile') {
+  const profileInfoQuery = useQuery({
+    queryKey: ['weibo', 'profile', page.kind === 'profile' ? page.profileId : null, 'info'],
+    queryFn: () => loadProfileInfo(page.kind === 'profile' ? page.profileId : ''),
+    enabled: rewriteEnabled && page.kind === 'profile',
+  })
+  const profilePostsQuery = useQuery({
+    queryKey: ['weibo', 'profile', page.kind === 'profile' ? page.profileId : null, 'posts'],
+    queryFn: () => loadProfilePosts(page.kind === 'profile' ? page.profileId : ''),
+    enabled: rewriteEnabled && page.kind === 'profile',
+  })
+
+  const statusDetailQuery = useQuery({
+    queryKey: ['weibo', 'status', page.kind === 'status' ? page.statusId : null],
+    queryFn: () => loadStatusDetail(page.kind === 'status' ? page.statusId : ''),
+    enabled: rewriteEnabled && page.kind === 'status',
+  })
+  const statusCommentsQuery = useInfiniteQuery({
+    queryKey: ['weibo', 'status-comments', page.kind === 'status' ? page.statusId : null],
+    queryFn: ({ pageParam }) => loadStatusComments(page.kind === 'status' ? page.statusId : '', pageParam),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    enabled: rewriteEnabled && page.kind === 'status',
+  })
+
+  const timelineItems = useMemo(
+    () => timelineQuery.data?.pages.flatMap((timelinePage) => timelinePage.items) ?? [],
+    [timelineQuery.data],
+  )
+  const statusComments = useMemo(
+    () => statusCommentsQuery.data?.pages.flatMap((commentsPage) => commentsPage.items) ?? [],
+    [statusCommentsQuery.data],
+  )
+  const navigateToStatusDetail = (item: { author: { id: string }, id: string, mblogId: string | null }) => {
+    const statusId = item.mblogId ?? item.id
+    if (!item.author.id || !statusId) {
       return
     }
-
-    let cancelled = false
-    setIsProfileLoading(true)
-    setProfileError(null)
-
-    void Promise.all([
-      loadProfileInfo(page.profileId),
-      loadProfilePosts(page.profileId),
-    ])
-      .then(([nextProfile, nextPosts]) => {
-        if (cancelled) {
-          return
-        }
-
-        startTransition(() => {
-          setProfile(nextProfile)
-          setProfilePosts(nextPosts)
-        })
-      })
-      .catch((error: unknown) => {
-        if (cancelled) {
-          return
-        }
-
-        setProfileError(
-          error instanceof Error
-            ? error.message
-            : 'Unknown Weibo profile error',
-        )
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setIsProfileLoading(false)
-        }
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [page, rewriteEnabled])
-
-  useEffect(() => {
-    if (!rewriteEnabled || page.kind !== 'home') {
-      return
-    }
-
-    let cancelled = false
-    setIsTimelineLoading(true)
-    setTimelineError(null)
-
-    void loadHomeTimeline(activeTimelineTab)
-      .then((result) => {
-        if (cancelled) {
-          return
-        }
-
-        startTransition(() => {
-          setTimelinePage(result)
-        })
-      })
-      .catch((error: unknown) => {
-        if (cancelled) {
-          return
-        }
-
-        setTimelineError(
-          error instanceof Error
-            ? error.message
-            : 'Unknown Weibo timeline error',
-        )
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setIsTimelineLoading(false)
-        }
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [activeTimelineTab, page, rewriteEnabled, timelineRequestKey])
-
-  useEffect(() => {
-    if (!rewriteEnabled || page.kind !== 'status') {
-      return
-    }
-
-    let cancelled = false
-    setIsStatusLoading(true)
-    setStatusError(null)
-
-    void loadStatusDetail(page.statusId)
-      .then((result) => {
-        if (cancelled) {
-          return
-        }
-
-        startTransition(() => {
-          setStatusDetail(result)
-        })
-      })
-      .catch((error: unknown) => {
-        if (cancelled) {
-          return
-        }
-
-        setStatusError(
-          error instanceof Error
-            ? error.message
-            : 'Unknown Weibo detail error',
-        )
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setIsStatusLoading(false)
-        }
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [page, rewriteEnabled])
-
-  const retryTimeline = () => {
-    if (page.kind !== 'home') {
-      return
-    }
-
-    setTimelineError(null)
-    setIsTimelineLoading(true)
-    setTimelineRequestKey((current) => current + 1)
+    window.location.assign(`https://weibo.com/${item.author.id}/${statusId}`)
   }
 
   if (!rewriteEnabled) {
@@ -284,11 +185,15 @@ export function AppShell({
       >
         <HomeTimelinePage
           activeTab={activeTimelineTab}
-          errorMessage={timelineError}
-          isLoading={isTimelineLoading}
-          onRetry={retryTimeline}
+          errorMessage={timelineQuery.error instanceof Error ? timelineQuery.error.message : null}
+          hasNextPage={Boolean(timelineQuery.hasNextPage)}
+          isFetchingNextPage={timelineQuery.isFetchingNextPage}
+          isLoading={timelineQuery.isLoading}
+          onRetry={() => void timelineQuery.refetch()}
+          onLoadNextPage={() => void timelineQuery.fetchNextPage()}
+          onCommentClick={navigateToStatusDetail}
           onTabChange={(tab) => void setHomeTimelineTab(tab)}
-          page={timelinePage}
+          items={timelineItems}
         />
       </ShellFrame>
     )
@@ -303,14 +208,23 @@ export function AppShell({
         onRewriteEnabledChange={(enabled) => void setRewriteEnabled(enabled)}
         onThemeChange={(nextTheme) => void setTheme(nextTheme)}
       >
-          {isStatusLoading
+          {statusDetailQuery.isLoading
             ? <PageLoadingState label="Loading this Weibo post..." />
             : null}
-          {!isStatusLoading && statusError
-            ? <PageErrorState description={statusError} />
+          {!statusDetailQuery.isLoading && statusDetailQuery.error instanceof Error
+            ? <PageErrorState description={statusDetailQuery.error.message} />
             : null}
-          {!isStatusLoading && !statusError && statusDetail
-            ? <StatusDetailPage detail={statusDetail} />
+          {!statusDetailQuery.isLoading && !statusDetailQuery.error && statusDetailQuery.data
+            ? (
+                <StatusDetailPage
+                  detail={statusDetailQuery.data}
+                  comments={statusComments}
+                  hasNextPage={Boolean(statusCommentsQuery.hasNextPage)}
+                  isFetchingNextPage={statusCommentsQuery.isFetchingNextPage}
+                  onCommentClick={navigateToStatusDetail}
+                  onLoadNextPage={() => void statusCommentsQuery.fetchNextPage()}
+                />
+              )
             : null}
       </ShellFrame>
     )
@@ -325,14 +239,14 @@ export function AppShell({
         onRewriteEnabledChange={(enabled) => void setRewriteEnabled(enabled)}
         onThemeChange={(nextTheme) => void setTheme(nextTheme)}
       >
-          {isProfileLoading
+          {profileInfoQuery.isLoading || profilePostsQuery.isLoading
             ? <PageLoadingState label="Loading this profile..." />
             : null}
-          {!isProfileLoading && profileError
-            ? <PageErrorState description={profileError} />
+          {!profileInfoQuery.isLoading && !profilePostsQuery.isLoading && (profileInfoQuery.error instanceof Error || profilePostsQuery.error instanceof Error)
+            ? <PageErrorState description={(profileInfoQuery.error as Error | null)?.message ?? (profilePostsQuery.error as Error | null)?.message ?? 'Unknown Weibo profile error'} />
             : null}
-          {!isProfileLoading && !profileError && profile
-            ? <ProfilePage activeTab={page.tab} posts={profilePosts} profile={profile} />
+          {!profileInfoQuery.isLoading && !profilePostsQuery.isLoading && !profileInfoQuery.error && !profilePostsQuery.error && profileInfoQuery.data && profilePostsQuery.data
+            ? <ProfilePage activeTab={page.tab} posts={profilePostsQuery.data} profile={profileInfoQuery.data} />
             : null}
       </ShellFrame>
     )

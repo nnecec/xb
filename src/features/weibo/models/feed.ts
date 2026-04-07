@@ -10,12 +10,31 @@ export interface FeedStats {
   reposts: number
 }
 
+export interface FeedImage {
+  id: string
+  thumbnailUrl: string
+  largeUrl: string
+}
+
+export interface FeedMedia {
+  type: 'video' | 'audio'
+  streamUrl: string
+  title: string
+  coverUrl: string | null
+}
+
 export interface FeedItem {
   id: string
+  mblogId: string | null
+  isLongText: boolean
   author: FeedAuthor
   text: string
   createdAtLabel: string
   stats: FeedStats
+  images: FeedImage[]
+  media: FeedMedia | null
+  regionName?: string
+  source?: string
 }
 
 export interface TimelinePage {

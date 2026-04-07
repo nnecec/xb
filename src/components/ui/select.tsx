@@ -4,6 +4,19 @@ import { Select as SelectPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 
+function getShadowRootPortalContainer() {
+  if (typeof document === "undefined") {
+    return undefined
+  }
+
+  const rootNode = document.activeElement?.getRootNode()
+  if (rootNode instanceof ShadowRoot) {
+    return rootNode as unknown as HTMLElement
+  }
+
+  return undefined
+}
+
 function Select({
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Root>) {
@@ -55,8 +68,10 @@ function SelectContent({
   align = "center",
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {
+  const portalContainer = React.useMemo(() => getShadowRootPortalContainer(), [])
+
   return (
-    <SelectPrimitive.Portal>
+    <SelectPrimitive.Portal container={portalContainer}>
       <SelectPrimitive.Content
         data-slot="select-content"
         className={cn(

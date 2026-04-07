@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppShell } from '@/features/weibo/app/app-shell'
@@ -19,6 +20,7 @@ vi.mock('@/features/weibo/services/weibo-repository', async () => {
     loadProfileInfo: vi.fn(),
     loadProfilePosts: vi.fn(),
     loadStatusDetail: vi.fn(),
+    loadStatusComments: vi.fn(),
   }
 })
 
@@ -40,7 +42,12 @@ describe('AppShell', () => {
   })
 
   it('writes the selected home timeline tab into the global settings store', async () => {
-    render(<AppShell page={{ kind: 'home', tab: 'for-you' }} />)
+    const queryClient = new QueryClient()
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AppShell page={{ kind: 'home', tab: 'for-you' }} />
+      </QueryClientProvider>,
+    )
 
     fireEvent.mouseDown(screen.getByRole('tab', { name: 'Following' }))
 

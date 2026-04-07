@@ -1,10 +1,10 @@
-import { Compass, House, MoonStar, Search, Sun, SunMoon, UserRound } from 'lucide-react'
+import { Compass, House, Search, UserRound } from 'lucide-react'
 
 import type { WeiboPageDescriptor } from '@/features/weibo/route/page-descriptor'
 import type { AppTheme } from '@/lib/app-settings'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { ThemeModeToggle } from '@/features/weibo/components/theme-mode-toggle'
 
 const NAV_ITEMS = [
   { icon: House, label: 'Home', pageKinds: ['home'] },
@@ -12,16 +12,6 @@ const NAV_ITEMS = [
   { icon: Compass, label: 'Following', pageKinds: ['status'] },
   { icon: UserRound, label: 'Profile', pageKinds: ['profile'] },
 ] as const
-
-const THEME_ITEMS: Array<{
-  icon: typeof SunMoon
-  label: string
-  value: AppTheme
-}> = [
-  { icon: SunMoon, label: 'System', value: 'system' },
-  { icon: Sun, label: 'Light', value: 'light' },
-  { icon: MoonStar, label: 'Dark', value: 'dark' },
-]
 
 export function NavigationRail({
   pageKind,
@@ -85,28 +75,7 @@ export function NavigationRail({
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
               Theme
             </p>
-            <ToggleGroup
-              type="single"
-              value={theme}
-              variant="outline"
-              className="grid w-full grid-cols-3"
-              onValueChange={(value) => {
-                if (value) {
-                  onThemeChange(value as AppTheme)
-                }
-              }}
-            >
-              {THEME_ITEMS.map(({ icon: Icon, label, value }) => (
-                <ToggleGroupItem
-                  key={value}
-                  value={value}
-                  className="flex min-w-0 flex-col gap-1 px-2 py-2 text-[11px]"
-                >
-                  <Icon className="size-3.5" />
-                  <span>{label}</span>
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
+            <ThemeModeToggle value={theme} onChange={onThemeChange} />
           </div>
         </div>
       </CardContent>
