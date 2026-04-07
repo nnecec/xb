@@ -1,7 +1,11 @@
 import type { TimelinePage } from '@/features/weibo/models/feed'
+import type { UserProfile } from '@/features/weibo/models/profile'
 import type { StatusDetail } from '@/features/weibo/models/status'
+import type { WeiboEndpointPath } from '@/features/weibo/services/endpoints'
 import { fetchWeiboJson } from '@/features/weibo/services/client'
+import { adaptProfileInfoResponse } from '@/features/weibo/services/adapters/profile'
 import { adaptStatusDetailResponse } from '@/features/weibo/services/adapters/status'
+import type { WeiboTimelinePayload } from '@/features/weibo/services/adapters/timeline'
 import { adaptTimelineResponse } from '@/features/weibo/services/adapters/timeline'
 import { WEIBO_ENDPOINTS } from '@/features/weibo/services/endpoints'
 
@@ -11,21 +15,27 @@ export interface LoadTimelineOptions {
   cursor?: string | null
 }
 
-function getTimelinePath(tab: HomeTimelineTab): string {
+function getTimelinePath(tab: HomeTimelineTab): WeiboEndpointPath {
   return tab === 'following'
     ? WEIBO_ENDPOINTS.following
     : WEIBO_ENDPOINTS.forYou
+}
+
+async function loadTimeline(
+  path: WeiboEndpointPath,
+  params: Record<string, string | number | null | undefined>,
+): Promise<TimelinePage> {
+  const payload = await fetchWeiboJson<WeiboTimelinePayload>(path, params)
+  return adaptTimelineResponse(payload)
 }
 
 export async function loadHomeTimeline(
   tab: HomeTimelineTab,
   options: LoadTimelineOptions = {},
 ): Promise<TimelinePage> {
-  const payload = await fetchWeiboJson<unknown>(getTimelinePath(tab), {
+  return loadTimeline(getTimelinePath(tab), {
     max_id: options.cursor ?? undefined,
   })
-
-  return adaptTimelineResponse(payload as Parameters<typeof adaptTimelineResponse>[0])
 }
 
 export async function loadSideCards(): Promise<unknown> {
@@ -38,4 +48,20 @@ export async function loadStatusDetail(statusId: string): Promise<StatusDetail> 
   })
 
   return adaptStatusDetailResponse(payload as Parameters<typeof adaptStatusDetailResponse>[0])
+}
+
+export async function loadProfileInfo(profileId: string): Promise<UserProfile> {
+  const payload = await fetchWeiboJson<unknown>(WEIBO_ENDPOINTS.profileInfo, {
+    uid: profileId,
+  })
+
+  return adaptProfileInfoResponse(payload as Parameters<typeof adaptProfileInfoResponse>[0])
+}
+
+export async function loadProfilePosts(profileId: string): Promise<TimelinePage> {
+  return loadTimeline(WEIBO_ENDPOINTS.profilePosts, {
+    uid: profileId,
+    page: 1,
+    feature: 0,
+  })
 }

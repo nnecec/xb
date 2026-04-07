@@ -44,4 +44,44 @@ describe('adaptTimelineResponse', () => {
       nextCursor: '999',
     })
   })
+
+  it('supports nested list payloads and empty cursors', () => {
+    expect(adaptTimelineResponse({
+      data: {
+        list: [
+          {
+            mid: 777,
+            raw_text: 'nested payload',
+            user: {
+              id: 42,
+              screen_name: 'Bob',
+              profile_image_url: 'https://wx4.sinaimg.cn/avatar.jpg',
+            },
+          },
+          null,
+          {},
+        ],
+        since_id: '',
+      },
+    })).toEqual({
+      items: [
+        {
+          id: '777',
+          text: 'nested payload',
+          createdAtLabel: '',
+          author: {
+            id: '42',
+            name: 'Bob',
+            avatarUrl: 'https://wx4.sinaimg.cn/avatar.jpg',
+          },
+          stats: {
+            likes: 0,
+            comments: 0,
+            reposts: 0,
+          },
+        },
+      ],
+      nextCursor: null,
+    })
+  })
 })

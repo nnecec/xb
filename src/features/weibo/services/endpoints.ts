@@ -8,3 +8,4 @@ export const WEIBO_ENDPOINTS = {
 } as const
 
 export type WeiboEndpointKey = keyof typeof WEIBO_ENDPOINTS
+export type WeiboEndpointPath = (typeof WEIBO_ENDPOINTS)[WeiboEndpointKey]

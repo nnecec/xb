@@ -1,6 +1,6 @@
 import type { FeedItem, TimelinePage } from '@/features/weibo/models/feed'
 
-interface TimelineStatusUser {
+export interface WeiboTimelineStatusUser {
   avatar_hd?: string
   id?: number | string
   idstr?: string
@@ -8,7 +8,7 @@ interface TimelineStatusUser {
   screen_name?: string
 }
 
-interface TimelineStatus {
+export interface WeiboTimelineStatus {
   attitudes_count?: number
   comments_count?: number
   created_at?: string
@@ -17,19 +17,20 @@ interface TimelineStatus {
   raw_text?: string
   reposts_count?: number
   text_raw?: string
-  user?: TimelineStatusUser
+  user?: WeiboTimelineStatusUser
 }
 
-interface TimelinePayload {
+export interface WeiboTimelinePayload {
   data?: {
-    list?: TimelineStatus[]
+    list?: Array<WeiboTimelineStatus | null | undefined>
+    statuses?: Array<WeiboTimelineStatus | null | undefined>
     since_id?: number | string
   }
   max_id?: number | string
-  statuses?: TimelineStatus[]
+  statuses?: Array<WeiboTimelineStatus | null | undefined>
 }
 
-function toFeedItem(status: TimelineStatus): FeedItem {
+function toFeedItem(status: WeiboTimelineStatus): FeedItem {
   return {
     id: String(status.idstr ?? status.mid ?? ''),
     author: {
@@ -55,15 +56,25 @@ function normalizeCursor(value: number | string | undefined): string | null {
   return String(value)
 }
 
-export function adaptTimelineResponse(payload: TimelinePayload): TimelinePage {
+function getTimelineStatuses(payload: WeiboTimelinePayload): WeiboTimelineStatus[] {
   const statuses = Array.isArray(payload.statuses)
     ? payload.statuses
+    : Array.isArray(payload.data?.statuses)
+      ? payload.data.statuses
     : Array.isArray(payload.data?.list)
       ? payload.data.list
       : []
 
+  return statuses.filter(
+    (status): status is WeiboTimelineStatus => status !== null && typeof status === 'object',
+  )
+}
+
+export function adaptTimelineResponse(payload: WeiboTimelinePayload): TimelinePage {
   return {
-    items: statuses.map(toFeedItem),
+    items: getTimelineStatuses(payload)
+      .map(toFeedItem)
+      .filter(item => item.id !== ''),
     nextCursor: normalizeCursor(payload.max_id ?? payload.data?.since_id),
   }
 }

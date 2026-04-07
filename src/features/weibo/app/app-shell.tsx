@@ -1,15 +1,20 @@
 import { startTransition, useEffect, useState } from 'react'
 
 import type { TimelinePage } from '@/features/weibo/models/feed'
+import type { UserProfile } from '@/features/weibo/models/profile'
 import type { WeiboPageDescriptor } from '@/features/weibo/route/page-descriptor'
 import type { StatusDetail } from '@/features/weibo/models/status'
 import { NavigationRail } from '@/features/weibo/components/navigation-rail'
 import { RightRail } from '@/features/weibo/components/right-rail'
 import { HomeTimelinePage } from '@/features/weibo/pages/home-timeline-page'
 import { PageErrorState, PageLoadingState } from '@/features/weibo/components/page-state'
+import { ProfilePage } from '@/features/weibo/pages/profile-page'
 import { StatusDetailPage } from '@/features/weibo/pages/status-detail-page'
+import type { RewriteSettings, RewriteTheme } from '@/features/weibo/settings/rewrite-settings'
 import {
   loadHomeTimeline,
+  loadProfileInfo,
+  loadProfilePosts,
   loadStatusDetail,
   type HomeTimelineTab,
 } from '@/features/weibo/services/weibo-repository'
@@ -21,6 +26,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 
 const PAGE_LABELS: Record<WeiboPageDescriptor['kind'], string> = {
   home: 'Home Timeline',
@@ -42,7 +48,75 @@ function describePage(page: WeiboPageDescriptor): string {
   }
 }
 
-export function AppShell({ page }: { page: WeiboPageDescriptor }) {
+function ShellFrame({
+  pageKind,
+  settings,
+  onRewriteEnabledChange,
+  onThemeChange,
+  children,
+}: {
+  pageKind: WeiboPageDescriptor['kind']
+  settings: RewriteSettings
+  onRewriteEnabledChange: (enabled: boolean) => void
+  onThemeChange: (theme: RewriteTheme) => void
+  children: React.ReactNode
+}) {
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="mx-auto grid min-h-screen max-w-7xl grid-cols-[280px_minmax(0,1fr)_300px] gap-4 px-4 py-4">
+        <NavigationRail
+          pageKind={pageKind}
+          settings={settings}
+          onRewriteEnabledChange={onRewriteEnabledChange}
+          onThemeChange={onThemeChange}
+        />
+        <div className="min-w-0">
+          {children}
+        </div>
+        <RightRail />
+      </div>
+    </div>
+  )
+}
+
+function RewritePausedCard({
+  onResume,
+}: {
+  onResume: () => void
+}) {
+  return (
+    <div className="fixed top-4 right-4 z-[2147483647] w-[min(24rem,calc(100vw-2rem))]">
+      <Card className="rounded-[28px] border-border/70 bg-card/95 shadow-lg shadow-black/5 backdrop-blur">
+        <CardHeader>
+          <CardTitle className="text-base">LoveForXb paused</CardTitle>
+          <CardDescription>
+            The original Weibo page is visible again. Resume the rewrite when you want the X-style layout back.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <Button onClick={onResume}>
+            Resume LoveForXb
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Theme selection stays persisted and will be applied the next time the rewrite is enabled.
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+export function AppShell({
+  page,
+  settings,
+  onRewriteEnabledChange,
+  onThemeChange,
+}: {
+  page: WeiboPageDescriptor
+  settings: RewriteSettings
+  onRewriteEnabledChange: (enabled: boolean) => void
+  onThemeChange: (theme: RewriteTheme) => void
+}) {
   const [activeTimelineTab, setActiveTimelineTab] = useState<HomeTimelineTab>('for-you')
   const [timelineRequestKey, setTimelineRequestKey] = useState(0)
   const [timelinePage, setTimelinePage] = useState<TimelinePage>({ items: [], nextCursor: null })
@@ -51,6 +125,10 @@ export function AppShell({ page }: { page: WeiboPageDescriptor }) {
   const [statusDetail, setStatusDetail] = useState<StatusDetail | null>(null)
   const [statusError, setStatusError] = useState<string | null>(null)
   const [isStatusLoading, setIsStatusLoading] = useState(page.kind === 'status')
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [profilePosts, setProfilePosts] = useState<TimelinePage>({ items: [], nextCursor: null })
+  const [profileError, setProfileError] = useState<string | null>(null)
+  const [isProfileLoading, setIsProfileLoading] = useState(page.kind === 'profile')
 
   useEffect(() => {
     if (page.kind !== 'home') {
@@ -61,7 +139,52 @@ export function AppShell({ page }: { page: WeiboPageDescriptor }) {
   }, [page])
 
   useEffect(() => {
-    if (page.kind !== 'home') {
+    if (!settings.enabled || page.kind !== 'profile') {
+      return
+    }
+
+    let cancelled = false
+    setIsProfileLoading(true)
+    setProfileError(null)
+
+    void Promise.all([
+      loadProfileInfo(page.profileId),
+      loadProfilePosts(page.profileId),
+    ])
+      .then(([nextProfile, nextPosts]) => {
+        if (cancelled) {
+          return
+        }
+
+        startTransition(() => {
+          setProfile(nextProfile)
+          setProfilePosts(nextPosts)
+        })
+      })
+      .catch((error: unknown) => {
+        if (cancelled) {
+          return
+        }
+
+        setProfileError(
+          error instanceof Error
+            ? error.message
+            : 'Unknown Weibo profile error',
+        )
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsProfileLoading(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [page, settings.enabled])
+
+  useEffect(() => {
+    if (!settings.enabled || page.kind !== 'home') {
       return
     }
 
@@ -99,10 +222,10 @@ export function AppShell({ page }: { page: WeiboPageDescriptor }) {
     return () => {
       cancelled = true
     }
-  }, [activeTimelineTab, page, timelineRequestKey])
+  }, [activeTimelineTab, page, settings.enabled, timelineRequestKey])
 
   useEffect(() => {
-    if (page.kind !== 'status') {
+    if (!settings.enabled || page.kind !== 'status') {
       return
     }
 
@@ -140,7 +263,7 @@ export function AppShell({ page }: { page: WeiboPageDescriptor }) {
     return () => {
       cancelled = true
     }
-  }, [page])
+  }, [page, settings.enabled])
 
   const retryTimeline = () => {
     if (page.kind !== 'home') {
@@ -152,30 +275,38 @@ export function AppShell({ page }: { page: WeiboPageDescriptor }) {
     setTimelineRequestKey((current) => current + 1)
   }
 
+  if (!settings.enabled) {
+    return <RewritePausedCard onResume={() => onRewriteEnabledChange(true)} />
+  }
+
   if (page.kind === 'home') {
     return (
-      <div className="min-h-screen bg-background text-foreground">
-        <div className="mx-auto grid min-h-screen max-w-7xl grid-cols-[88px_minmax(0,1fr)_300px] gap-4 px-4 py-4">
-          <NavigationRail />
-          <HomeTimelinePage
-            activeTab={activeTimelineTab}
-            errorMessage={timelineError}
-            isLoading={isTimelineLoading}
-            onRetry={retryTimeline}
-            onTabChange={setActiveTimelineTab}
-            page={timelinePage}
-          />
-          <RightRail />
-        </div>
-      </div>
+      <ShellFrame
+        pageKind={page.kind}
+        settings={settings}
+        onRewriteEnabledChange={onRewriteEnabledChange}
+        onThemeChange={onThemeChange}
+      >
+        <HomeTimelinePage
+          activeTab={activeTimelineTab}
+          errorMessage={timelineError}
+          isLoading={isTimelineLoading}
+          onRetry={retryTimeline}
+          onTabChange={setActiveTimelineTab}
+          page={timelinePage}
+        />
+      </ShellFrame>
     )
   }
 
   if (page.kind === 'status') {
     return (
-      <div className="min-h-screen bg-background text-foreground">
-        <div className="mx-auto grid min-h-screen max-w-7xl grid-cols-[88px_minmax(0,1fr)_300px] gap-4 px-4 py-4">
-          <NavigationRail />
+      <ShellFrame
+        pageKind={page.kind}
+        settings={settings}
+        onRewriteEnabledChange={onRewriteEnabledChange}
+        onThemeChange={onThemeChange}
+      >
           {isStatusLoading
             ? <PageLoadingState label="Loading this Weibo post..." />
             : null}
@@ -185,17 +316,38 @@ export function AppShell({ page }: { page: WeiboPageDescriptor }) {
           {!isStatusLoading && !statusError && statusDetail
             ? <StatusDetailPage detail={statusDetail} />
             : null}
-          <RightRail />
-        </div>
-      </div>
+      </ShellFrame>
+    )
+  }
+
+  if (page.kind === 'profile') {
+    return (
+      <ShellFrame
+        pageKind={page.kind}
+        settings={settings}
+        onRewriteEnabledChange={onRewriteEnabledChange}
+        onThemeChange={onThemeChange}
+      >
+          {isProfileLoading
+            ? <PageLoadingState label="Loading this profile..." />
+            : null}
+          {!isProfileLoading && profileError
+            ? <PageErrorState description={profileError} />
+            : null}
+          {!isProfileLoading && !profileError && profile
+            ? <ProfilePage activeTab={page.tab} posts={profilePosts} profile={profile} />
+            : null}
+      </ShellFrame>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto grid min-h-screen max-w-7xl grid-cols-[88px_minmax(0,1fr)_300px] gap-4 px-4 py-4">
-        <NavigationRail />
-
+    <ShellFrame
+      pageKind={page.kind}
+      settings={settings}
+      onRewriteEnabledChange={onRewriteEnabledChange}
+      onThemeChange={onThemeChange}
+    >
         <Card className="rounded-[28px] border-border/70 bg-card/95 shadow-none">
           <CardHeader>
             <CardTitle className="text-xl">{PAGE_LABELS[page.kind]}</CardTitle>
@@ -206,9 +358,6 @@ export function AppShell({ page }: { page: WeiboPageDescriptor }) {
             <p>Route sync is active and listening for main-world history updates.</p>
           </CardContent>
         </Card>
-
-        <RightRail />
-      </div>
-    </div>
+    </ShellFrame>
   )
 }
