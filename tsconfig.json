@@ -1,0 +1,18 @@
+{
+  "extends": "./.wxt/tsconfig.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "jsx": "react-jsx",
+    "baseUrl": "./.wxt",
+    "ignoreDeprecations": "6.0"
+  },
+  "include": [
+    "src/**/*",
+    ".wxt/wxt.d.ts"
+  ],
+  "exclude": [
+    ".output",
+    "wxt.config.ts",
+    "web-ext.config.ts"
+  ]
+}
