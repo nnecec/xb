@@ -1,5 +1,7 @@
 import type { TimelinePage } from '@/features/weibo/models/feed'
+import type { StatusDetail } from '@/features/weibo/models/status'
 import { fetchWeiboJson } from '@/features/weibo/services/client'
+import { adaptStatusDetailResponse } from '@/features/weibo/services/adapters/status'
 import { adaptTimelineResponse } from '@/features/weibo/services/adapters/timeline'
 import { WEIBO_ENDPOINTS } from '@/features/weibo/services/endpoints'
 
@@ -28,4 +30,12 @@ export async function loadHomeTimeline(
 
 export async function loadSideCards(): Promise<unknown> {
   return fetchWeiboJson<unknown>(WEIBO_ENDPOINTS.sideCards, {})
+}
+
+export async function loadStatusDetail(statusId: string): Promise<StatusDetail> {
+  const payload = await fetchWeiboJson<unknown>(WEIBO_ENDPOINTS.statusDetail, {
+    id: statusId,
+  })
+
+  return adaptStatusDetailResponse(payload as Parameters<typeof adaptStatusDetailResponse>[0])
 }
