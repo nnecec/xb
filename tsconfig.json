@@ -1,9 +1,11 @@
 {
   "compilerOptions": {
     "allowImportingTsExtensions": true,
+    "allowArbitraryExtensions": true,
     "jsx": "react-jsx",
     "baseUrl": ".",
     "moduleResolution": "Bundler",
+    "noUncheckedSideEffectImports": false,
     "paths": {
       "@/*": [
         "src/*"
