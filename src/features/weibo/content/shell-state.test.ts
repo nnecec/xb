@@ -28,6 +28,8 @@ describe('bindShellState', () => {
       settingsStore: store,
     })
 
+    expect(document.documentElement.getAttribute('data-loveforxb-weibo-ready')).toBe('')
+
     await store.getState().setTheme('dark')
     await store.getState().setRewriteEnabled(false)
 

@@ -1,4 +1,8 @@
-import { applyPageTakeover, clearPageTakeover } from '@/features/weibo/content/page-takeover'
+import {
+  applyPageTakeover,
+  clearPageTakeover,
+  markWeiboPageReady,
+} from '@/features/weibo/content/page-takeover'
 import { resolveIsDarkMode } from '@/lib/app-settings'
 import type { AppSettingsStore } from '@/lib/app-settings-store'
 
@@ -31,6 +35,7 @@ export function bindShellState({
   const onSystemThemeChange = () => applyShellState()
 
   applyShellState()
+  markWeiboPageReady()
   mediaQuery.addEventListener('change', onSystemThemeChange)
 
   return () => {

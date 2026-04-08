@@ -1,0 +1,7 @@
+/*
+  Keep selector in sync with WEIBO_PAGE_READY_ATTR in
+  src/features/weibo/content/page-takeover.ts
+*/
+html:not([data-loveforxb-weibo-ready]) #app {
+  visibility: hidden !important;
+}

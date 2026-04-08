@@ -8,7 +8,8 @@ import { injectScript } from "wxt/utils/inject-script";
 import { AppRoot } from "@/features/weibo/app/app-root";
 import { createPageStore, type PageStore } from "@/features/weibo/app/page-store";
 import { bindShellState } from "@/features/weibo/content/shell-state";
-import { findWeiboHostRegions } from "@/features/weibo/content/host-selectors";
+import { markWeiboPageReady } from "@/features/weibo/content/page-takeover";
+import { waitForWeiboHostRegions } from "@/features/weibo/content/host-selectors";
 import { getAppSettingsStore } from "@/lib/app-settings-store";
 
 interface MountedWeiboUi {
@@ -24,8 +25,9 @@ export default defineContentScript({
   async main(ctx) {
     await injectScript("/weibo-main-world.js", { keepInDom: true });
 
-    const regions = findWeiboHostRegions(document);
+    const regions = await waitForWeiboHostRegions(document);
     if (!regions) {
+      markWeiboPageReady();
       return;
     }
     const settingsStore = getAppSettingsStore();

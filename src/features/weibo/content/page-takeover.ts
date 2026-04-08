@@ -1,6 +1,13 @@
 const HIDDEN_ATTR = 'data-loveforxb-hidden'
 const PREVIOUS_DISPLAY_ATTR = 'data-loveforxb-previous-display'
 
+/** Set on `<html>` once shell state is applied; paired with `weibo-hide.content.css`. */
+export const WEIBO_PAGE_READY_ATTR = 'data-loveforxb-weibo-ready'
+
+export function markWeiboPageReady() {
+  document.documentElement.setAttribute(WEIBO_PAGE_READY_ATTR, '')
+}
+
 export function applyPageTakeover(node: HTMLElement) {
   if (!node.hasAttribute(PREVIOUS_DISPLAY_ATTR)) {
     node.setAttribute(PREVIOUS_DISPLAY_ATTR, node.style.display)
