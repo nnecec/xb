@@ -121,4 +121,25 @@ describe('adaptTimelineResponse', () => {
       },
     ])
   })
+
+  it('skips ad statuses when isAd is 1', () => {
+    const result = adaptTimelineResponse({
+      statuses: [
+        {
+          idstr: 'ad-1',
+          text_raw: 'sponsored',
+          isAd: 1,
+          user: { idstr: '9', screen_name: 'Ad Bot' },
+        },
+        {
+          idstr: 'normal-1',
+          text_raw: 'real post',
+          user: { idstr: '10', screen_name: 'Real User' },
+        },
+      ],
+    })
+
+    expect(result.items).toHaveLength(1)
+    expect(result.items[0]?.id).toBe('normal-1')
+  })
 })

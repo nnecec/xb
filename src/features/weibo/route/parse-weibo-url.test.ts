@@ -27,6 +27,15 @@ describe('parseWeiboUrl', () => {
     })
   })
 
+  it('parses a nickname profile URL (/n/screenName)', () => {
+    expect(parseWeiboUrl('https://weibo.com/n/AIMIKKKK')).toEqual({
+      kind: 'profile',
+      profileId: 'AIMIKKKK',
+      profileSource: 'n',
+      tab: 'posts',
+    })
+  })
+
   it('returns unsupported for unknown paths', () => {
     expect(parseWeiboUrl('https://weibo.com/settings')).toEqual({
       kind: 'unsupported',

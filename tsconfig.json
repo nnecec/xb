@@ -1,30 +1,8 @@
 {
+  "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
     "allowImportingTsExtensions": true,
-    "allowArbitraryExtensions": true,
     "jsx": "react-jsx",
-    "baseUrl": ".",
-    "moduleResolution": "Bundler",
-    "noUncheckedSideEffectImports": false,
-    "paths": {
-      "@/*": [
-        "src/*"
-      ]
-    },
-    "types": [
-      "wxt/browser"
-    ],
-    "skipLibCheck": true,
-    "ignoreDeprecations": "6.0"
-  },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    ".output",
-    ".wxt",
-    "bewlycat",
-    "wxt.config.ts",
-    "web-ext.config.ts"
-  ]
+    "baseUrl": "./.wxt"
+  }
 }

@@ -1,10 +1,6 @@
 import "../assets/global.css";
 
 import { createRoot, type Root } from "react-dom/client";
-import { createShadowRootUi } from "wxt/utils/content-script-ui/shadow-root";
-import { defineContentScript } from "wxt/utils/define-content-script";
-import { injectScript } from "wxt/utils/inject-script";
-
 import { AppRoot } from "@/features/weibo/app/app-root";
 import { bindShellState } from "@/features/weibo/content/shell-state";
 import { markWeiboPageReady } from "@/features/weibo/content/page-takeover";
@@ -15,6 +11,8 @@ interface MountedWeiboUi {
   root: Root;
   cleanup: () => void;
 }
+
+export let ui: ShadowRootContentScriptUi<MountedWeiboUi>;
 
 export default defineContentScript({
   matches: ["https://weibo.com/*", "https://www.weibo.com/*"],
@@ -31,7 +29,7 @@ export default defineContentScript({
     const settingsStore = getAppSettingsStore();
     await settingsStore.getState().hydrate();
 
-    const ui = await createShadowRootUi(ctx, {
+    ui = await createShadowRootUi(ctx, {
       name: "loveforxb-shell",
       position: "inline",
       anchor: "body",

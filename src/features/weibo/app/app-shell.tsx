@@ -1,81 +1,98 @@
-import { useMemo, useRef } from "react";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { useLocation, useNavigate } from "react-router";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { ArrowRight, Sparkles } from 'lucide-react'
+import { useMemo, useRef } from 'react'
+import { useLocation, useNavigate } from 'react-router'
 
-import type { WeiboPageDescriptor } from "@/features/weibo/route/page-descriptor";
-import { parseWeiboUrl } from "@/features/weibo/route/parse-weibo-url";
-import { NavigationRail } from "@/features/weibo/components/navigation-rail";
-import { RightRail } from "@/features/weibo/components/right-rail";
-import { HomeTimelinePage } from "@/features/weibo/pages/home-timeline-page";
-import { PageErrorState, PageLoadingState } from "@/features/weibo/components/page-state";
-import { ProfilePage } from "@/features/weibo/pages/profile-page";
-import { StatusDetailPage } from "@/features/weibo/pages/status-detail-page";
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { NavigationRail } from '@/features/weibo/components/navigation-rail'
+import { PageErrorState, PageLoadingState } from '@/features/weibo/components/page-state'
+import { RightRail } from '@/features/weibo/components/right-rail'
+import { HomeTimelinePage } from '@/features/weibo/pages/home-timeline-page'
+import { ProfilePage } from '@/features/weibo/pages/profile-page'
+import { StatusDetailPage } from '@/features/weibo/pages/status-detail-page'
+import type { WeiboPageDescriptor } from '@/features/weibo/route/page-descriptor'
+import { parseWeiboUrl } from '@/features/weibo/route/parse-weibo-url'
 import {
   loadHomeTimeline,
-  loadProfileInfo,
+  loadProfileHoverCard,
   loadProfilePosts,
   loadStatusComments,
   loadStatusDetail,
-} from "@/features/weibo/services/weibo-repository";
-import type { AppTheme } from "@/lib/app-settings";
-import { useAppSettings } from "@/lib/app-settings-store";
+} from '@/features/weibo/services/weibo-repository'
+import type { AppTheme } from '@/lib/app-settings'
+import { useAppSettings } from '@/lib/app-settings-store'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-
-const PAGE_LABELS: Record<WeiboPageDescriptor["kind"], string> = {
-  home: "Home Timeline",
-  profile: "Profile",
-  status: "Status Detail",
-  unsupported: "Unsupported Page",
-};
+const PAGE_LABELS: Record<WeiboPageDescriptor['kind'], string> = {
+  home: 'Home',
+  profile: 'Profile',
+  status: 'Status Detail',
+  unsupported: 'Unsupported Page',
+}
 
 function describePage(page: WeiboPageDescriptor): string {
   switch (page.kind) {
-    case "home":
-      return `Active tab: ${page.tab}`;
-    case "profile":
-      return `Profile ${page.profileId} via /${page.profileSource}`;
-    case "status":
-      return `Status ${page.statusId} by ${page.authorId}`;
-    case "unsupported":
-      return `Reason: ${page.reason}`;
+    case 'home':
+      return `Active tab: ${page.tab}`
+    case 'profile':
+      return `Profile ${page.profileId} via /${page.profileSource}`
+    case 'status':
+      return `Status ${page.statusId} by ${page.authorId}`
+    case 'unsupported':
+      return `Reason: ${page.reason}`
   }
 }
 
 function ShellFrame({
   pageKind,
+  viewingProfileUserId,
   rewriteEnabled,
   theme,
   onRewriteEnabledChange,
   onThemeChange,
   children,
 }: {
-  pageKind: WeiboPageDescriptor["kind"];
-  rewriteEnabled: boolean;
-  theme: AppTheme;
-  onRewriteEnabledChange: (enabled: boolean) => void;
-  onThemeChange: (theme: AppTheme) => void;
-  children: React.ReactNode;
+  pageKind: WeiboPageDescriptor['kind']
+  viewingProfileUserId?: string | null
+  rewriteEnabled: boolean
+  theme: AppTheme
+  onRewriteEnabledChange: (enabled: boolean) => void
+  onThemeChange: (theme: AppTheme) => void
+  children: React.ReactNode
 }) {
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
-      <div className="grid h-full grid-cols-[280px_minmax(360px,600px)_280px] gap-4 px-4 py-4 mx-auto">
+      <div className="mx-auto grid h-full w-full grid-cols-[72px_minmax(0,1fr)] gap-3 px-3 py-3 md:grid-cols-[88px_minmax(0,1fr)] md:gap-4 md:px-4 md:py-4 lg:grid-cols-[88px_minmax(360px,1fr)_240px] xl:grid-cols-[280px_minmax(360px,600px)_280px] xl:max-w-[1200px]">
         <div className="contents">
-          <NavigationRail
-            pageKind={pageKind}
-            rewriteEnabled={rewriteEnabled}
-            theme={theme}
-            onRewriteEnabledChange={onRewriteEnabledChange}
-            onThemeChange={onThemeChange}
-          />
+          <div className="hidden xl:block">
+            <NavigationRail
+              pageKind={pageKind}
+              viewingProfileUserId={viewingProfileUserId}
+              rewriteEnabled={rewriteEnabled}
+              theme={theme}
+              onRewriteEnabledChange={onRewriteEnabledChange}
+              onThemeChange={onThemeChange}
+            />
+          </div>
+          <div className="xl:hidden">
+            <NavigationRail
+              pageKind={pageKind}
+              viewingProfileUserId={viewingProfileUserId}
+              rewriteEnabled={rewriteEnabled}
+              theme={theme}
+              onRewriteEnabledChange={onRewriteEnabledChange}
+              onThemeChange={onThemeChange}
+              logoOnly
+            />
+          </div>
           <main className="min-w-0 overflow-hidden">{children}</main>
-          <RightRail />
+          <div className="hidden lg:flex">
+            <RightRail />
+          </div>
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 function RewritePausedCard({ onResume }: { onResume: () => void }) {
@@ -97,88 +114,107 @@ function RewritePausedCard({ onResume }: { onResume: () => void }) {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }
 
 export function AppShell() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const homeScrollRef = useRef<HTMLDivElement | null>(null);
+  const location = useLocation()
+  const navigate = useNavigate()
+  const homeScrollRef = useRef<HTMLDivElement | null>(null)
   const page = useMemo(
     () =>
       parseWeiboUrl(new URL(`${location.pathname}${location.search}`, window.location.origin).href),
     [location.pathname, location.search],
-  );
+  )
 
-  const theme = useAppSettings((state) => state.theme);
-  const rewriteEnabled = useAppSettings((state) => state.rewriteEnabled);
-  const activeTimelineTab = useAppSettings((state) => state.homeTimelineTab);
-  const setRewriteEnabled = useAppSettings((state) => state.setRewriteEnabled);
-  const setHomeTimelineTab = useAppSettings((state) => state.setHomeTimelineTab);
-  const setTheme = useAppSettings((state) => state.setTheme);
+  const theme = useAppSettings((state) => state.theme)
+  const rewriteEnabled = useAppSettings((state) => state.rewriteEnabled)
+  const activeTimelineTab = useAppSettings((state) => state.homeTimelineTab)
+  const setRewriteEnabled = useAppSettings((state) => state.setRewriteEnabled)
+  const setHomeTimelineTab = useAppSettings((state) => state.setHomeTimelineTab)
+  const setTheme = useAppSettings((state) => state.setTheme)
 
   const timelineQuery = useInfiniteQuery({
-    queryKey: ["weibo", "timeline", activeTimelineTab],
+    queryKey: ['weibo', 'timeline', activeTimelineTab],
     queryFn: ({ pageParam }) => loadHomeTimeline(activeTimelineTab, { cursor: pageParam }),
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     staleTime: 30 * 60 * 1000,
-    enabled: rewriteEnabled && page.kind === "home",
-  });
+    enabled: rewriteEnabled && page.kind === 'home',
+  })
 
   const profileInfoQuery = useQuery({
-    queryKey: ["weibo", "profile", page.kind === "profile" ? page.profileId : null, "info"],
-    queryFn: () => loadProfileInfo(page.kind === "profile" ? page.profileId : ""),
-    enabled: rewriteEnabled && page.kind === "profile",
-  });
+    queryKey: [
+      'weibo',
+      'profile',
+      'info',
+      page.kind === 'profile' ? page.profileSource : null,
+      page.kind === 'profile' ? page.profileId : null,
+    ],
+    queryFn: () => {
+      if (page.kind !== 'profile') {
+        return Promise.reject(new Error('not-profile'))
+      }
+      return page.profileSource === 'u'
+        ? loadProfileHoverCard({ uid: page.profileId })
+        : loadProfileHoverCard({ screenName: page.profileId })
+    },
+    enabled: rewriteEnabled && page.kind === 'profile',
+  })
   const profilePostsQuery = useQuery({
-    queryKey: ["weibo", "profile", page.kind === "profile" ? page.profileId : null, "posts"],
-    queryFn: () => loadProfilePosts(page.kind === "profile" ? page.profileId : ""),
-    enabled: rewriteEnabled && page.kind === "profile",
-  });
+    queryKey: ['weibo', 'profile', 'posts', profileInfoQuery.data?.id ?? null],
+    queryFn: () => loadProfilePosts(profileInfoQuery.data!.id),
+    enabled: rewriteEnabled && page.kind === 'profile' && Boolean(profileInfoQuery.data?.id),
+  })
 
   const statusDetailQuery = useQuery({
-    queryKey: ["weibo", "status", page.kind === "status" ? page.statusId : null],
-    queryFn: () => loadStatusDetail(page.kind === "status" ? page.statusId : ""),
-    enabled: rewriteEnabled && page.kind === "status",
-  });
+    queryKey: ['weibo', 'status', page.kind === 'status' ? page.statusId : null],
+    queryFn: () => loadStatusDetail(page.kind === 'status' ? page.statusId : ''),
+    enabled: rewriteEnabled && page.kind === 'status',
+  })
   const statusCommentsQuery = useInfiniteQuery({
-    queryKey: ["weibo", "status-comments", page.kind === "status" ? page.statusId : null],
+    queryKey: ['weibo', 'status-comments', page.kind === 'status' ? page.statusId : null],
     queryFn: ({ pageParam }) =>
-      loadStatusComments(page.kind === "status" ? page.statusId : "", pageParam),
+      loadStatusComments(page.kind === 'status' ? page.statusId : '', pageParam),
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-    enabled: rewriteEnabled && page.kind === "status",
-  });
+    enabled: rewriteEnabled && page.kind === 'status',
+  })
 
   const timelineItems = useMemo(
     () => timelineQuery.data?.pages.flatMap((timelinePage) => timelinePage.items) ?? [],
     [timelineQuery.data],
-  );
+  )
   const statusComments = useMemo(
     () => statusCommentsQuery.data?.pages.flatMap((commentsPage) => commentsPage.items) ?? [],
     [statusCommentsQuery.data],
-  );
+  )
   const navigateToStatusDetail = (item: {
-    author: { id: string };
-    id: string;
-    mblogId: string | null;
+    author: { id: string }
+    id: string
+    mblogId: string | null
   }) => {
-    const statusId = item.mblogId ?? item.id;
+    const statusId = item.mblogId ?? item.id
     if (!item.author.id || !statusId) {
-      return;
+      return
     }
-    navigate(`/${item.author.id}/${statusId}`);
-  };
-
-  if (!rewriteEnabled) {
-    return <RewritePausedCard onResume={() => void setRewriteEnabled(true)} />;
+    navigate(`/${item.author.id}/${statusId}`)
   }
 
-  if (page.kind === "home" || page.kind === "status") {
+  const viewingProfileUserId = useMemo(
+    () => (page.kind === 'profile' ? profileInfoQuery.data?.id ?? null : null),
+    [page.kind, profileInfoQuery.data?.id],
+  )
+
+  if (!rewriteEnabled) {
+    return <RewritePausedCard onResume={() => void setRewriteEnabled(true)} />
+  }
+
+  if (page.kind === 'home' || page.kind === 'status') {
     return (
       <ShellFrame
         pageKind={page.kind}
+        viewingProfileUserId={viewingProfileUserId}
         rewriteEnabled={rewriteEnabled}
         theme={theme}
         onRewriteEnabledChange={(enabled) => void setRewriteEnabled(enabled)}
@@ -188,8 +224,8 @@ export function AppShell() {
           {/* Home timeline stays mounted to preserve scroll position. */}
           <div
             ref={homeScrollRef}
-            className={["h-full overflow-y-auto", page.kind === "home" ? "block" : "hidden"].join(
-              " ",
+            className={['h-full overflow-y-auto', page.kind === 'home' ? 'block' : 'hidden'].join(
+              ' ',
             )}
           >
             <HomeTimelinePage
@@ -209,8 +245,8 @@ export function AppShell() {
           </div>
 
           <div
-            className={["h-full overflow-y-auto", page.kind === "status" ? "block" : "hidden"].join(
-              " ",
+            className={['h-full overflow-y-auto', page.kind === 'status' ? 'block' : 'hidden'].join(
+              ' ',
             )}
           >
             {statusDetailQuery.isLoading ? (
@@ -231,13 +267,14 @@ export function AppShell() {
           </div>
         </div>
       </ShellFrame>
-    );
+    )
   }
 
-  if (page.kind === "profile") {
+  if (page.kind === 'profile') {
     return (
       <ShellFrame
         pageKind={page.kind}
+        viewingProfileUserId={viewingProfileUserId}
         rewriteEnabled={rewriteEnabled}
         theme={theme}
         onRewriteEnabledChange={(enabled) => void setRewriteEnabled(enabled)}
@@ -254,7 +291,7 @@ export function AppShell() {
               description={
                 (profileInfoQuery.error as Error | null)?.message ??
                 (profilePostsQuery.error as Error | null)?.message ??
-                "Unknown Weibo profile error"
+                'Unknown Weibo profile error'
               }
             />
           ) : null}
@@ -265,19 +302,20 @@ export function AppShell() {
           profileInfoQuery.data &&
           profilePostsQuery.data ? (
             <ProfilePage
-              activeTab={page.tab}
               posts={profilePostsQuery.data}
               profile={profileInfoQuery.data}
+              onCommentClick={navigateToStatusDetail}
             />
           ) : null}
         </div>
       </ShellFrame>
-    );
+    )
   }
 
   return (
     <ShellFrame
       pageKind={page.kind}
+      viewingProfileUserId={viewingProfileUserId}
       rewriteEnabled={rewriteEnabled}
       theme={theme}
       onRewriteEnabledChange={(enabled) => void setRewriteEnabled(enabled)}
@@ -296,5 +334,5 @@ export function AppShell() {
         </Card>
       </div>
     </ShellFrame>
-  );
+  )
 }

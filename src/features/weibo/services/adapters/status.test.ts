@@ -56,6 +56,28 @@ describe('adaptStatusDetailResponse', () => {
     ])
     expect(result.status.media).toBeNull()
   })
+
+  it('unwraps { ok, data } so retweeted_status is visible (PC ajax shape)', () => {
+    const result = adaptStatusDetailResponse({
+      ok: 1,
+      data: {
+        idstr: '501',
+        text_raw: 'forward',
+        created_at: 'today',
+        user: { idstr: '1', screen_name: 'Alice' },
+        retweeted_status: {
+          idstr: '502',
+          text_raw: 'original',
+          created_at: 'today',
+          user: { idstr: '2', screen_name: 'Bob' },
+        },
+      },
+    })
+
+    expect(result.status.id).toBe('501')
+    expect(result.status.retweetedStatus?.id).toBe('502')
+    expect(result.status.retweetedStatus?.text).toBe('original')
+  })
 })
 
 describe('adaptStatusCommentsResponse', () => {

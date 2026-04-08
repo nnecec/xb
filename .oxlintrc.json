@@ -1,11 +1,21 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "react-perf", "typescript"],
-  "categories": {},
-  "rules": {},
+  "plugins": ["typescript", "unicorn", "oxc", "react", "react-perf"],
+  "categories": {
+    "correctness": "error"
+  },
+  "rules": {
+    "no-unused-vars": [
+      "error",
+      {
+        "fix": {
+          "imports": "safe-fix",
+          "variables": "safe-fix"
+        }
+      }
+    ]
+  },
   "env": {
     "builtin": true
-  },
-  "globals": {},
-  "ignorePatterns": []
+  }
 }

@@ -1,5 +1,6 @@
 import { Heart } from 'lucide-react'
 import type { CommentItem } from '@/features/weibo/models/status'
+import { MentionInlineText } from '@/features/weibo/components/status-text'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -22,7 +23,7 @@ function NestedCommentCard({ comment }: { comment: CommentItem }) {
         </Badge>
       </div>
       <p className="whitespace-pre-wrap text-xs leading-5 text-foreground/90">
-        {comment.text || 'No content.'}
+        <MentionInlineText text={comment.text || ''} />
       </p>
       {comment.comments.length > 0 ? (
         <div className="mt-2 flex flex-col gap-2 border-l border-border/70 pl-2">
@@ -59,7 +60,7 @@ export function CommentCard({ item }: { item: CommentItem }) {
       </CardHeader>
       <CardContent className="flex flex-col gap-3 px-4">
         <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">
-          {item.text || 'No content.'}
+          <MentionInlineText text={item.text || ''} />
         </p>
 
         {item.replyComment ? (
@@ -68,7 +69,7 @@ export function CommentCard({ item }: { item: CommentItem }) {
               回复 @{item.replyComment.author.name}
             </p>
             <p className="line-clamp-3 text-xs leading-5 text-muted-foreground">
-              {item.replyComment.text || 'No content.'}
+              <MentionInlineText text={item.replyComment.text || ''} />
             </p>
           </div>
         ) : null}

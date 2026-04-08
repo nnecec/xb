@@ -50,6 +50,8 @@ export interface WeiboPicInfo {
 }
 
 export interface WeiboStatus {
+  /** Numeric status id when `idstr` / `mid` omitted (some payloads). */
+  id?: number | string
   attitudes_count?: number
   comments_count?: number
   created_at?: string
@@ -73,6 +75,7 @@ export interface WeiboStatus {
   retweeted_status?: WeiboStatus
   analysis_extra?: string
   url_struct?: WeiboUrlStruct[]
+  isAd?: number
 }
 
 // ─── Transform helpers ────────────────────────────────────────────────────────
@@ -139,7 +142,10 @@ function pickAnalysisExtraValue(
 
 function shouldAttachMediaToRetweeted(status: WeiboStatus): boolean {
   const retweetedId = String(
-    status.retweeted_status?.idstr ?? status.retweeted_status?.mid ?? '',
+    status.retweeted_status?.idstr ??
+      status.retweeted_status?.mid ??
+      status.retweeted_status?.id ??
+      '',
   )
   if (!retweetedId) {
     return false
@@ -214,7 +220,7 @@ export function toFeedItem(
   const urlEntities = toUrlEntities(status)
 
   return {
-    id: String(status.idstr ?? status.mid ?? ''),
+    id: String(status.idstr ?? status.mid ?? status.id ?? ''),
     mblogId: status.mblogid ?? null,
     isLongText: Boolean(status.isLongText),
     text: status.text_raw ?? status.raw_text ?? status.text ?? '',

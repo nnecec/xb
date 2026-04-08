@@ -24,6 +24,15 @@ export function parseWeiboUrl(input: string): WeiboPageDescriptor {
     }
   }
 
+  if (parts[0] === 'n' && parts[1]) {
+    return {
+      kind: 'profile',
+      profileId: decodeURIComponent(parts[1]),
+      profileSource: 'n',
+      tab: 'posts',
+    }
+  }
+
   if (parts.length >= 2 && /^\d+$/.test(parts[0])) {
     return {
       kind: 'status',

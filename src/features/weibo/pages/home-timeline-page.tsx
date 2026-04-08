@@ -1,16 +1,16 @@
-import { useEffect, useRef } from "react";
-import type { TimelinePage } from "@/features/weibo/models/feed";
-import type { FeedItem } from "@/features/weibo/models/feed";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
+import { useEffect, useRef } from 'react'
 
-import { FeedCard } from "@/features/weibo/components/feed-card";
+import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { FeedCard } from '@/features/weibo/components/feed-card'
 import {
   PageEmptyState,
   PageErrorState,
   PageLoadingState,
-} from "@/features/weibo/components/page-state";
+} from '@/features/weibo/components/page-state'
+import type { TimelinePage } from '@/features/weibo/models/feed'
+import type { FeedItem } from '@/features/weibo/models/feed'
 
 export function HomeTimelinePage({
   activeTab,
@@ -24,45 +24,49 @@ export function HomeTimelinePage({
   onTabChange,
   items,
 }: {
-  activeTab: "for-you" | "following";
-  isLoading: boolean;
-  errorMessage: string | null;
-  hasNextPage: boolean;
-  isFetchingNextPage: boolean;
-  onRetry: () => void;
-  onLoadNextPage: () => void;
-  onCommentClick: (item: FeedItem) => void;
-  onTabChange: (value: "for-you" | "following") => void;
-  items: TimelinePage["items"];
+  activeTab: 'for-you' | 'following'
+  isLoading: boolean
+  errorMessage: string | null
+  hasNextPage: boolean
+  isFetchingNextPage: boolean
+  onRetry: () => void
+  onLoadNextPage: () => void
+  onCommentClick: (item: FeedItem) => void
+  onTabChange: (value: 'for-you' | 'following') => void
+  items: TimelinePage['items']
 }) {
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     if (!loadMoreRef.current || !hasNextPage || isFetchingNextPage) {
-      return;
+      return
     }
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
-          onLoadNextPage();
+          onLoadNextPage()
         }
       },
       { threshold: 0.2 },
-    );
-    observer.observe(loadMoreRef.current);
-    return () => observer.disconnect();
-  }, [hasNextPage, isFetchingNextPage, onLoadNextPage]);
+    )
+    observer.observe(loadMoreRef.current)
+    return () => observer.disconnect()
+  }, [hasNextPage, isFetchingNextPage, onLoadNextPage])
 
   return (
     <Tabs
       value={activeTab}
       className="flex flex-col"
-      onValueChange={(value) => onTabChange(value as "for-you" | "following")}
+      onValueChange={(value) => onTabChange(value as 'for-you' | 'following')}
     >
-      <div className="sticky top-0 z-10 bg-background/95 px-4 pt-4 pb-2 backdrop-blur">
+      <div className="sticky top-0 z-10 px-4 pb-2 backdrop-blur">
         <TabsList className="grid w-full grid-cols-2 rounded-full">
-          <TabsTrigger value="for-you">For You</TabsTrigger>
-          <TabsTrigger value="following">Following</TabsTrigger>
+          <TabsTrigger value="for-you" className="rounded-full">
+            For You
+          </TabsTrigger>
+          <TabsTrigger value="following" className="rounded-full">
+            Following
+          </TabsTrigger>
         </TabsList>
       </div>
 
@@ -91,5 +95,5 @@ export function HomeTimelinePage({
         ) : null}
       </TabsContent>
     </Tabs>
-  );
+  )
 }

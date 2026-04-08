@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Heart, MessageCircle, Repeat2 } from "lucide-react";
-import type { FeedItem } from "@/features/weibo/models/feed";
+import type { FeedImage, FeedItem } from "@/features/weibo/models/feed";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImageCarousel } from "@/features/weibo/components/image-carousel";
+import { StatusText } from "@/features/weibo/components/status-text";
+import { UserHoverCard } from "@/features/weibo/components/user-hover-card";
 import { loadStatusLongText } from "@/features/weibo/services/weibo-repository";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 
@@ -34,39 +36,6 @@ function FeedMediaBlock({ item }: { item: FeedItem }) {
   );
 }
 
-function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function renderStatusText(item: FeedItem, text: string) {
-  if (!item.urlEntities || item.urlEntities.length === 0) {
-    return text || "No text content.";
-  }
-
-  const entityMap = new Map(item.urlEntities.map((entity) => [entity.shortUrl, entity]));
-  const pattern = item.urlEntities.map((entity) => escapeRegExp(entity.shortUrl)).join("|");
-  const chunks = text.split(new RegExp(`(${pattern})`, "g"));
-
-  return chunks.map((chunk, index) => {
-    const entity = entityMap.get(chunk);
-    if (!entity) {
-      return <span key={`text-${index}`}>{chunk}</span>;
-    }
-
-    return (
-      <a
-        key={`link-${index}`}
-        href={entity.shortUrl}
-        target="_blank"
-        rel="noreferrer"
-        className="text-primary underline underline-offset-2"
-      >
-        {entity.title}
-      </a>
-    );
-  });
-}
-
 export function FeedCard({
   item,
   onCommentClick,
@@ -74,7 +43,10 @@ export function FeedCard({
   item: FeedItem;
   onCommentClick?: (item: FeedItem) => void;
 }) {
-  const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null);
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
+  const [startImageIndex, setStartImageIndex] = useState(0);
+  /** When set, preview dialog shows this list (retweet gallery); otherwise main post `item.images`. */
+  const [carouselImages, setCarouselImages] = useState<FeedImage[] | null>(null);
   const [longTextEnabled, setLongTextEnabled] = useState(false);
   const { data: longText, isLoading: isLongTextLoading } = useQuery({
     queryKey: ["weibo", "longtext", item.mblogId],
@@ -86,15 +58,25 @@ export function FeedCard({
     <>
       <Card className="gap-4 rounded-[28px] border-border/70 bg-card/95 py-4 shadow-none">
         <CardHeader className="grid grid-cols-[48px_minmax(0,1fr)] gap-3 px-4">
-          <Avatar className="size-12">
-            <AvatarImage src={item.author.avatarUrl ?? undefined} alt={item.author.name} />
-            <AvatarFallback className="text-sm font-semibold">
-              {item.author.name?.slice(0, 1).toUpperCase() || "?"}
-            </AvatarFallback>
-          </Avatar>
+          <UserHoverCard uid={item.author.id}>
+            <button type="button" className="cursor-pointer">
+              <Avatar className="size-12">
+                <AvatarImage src={item.author.avatarUrl ?? undefined} alt={item.author.name} />
+                <AvatarFallback className="text-sm font-semibold">
+                  {item.author.name?.slice(0, 1).toUpperCase() || "?"}
+                </AvatarFallback>
+              </Avatar>
+            </button>
+          </UserHoverCard>
           <div className="flex min-w-0 flex-col gap-1">
             <div className="flex flex-wrap items-center gap-2">
-              <CardTitle className="truncate text-base">{item.author.name}</CardTitle>
+              <UserHoverCard uid={item.author.id}>
+                <button type="button" className="cursor-pointer">
+                  <CardTitle className="truncate text-base hover:underline">
+                    {item.author.name}
+                  </CardTitle>
+                </button>
+              </UserHoverCard>
               <Badge variant="secondary">{item.createdAtLabel || "Unknown time"}</Badge>
             </div>
             <CardDescription className="text-xs">
@@ -105,7 +87,7 @@ export function FeedCard({
         <CardContent className="flex flex-col gap-4 px-4">
           <div>
             <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">
-              {renderStatusText(item, longTextEnabled && longText ? longText : item.text)}
+              <StatusText item={item} text={longTextEnabled && longText ? longText : item.text} />
             </p>
             {item.isLongText && !longTextEnabled ? (
               <Button
@@ -129,7 +111,11 @@ export function FeedCard({
                   key={image.id}
                   type="button"
                   className="overflow-hidden rounded-lg border border-border/70"
-                  onClick={() => setActiveImageIndex(index)}
+                  onClick={() => {
+                    setCarouselImages(null);
+                    setStartImageIndex(index);
+                    setImageDialogOpen(true);
+                  }}
                 >
                   <img
                     src={image.thumbnailUrl}
@@ -144,20 +130,28 @@ export function FeedCard({
           {item.retweetedStatus ? (
             <div className="rounded-xl border border-border/70 bg-muted/40 p-3">
               <div className="mb-3 grid grid-cols-[36px_minmax(0,1fr)] gap-2">
-                <Avatar className="size-9">
-                  <AvatarImage
-                    src={item.retweetedStatus.author.avatarUrl ?? undefined}
-                    alt={item.retweetedStatus.author.name}
-                  />
-                  <AvatarFallback className="text-xs font-semibold">
-                    {item.retweetedStatus.author.name?.slice(0, 1).toUpperCase() || "?"}
-                  </AvatarFallback>
-                </Avatar>
+                <UserHoverCard uid={item.retweetedStatus.author.id}>
+                  <button type="button" className="cursor-pointer">
+                    <Avatar className="size-9">
+                      <AvatarImage
+                        src={item.retweetedStatus.author.avatarUrl ?? undefined}
+                        alt={item.retweetedStatus.author.name}
+                      />
+                      <AvatarFallback className="text-xs font-semibold">
+                        {item.retweetedStatus.author.name?.slice(0, 1).toUpperCase() || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                </UserHoverCard>
                 <div className="flex min-w-0 flex-col gap-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="truncate text-sm font-medium text-foreground">
-                      @{item.retweetedStatus.author.name}
-                    </p>
+                    <UserHoverCard uid={item.retweetedStatus.author.id}>
+                      <button type="button" className="cursor-pointer text-left">
+                        <p className="truncate text-sm font-medium text-foreground hover:underline">
+                          @{item.retweetedStatus.author.name}
+                        </p>
+                      </button>
+                    </UserHoverCard>
                     <Badge variant="secondary">
                       {item.retweetedStatus.createdAtLabel || "Unknown time"}
                     </Badge>
@@ -169,24 +163,30 @@ export function FeedCard({
                 </div>
               </div>
               <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">
-                {renderStatusText(item.retweetedStatus, item.retweetedStatus.text)}
+                <StatusText item={item.retweetedStatus} text={item.retweetedStatus.text} />
               </p>
               <div className="mt-3">
                 <FeedMediaBlock item={item.retweetedStatus} />
               </div>
               {item.retweetedStatus.images.length > 0 ? (
                 <div className="mt-3 grid grid-cols-3 gap-2">
-                  {item.retweetedStatus.images.slice(0, 9).map((image) => (
-                    <div
+                  {item.retweetedStatus.images.slice(0, 9).map((image, index) => (
+                    <button
                       key={image.id}
+                      type="button"
                       className="overflow-hidden rounded-lg border border-border/70"
+                      onClick={() => {
+                        setCarouselImages(item.retweetedStatus!.images);
+                        setStartImageIndex(index);
+                        setImageDialogOpen(true);
+                      }}
                     >
                       <img
                         src={image.thumbnailUrl}
                         alt=""
                         className="aspect-square w-full object-cover"
                       />
-                    </div>
+                    </button>
                   ))}
                 </div>
               ) : null}
@@ -214,14 +214,15 @@ export function FeedCard({
         </CardContent>
       </Card>
 
-      {activeImageIndex !== null && (
-        <ImageCarousel
-          images={item.images}
-          activeIndex={activeImageIndex}
-          onClose={() => setActiveImageIndex(null)}
-          onNavigate={setActiveImageIndex}
-        />
-      )}
+      <ImageCarousel
+        images={carouselImages ?? item.images}
+        startIndex={startImageIndex}
+        open={imageDialogOpen}
+        onOpenChange={(open) => {
+          setImageDialogOpen(open);
+          if (!open) setCarouselImages(null);
+        }}
+      />
     </>
   );
 }

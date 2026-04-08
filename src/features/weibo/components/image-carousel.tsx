@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
+import { useEffect, useState } from 'react'
+
 import {
   Carousel,
   CarouselContent,
@@ -7,91 +7,62 @@ import {
   CarouselNext,
   CarouselPrevious,
   type CarouselApi,
-} from "@/components/ui/carousel";
+} from '@/components/ui/carousel'
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 
 interface ImageCarouselProps {
-  images: { id: string; thumbnailUrl: string; largeUrl: string }[];
-  activeIndex: number;
-  onClose: () => void;
-  onNavigate: (index: number) => void;
+  images: { id: string; thumbnailUrl: string; largeUrl: string }[]
+  startIndex: number
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }
 
-export function ImageCarousel({
-  images,
-  activeIndex,
-  onClose,
-  onNavigate,
-}: ImageCarouselProps) {
-  const [api, setApi] = useState<CarouselApi | undefined>();
+export function ImageCarousel({ images, startIndex, open, onOpenChange }: ImageCarouselProps) {
+  const [api, setApi] = useState<CarouselApi | undefined>()
+  const [current, setCurrent] = useState(startIndex)
 
   useEffect(() => {
-    if (!api) return;
-    api.on("select", () => {
-      onNavigate(api.selectedScrollSnap());
-    });
-  }, [api, onNavigate]);
+    if (!api || !open) return
+    api.scrollTo(startIndex, true)
+    setCurrent(startIndex)
+  }, [api, open, startIndex])
 
-  // Scroll to activeIndex when carousel mounts or activeIndex changes
   useEffect(() => {
-    if (!api) return;
-    api.scrollTo(activeIndex);
-  }, [api, activeIndex]);
-
-  // Keyboard support
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [onClose]);
+    if (!api) return
+    const onSelect = () => setCurrent(api.selectedScrollSnap())
+    api.on('select', onSelect)
+    return () => {
+      api.off('select', onSelect)
+    }
+  }, [api])
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/95"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      {/* Close button */}
-      <button
-        type="button"
-        aria-label="关闭"
-        className="absolute right-4 top-4 z-10 rounded-full bg-black/40 p-2 text-white hover:bg-black/60"
-        onClick={onClose}
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className="sm:max-w-6xl border-none bg-transparent p-0 shadow-none"
+        showCloseButton
       >
-        <X className="size-5" />
-      </button>
+        <DialogTitle className="sr-only">图片预览</DialogTitle>
+        <DialogDescription className="sr-only">
+          第 {current + 1} 张，共 {images.length} 张
+        </DialogDescription>
 
-      {/* Counter */}
-      <span className="absolute left-1/2 top-4 -translate-x-1/2 text-sm text-white/70">
-        {activeIndex + 1} / {images.length}
-      </span>
+        <span className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-8 text-sm text-white/70">
+          {current + 1} / {images.length}
+        </span>
 
-      {/* Carousel */}
-      <div className="relative w-full max-w-4xl">
-        <Carousel
-          className="w-full"
-          opts={{ loop: true }}
-          setApi={setApi}
-        >
+        <Carousel className="w-full" opts={{ loop: true, startIndex }} setApi={setApi}>
           <CarouselContent>
             {images.map((image) => (
               <CarouselItem key={image.id}>
-                <div className="flex items-center justify-center p-4">
-                  <img
-                    src={image.largeUrl}
-                    alt=""
-                    className="max-h-[90vh] w-full object-contain"
-                  />
-                </div>
+                <img src={image.largeUrl} alt="" className="max-h-[85vh] w-full object-contain" />
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="left-2 text-white hover:bg-white/10 [&_svg]:size-6" />
-          <CarouselNext className="right-2 text-white hover:bg-white/10 [&_svg]:size-6" />
+          <CarouselPrevious className="left-2 border-none bg-black/40 text-white hover:bg-black/60 hover:text-white [&_svg]:size-6" />
+          <CarouselNext className="right-2 border-none bg-black/40 text-white hover:bg-black/60 hover:text-white [&_svg]:size-6" />
         </Carousel>
-      </div>
-    </div>
-  );
+      </DialogContent>
+    </Dialog>
+  )
 }
