@@ -1,6 +1,7 @@
 import { useMemo, useRef } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router";
+import { ArrowRight, Sparkles } from "lucide-react";
 
 import type { WeiboPageDescriptor } from "@/features/weibo/route/page-descriptor";
 import { parseWeiboUrl } from "@/features/weibo/route/parse-weibo-url";
@@ -60,7 +61,7 @@ function ShellFrame({
 }) {
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
-      <div className="grid h-full grid-cols-[280px_minmax(0,1fr)_300px] gap-4 px-4 py-4">
+      <div className="grid h-full grid-cols-[280px_minmax(360px,600px)_280px] gap-4 px-4 py-4 mx-auto">
         <div className="contents">
           <NavigationRail
             pageKind={pageKind}
@@ -79,21 +80,20 @@ function ShellFrame({
 
 function RewritePausedCard({ onResume }: { onResume: () => void }) {
   return (
-    <div className="fixed top-4 right-4 z-2147483647 w-[min(24rem,calc(100vw-2rem))]">
+    <div className="fixed bottom-4 left-4 z-2147483647">
       <Card className="rounded-[28px] border-border/70 bg-card/95 shadow-lg shadow-black/5 backdrop-blur">
         <CardHeader>
-          <CardTitle className="text-base">LoveForXb paused</CardTitle>
-          <CardDescription>
-            The original Weibo page is visible again. Resume the rewrite when you want the X-style
-            layout back.
-          </CardDescription>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Sparkles className="h-4 w-4 text-primary" />
+            LoveForXb
+          </CardTitle>
+          <CardDescription>一键切换「更清爽、更 X 的」超级体验</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          <Button onClick={onResume}>Resume LoveForXb</Button>
-          <p className="text-xs text-muted-foreground">
-            Theme selection stays persisted and will be applied the next time the rewrite is
-            enabled.
-          </p>
+          <Button onClick={onResume} className="justify-between">
+            <span>Let's LoveForXb</span>
+            <ArrowRight className="h-4 w-4" />
+          </Button>
         </CardContent>
       </Card>
     </div>
@@ -106,9 +106,7 @@ export function AppShell() {
   const homeScrollRef = useRef<HTMLDivElement | null>(null);
   const page = useMemo(
     () =>
-      parseWeiboUrl(
-        new URL(`${location.pathname}${location.search}`, window.location.origin).href,
-      ),
+      parseWeiboUrl(new URL(`${location.pathname}${location.search}`, window.location.origin).href),
     [location.pathname, location.search],
   );
 
@@ -186,18 +184,19 @@ export function AppShell() {
         onRewriteEnabledChange={(enabled) => void setRewriteEnabled(enabled)}
         onThemeChange={(nextTheme) => void setTheme(nextTheme)}
       >
-        <div className="h-full">
+        <div className="h-full mx-auto">
           {/* Home timeline stays mounted to preserve scroll position. */}
           <div
             ref={homeScrollRef}
-            className={[
-              "h-full overflow-y-auto",
-              page.kind === "home" ? "block" : "hidden",
-            ].join(" ")}
+            className={["h-full overflow-y-auto", page.kind === "home" ? "block" : "hidden"].join(
+              " ",
+            )}
           >
             <HomeTimelinePage
               activeTab={activeTimelineTab}
-              errorMessage={timelineQuery.error instanceof Error ? timelineQuery.error.message : null}
+              errorMessage={
+                timelineQuery.error instanceof Error ? timelineQuery.error.message : null
+              }
               hasNextPage={Boolean(timelineQuery.hasNextPage)}
               isFetchingNextPage={timelineQuery.isFetchingNextPage}
               isLoading={timelineQuery.isLoading}
@@ -210,10 +209,9 @@ export function AppShell() {
           </div>
 
           <div
-            className={[
-              "h-full overflow-y-auto",
-              page.kind === "status" ? "block" : "hidden",
-            ].join(" ")}
+            className={["h-full overflow-y-auto", page.kind === "status" ? "block" : "hidden"].join(
+              " ",
+            )}
           >
             {statusDetailQuery.isLoading ? (
               <PageLoadingState label="Loading this Weibo post..." />

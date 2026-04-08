@@ -21,19 +21,51 @@ describe('StatusDetailPage', () => {
             stats: { likes: 1, comments: 1, reposts: 0 },
             images: [],
             media: null,
+            retweetedStatus: {
+              id: '700',
+              mblogId: null,
+              isLongText: false,
+              text: 'retweeted post',
+              createdAtLabel: 'today',
+              author: { id: '8', name: 'Retweeter', avatarUrl: null },
+              stats: { likes: 0, comments: 0, reposts: 0 },
+              images: [],
+              media: null,
+            },
           },
         }}
         comments={[
             {
               id: '601',
-              isLongText: false,
-              mblogId: null,
               text: 'reply',
               createdAtLabel: 'today',
               author: { id: '2', name: 'Bob', avatarUrl: null },
-              stats: { likes: 0, comments: 0, reposts: 0 },
-              images: [],
-              media: null,
+              likeCount: 0,
+              source: '来自江苏',
+              replyComment: null,
+              comments: [
+                {
+                  id: '602',
+                  text: 'nested reply',
+                  createdAtLabel: 'today',
+                  author: { id: '3', name: 'Carol', avatarUrl: null },
+                  likeCount: 0,
+                  source: '',
+                  replyComment: null,
+                  comments: [
+                    {
+                      id: '603',
+                      text: 'third level reply',
+                      createdAtLabel: 'today',
+                      author: { id: '4', name: 'Dave', avatarUrl: null },
+                      likeCount: 0,
+                      source: '',
+                      replyComment: null,
+                      comments: [],
+                    },
+                  ],
+                },
+              ],
             },
           ]}
         hasNextPage={false}
@@ -44,6 +76,9 @@ describe('StatusDetailPage', () => {
     )
 
     expect(screen.getByText('main post')).toBeInTheDocument()
+    expect(screen.getByText('retweeted post')).toBeInTheDocument()
     expect(screen.getByText('reply')).toBeInTheDocument()
+    expect(screen.getByText('nested reply')).toBeInTheDocument()
+    expect(screen.getByText('third level reply')).toBeInTheDocument()
   })
 })

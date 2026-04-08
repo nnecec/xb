@@ -1,6 +1,7 @@
 import type { StatusCommentsPage, StatusDetail } from '@/features/weibo/models/status'
 import {
   type WeiboStatus,
+  toCommentItem,
   toFeedItem,
 } from '../../utils/transform'
 
@@ -30,7 +31,7 @@ export function adaptStatusDetailResponse(payload: StatusPayload): StatusDetail 
 
 export function adaptStatusCommentsResponse(payload: StatusCommentsPayload): StatusCommentsPage {
   return {
-    items: Array.isArray(payload.data) ? payload.data.map(toFeedItem) : [],
+    items: Array.isArray(payload.data) ? payload.data.map(toCommentItem) : [],
     nextCursor: normalizeCursor(payload.max_id),
   }
 }

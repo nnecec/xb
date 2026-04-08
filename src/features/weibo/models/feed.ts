@@ -23,6 +23,11 @@ export interface FeedMedia {
   coverUrl: string | null
 }
 
+export interface FeedUrlEntity {
+  shortUrl: string
+  title: string
+}
+
 export interface FeedItem {
   id: string
   mblogId: string | null
@@ -33,8 +38,10 @@ export interface FeedItem {
   stats: FeedStats
   images: FeedImage[]
   media: FeedMedia | null
+  urlEntities?: FeedUrlEntity[]
   regionName?: string
   source?: string
+  retweetedStatus?: Omit<FeedItem, 'retweetedStatus'> | null
 }
 
 export interface TimelinePage {

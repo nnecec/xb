@@ -1,8 +1,9 @@
 import type { StatusDetail } from '@/features/weibo/models/status'
-import type { FeedItem } from '@/features/weibo/models/feed'
+import type { CommentItem } from '@/features/weibo/models/status'
 import { Button } from '@/components/ui/button'
 
 import { FeedCard } from '@/features/weibo/components/feed-card'
+import { CommentCard } from '@/features/weibo/components/comment-card'
 import { PageEmptyState } from '@/features/weibo/components/page-state'
 
 export function StatusDetailPage({
@@ -13,7 +14,7 @@ export function StatusDetailPage({
   onLoadNextPage,
 }: {
   detail: StatusDetail
-  comments: FeedItem[]
+  comments: CommentItem[]
   hasNextPage: boolean
   isFetchingNextPage: boolean
   onLoadNextPage: () => void
@@ -22,7 +23,7 @@ export function StatusDetailPage({
     <div className="flex flex-col gap-4">
       <FeedCard item={detail.status} />
       {comments.length > 0
-        ? comments.map((reply) => <FeedCard key={reply.id} item={reply} />)
+        ? comments.map((reply) => <CommentCard key={reply.id} item={reply} />)
         : <PageEmptyState label="No replies are available for this post yet." />}
       {hasNextPage ? (
         <Button variant="outline" onClick={onLoadNextPage} disabled={isFetchingNextPage}>

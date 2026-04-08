@@ -8,10 +8,63 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImageCarousel } from "@/features/weibo/components/image-carousel";
 import { loadStatusLongText } from "@/features/weibo/services/weibo-repository";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 function formatCount(value: number) {
   if (value <= 9999) return String(value);
   return `${(value / 10000).toFixed(1)}万`;
+}
+
+function FeedMediaBlock({ item }: { item: FeedItem }) {
+  if (!item.media) {
+    return null;
+  }
+
+  return item.media.type === "audio" ? (
+    <audio controls src={item.media.streamUrl} className="w-full" />
+  ) : (
+    <AspectRatio ratio={16 / 9}>
+      <video
+        controls
+        src={item.media.streamUrl}
+        poster={item.media.coverUrl ?? undefined}
+        className="w-full rounded-xl object-contain h-full"
+      />
+    </AspectRatio>
+  );
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function renderStatusText(item: FeedItem, text: string) {
+  if (!item.urlEntities || item.urlEntities.length === 0) {
+    return text || "No text content.";
+  }
+
+  const entityMap = new Map(item.urlEntities.map((entity) => [entity.shortUrl, entity]));
+  const pattern = item.urlEntities.map((entity) => escapeRegExp(entity.shortUrl)).join("|");
+  const chunks = text.split(new RegExp(`(${pattern})`, "g"));
+
+  return chunks.map((chunk, index) => {
+    const entity = entityMap.get(chunk);
+    if (!entity) {
+      return <span key={`text-${index}`}>{chunk}</span>;
+    }
+
+    return (
+      <a
+        key={`link-${index}`}
+        href={entity.shortUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="text-primary underline underline-offset-2"
+      >
+        {entity.title}
+      </a>
+    );
+  });
 }
 
 export function FeedCard({
@@ -21,7 +74,6 @@ export function FeedCard({
   item: FeedItem;
   onCommentClick?: (item: FeedItem) => void;
 }) {
-  console.log("🚀 ~ FeedCard ~ item:", item);
   const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null);
   const [longTextEnabled, setLongTextEnabled] = useState(false);
   const { data: longText, isLoading: isLongTextLoading } = useQuery({
@@ -46,19 +98,19 @@ export function FeedCard({
               <Badge variant="secondary">{item.createdAtLabel || "Unknown time"}</Badge>
             </div>
             <CardDescription className="text-xs">
-              {item.source ? `${item.source}` : ""} {item.regionName ? `· ${item.regionName}` : ""}
+              {item.source ? `${item.source}` : ""} {item.regionName ? `${item.regionName}` : ""}
             </CardDescription>
           </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-4 px-4">
           <div>
             <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">
-              {longTextEnabled && longText ? longText : item.text || "No text content."}
+              {renderStatusText(item, longTextEnabled && longText ? longText : item.text)}
             </p>
             {item.isLongText && !longTextEnabled ? (
               <Button
                 className="mt-2"
-                size="sm"
+                size="xs"
                 variant="secondary"
                 onClick={() => setLongTextEnabled(true)}
                 disabled={isLongTextLoading}
@@ -68,18 +120,7 @@ export function FeedCard({
             ) : null}
           </div>
 
-          {item.media ? (
-            item.media.type === "audio" ? (
-              <audio controls src={item.media.streamUrl} className="w-full" />
-            ) : (
-              <video
-                controls
-                src={item.media.streamUrl}
-                poster={item.media.coverUrl ?? undefined}
-                className="w-full rounded-xl"
-              />
-            )
-          ) : null}
+          <FeedMediaBlock item={item} />
 
           {item.images.length > 0 ? (
             <div className="grid grid-cols-3 gap-2">
@@ -97,6 +138,58 @@ export function FeedCard({
                   />
                 </button>
               ))}
+            </div>
+          ) : null}
+
+          {item.retweetedStatus ? (
+            <div className="rounded-xl border border-border/70 bg-muted/40 p-3">
+              <div className="mb-3 grid grid-cols-[36px_minmax(0,1fr)] gap-2">
+                <Avatar className="size-9">
+                  <AvatarImage
+                    src={item.retweetedStatus.author.avatarUrl ?? undefined}
+                    alt={item.retweetedStatus.author.name}
+                  />
+                  <AvatarFallback className="text-xs font-semibold">
+                    {item.retweetedStatus.author.name?.slice(0, 1).toUpperCase() || "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex min-w-0 flex-col gap-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      @{item.retweetedStatus.author.name}
+                    </p>
+                    <Badge variant="secondary">
+                      {item.retweetedStatus.createdAtLabel || "Unknown time"}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {item.retweetedStatus.source ? `${item.retweetedStatus.source}` : ""}{" "}
+                    {item.retweetedStatus.regionName ? `· ${item.retweetedStatus.regionName}` : ""}
+                  </p>
+                </div>
+              </div>
+              <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">
+                {renderStatusText(item.retweetedStatus, item.retweetedStatus.text)}
+              </p>
+              <div className="mt-3">
+                <FeedMediaBlock item={item.retweetedStatus} />
+              </div>
+              {item.retweetedStatus.images.length > 0 ? (
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {item.retweetedStatus.images.slice(0, 9).map((image) => (
+                    <div
+                      key={image.id}
+                      className="overflow-hidden rounded-lg border border-border/70"
+                    >
+                      <img
+                        src={image.thumbnailUrl}
+                        alt=""
+                        className="aspect-square w-full object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </div>
           ) : null}
 

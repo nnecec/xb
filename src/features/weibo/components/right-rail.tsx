@@ -1,10 +1,10 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-const TRENDS = ['设计系统', '前端工程化', '微博体验改写']
+const TRENDS = ["设计系统", "前端工程化", "微博体验改写"];
 
 export function RightRail() {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex-col gap-4 flex">
       <Card className="rounded-[28px] border-border/70 bg-card/95 shadow-none">
         <CardHeader>
           <CardTitle className="text-base">Trends</CardTitle>
@@ -29,5 +29,5 @@ export function RightRail() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

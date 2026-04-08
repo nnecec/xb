@@ -30,7 +30,7 @@ describe('adaptTimelineResponse', () => {
           isLongText: false,
           mblogId: null,
           text: 'hello world',
-          createdAtLabel: '2026-04-08 10:00',
+          createdAtLabel: '10:00',
           author: {
             id: '1969776354',
             name: 'Alice',
@@ -95,5 +95,30 @@ describe('adaptTimelineResponse', () => {
       ],
       nextCursor: null,
     })
+  })
+
+  it('maps short links to url title entities', () => {
+    const result = adaptTimelineResponse({
+      statuses: [
+        {
+          idstr: '888',
+          text_raw: '看这个视频 http://t.cn/AXMyKy9F',
+          user: { idstr: '1', screen_name: 'Alice' },
+          url_struct: [
+            {
+              short_url: 'http://t.cn/AXMyKy9F',
+              url_title: '大米评测的微博视频',
+            },
+          ],
+        },
+      ],
+    })
+
+    expect(result.items[0]?.urlEntities).toEqual([
+      {
+        shortUrl: 'http://t.cn/AXMyKy9F',
+        title: '大米评测的微博视频',
+      },
+    ])
   })
 })
