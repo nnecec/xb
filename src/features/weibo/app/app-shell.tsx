@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router";
 
@@ -69,7 +69,7 @@ function ShellFrame({
             onRewriteEnabledChange={onRewriteEnabledChange}
             onThemeChange={onThemeChange}
           />
-          <main className="min-w-0 overflow-y-auto">{children}</main>
+          <main className="min-w-0 overflow-hidden">{children}</main>
           <RightRail />
         </div>
       </div>
@@ -103,6 +103,7 @@ function RewritePausedCard({ onResume }: { onResume: () => void }) {
 export function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
+  const homeScrollRef = useRef<HTMLDivElement | null>(null);
   const page = useMemo(
     () =>
       parseWeiboUrl(
@@ -117,11 +118,13 @@ export function AppShell() {
   const setRewriteEnabled = useAppSettings((state) => state.setRewriteEnabled);
   const setHomeTimelineTab = useAppSettings((state) => state.setHomeTimelineTab);
   const setTheme = useAppSettings((state) => state.setTheme);
+
   const timelineQuery = useInfiniteQuery({
     queryKey: ["weibo", "timeline", activeTimelineTab],
     queryFn: ({ pageParam }) => loadHomeTimeline(activeTimelineTab, { cursor: pageParam }),
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    staleTime: 30 * 60 * 1000,
     enabled: rewriteEnabled && page.kind === "home",
   });
 
@@ -174,7 +177,7 @@ export function AppShell() {
     return <RewritePausedCard onResume={() => void setRewriteEnabled(true)} />;
   }
 
-  if (page.kind === "home") {
+  if (page.kind === "home" || page.kind === "status") {
     return (
       <ShellFrame
         pageKind={page.kind}
@@ -183,46 +186,52 @@ export function AppShell() {
         onRewriteEnabledChange={(enabled) => void setRewriteEnabled(enabled)}
         onThemeChange={(nextTheme) => void setTheme(nextTheme)}
       >
-        <HomeTimelinePage
-          activeTab={activeTimelineTab}
-          errorMessage={timelineQuery.error instanceof Error ? timelineQuery.error.message : null}
-          hasNextPage={Boolean(timelineQuery.hasNextPage)}
-          isFetchingNextPage={timelineQuery.isFetchingNextPage}
-          isLoading={timelineQuery.isLoading}
-          onRetry={() => void timelineQuery.refetch()}
-          onLoadNextPage={() => void timelineQuery.fetchNextPage()}
-          onCommentClick={navigateToStatusDetail}
-          onTabChange={(tab) => void setHomeTimelineTab(tab)}
-          items={timelineItems}
-        />
-      </ShellFrame>
-    );
-  }
+        <div className="h-full">
+          {/* Home timeline stays mounted to preserve scroll position. */}
+          <div
+            ref={homeScrollRef}
+            className={[
+              "h-full overflow-y-auto",
+              page.kind === "home" ? "block" : "hidden",
+            ].join(" ")}
+          >
+            <HomeTimelinePage
+              activeTab={activeTimelineTab}
+              errorMessage={timelineQuery.error instanceof Error ? timelineQuery.error.message : null}
+              hasNextPage={Boolean(timelineQuery.hasNextPage)}
+              isFetchingNextPage={timelineQuery.isFetchingNextPage}
+              isLoading={timelineQuery.isLoading}
+              onRetry={() => void timelineQuery.refetch()}
+              onLoadNextPage={() => void timelineQuery.fetchNextPage()}
+              onCommentClick={navigateToStatusDetail}
+              onTabChange={(tab) => void setHomeTimelineTab(tab)}
+              items={timelineItems}
+            />
+          </div>
 
-  if (page.kind === "status") {
-    return (
-      <ShellFrame
-        pageKind={page.kind}
-        rewriteEnabled={rewriteEnabled}
-        theme={theme}
-        onRewriteEnabledChange={(enabled) => void setRewriteEnabled(enabled)}
-        onThemeChange={(nextTheme) => void setTheme(nextTheme)}
-      >
-        {statusDetailQuery.isLoading ? (
-          <PageLoadingState label="Loading this Weibo post..." />
-        ) : null}
-        {!statusDetailQuery.isLoading && statusDetailQuery.error instanceof Error ? (
-          <PageErrorState description={statusDetailQuery.error.message} />
-        ) : null}
-        {!statusDetailQuery.isLoading && !statusDetailQuery.error && statusDetailQuery.data ? (
-          <StatusDetailPage
-            detail={statusDetailQuery.data}
-            comments={statusComments}
-            hasNextPage={Boolean(statusCommentsQuery.hasNextPage)}
-            isFetchingNextPage={statusCommentsQuery.isFetchingNextPage}
-            onLoadNextPage={() => void statusCommentsQuery.fetchNextPage()}
-          />
-        ) : null}
+          <div
+            className={[
+              "h-full overflow-y-auto",
+              page.kind === "status" ? "block" : "hidden",
+            ].join(" ")}
+          >
+            {statusDetailQuery.isLoading ? (
+              <PageLoadingState label="Loading this Weibo post..." />
+            ) : null}
+            {!statusDetailQuery.isLoading && statusDetailQuery.error instanceof Error ? (
+              <PageErrorState description={statusDetailQuery.error.message} />
+            ) : null}
+            {!statusDetailQuery.isLoading && !statusDetailQuery.error && statusDetailQuery.data ? (
+              <StatusDetailPage
+                detail={statusDetailQuery.data}
+                comments={statusComments}
+                hasNextPage={Boolean(statusCommentsQuery.hasNextPage)}
+                isFetchingNextPage={statusCommentsQuery.isFetchingNextPage}
+                onLoadNextPage={() => void statusCommentsQuery.fetchNextPage()}
+              />
+            ) : null}
+          </div>
+        </div>
       </ShellFrame>
     );
   }
@@ -236,32 +245,34 @@ export function AppShell() {
         onRewriteEnabledChange={(enabled) => void setRewriteEnabled(enabled)}
         onThemeChange={(nextTheme) => void setTheme(nextTheme)}
       >
-        {profileInfoQuery.isLoading || profilePostsQuery.isLoading ? (
-          <PageLoadingState label="Loading this profile..." />
-        ) : null}
-        {!profileInfoQuery.isLoading &&
-        !profilePostsQuery.isLoading &&
-        (profileInfoQuery.error instanceof Error || profilePostsQuery.error instanceof Error) ? (
-          <PageErrorState
-            description={
-              (profileInfoQuery.error as Error | null)?.message ??
-              (profilePostsQuery.error as Error | null)?.message ??
-              "Unknown Weibo profile error"
-            }
-          />
-        ) : null}
-        {!profileInfoQuery.isLoading &&
-        !profilePostsQuery.isLoading &&
-        !profileInfoQuery.error &&
-        !profilePostsQuery.error &&
-        profileInfoQuery.data &&
-        profilePostsQuery.data ? (
-          <ProfilePage
-            activeTab={page.tab}
-            posts={profilePostsQuery.data}
-            profile={profileInfoQuery.data}
-          />
-        ) : null}
+        <div className="h-full overflow-y-auto">
+          {profileInfoQuery.isLoading || profilePostsQuery.isLoading ? (
+            <PageLoadingState label="Loading this profile..." />
+          ) : null}
+          {!profileInfoQuery.isLoading &&
+          !profilePostsQuery.isLoading &&
+          (profileInfoQuery.error instanceof Error || profilePostsQuery.error instanceof Error) ? (
+            <PageErrorState
+              description={
+                (profileInfoQuery.error as Error | null)?.message ??
+                (profilePostsQuery.error as Error | null)?.message ??
+                "Unknown Weibo profile error"
+              }
+            />
+          ) : null}
+          {!profileInfoQuery.isLoading &&
+          !profilePostsQuery.isLoading &&
+          !profileInfoQuery.error &&
+          !profilePostsQuery.error &&
+          profileInfoQuery.data &&
+          profilePostsQuery.data ? (
+            <ProfilePage
+              activeTab={page.tab}
+              posts={profilePostsQuery.data}
+              profile={profileInfoQuery.data}
+            />
+          ) : null}
+        </div>
       </ShellFrame>
     );
   }
@@ -274,16 +285,18 @@ export function AppShell() {
       onRewriteEnabledChange={(enabled) => void setRewriteEnabled(enabled)}
       onThemeChange={(nextTheme) => void setTheme(nextTheme)}
     >
-      <Card className="rounded-[28px] border-border/70 bg-card/95 shadow-none">
-        <CardHeader>
-          <CardTitle className="text-xl">{PAGE_LABELS[page.kind]}</CardTitle>
-          <CardDescription>{describePage(page)}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3 text-sm text-muted-foreground">
-          <p>ShadowRoot shell mounted successfully.</p>
-          <p>Route sync is active and listening for main-world history updates.</p>
-        </CardContent>
-      </Card>
+      <div className="h-full overflow-y-auto">
+        <Card className="rounded-[28px] border-border/70 bg-card/95 shadow-none">
+          <CardHeader>
+            <CardTitle className="text-xl">{PAGE_LABELS[page.kind]}</CardTitle>
+            <CardDescription>{describePage(page)}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3 text-sm text-muted-foreground">
+            <p>ShadowRoot shell mounted successfully.</p>
+            <p>Route sync is active and listening for main-world history updates.</p>
+          </CardContent>
+        </Card>
+      </div>
     </ShellFrame>
   );
 }
