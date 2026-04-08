@@ -1,21 +1,29 @@
-import { useSyncExternalStore } from 'react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Route, Routes } from "react-router";
 
-import { AppShell } from '@/features/weibo/app/app-shell'
-import type { PageStore } from '@/features/weibo/app/page-store'
+import { AppShell } from "@/features/weibo/app/app-shell";
+import { WeiboHistorySync } from "@/features/weibo/app/weibo-history-sync";
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+      refetchInterval: false,
+    },
+  },
+});
 
-export function AppRoot({
-  pageStore,
-}: {
-  pageStore: PageStore
-}) {
-  const page = useSyncExternalStore(pageStore.subscribe, pageStore.getSnapshot)
-
+export function AppRoot() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppShell page={page} />
+      <BrowserRouter>
+        <WeiboHistorySync />
+        <Routes>
+          <Route path="*" element={<AppShell />} />
+        </Routes>
+      </BrowserRouter>
     </QueryClientProvider>
-  )
+  );
 }

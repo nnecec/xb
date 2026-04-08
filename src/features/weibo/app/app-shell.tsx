@@ -1,10 +1,9 @@
 import { useMemo } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useLocation, useNavigate } from "react-router";
 
-import type { TimelinePage } from "@/features/weibo/models/feed";
-import type { UserProfile } from "@/features/weibo/models/profile";
 import type { WeiboPageDescriptor } from "@/features/weibo/route/page-descriptor";
-import type { StatusDetail } from "@/features/weibo/models/status";
+import { parseWeiboUrl } from "@/features/weibo/route/parse-weibo-url";
 import { NavigationRail } from "@/features/weibo/components/navigation-rail";
 import { RightRail } from "@/features/weibo/components/right-rail";
 import { HomeTimelinePage } from "@/features/weibo/pages/home-timeline-page";
@@ -50,7 +49,6 @@ function ShellFrame({
   theme,
   onRewriteEnabledChange,
   onThemeChange,
-  onNavigate,
   children,
 }: {
   pageKind: WeiboPageDescriptor["kind"];
@@ -58,7 +56,6 @@ function ShellFrame({
   theme: AppTheme;
   onRewriteEnabledChange: (enabled: boolean) => void;
   onThemeChange: (theme: AppTheme) => void;
-  onNavigate: (href: string) => void;
   children: React.ReactNode;
 }) {
   return (
@@ -71,7 +68,6 @@ function ShellFrame({
             theme={theme}
             onRewriteEnabledChange={onRewriteEnabledChange}
             onThemeChange={onThemeChange}
-            onNavigate={onNavigate}
           />
           <main className="min-w-0 overflow-y-auto">{children}</main>
           <RightRail />
@@ -104,7 +100,17 @@ function RewritePausedCard({ onResume }: { onResume: () => void }) {
   );
 }
 
-export function AppShell({ page }: { page: WeiboPageDescriptor }) {
+export function AppShell() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const page = useMemo(
+    () =>
+      parseWeiboUrl(
+        new URL(`${location.pathname}${location.search}`, window.location.origin).href,
+      ),
+    [location.pathname, location.search],
+  );
+
   const theme = useAppSettings((state) => state.theme);
   const rewriteEnabled = useAppSettings((state) => state.rewriteEnabled);
   const activeTimelineTab = useAppSettings((state) => state.homeTimelineTab);
@@ -161,11 +167,7 @@ export function AppShell({ page }: { page: WeiboPageDescriptor }) {
     if (!item.author.id || !statusId) {
       return;
     }
-    window.location.assign(`https://weibo.com/${item.author.id}/${statusId}`);
-  };
-
-  const navigate: (href: string) => void = (href) => {
-    window.history.pushState(null, "", href);
+    navigate(`/${item.author.id}/${statusId}`);
   };
 
   if (!rewriteEnabled) {
@@ -180,7 +182,6 @@ export function AppShell({ page }: { page: WeiboPageDescriptor }) {
         theme={theme}
         onRewriteEnabledChange={(enabled) => void setRewriteEnabled(enabled)}
         onThemeChange={(nextTheme) => void setTheme(nextTheme)}
-        onNavigate={navigate}
       >
         <HomeTimelinePage
           activeTab={activeTimelineTab}
@@ -206,7 +207,6 @@ export function AppShell({ page }: { page: WeiboPageDescriptor }) {
         theme={theme}
         onRewriteEnabledChange={(enabled) => void setRewriteEnabled(enabled)}
         onThemeChange={(nextTheme) => void setTheme(nextTheme)}
-        onNavigate={navigate}
       >
         {statusDetailQuery.isLoading ? (
           <PageLoadingState label="Loading this Weibo post..." />
@@ -235,7 +235,6 @@ export function AppShell({ page }: { page: WeiboPageDescriptor }) {
         theme={theme}
         onRewriteEnabledChange={(enabled) => void setRewriteEnabled(enabled)}
         onThemeChange={(nextTheme) => void setTheme(nextTheme)}
-        onNavigate={navigate}
       >
         {profileInfoQuery.isLoading || profilePostsQuery.isLoading ? (
           <PageLoadingState label="Loading this profile..." />
@@ -274,7 +273,6 @@ export function AppShell({ page }: { page: WeiboPageDescriptor }) {
       theme={theme}
       onRewriteEnabledChange={(enabled) => void setRewriteEnabled(enabled)}
       onThemeChange={(nextTheme) => void setTheme(nextTheme)}
-      onNavigate={navigate}
     >
       <Card className="rounded-[28px] border-border/70 bg-card/95 shadow-none">
         <CardHeader>

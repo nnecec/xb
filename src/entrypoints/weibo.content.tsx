@@ -6,14 +6,12 @@ import { defineContentScript } from "wxt/utils/define-content-script";
 import { injectScript } from "wxt/utils/inject-script";
 
 import { AppRoot } from "@/features/weibo/app/app-root";
-import { createPageStore, type PageStore } from "@/features/weibo/app/page-store";
 import { bindShellState } from "@/features/weibo/content/shell-state";
 import { markWeiboPageReady } from "@/features/weibo/content/page-takeover";
 import { waitForWeiboHostRegions } from "@/features/weibo/content/host-selectors";
 import { getAppSettingsStore } from "@/lib/app-settings-store";
 
 interface MountedWeiboUi {
-  pageStore: PageStore;
   root: Root;
   cleanup: () => void;
 }
@@ -39,19 +37,17 @@ export default defineContentScript({
       anchor: "body",
       append: "first",
       onMount(container) {
-        const pageStore = createPageStore();
         const cleanup = bindShellState({
           container,
           appRoot: regions.appRoot,
           settingsStore,
         });
         const root = createRoot(container);
-        root.render(<AppRoot pageStore={pageStore} />);
-        return { cleanup, pageStore, root };
+        root.render(<AppRoot />);
+        return { cleanup, root };
       },
       onRemove(mounted?: MountedWeiboUi) {
         mounted?.cleanup();
-        mounted?.pageStore.dispose();
         mounted?.root.unmount();
       },
     });

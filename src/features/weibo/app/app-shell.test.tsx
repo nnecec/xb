@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppShell } from '@/features/weibo/app/app-shell'
@@ -45,7 +46,9 @@ describe('AppShell', () => {
     const queryClient = new QueryClient()
     render(
       <QueryClientProvider client={queryClient}>
-        <AppShell page={{ kind: 'home', tab: 'for-you' }} />
+        <MemoryRouter initialEntries={['/']}>
+          <AppShell />
+        </MemoryRouter>
       </QueryClientProvider>,
     )
 

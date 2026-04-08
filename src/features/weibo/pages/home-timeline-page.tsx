@@ -1,12 +1,16 @@
-import { useEffect, useRef } from 'react'
-import type { TimelinePage } from '@/features/weibo/models/feed'
-import type { FeedItem } from '@/features/weibo/models/feed'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Button } from '@/components/ui/button'
-import { Spinner } from '@/components/ui/spinner'
+import { useEffect, useRef } from "react";
+import type { TimelinePage } from "@/features/weibo/models/feed";
+import type { FeedItem } from "@/features/weibo/models/feed";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 
-import { FeedCard } from '@/features/weibo/components/feed-card'
-import { PageEmptyState, PageErrorState, PageLoadingState } from '@/features/weibo/components/page-state'
+import { FeedCard } from "@/features/weibo/components/feed-card";
+import {
+  PageEmptyState,
+  PageErrorState,
+  PageLoadingState,
+} from "@/features/weibo/components/page-state";
 
 export function HomeTimelinePage({
   activeTab,
@@ -20,37 +24,40 @@ export function HomeTimelinePage({
   onTabChange,
   items,
 }: {
-  activeTab: 'for-you' | 'following'
-  isLoading: boolean
-  errorMessage: string | null
-  hasNextPage: boolean
-  isFetchingNextPage: boolean
-  onRetry: () => void
-  onLoadNextPage: () => void
-  onCommentClick: (item: FeedItem) => void
-  onTabChange: (value: 'for-you' | 'following') => void
-  items: TimelinePage['items']
+  activeTab: "for-you" | "following";
+  isLoading: boolean;
+  errorMessage: string | null;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  onRetry: () => void;
+  onLoadNextPage: () => void;
+  onCommentClick: (item: FeedItem) => void;
+  onTabChange: (value: "for-you" | "following") => void;
+  items: TimelinePage["items"];
 }) {
-  const loadMoreRef = useRef<HTMLDivElement | null>(null)
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!loadMoreRef.current || !hasNextPage || isFetchingNextPage) {
-      return
+      return;
     }
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0]?.isIntersecting) {
-        onLoadNextPage()
-      }
-    }, { threshold: 0.2 })
-    observer.observe(loadMoreRef.current)
-    return () => observer.disconnect()
-  }, [hasNextPage, isFetchingNextPage, onLoadNextPage])
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          onLoadNextPage();
+        }
+      },
+      { threshold: 0.2 },
+    );
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, onLoadNextPage]);
 
   return (
     <Tabs
       value={activeTab}
-      className="flex h-full flex-col"
-      onValueChange={(value) => onTabChange(value as 'for-you' | 'following')}
+      className="flex flex-col"
+      onValueChange={(value) => onTabChange(value as "for-you" | "following")}
     >
       <div className="sticky top-0 z-10 bg-background/95 px-4 pt-4 pb-2 backdrop-blur">
         <TabsList className="grid w-full grid-cols-2 rounded-full">
@@ -68,7 +75,9 @@ export function HomeTimelinePage({
           <PageEmptyState label="No posts are available for this timeline yet." />
         ) : null}
         {!isLoading && !errorMessage
-          ? items.map((item) => <FeedCard key={item.id} item={item} onCommentClick={onCommentClick} />)
+          ? items.map((item) => (
+              <FeedCard key={item.id} item={item} onCommentClick={onCommentClick} />
+            ))
           : null}
         {hasNextPage ? (
           <div ref={loadMoreRef} className="flex justify-center py-3">
@@ -76,9 +85,11 @@ export function HomeTimelinePage({
           </div>
         ) : null}
         {hasNextPage && !isFetchingNextPage ? (
-          <Button variant="outline" onClick={onLoadNextPage}>加载下一页</Button>
+          <Button variant="outline" onClick={onLoadNextPage}>
+            加载下一页
+          </Button>
         ) : null}
       </TabsContent>
     </Tabs>
-  )
+  );
 }

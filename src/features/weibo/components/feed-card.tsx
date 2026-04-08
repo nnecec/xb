@@ -21,6 +21,7 @@ export function FeedCard({
   item: FeedItem;
   onCommentClick?: (item: FeedItem) => void;
 }) {
+  console.log("🚀 ~ FeedCard ~ item:", item);
   const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null);
   const [longTextEnabled, setLongTextEnabled] = useState(false);
   const { data: longText, isLoading: isLongTextLoading } = useQuery({

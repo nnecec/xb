@@ -1,4 +1,5 @@
 import { Compass, House, Search, UserRound } from 'lucide-react'
+import { Link } from 'react-router'
 
 import type { WeiboPageDescriptor } from '@/features/weibo/route/page-descriptor'
 import type { AppTheme } from '@/lib/app-settings'
@@ -19,14 +20,12 @@ export function NavigationRail({
   theme,
   onRewriteEnabledChange,
   onThemeChange,
-  onNavigate,
 }: {
   pageKind: WeiboPageDescriptor['kind']
   rewriteEnabled: boolean
   theme: AppTheme
   onRewriteEnabledChange: (enabled: boolean) => void
   onThemeChange: (theme: AppTheme) => void
-  onNavigate: (href: string) => void
 }) {
   return (
     <Card className="rounded-[28px] border-border/70 bg-card/95 shadow-none">
@@ -40,20 +39,19 @@ export function NavigationRail({
             const isActive = pageKinds.some((candidate) => candidate === pageKind)
 
             return (
-            <button
+            <Link
               key={label}
-              type="button"
+              to={href}
               className={[
                 'flex items-center gap-3 rounded-2xl px-3 py-3 text-sm transition-colors',
                 isActive
                   ? 'bg-accent text-accent-foreground'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground',
               ].join(' ')}
-              onClick={() => onNavigate(href)}
             >
               <Icon aria-hidden="true" />
               <span>{label}</span>
-            </button>
+            </Link>
             )
           })}
         </div>
