@@ -7,10 +7,10 @@ import { Switch } from '@/components/ui/switch'
 import { ThemeModeToggle } from '@/features/weibo/components/theme-mode-toggle'
 
 const NAV_ITEMS = [
-  { icon: House, label: 'Home', pageKinds: ['home'] },
-  { icon: Search, label: 'Explore', pageKinds: ['unsupported'] },
-  { icon: Compass, label: 'Following', pageKinds: ['status'] },
-  { icon: UserRound, label: 'Profile', pageKinds: ['profile'] },
+  { icon: House, label: 'Home', pageKinds: ['home'], href: '/' },
+  { icon: Search, label: 'Explore', pageKinds: ['unsupported'] as const, href: '/' },
+  { icon: Compass, label: 'Following', pageKinds: ['status'] as const, href: '/' },
+  { icon: UserRound, label: 'Profile', pageKinds: ['profile'] as const, href: '/' },
 ] as const
 
 export function NavigationRail({
@@ -19,12 +19,14 @@ export function NavigationRail({
   theme,
   onRewriteEnabledChange,
   onThemeChange,
+  onNavigate,
 }: {
   pageKind: WeiboPageDescriptor['kind']
   rewriteEnabled: boolean
   theme: AppTheme
   onRewriteEnabledChange: (enabled: boolean) => void
   onThemeChange: (theme: AppTheme) => void
+  onNavigate: (href: string) => void
 }) {
   return (
     <Card className="rounded-[28px] border-border/70 bg-card/95 shadow-none">
@@ -34,22 +36,24 @@ export function NavigationRail({
       </CardHeader>
       <CardContent className="flex flex-col gap-5 px-4 pb-4">
         <div className="flex flex-col gap-2">
-          {NAV_ITEMS.map(({ icon: Icon, label, pageKinds }) => {
+          {NAV_ITEMS.map(({ icon: Icon, label, pageKinds, href }) => {
             const isActive = pageKinds.some((candidate) => candidate === pageKind)
 
             return (
-            <div
+            <button
               key={label}
+              type="button"
               className={[
                 'flex items-center gap-3 rounded-2xl px-3 py-3 text-sm transition-colors',
                 isActive
                   ? 'bg-accent text-accent-foreground'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground',
               ].join(' ')}
+              onClick={() => onNavigate(href)}
             >
               <Icon aria-hidden="true" />
               <span>{label}</span>
-            </div>
+            </button>
             )
           })}
         </div>
