@@ -19,7 +19,7 @@ export function ProfilePage({
       <ProfileHeader profile={profile} />
 
       <Tabs defaultValue="posts" className="flex flex-col gap-4">
-        <TabsList className="sticky top-[52px] z-10 grid w-full grid-cols-2 rounded-full">
+        <TabsList className="sticky top-0 z-10 grid w-full grid-cols-2 rounded-full">
           <TabsTrigger value="posts" className="rounded-full">
             微博
           </TabsTrigger>

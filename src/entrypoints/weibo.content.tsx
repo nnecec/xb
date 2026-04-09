@@ -36,7 +36,7 @@ export default defineContentScript({
       anchor: 'body',
       append: 'first',
       onMount(container) {
-        setUiPortalContainer(container.getRootNode())
+        setUiPortalContainer(container)
         const cleanup = bindShellState({
           container,
           appRoot: regions.appRoot,

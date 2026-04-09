@@ -1,21 +1,14 @@
 import { House, UserRound, Zap } from 'lucide-react'
 import { useMemo } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 
 import WeiboLogo from '@/assets/icons/weibo.svg'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import { ThemeModeToggle } from '@/features/weibo/components/theme-mode-toggle'
 import { getCurrentUserUid } from '@/features/weibo/platform/current-user'
 import type { WeiboPageDescriptor } from '@/features/weibo/route/page-descriptor'
 import type { AppTheme } from '@/lib/app-settings'
+import { cn } from '@/lib/utils'
 
 export function NavigationRail({
   pageKind,
@@ -24,7 +17,6 @@ export function NavigationRail({
   theme,
   onRewriteEnabledChange,
   onThemeChange,
-  logoOnly = false,
 }: {
   pageKind: WeiboPageDescriptor['kind']
   /** Resolved numeric user id when on a profile page (from API); used to match logged-in user. */
@@ -33,10 +25,11 @@ export function NavigationRail({
   theme: AppTheme
   onRewriteEnabledChange: (enabled: boolean) => void
   onThemeChange: (theme: AppTheme) => void
+  /** @deprecated Navigation rail is now always responsive; this prop is ignored. */
   logoOnly?: boolean
 }) {
   const currentUserUid = useMemo(() => getCurrentUserUid(), [])
-
+  const navigate = useNavigate()
   const navItems = useMemo(() => {
     const profileHref = currentUserUid ? `/u/${currentUserUid}` : '/'
     const isOwnProfileActive =
@@ -60,76 +53,65 @@ export function NavigationRail({
       },
     ]
   }, [currentUserUid, pageKind, viewingProfileUserId])
-  const rootClasses = logoOnly
-    ? 'flex h-full min-h-0 flex-col items-center rounded-[24px] border-border/70 px-2 py-3 shadow-none'
-    : 'flex h-full min-h-0 flex-col rounded-[28px] border-border/70 shadow-none'
-
-  const navItemClasses = logoOnly
-    ? 'flex items-center justify-center rounded-2xl p-3 transition-colors'
-    : 'flex items-center gap-3 rounded-2xl px-3 py-3 text-sm transition-colors'
 
   return (
-    <Card className={rootClasses}>
-      <CardHeader className={logoOnly ? 'px-0 pb-3 pt-1' : undefined}>
-        <CardTitle>
-          <img src={WeiboLogo} alt="Weibo Logo" className="size-12" />
-        </CardTitle>
-        {!logoOnly && <CardDescription>随时随地发现新鲜事</CardDescription>}
-      </CardHeader>
-      <CardContent
-        className={logoOnly ? 'flex flex-1 flex-col gap-4 px-0' : 'flex flex-1 flex-col gap-5 px-4'}
-      >
-        <div
-          className={logoOnly ? 'flex flex-1 flex-col items-center gap-2' : 'flex flex-col gap-2'}
-        >
+    <aside className="flex h-full min-h-0 flex-col px-1 md:px-2 xl:px-3">
+      <div className="mb-3 flex justify-start md:mb-4 xl:mb-5">
+        <img
+          src={WeiboLogo}
+          alt="Weibo Logo"
+          className="h-11 w-11 translate-y-[1px] object-contain fill-current"
+        />
+      </div>
+
+      <nav aria-label="Main navigation" className="flex min-h-0 flex-1 flex-col">
+        <div className="flex flex-col gap-2">
           {navItems.map(({ icon: Icon, label, href, isActive }) => {
             return (
-              <Link
+              <Button
                 key={label}
-                to={href}
+                onClick={() => navigate(href)}
                 title={label}
-                className={[
-                  navItemClasses,
-                  isActive
-                    ? 'bg-accent text-accent-foreground'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                ].join(' ')}
+                aria-label={label}
+                variant={isActive ? 'default' : 'ghost'}
+                size="icon"
               >
-                <Icon aria-hidden="true" />
-                {!logoOnly && <span>{label}</span>}
-              </Link>
+                <Icon aria-hidden="true" className="size-4 shrink-0" />
+                <span
+                  className={cn(
+                    'hidden text-xs xl:inline',
+                    isActive ? 'text-background/90' : 'text-muted-foreground',
+                  )}
+                >
+                  {label}
+                </span>
+              </Button>
             )
           })}
         </div>
-      </CardContent>
-      <CardFooter>
-        <div
-          className={
-            logoOnly
-              ? 'mt-auto flex flex-col justify-center items-center gap-2'
-              : 'mt-auto flex flex-col gap-3 rounded-2xl w-full'
-          }
-        >
-          <div className={logoOnly ? '' : 'flex items-center justify-between'}>
-            {!logoOnly && <p className="text-sm font-medium text-muted-foreground">返回原模式</p>}
+
+        <div className="mt-auto space-y-3 border-t border-border/60 pt-3 xl:space-y-3.5 xl:pt-4">
+          <div className="flex items-center justify-center xl:justify-between">
+            <p className="hidden text-xs font-medium text-muted-foreground xl:block">返回原模式</p>
             <Button
               type="button"
               size="icon"
               variant="secondary"
               onClick={() => onRewriteEnabledChange(!rewriteEnabled)}
+              aria-pressed={rewriteEnabled}
               aria-label="Toggle xb rewrite"
-              className={logoOnly ? 'h-10 w-10' : undefined}
+              className="h-10 w-10 rounded-xl"
             >
               <Zap className="size-4" aria-hidden="true" />
             </Button>
           </div>
 
-          <div className={logoOnly ? '' : 'flex items-center justify-between'}>
-            {!logoOnly && <p className="text-sm font-medium text-muted-foreground">深色模式</p>}
+          <div className="flex items-center justify-center xl:justify-between">
+            <p className="hidden text-xs font-medium text-muted-foreground xl:block">深色模式</p>
             <ThemeModeToggle value={theme} onChange={onThemeChange} />
           </div>
         </div>
-      </CardFooter>
-    </Card>
+      </nav>
+    </aside>
   )
 }

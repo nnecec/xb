@@ -49,33 +49,20 @@ export function ShellFrame({
 }: ShellFrameProps) {
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
-      <div className="mx-auto grid h-full w-full grid-cols-[72px_minmax(0,1fr)] gap-3 px-3 py-3 md:grid-cols-[88px_minmax(0,1fr)] md:gap-4 md:px-4 md:py-4 lg:grid-cols-[88px_minmax(360px,1fr)_240px] xl:grid-cols-[280px_minmax(360px,600px)_280px] xl:max-w-[1200px]">
-        <div className="contents">
-          <div className="hidden xl:block">
-            <NavigationRail
-              pageKind={pageKind}
-              viewingProfileUserId={viewingProfileUserId}
-              rewriteEnabled={rewriteEnabled}
-              theme={theme}
-              onRewriteEnabledChange={onRewriteEnabledChange}
-              onThemeChange={onThemeChange}
-            />
-          </div>
-          <div className="xl:hidden">
-            <NavigationRail
-              pageKind={pageKind}
-              viewingProfileUserId={viewingProfileUserId}
-              rewriteEnabled={rewriteEnabled}
-              theme={theme}
-              onRewriteEnabledChange={onRewriteEnabledChange}
-              onThemeChange={onThemeChange}
-              logoOnly
-            />
-          </div>
-          <main className="min-w-0 overflow-hidden">{children}</main>
-          <div className="hidden lg:flex">
-            <RightRail />
-          </div>
+      <div className="mx-auto grid h-full w-full grid-cols-[88px_minmax(0,1fr)] gap-3 px-3 py-3 md:gap-4 md:px-4 md:py-4 lg:grid-cols-[88px_minmax(360px,1fr)_240px] xl:grid-cols-[248px_minmax(360px,600px)_280px] xl:max-w-[1200px]">
+        <div className="min-h-0">
+          <NavigationRail
+            pageKind={pageKind}
+            viewingProfileUserId={viewingProfileUserId}
+            rewriteEnabled={rewriteEnabled}
+            theme={theme}
+            onRewriteEnabledChange={onRewriteEnabledChange}
+            onThemeChange={onThemeChange}
+          />
+        </div>
+        <main className="min-w-0 overflow-hidden">{children}</main>
+        <div className="hidden lg:flex">
+          <RightRail />
         </div>
       </div>
     </div>
