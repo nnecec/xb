@@ -115,4 +115,32 @@ describe('adaptStatusCommentsResponse', () => {
     expect(result.items[0]?.comments[0]?.id).toBe('1002')
     expect(result.items[0]?.likeCount).toBe(3)
   })
+
+  it('falls back to numeric id for comments and reply comments', () => {
+    const result = adaptStatusCommentsResponse({
+      data: [
+        {
+          id: 1001,
+          text_raw: '一级评论',
+          user: { id: 1, screen_name: 'Alice' },
+          reply_comment: {
+            id: 9001,
+            text_raw: '被回复评论',
+            user: { id: 9, screen_name: 'Root' },
+          },
+          comments: [
+            {
+              id: 1002,
+              text_raw: '二级评论',
+              user: { id: 2, screen_name: 'Bob' },
+            },
+          ],
+        },
+      ],
+    })
+
+    expect(result.items[0]?.id).toBe('1001')
+    expect(result.items[0]?.replyComment?.id).toBe('9001')
+    expect(result.items[0]?.comments[0]?.id).toBe('1002')
+  })
 })

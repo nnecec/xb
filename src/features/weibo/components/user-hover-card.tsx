@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { skipToken, useQuery } from '@tanstack/react-query'
 import { MapPin, UserRound } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
@@ -6,6 +6,11 @@ import { useNavigate } from 'react-router'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
+import {
+  formatProfileCount,
+  ProfileBanner,
+  ProfileMutualFollowers,
+} from '@/features/weibo/components/profile-shared'
 import { loadProfileHoverCard } from '@/features/weibo/services/weibo-repository'
 
 function UserHoverCardSkeleton() {
@@ -29,19 +34,32 @@ type UserHoverCardProps =
   | { uid: string; screenName?: undefined; children: ReactNode }
   | { screenName: string; uid?: undefined; children: ReactNode }
 
+type ProfileHoverLookup = { uid: string } | { screenName: string }
+
+function getProfileLookup(props: UserHoverCardProps): ProfileHoverLookup {
+  if ('screenName' in props) {
+    return { screenName: props.screenName as string }
+  }
+
+  return { uid: props.uid }
+}
+
 export function UserHoverCard(props: UserHoverCardProps) {
   const { children } = props
-  const uid = 'uid' in props ? props.uid : undefined
-  const screenName = 'screenName' in props ? props.screenName : undefined
+  const lookup = getProfileLookup(props)
   const navigate = useNavigate()
 
   const [hasOpened, setHasOpened] = useState(false)
 
   const { data: profile, isLoading } = useQuery({
-    queryKey: ['weibo', 'profile-hover', uid ?? '', screenName ?? ''],
-    queryFn: () =>
-      screenName ? loadProfileHoverCard({ screenName }) : loadProfileHoverCard({ uid: uid ?? '' }),
-    enabled: hasOpened && (screenName ? Boolean(screenName) : Boolean(uid)),
+    queryKey: [
+      'weibo',
+      'profile-hover',
+      'uid' in lookup ? 'u' : 'n',
+      'uid' in lookup ? lookup.uid : lookup.screenName,
+    ],
+    queryFn: hasOpened ? () => loadProfileHoverCard(lookup) : skipToken,
+    enabled: hasOpened,
     staleTime: 5 * 60 * 1000,
   })
 
@@ -57,13 +75,11 @@ export function UserHoverCard(props: UserHoverCardProps) {
           <UserHoverCardSkeleton />
         ) : (
           <div>
-            <div className="relative h-20">
-              {profile.bannerUrl ? (
-                <img src={profile.bannerUrl} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <div className="h-full w-full bg-linear-to-r from-blue-400 to-purple-500" />
-              )}
-            </div>
+            <ProfileBanner
+              bannerUrl={profile.bannerUrl}
+              className="relative h-20"
+              fallbackClassName="h-full w-full bg-linear-to-r from-blue-400 to-purple-500"
+            />
 
             <div className="px-4 pb-4 flex flex-col gap-2">
               <div className="-mt-8 mb-2 flex items-end gap-3">
@@ -99,42 +115,37 @@ export function UserHoverCard(props: UserHoverCardProps) {
               <div className="flex items-center gap-4 text-sm">
                 {profile.friendsCount != null ? (
                   <span className="text-muted-foreground">
-                    <span className="font-semibold text-foreground">{profile.friendsCount}</span>{' '}
+                    <span className="font-semibold text-foreground">
+                      {formatProfileCount(profile.friendsCount)}
+                    </span>{' '}
                     关注
                   </span>
                 ) : null}
                 {profile.followersCount ? (
                   <span className="text-muted-foreground">
-                    <span className="font-semibold text-foreground">{profile.followersCount}</span>{' '}
+                    <span className="font-semibold text-foreground">
+                      {formatProfileCount(profile.followersCount)}
+                    </span>{' '}
                     粉丝
                   </span>
                 ) : null}
               </div>
 
-              {profile.mutualFollowers.length > 0 ? (
-                <div className="flex items-center gap-2">
-                  <div className="flex -space-x-1.5">
-                    {profile.mutualFollowers.slice(0, 3).map((follower) => (
-                      <Avatar key={follower.screenName} className="size-5 ring-2 ring-card">
-                        <AvatarImage src={follower.avatarUrl} alt={follower.screenName} />
-                        <AvatarFallback className="text-[10px]">
-                          {follower.screenName?.slice(0, 1)}
-                        </AvatarFallback>
-                      </Avatar>
-                    ))}
-                  </div>
-                  <p className="flex-1 text-xs leading-tight text-muted-foreground">
-                    {profile.mutualFollowers
-                      .slice(0, 2)
-                      .map((f) => `@${f.screenName}`)
-                      .join(' ')}
-                    {(profile.mutualFollowerTotal ?? 0) > 2
-                      ? ` 等${profile.mutualFollowerTotal}人`
-                      : ''}
-                    也关注了TA
-                  </p>
-                </div>
-              ) : null}
+              <ProfileMutualFollowers
+                followers={profile.mutualFollowers}
+                total={profile.mutualFollowerTotal}
+                className="flex items-center gap-2"
+                avatarListClassName="flex -space-x-1.5"
+                avatarClassName="size-5 ring-2 ring-card"
+                avatarFallbackClassName="text-[10px]"
+                textClassName="flex-1 text-xs leading-tight text-muted-foreground"
+                renderText={(followers, total) =>
+                  `${followers
+                    .slice(0, 2)
+                    .map((f) => `@${f.screenName}`)
+                    .join(' ')}${(total ?? 0) > 2 ? ` 等${total}人` : ''}也关注了TA`
+                }
+              />
 
               <Button
                 variant="outline"

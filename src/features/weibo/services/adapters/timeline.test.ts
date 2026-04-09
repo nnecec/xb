@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { adaptTimelineResponse } from '@/features/weibo/services/adapters/timeline'
 
@@ -22,6 +22,15 @@ const payload = {
 }
 
 describe('adaptTimelineResponse', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-04-08T12:00:00+08:00'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('normalizes statuses into feed items', () => {
     expect(adaptTimelineResponse(payload)).toEqual({
       items: [
@@ -52,24 +61,26 @@ describe('adaptTimelineResponse', () => {
   })
 
   it('supports nested list payloads and empty cursors', () => {
-    expect(adaptTimelineResponse({
-      data: {
-        list: [
-          {
-            mid: 777,
-            raw_text: 'nested payload',
-            user: {
-              id: 42,
-              screen_name: 'Bob',
-              profile_image_url: 'https://wx4.sinaimg.cn/avatar.jpg',
+    expect(
+      adaptTimelineResponse({
+        data: {
+          list: [
+            {
+              mid: 777,
+              raw_text: 'nested payload',
+              user: {
+                id: 42,
+                screen_name: 'Bob',
+                profile_image_url: 'https://wx4.sinaimg.cn/avatar.jpg',
+              },
             },
-          },
-          null,
-          {},
-        ],
-        since_id: '',
-      },
-    })).toEqual({
+            null,
+            {},
+          ],
+          since_id: '',
+        },
+      }),
+    ).toEqual({
       items: [
         {
           id: '777',
@@ -81,6 +92,46 @@ describe('adaptTimelineResponse', () => {
             id: '42',
             name: 'Bob',
             avatarUrl: 'https://wx4.sinaimg.cn/avatar.jpg',
+          },
+          stats: {
+            likes: 0,
+            comments: 0,
+            reposts: 0,
+          },
+          images: [],
+          media: null,
+          regionName: '',
+          source: '',
+        },
+      ],
+      nextCursor: null,
+    })
+  })
+
+  it('treats zero cursor values as the end of pagination', () => {
+    expect(
+      adaptTimelineResponse({
+        statuses: [
+          {
+            idstr: '901',
+            text_raw: 'last page item',
+            user: { idstr: '1', screen_name: 'Alice' },
+          },
+        ],
+        max_id: '0',
+      }),
+    ).toEqual({
+      items: [
+        {
+          id: '901',
+          isLongText: false,
+          mblogId: null,
+          text: 'last page item',
+          createdAtLabel: '',
+          author: {
+            id: '1',
+            name: 'Alice',
+            avatarUrl: null,
           },
           stats: {
             likes: 0,

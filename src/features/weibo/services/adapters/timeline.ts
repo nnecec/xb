@@ -1,8 +1,6 @@
 import type { TimelinePage } from '@/features/weibo/models/feed'
-import {
-  type WeiboStatus,
-  toFeedItem,
-} from '../../utils/transform'
+
+import { type WeiboStatus, toFeedItem } from '../../utils/transform'
 
 export interface WeiboTimelineStatus extends WeiboStatus {}
 
@@ -17,16 +15,14 @@ export interface WeiboTimelinePayload {
 }
 
 function normalizeCursor(value: number | string | undefined): string | null {
-  if (value === undefined || value === null || value === '') {
+  if (value === undefined || value === null || value === '' || String(value) === '0') {
     return null
   }
 
   return String(value)
 }
 
-function getTimelineStatuses(
-  payload: WeiboTimelinePayload,
-): WeiboStatus[] {
+function getTimelineStatuses(payload: WeiboTimelinePayload): WeiboStatus[] {
   const statuses = Array.isArray(payload.statuses)
     ? payload.statuses
     : Array.isArray(payload.data?.statuses)
@@ -40,13 +36,11 @@ function getTimelineStatuses(
   )
 }
 
-export function adaptTimelineResponse(
-  payload: WeiboTimelinePayload,
-): TimelinePage {
+export function adaptTimelineResponse(payload: WeiboTimelinePayload): TimelinePage {
   return {
     items: getTimelineStatuses(payload)
-      .map(toFeedItem)
-      .filter(item => item.id !== ''),
+      .map((status) => toFeedItem(status))
+      .filter((item) => item.id !== ''),
     nextCursor: normalizeCursor(payload.max_id ?? payload.data?.since_id),
   }
 }

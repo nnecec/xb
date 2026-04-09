@@ -61,8 +61,8 @@ export function NavigationRail({
     ]
   }, [currentUserUid, pageKind, viewingProfileUserId])
   const rootClasses = logoOnly
-    ? 'flex h-full min-h-0 flex-col items-center rounded-[24px] border-border/70 bg-card/95 px-2 py-3 shadow-none'
-    : 'flex h-full min-h-0 flex-col rounded-[28px] border-border/70 bg-card/95 shadow-none'
+    ? 'flex h-full min-h-0 flex-col items-center rounded-[24px] border-border/70 px-2 py-3 shadow-none'
+    : 'flex h-full min-h-0 flex-col rounded-[28px] border-border/70 shadow-none'
 
   const navItemClasses = logoOnly
     ? 'flex items-center justify-center rounded-2xl p-3 transition-colors'
@@ -71,6 +71,7 @@ export function NavigationRail({
   return (
     <Card className={rootClasses}>
       <CardHeader className={logoOnly ? 'px-0 pb-3 pt-1' : undefined}>
+        xxxx
         <CardTitle>
           <img src={WeiboLogo} alt="Weibo Logo" className="size-12" />
         </CardTitle>

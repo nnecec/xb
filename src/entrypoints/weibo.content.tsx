@@ -1,55 +1,58 @@
-import "../assets/global.css";
+import '../assets/global.css'
+import { createRoot, type Root } from 'react-dom/client'
 
-import { createRoot, type Root } from "react-dom/client";
-import { AppRoot } from "@/features/weibo/app/app-root";
-import { bindShellState } from "@/features/weibo/content/shell-state";
-import { markWeiboPageReady } from "@/features/weibo/content/page-takeover";
-import { waitForWeiboHostRegions } from "@/features/weibo/content/host-selectors";
-import { getAppSettingsStore } from "@/lib/app-settings-store";
+import { setUiPortalContainer } from '@/components/ui/portal'
+import { AppRoot } from '@/features/weibo/app/app-root'
+import { waitForWeiboHostRegions } from '@/features/weibo/content/host-selectors'
+import { markWeiboPageReady } from '@/features/weibo/content/page-takeover'
+import { bindShellState } from '@/features/weibo/content/shell-state'
+import { getAppSettingsStore } from '@/lib/app-settings-store'
 
 interface MountedWeiboUi {
-  root: Root;
-  cleanup: () => void;
+  root: Root
+  cleanup: () => void
 }
 
-export let ui: ShadowRootContentScriptUi<MountedWeiboUi>;
+export let ui: ShadowRootContentScriptUi<MountedWeiboUi>
 
 export default defineContentScript({
-  matches: ["https://weibo.com/*", "https://www.weibo.com/*"],
-  runAt: "document_idle",
-  cssInjectionMode: "ui",
+  matches: ['https://weibo.com/*', 'https://www.weibo.com/*'],
+  runAt: 'document_idle',
+  cssInjectionMode: 'ui',
   async main(ctx) {
-    await injectScript("/weibo-main-world.js", { keepInDom: true });
+    await injectScript('/weibo-main-world.js', { keepInDom: true })
 
-    const regions = await waitForWeiboHostRegions(document);
+    const regions = await waitForWeiboHostRegions(document)
     if (!regions) {
-      markWeiboPageReady();
-      return;
+      markWeiboPageReady()
+      return
     }
-    const settingsStore = getAppSettingsStore();
-    await settingsStore.getState().hydrate();
+    const settingsStore = getAppSettingsStore()
+    await settingsStore.getState().hydrate()
 
     ui = await createShadowRootUi(ctx, {
-      name: "xb-shell",
-      position: "inline",
-      anchor: "body",
-      append: "first",
+      name: 'xb-shell',
+      position: 'inline',
+      anchor: 'body',
+      append: 'first',
       onMount(container) {
+        setUiPortalContainer(container.getRootNode())
         const cleanup = bindShellState({
           container,
           appRoot: regions.appRoot,
           settingsStore,
-        });
-        const root = createRoot(container);
-        root.render(<AppRoot />);
-        return { cleanup, root };
+        })
+        const root = createRoot(container)
+        root.render(<AppRoot />)
+        return { cleanup, root }
       },
       onRemove(mounted?: MountedWeiboUi) {
-        mounted?.cleanup();
-        mounted?.root.unmount();
+        setUiPortalContainer(null)
+        mounted?.cleanup()
+        mounted?.root.unmount()
       },
-    });
+    })
 
-    ui.mount();
+    ui.mount()
   },
-});
+})

@@ -41,6 +41,7 @@ export function bindShellState({
   return () => {
     unsubscribe()
     mediaQuery.removeEventListener('change', onSystemThemeChange)
+    container.classList.remove('dark')
     clearPageTakeover(appRoot)
   }
 }

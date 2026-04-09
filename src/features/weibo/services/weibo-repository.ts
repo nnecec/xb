@@ -2,32 +2,31 @@ import type { TimelinePage } from '@/features/weibo/models/feed'
 import type { UserProfile } from '@/features/weibo/models/profile'
 import type { StatusCommentsPage } from '@/features/weibo/models/status'
 import type { StatusDetail } from '@/features/weibo/models/status'
-import type { WeiboEndpointPath } from '@/features/weibo/services/endpoints'
-import { fetchWeiboJson } from '@/features/weibo/services/client'
 import {
   adaptProfileInfoResponse,
   mergeProfileDetail,
   type ProfileDetailPayload,
   type ProfileInfoPayload,
 } from '@/features/weibo/services/adapters/profile'
-import { adaptStatusCommentsResponse, adaptStatusDetailResponse } from '@/features/weibo/services/adapters/status'
+import {
+  adaptStatusCommentsResponse,
+  adaptStatusDetailResponse,
+} from '@/features/weibo/services/adapters/status'
 import type { WeiboTimelinePayload } from '@/features/weibo/services/adapters/timeline'
 import { adaptTimelineResponse } from '@/features/weibo/services/adapters/timeline'
+import { fetchWeiboJson } from '@/features/weibo/services/client'
+import type { WeiboEndpointPath } from '@/features/weibo/services/endpoints'
 import { WEIBO_ENDPOINTS } from '@/features/weibo/services/endpoints'
 
-/** `uid` 数字 uid；`screenName` 对应 `profile/info?screen_name=&scene=profile`。 */
-export type ProfileInfoLookup = { uid: string } | { screenName: string }
-
 export type HomeTimelineTab = 'for-you' | 'following'
+type ProfileLookup = { uid: string } | { screenName: string }
 
 export interface LoadTimelineOptions {
   cursor?: string | null
 }
 
 function getTimelinePath(tab: HomeTimelineTab): WeiboEndpointPath {
-  return tab === 'following'
-    ? WEIBO_ENDPOINTS.following
-    : WEIBO_ENDPOINTS.forYou
+  return tab === 'following' ? WEIBO_ENDPOINTS.following : WEIBO_ENDPOINTS.forYou
 }
 
 async function loadTimeline(
@@ -54,12 +53,8 @@ export async function loadHomeTimeline(
   }
 
   return loadTimeline(getTimelinePath(tab), {
-    ...(isFirstPage ? { since_id: '0' } : { max_id: options.cursor }),
+    [isFirstPage ? 'since_id' : 'max_id']: isFirstPage ? '0' : options.cursor,
   })
-}
-
-export async function loadSideCards(): Promise<unknown> {
-  return fetchWeiboJson<unknown>(WEIBO_ENDPOINTS.sideCards, {})
 }
 
 export async function loadStatusDetail(statusId: string): Promise<StatusDetail> {
@@ -71,9 +66,12 @@ export async function loadStatusDetail(statusId: string): Promise<StatusDetail> 
 }
 
 export async function loadStatusLongText(mblogId: string): Promise<string> {
-  const payload = await fetchWeiboJson<{ data?: { longTextContent?: string } }>(WEIBO_ENDPOINTS.statusLongText, {
-    id: mblogId,
-  })
+  const payload = await fetchWeiboJson<{ data?: { longTextContent?: string } }>(
+    WEIBO_ENDPOINTS.statusLongText,
+    {
+      id: mblogId,
+    },
+  )
 
   return payload.data?.longTextContent ?? ''
 }
@@ -97,40 +95,41 @@ export async function loadStatusComments(
   return adaptStatusCommentsResponse(payload as Parameters<typeof adaptStatusCommentsResponse>[0])
 }
 
-export async function loadProfileInfo(lookup: ProfileInfoLookup): Promise<UserProfile> {
-  const params =
-    'screenName' in lookup
-      ? { screen_name: lookup.screenName, scene: 'profile' }
-      : { uid: lookup.uid }
-  const payload = await fetchWeiboJson<ProfileInfoPayload>(WEIBO_ENDPOINTS.profileInfo, params)
+function getProfileInfoParams(lookup: ProfileLookup) {
+  return 'screenName' in lookup
+    ? { screen_name: lookup.screenName, scene: 'profile' }
+    : { uid: lookup.uid }
+}
+
+async function fetchProfileInfo(lookup: ProfileLookup): Promise<UserProfile> {
+  const payload = await fetchWeiboJson<ProfileInfoPayload>(
+    WEIBO_ENDPOINTS.profileInfo,
+    getProfileInfoParams(lookup),
+  )
 
   return adaptProfileInfoResponse(payload)
 }
 
-export type ProfileHoverLookup = { uid: string } | { screenName: string }
+async function fetchProfileDetail(uid: string): Promise<ProfileDetailPayload> {
+  return fetchWeiboJson<ProfileDetailPayload>(WEIBO_ENDPOINTS.profileDetail, { uid })
+}
 
-export async function loadProfileHoverCard(lookup: ProfileHoverLookup): Promise<UserProfile> {
+export async function loadProfileHoverCard(lookup: ProfileLookup): Promise<UserProfile> {
   if ('screenName' in lookup) {
-    const infoPayload = await fetchWeiboJson<ProfileInfoPayload>(WEIBO_ENDPOINTS.profileInfo, {
-      screen_name: lookup.screenName,
-      scene: 'profile',
-    })
-    const profile = adaptProfileInfoResponse(infoPayload)
+    const profile = await fetchProfileInfo(lookup)
     if (!profile.id) {
       throw new Error('weibo-profile-info-missing-id')
     }
-    const detailPayload = await fetchWeiboJson<ProfileDetailPayload>(WEIBO_ENDPOINTS.profileDetail, {
-      uid: profile.id,
-    })
+
+    const detailPayload = await fetchProfileDetail(profile.id)
     return mergeProfileDetail(profile, detailPayload)
   }
 
-  const [infoPayload, detailPayload] = await Promise.all([
-    fetchWeiboJson<ProfileInfoPayload>(WEIBO_ENDPOINTS.profileInfo, { uid: lookup.uid }),
-    fetchWeiboJson<ProfileDetailPayload>(WEIBO_ENDPOINTS.profileDetail, { uid: lookup.uid }),
+  const [profile, detailPayload] = await Promise.all([
+    fetchProfileInfo(lookup),
+    fetchProfileDetail(lookup.uid),
   ])
 
-  const profile = adaptProfileInfoResponse(infoPayload)
   return mergeProfileDetail(profile, detailPayload)
 }
 

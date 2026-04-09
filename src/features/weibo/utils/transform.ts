@@ -1,5 +1,6 @@
-import type { FeedItem } from '@/features/weibo/models/feed'
+import type { FeedAuthor, FeedItem } from '@/features/weibo/models/feed'
 import type { CommentItem } from '@/features/weibo/models/status'
+
 import { formatCreatedAt } from '../services/utils/date'
 
 // ─── Shared payload types ────────────────────────────────────────────────────
@@ -86,7 +87,7 @@ export function toImages(status: WeiboStatus) {
   }
 
   return status.pic_ids
-    .map(picId => {
+    .map((picId) => {
       const info = status.pic_infos?.[picId]
       const thumbnailUrl = info?.large?.url ?? info?.thumbnail?.url
       const largeUrl = info?.original?.url ?? info?.large?.url
@@ -96,21 +97,18 @@ export function toImages(status: WeiboStatus) {
 
       return { id: picId, thumbnailUrl, largeUrl }
     })
-    .filter(
-      (item): item is { id: string; thumbnailUrl: string; largeUrl: string } =>
-        item !== null,
-    )
+    .filter((item): item is { id: string; thumbnailUrl: string; largeUrl: string } => item !== null)
 }
 
 export function toMedia(status: WeiboStatus) {
   const mediaInfo = status.page_info?.media_info
   const bestPlaybackUrl = Array.isArray(mediaInfo?.playback_list)
     ? mediaInfo.playback_list
-        .map(item => ({
+        .map((item) => ({
           quality: Number(item?.meta?.quality_index ?? -1),
           url: item?.play_info?.url ?? '',
         }))
-        .filter(item => Boolean(item.url))
+        .filter((item) => Boolean(item.url))
         .sort((a, b) => b.quality - a.quality)[0]?.url
     : null
   const streamUrl = bestPlaybackUrl ?? mediaInfo?.stream_url_hd ?? mediaInfo?.stream_url
@@ -119,20 +117,14 @@ export function toMedia(status: WeiboStatus) {
   }
 
   return {
-    type:
-      status.page_info?.object_type === 'music'
-        ? ('audio' as const)
-        : ('video' as const),
+    type: status.page_info?.object_type === 'music' ? ('audio' as const) : ('video' as const),
     streamUrl,
     title: mediaInfo?.name ?? '',
     coverUrl: mediaInfo?.big_pic_info?.pic_big?.url ?? null,
   }
 }
 
-function pickAnalysisExtraValue(
-  analysisExtra: string | undefined,
-  key: string,
-): string | null {
+function pickAnalysisExtraValue(analysisExtra: string | undefined, key: string): string | null {
   if (!analysisExtra) {
     return null
   }
@@ -169,7 +161,7 @@ function toUrlEntities(status: WeiboStatus) {
   }
 
   return status.url_struct
-    .map(entity => {
+    .map((entity) => {
       const shortUrl = entity.short_url?.trim() ?? ''
       const title = entity.url_title?.trim() ?? ''
       if (!shortUrl || !title) {
@@ -183,10 +175,23 @@ function toUrlEntities(status: WeiboStatus) {
     .filter((entity): entity is { shortUrl: string; title: string } => entity !== null)
 }
 
-export function toFeedItem(
-  status: WeiboStatus,
-  includeRetweeted = true,
-): FeedItem {
+function getStatusId(status: Pick<WeiboStatus, 'idstr' | 'mid' | 'id'>): string {
+  return String(status.idstr ?? status.mid ?? status.id ?? '')
+}
+
+function getStatusText(status: Pick<WeiboStatus, 'text_raw' | 'raw_text' | 'text'>): string {
+  return status.text_raw ?? status.raw_text ?? status.text ?? ''
+}
+
+function getStatusAuthor(user: WeiboStatusUser | undefined): FeedAuthor {
+  return {
+    id: String(user?.idstr ?? user?.id ?? ''),
+    name: user?.screen_name ?? '',
+    avatarUrl: user?.avatar_hd ?? user?.profile_image_url ?? null,
+  }
+}
+
+export function toFeedItem(status: WeiboStatus, includeRetweeted = true): FeedItem {
   const mediaBelongsToRetweeted =
     includeRetweeted && Boolean(status.retweeted_status) && shouldAttachMediaToRetweeted(status)
   const normalizedRetweetedStatus =
@@ -220,17 +225,12 @@ export function toFeedItem(
   const urlEntities = toUrlEntities(status)
 
   return {
-    id: String(status.idstr ?? status.mid ?? status.id ?? ''),
+    id: getStatusId(status),
     mblogId: status.mblogid ?? null,
     isLongText: Boolean(status.isLongText),
-    text: status.text_raw ?? status.raw_text ?? status.text ?? '',
+    text: getStatusText(status),
     createdAtLabel: formatCreatedAt(status.created_at ?? ''),
-    author: {
-      id: String(status.user?.idstr ?? status.user?.id ?? ''),
-      name: status.user?.screen_name ?? '',
-      avatarUrl:
-        status.user?.avatar_hd ?? status.user?.profile_image_url ?? null,
-    },
+    author: getStatusAuthor(status.user),
     stats: {
       likes: Number(status.attitudes_count ?? 0),
       comments: Number(status.comments_count ?? 0),
@@ -249,43 +249,19 @@ export function toFeedItem(
 
 export function toCommentItem(comment: WeiboStatus): CommentItem {
   return {
-    id: String(comment.idstr ?? comment.mid ?? ''),
-    text: comment.text_raw ?? comment.raw_text ?? comment.text ?? '',
+    id: getStatusId(comment),
+    text: getStatusText(comment),
     createdAtLabel: formatCreatedAt(comment.created_at ?? ''),
-    author: {
-      id: String(comment.user?.idstr ?? comment.user?.id ?? ''),
-      name: comment.user?.screen_name ?? '',
-      avatarUrl:
-        comment.user?.avatar_hd ?? comment.user?.profile_image_url ?? null,
-    },
+    author: getStatusAuthor(comment.user),
     likeCount: Number(comment.like_count ?? 0),
     source: comment.source ?? '',
     replyComment: comment.reply_comment
       ? {
-          id: String(
-            comment.reply_comment.idstr ?? comment.reply_comment.mid ?? '',
-          ),
-          text:
-            comment.reply_comment.text_raw ??
-            comment.reply_comment.raw_text ??
-            comment.reply_comment.text ??
-            '',
-          author: {
-            id: String(
-              comment.reply_comment.user?.idstr ??
-                comment.reply_comment.user?.id ??
-                '',
-            ),
-            name: comment.reply_comment.user?.screen_name ?? '',
-            avatarUrl:
-              comment.reply_comment.user?.avatar_hd ??
-              comment.reply_comment.user?.profile_image_url ??
-              null,
-          },
+          id: getStatusId(comment.reply_comment),
+          text: getStatusText(comment.reply_comment),
+          author: getStatusAuthor(comment.reply_comment.user),
         }
       : null,
-    comments: Array.isArray(comment.comments)
-      ? comment.comments.map(toCommentItem)
-      : [],
+    comments: Array.isArray(comment.comments) ? comment.comments.map(toCommentItem) : [],
   }
 }

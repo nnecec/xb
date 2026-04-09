@@ -3,7 +3,7 @@ import { Dialog as DialogPrimitive } from 'radix-ui'
 import * as React from 'react'
 
 import { Button } from '@/components/ui/button'
-import { ui } from '@/entrypoints/weibo.content'
+import { getUiPortalContainer } from '@/components/ui/portal'
 import { cn } from '@/lib/utils'
 
 function Dialog({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) {
@@ -46,8 +46,10 @@ function DialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
 }) {
+  const container = React.useMemo(() => getUiPortalContainer(), [])
+
   return (
-    <DialogPortal data-slot="dialog-portal" container={ui.uiContainer}>
+    <DialogPortal data-slot="dialog-portal" container={container}>
       <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"
