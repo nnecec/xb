@@ -1,4 +1,4 @@
-# LoveForXb Weibo Redesign Design
+# xb Weibo Redesign Design
 
 Date: 2026-04-07
 Status: Approved in conversation, pending user review of written spec

@@ -28,13 +28,13 @@ describe('bindShellState', () => {
       settingsStore: store,
     })
 
-    expect(document.documentElement.getAttribute('data-loveforxb-weibo-ready')).toBe('')
+    expect(document.documentElement.getAttribute('data-xb-weibo-ready')).toBe('')
 
     await store.getState().setTheme('dark')
     await store.getState().setRewriteEnabled(false)
 
     expect(container.classList.contains('dark')).toBe(true)
-    expect(appRoot.getAttribute('data-loveforxb-hidden')).toBeNull()
+    expect(appRoot.getAttribute('data-xb-hidden')).toBeNull()
 
     cleanup()
   })

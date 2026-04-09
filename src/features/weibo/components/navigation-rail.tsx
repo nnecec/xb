@@ -117,7 +117,7 @@ export function NavigationRail({
               size="icon"
               variant="secondary"
               onClick={() => onRewriteEnabledChange(!rewriteEnabled)}
-              aria-label="Toggle LoveForXb rewrite"
+              aria-label="Toggle xb rewrite"
               className={logoOnly ? 'h-10 w-10' : undefined}
             >
               <Zap className="size-4" aria-hidden="true" />

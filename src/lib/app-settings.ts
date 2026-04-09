@@ -13,7 +13,7 @@ export interface AppSettingsStorageArea {
   set: (items: Record<string, unknown>) => Promise<void>
 }
 
-export const APP_SETTINGS_STORAGE_KEY = 'loveforxb:app-settings'
+export const APP_SETTINGS_STORAGE_KEY = 'xb:app-settings'
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   theme: 'system',

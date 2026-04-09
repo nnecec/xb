@@ -60,7 +60,7 @@ The new implementation writes a fresh app-level storage record and does not read
 Proposed key:
 
 ```ts
-const APP_SETTINGS_STORAGE_KEY = 'loveforxb:app-settings'
+const APP_SETTINGS_STORAGE_KEY = 'xb:app-settings'
 ```
 
 ## Store Architecture

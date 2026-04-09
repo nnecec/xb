@@ -8,7 +8,7 @@ describe('createRouteStore', () => {
 
     window.dispatchEvent(new MessageEvent('message', {
       data: {
-        source: 'loveforxb',
+        source: 'xb',
         type: 'route-change',
         href: 'https://weibo.com/u/1969776354',
       },

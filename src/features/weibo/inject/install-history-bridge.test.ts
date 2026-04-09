@@ -11,7 +11,7 @@ describe('installHistoryBridge', () => {
 
     expect(spy).toHaveBeenCalledWith(
       expect.objectContaining({
-        source: 'loveforxb',
+        source: 'xb',
         type: 'route-change',
         href: 'http://localhost:3000/u/1969776354',
       }),

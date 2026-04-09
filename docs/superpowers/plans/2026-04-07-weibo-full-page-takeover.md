@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make the Weibo rewrite hide the full host app shell, including the native header, whenever LoveForXb is enabled.
+**Goal:** Make the Weibo rewrite hide the full host app shell, including the native header, whenever xb is enabled.
 
 **Architecture:** Keep the ShadowRoot-mounted React app mounted under `body`, but change host region discovery so takeover targets the highest safe Weibo app root rather than only the center content node. Update the content-script binding to use that app root and extend selector tests so the restored page behavior stays symmetric.
 
@@ -132,13 +132,13 @@ describe('applyPageTakeover', () => {
 
     applyPageTakeover(node)
 
-    expect(node.getAttribute('data-loveforxb-hidden')).toBe('true')
+    expect(node.getAttribute('data-xb-hidden')).toBe('true')
     expect(node.getAttribute('aria-hidden')).toBe('true')
     expect(node.style.display).toBe('none')
 
     clearPageTakeover(node)
 
-    expect(node.hasAttribute('data-loveforxb-hidden')).toBe(false)
+    expect(node.hasAttribute('data-xb-hidden')).toBe(false)
     expect(node.hasAttribute('aria-hidden')).toBe(false)
     expect(node.style.display).toBe('grid')
   })

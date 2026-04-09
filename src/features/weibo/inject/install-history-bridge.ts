@@ -1,5 +1,5 @@
 import {
-  LOVEFORXB_SOURCE,
+  XB_SOURCE,
   ROUTE_CHANGE_EVENT,
 } from '@/features/weibo/platform/messages'
 
@@ -8,7 +8,7 @@ type HistoryMethod = 'pushState' | 'replaceState'
 export function installHistoryBridge(targetWindow: Window) {
   const emitRouteChange = () => {
     targetWindow.postMessage({
-      source: LOVEFORXB_SOURCE,
+      source: XB_SOURCE,
       type: ROUTE_CHANGE_EVENT,
       href: targetWindow.location.href,
     }, '*')

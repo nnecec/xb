@@ -30,7 +30,7 @@ export default defineContentScript({
     await settingsStore.getState().hydrate();
 
     ui = await createShadowRootUi(ctx, {
-      name: "loveforxb-shell",
+      name: "xb-shell",
       position: "inline",
       anchor: "body",
       append: "first",

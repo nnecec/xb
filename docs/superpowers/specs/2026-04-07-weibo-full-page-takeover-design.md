@@ -5,7 +5,7 @@ Status: Drafted from approved conversation direction, pending user review
 
 ## Goal
 
-Adjust the Weibo rewrite takeover behavior so that enabling LoveForXb hides the full host application shell instead of only the main content region.
+Adjust the Weibo rewrite takeover behavior so that enabling xb hides the full host application shell instead of only the main content region.
 
 This specifically means:
 - The original Weibo `header` must disappear when the rewrite is enabled
@@ -95,4 +95,4 @@ Constraint:
 
 ## Expected Outcome
 
-When rewrite is enabled on supported pages, the user should see only the LoveForXb React shell, including its own navigation and header-like structure. When rewrite is disabled, the original Weibo shell, including the native header, should reappear without layout residue.
+When rewrite is enabled on supported pages, the user should see only the xb React shell, including its own navigation and header-like structure. When rewrite is disabled, the original Weibo shell, including the native header, should reappear without layout residue.

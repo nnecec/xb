@@ -1,4 +1,4 @@
-# LoveForXb Weibo Redesign V1 Implementation Plan
+# xb Weibo Redesign V1 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -220,7 +220,7 @@ describe('installHistoryBridge', () => {
     installHistoryBridge(window)
     history.pushState({}, '', '/u/1969776354')
     expect(spy).toHaveBeenCalledWith(
-      expect.objectContaining({ source: 'loveforxb', type: 'route-change' }),
+      expect.objectContaining({ source: 'xb', type: 'route-change' }),
       '*',
     )
   })
@@ -249,11 +249,11 @@ Expected: FAIL with missing module errors.
 
 ```ts
 // src/features/weibo/platform/messages.ts
-export const LOVEFORXB_SOURCE = 'loveforxb'
+export const XB_SOURCE = 'xb'
 export const ROUTE_CHANGE_EVENT = 'route-change'
 
 export interface RouteChangeMessage {
-  source: typeof LOVEFORXB_SOURCE
+  source: typeof XB_SOURCE
   type: typeof ROUTE_CHANGE_EVENT
   href: string
 }
@@ -261,19 +261,19 @@ export interface RouteChangeMessage {
 export function isRouteChangeMessage(value: unknown): value is RouteChangeMessage {
   return typeof value === 'object'
     && value !== null
-    && (value as RouteChangeMessage).source === LOVEFORXB_SOURCE
+    && (value as RouteChangeMessage).source === XB_SOURCE
     && (value as RouteChangeMessage).type === ROUTE_CHANGE_EVENT
 }
 ```
 
 ```ts
 // src/features/weibo/inject/install-history-bridge.ts
-import { LOVEFORXB_SOURCE, ROUTE_CHANGE_EVENT } from '@/features/weibo/platform/messages'
+import { XB_SOURCE, ROUTE_CHANGE_EVENT } from '@/features/weibo/platform/messages'
 
 export function installHistoryBridge(targetWindow: Window) {
   const emit = () => {
     targetWindow.postMessage({
-      source: LOVEFORXB_SOURCE,
+      source: XB_SOURCE,
       type: ROUTE_CHANGE_EVENT,
       href: targetWindow.location.href,
     }, '*')
@@ -371,7 +371,7 @@ describe('applyPageTakeover', () => {
   it('marks the original content root as hidden', () => {
     const node = document.createElement('div')
     applyPageTakeover(node)
-    expect(node.dataset.loveforxbHidden).toBe('true')
+    expect(node.dataset.xbHidden).toBe('true')
     clearPageTakeover(node)
   })
 })
@@ -379,7 +379,7 @@ describe('applyPageTakeover', () => {
 describe('createRouteStore', () => {
   it('updates the descriptor from a route-change message', () => {
     const store = createRouteStore('https://weibo.com/')
-    window.postMessage({ source: 'loveforxb', type: 'route-change', href: 'https://weibo.com/u/1969776354' }, '*')
+    window.postMessage({ source: 'xb', type: 'route-change', href: 'https://weibo.com/u/1969776354' }, '*')
     expect(store.getSnapshot()).toEqual({
       kind: 'profile',
       profileId: '1969776354',
@@ -401,13 +401,13 @@ Expected: FAIL with missing module errors.
 ```ts
 // src/features/weibo/content/page-takeover.ts
 export function applyPageTakeover(node: HTMLElement) {
-  node.dataset.loveforxbHidden = 'true'
+  node.dataset.xbHidden = 'true'
   node.setAttribute('aria-hidden', 'true')
   node.style.display = 'none'
 }
 
 export function clearPageTakeover(node: HTMLElement) {
-  delete node.dataset.loveforxbHidden
+  delete node.dataset.xbHidden
   node.removeAttribute('aria-hidden')
   node.style.display = ''
 }
@@ -506,7 +506,7 @@ export default defineContentScript({
     applyPageTakeover(regions.contentRoot)
 
     const ui = await createShadowRootUi(ctx, {
-      name: 'loveforxb-shell',
+      name: 'xb-shell',
       position: 'inline',
       anchor: 'body',
       onMount(container) {
@@ -527,8 +527,8 @@ export default defineContentScript({
 ```ts
 // wxt.config.ts
 manifest: {
-  name: 'LoveForXb',
-  description: 'LoveForXb rewrites weibo.com into a cleaner X-like reading experience',
+  name: 'xb',
+  description: 'xb rewrites weibo.com into a cleaner X-like reading experience',
   permissions: ['storage'],
   host_permissions: ['https://weibo.com/*', 'https://www.weibo.com/*'],
   web_accessible_resources: [
@@ -833,9 +833,9 @@ const mockTimelinePage: TimelinePage = {
   items: [
     {
       id: 'seed-home-card',
-      text: 'LoveForXb home timeline seed item',
+      text: 'xb home timeline seed item',
       createdAtLabel: 'now',
-      author: { id: 'seed-user', name: 'LoveForXb', avatarUrl: null },
+      author: { id: 'seed-user', name: 'xb', avatarUrl: null },
       stats: { likes: 0, comments: 0, reposts: 0 },
     },
   ],
@@ -1264,7 +1264,7 @@ import { Button } from '@/components/ui/button'
 
 export function AppShell({ page }: { page: WeiboPageDescriptor }) {
   const showOriginalPage = () => {
-    const hidden = document.querySelector<HTMLElement>('[data-loveforxb-hidden="true"]')
+    const hidden = document.querySelector<HTMLElement>('[data-xb-hidden="true"]')
     if (!hidden) return
     clearPageTakeover(hidden)
   }
@@ -1291,7 +1291,7 @@ export function AppShell({ page }: { page: WeiboPageDescriptor }) {
 ```ts
 // src/features/weibo/content/page-takeover.ts
 export function clearPageTakeover(node: HTMLElement) {
-  delete node.dataset.loveforxbHidden
+  delete node.dataset.xbHidden
   node.removeAttribute('aria-hidden')
   node.style.display = ''
 }
@@ -1299,7 +1299,7 @@ export function clearPageTakeover(node: HTMLElement) {
 
 ```md
 <!-- README.md -->
-LoveForXb rewrites `weibo.com` home, detail, and profile pages with a ShadowRoot-isolated React UI. Run `pnpm dev`, open `https://weibo.com/`, and use the in-app fallback button to restore the original page when needed.
+xb rewrites `weibo.com` home, detail, and profile pages with a ShadowRoot-isolated React UI. Run `pnpm dev`, open `https://weibo.com/`, and use the in-app fallback button to restore the original page when needed.
 ```
 
 - [ ] **Step 4: Run the full test suite and build**

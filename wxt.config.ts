@@ -6,8 +6,8 @@ export default defineConfig({
   modules: ['@wxt-dev/module-react'],
   srcDir: 'src',
   manifest: {
-    name: 'LoveForXb',
-    description: 'LoveForXb rewrites weibo.com into a cleaner X-like reading experience',
+    name: 'xb',
+    description: 'xb rewrites weibo.com into a cleaner X-like reading experience',
     permissions: ['storage'],
     host_permissions: ['https://weibo.com/*', 'https://www.weibo.com/*'],
     web_accessible_resources: [

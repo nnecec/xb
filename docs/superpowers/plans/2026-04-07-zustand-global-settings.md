@@ -167,7 +167,7 @@ export interface AppSettingsStorageArea {
   set: (items: Record<string, unknown>) => Promise<void>
 }
 
-export const APP_SETTINGS_STORAGE_KEY = 'loveforxb:app-settings'
+export const APP_SETTINGS_STORAGE_KEY = 'xb:app-settings'
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   theme: 'system',
@@ -287,10 +287,10 @@ function createStorageArea(initialValue?: unknown) {
 
   return {
     get: vi.fn(async () => ({
-      'loveforxb:app-settings': stored,
+      'xb:app-settings': stored,
     })),
     set: vi.fn(async (items: Record<string, unknown>) => {
-      stored = items['loveforxb:app-settings']
+      stored = items['xb:app-settings']
     }),
     read() {
       return stored
@@ -471,7 +471,7 @@ describe('bindShellState', () => {
     const container = document.createElement('div')
     const appRoot = document.createElement('div')
     const store = createAppSettingsStore({
-      get: async () => ({ 'loveforxb:app-settings': undefined }),
+      get: async () => ({ 'xb:app-settings': undefined }),
       set: async () => {},
     })
 
@@ -494,7 +494,7 @@ describe('bindShellState', () => {
     await store.getState().setRewriteEnabled(false)
 
     expect(container.classList.contains('dark')).toBe(true)
-    expect(appRoot.getAttribute('data-loveforxb-hidden')).toBeNull()
+    expect(appRoot.getAttribute('data-xb-hidden')).toBeNull()
 
     cleanup()
   })
@@ -579,7 +579,7 @@ async main(ctx) {
   await settingsStore.getState().hydrate()
 
   const ui = await createShadowRootUi(ctx, {
-    name: 'loveforxb-shell',
+    name: 'xb-shell',
     position: 'inline',
     anchor: 'body',
     append: 'first',
@@ -656,7 +656,7 @@ describe('AppShell', () => {
   beforeEach(() => {
     resetAppSettingsStoreForTest()
     const store = getAppSettingsStore({
-      get: async () => ({ 'loveforxb:app-settings': undefined }),
+      get: async () => ({ 'xb:app-settings': undefined }),
       set: async () => {},
     })
     store.setState({
@@ -812,7 +812,7 @@ export function NavigationRail({
   return (
     <Card className="rounded-[28px] border-border/70 bg-card/95 shadow-none">
       <CardHeader>
-        <CardTitle className="text-base">LoveForXb</CardTitle>
+        <CardTitle className="text-base">xb</CardTitle>
         <CardDescription>Weibo, rebuilt for reading</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-5 px-4 pb-4">
@@ -847,7 +847,7 @@ export function NavigationRail({
             </div>
             <Switch
               checked={rewriteEnabled}
-              aria-label="Toggle LoveForXb rewrite"
+              aria-label="Toggle xb rewrite"
               onCheckedChange={onRewriteEnabledChange}
             />
           </div>

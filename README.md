@@ -1,5 +1,5 @@
-# LoveForXb
+# xb
 
-LoveForXb is a browser extension for weibo.com.
+xb is a browser extension for weibo.com.
 
 [中文](./README.cn.md)

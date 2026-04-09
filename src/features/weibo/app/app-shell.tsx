@@ -102,13 +102,13 @@ function RewritePausedCard({ onResume }: { onResume: () => void }) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Sparkles className="h-4 w-4 text-primary" />
-            LoveForXb
+            xb
           </CardTitle>
           <CardDescription>一键切换「更清爽、更 X 的」超级体验</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <Button onClick={onResume} className="justify-between">
-            <span>Let's LoveForXb</span>
+            <span>Let's xb</span>
             <ArrowRight className="h-4 w-4" />
           </Button>
         </CardContent>

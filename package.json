@@ -1,8 +1,8 @@
 {
-  "name": "loveforxb",
+  "name": "xb",
   "version": "0.0.1",
   "private": true,
-  "description": "LoveForXb enhances your X.com experience",
+  "description": "xb enhances your X.com experience",
   "type": "module",
   "scripts": {
     "build": "wxt build",

@@ -12,13 +12,13 @@ describe('applyPageTakeover', () => {
 
     applyPageTakeover(node)
 
-    expect(node.getAttribute('data-loveforxb-hidden')).toBe('true')
+    expect(node.getAttribute('data-xb-hidden')).toBe('true')
     expect(node.getAttribute('aria-hidden')).toBe('true')
     expect(node.style.display).toBe('none')
 
     clearPageTakeover(node)
 
-    expect(node.hasAttribute('data-loveforxb-hidden')).toBe(false)
+    expect(node.hasAttribute('data-xb-hidden')).toBe(false)
     expect(node.hasAttribute('aria-hidden')).toBe(false)
     expect(node.style.display).toBe('grid')
   })
