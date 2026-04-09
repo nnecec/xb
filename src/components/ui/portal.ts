@@ -1,6 +1,8 @@
 let uiPortalContainer: HTMLElement | undefined
 
-function normalizePortalContainer(container: Node | null | undefined): HTMLElement | undefined {
+function normalizePortalContainer(
+  container: Node | null | undefined,
+): HTMLElement | undefined {
   if (!container) {
     return undefined
   }
@@ -25,5 +27,9 @@ export function setUiPortalContainer(container: Node | null | undefined) {
 }
 
 export function getUiPortalContainer(): HTMLElement | undefined {
+  console.log(
+    '🚀 ~ getUiPortalContainer ~ uiPortalContainer:',
+    uiPortalContainer,
+  )
   return uiPortalContainer ?? getActivePortalContainer()
 }

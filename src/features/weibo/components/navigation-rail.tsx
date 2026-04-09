@@ -71,7 +71,6 @@ export function NavigationRail({
   return (
     <Card className={rootClasses}>
       <CardHeader className={logoOnly ? 'px-0 pb-3 pt-1' : undefined}>
-        xxxx
         <CardTitle>
           <img src={WeiboLogo} alt="Weibo Logo" className="size-12" />
         </CardTitle>
