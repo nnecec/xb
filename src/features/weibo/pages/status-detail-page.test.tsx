@@ -48,6 +48,7 @@ describe('StatusDetailPage', () => {
                 author: { id: '2', name: 'Bob', avatarUrl: null },
                 likeCount: 0,
                 source: '来自江苏',
+                images: [],
                 replyComment: null,
                 comments: [
                   {
@@ -57,6 +58,7 @@ describe('StatusDetailPage', () => {
                     author: { id: '3', name: 'Carol', avatarUrl: null },
                     likeCount: 0,
                     source: '',
+                    images: [],
                     replyComment: null,
                     comments: [
                       {
@@ -66,6 +68,7 @@ describe('StatusDetailPage', () => {
                         author: { id: '4', name: 'Dave', avatarUrl: null },
                         likeCount: 0,
                         source: '',
+                        images: [],
                         replyComment: null,
                         comments: [],
                       },

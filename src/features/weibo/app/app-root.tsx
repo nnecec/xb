@@ -1,8 +1,9 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { BrowserRouter, Route, Routes } from 'react-router'
 
-import { AppShell } from "@/features/weibo/app/app-shell";
-import { WeiboHistorySync } from "@/features/weibo/app/weibo-history-sync";
+import { usePrewarmEmoticonConfig } from '@/features/weibo/app/emoticon-query'
+import { AppShell } from '@/features/weibo/app/app-shell'
+import { WeiboHistorySync } from '@/features/weibo/app/weibo-history-sync'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -13,17 +14,25 @@ const queryClient = new QueryClient({
       refetchInterval: false,
     },
   },
-});
+})
+
+function AppRootBootstrap() {
+  usePrewarmEmoticonConfig()
+
+  return (
+    <BrowserRouter>
+      <WeiboHistorySync />
+      <Routes>
+        <Route path="*" element={<AppShell />} />
+      </Routes>
+    </BrowserRouter>
+  )
+}
 
 export function AppRoot() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <WeiboHistorySync />
-        <Routes>
-          <Route path="*" element={<AppShell />} />
-        </Routes>
-      </BrowserRouter>
+      <AppRootBootstrap />
     </QueryClientProvider>
-  );
+  )
 }

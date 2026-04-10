@@ -40,13 +40,25 @@ export interface WeiboPageInfo {
 }
 
 export interface WeiboUrlStruct {
+  url_type?: number | string
   short_url?: string
   url_title?: string
+  long_url?: string
+  ori_url?: string
+  h5_target_url?: string
+  pic_ids?: string[]
+  pic_infos?: Record<string, WeiboPicInfo>
+}
+
+export interface WeiboTopicStruct {
+  topic_title?: string
 }
 
 export interface WeiboPicInfo {
+  bmiddle?: { url?: string }
   large?: { url?: string }
   original?: { url?: string }
+  woriginal?: { url?: string }
   thumbnail?: { url?: string }
 }
 
@@ -76,21 +88,27 @@ export interface WeiboStatus {
   retweeted_status?: WeiboStatus
   analysis_extra?: string
   url_struct?: WeiboUrlStruct[]
+  topic_struct?: WeiboTopicStruct[]
   isAd?: number
 }
 
 // ─── Transform helpers ────────────────────────────────────────────────────────
 
-export function toImages(status: WeiboStatus) {
-  if (!Array.isArray(status.pic_ids) || !status.pic_infos) {
+function toImagesFromParts(picIds?: string[], picInfos?: Record<string, WeiboPicInfo>) {
+  if (!Array.isArray(picIds) || !picInfos) {
     return []
   }
 
-  return status.pic_ids
+  return picIds
     .map((picId) => {
-      const info = status.pic_infos?.[picId]
-      const thumbnailUrl = info?.large?.url ?? info?.thumbnail?.url
-      const largeUrl = info?.original?.url ?? info?.large?.url
+      const info = picInfos?.[picId]
+      const thumbnailUrl = info?.large?.url ?? info?.bmiddle?.url ?? info?.thumbnail?.url
+      const largeUrl =
+        info?.woriginal?.url ??
+        info?.original?.url ??
+        info?.large?.url ??
+        info?.bmiddle?.url ??
+        info?.thumbnail?.url
       if (!thumbnailUrl || !largeUrl) {
         return null
       }
@@ -98,6 +116,49 @@ export function toImages(status: WeiboStatus) {
       return { id: picId, thumbnailUrl, largeUrl }
     })
     .filter((item): item is { id: string; thumbnailUrl: string; largeUrl: string } => item !== null)
+}
+
+export function toImages(status: WeiboStatus) {
+  return toImagesFromParts(status.pic_ids, status.pic_infos)
+}
+
+function getImageUrlStructs(status: Pick<WeiboStatus, 'url_struct'>) {
+  if (!Array.isArray(status.url_struct)) {
+    return []
+  }
+
+  return status.url_struct.filter(
+    (entity): entity is WeiboUrlStruct & { pic_ids: string[]; pic_infos: Record<string, WeiboPicInfo> } =>
+      Array.isArray(entity.pic_ids) && entity.pic_ids.length > 0 && Boolean(entity.pic_infos),
+  )
+}
+
+function toCommentImages(status: WeiboStatus) {
+  const directImages = toImages(status)
+  if (directImages.length > 0) {
+    return directImages
+  }
+
+  const seen = new Set<string>()
+  return getImageUrlStructs(status)
+    .flatMap((entity) => toImagesFromParts(entity.pic_ids, entity.pic_infos))
+    .filter((image) => {
+      if (seen.has(image.id)) {
+        return false
+      }
+      seen.add(image.id)
+      return true
+    })
+}
+
+function stripEntityTokens(text: string, tokens: string[]) {
+  return tokens
+    .reduce((result, token) => {
+      return result.replaceAll(token, '').replace(/[ \t]{2,}/g, ' ')
+    }, text)
+    .replace(/\s+\n/g, '\n')
+    .replace(/\n\s+/g, '\n')
+    .trim()
 }
 
 export function toMedia(status: WeiboStatus) {
@@ -154,7 +215,7 @@ function shouldAttachMediaToRetweeted(status: WeiboStatus): boolean {
   return rootMid === retweetedId
 }
 
-function toUrlEntities(status: WeiboStatus) {
+function toUrlEntities(status: WeiboStatus, options?: { excludeImageEntities?: boolean }) {
   const text = status.text_raw ?? status.text ?? ''
   if (!text || !Array.isArray(status.url_struct)) {
     return []
@@ -164,15 +225,53 @@ function toUrlEntities(status: WeiboStatus) {
     .map((entity) => {
       const shortUrl = entity.short_url?.trim() ?? ''
       const title = entity.url_title?.trim() ?? ''
-      if (!shortUrl || !title) {
+      const rawUrlType = entity.url_type
+      const hasUrlType =
+        rawUrlType !== undefined && rawUrlType !== null && String(rawUrlType).trim() !== ''
+      const isImageEntity = Array.isArray(entity.pic_ids) && entity.pic_ids.length > 0
+      const targetUrl =
+        entity.h5_target_url?.trim() ??
+        entity.long_url?.trim() ??
+        entity.ori_url?.trim() ??
+        shortUrl
+      if (!shortUrl || !title || !targetUrl || !hasUrlType) {
+        return null
+      }
+      if (options?.excludeImageEntities && isImageEntity) {
         return null
       }
       if (!text.includes(shortUrl)) {
         return null
       }
-      return { shortUrl, title }
+      return { shortUrl, title, url: targetUrl }
     })
-    .filter((entity): entity is { shortUrl: string; title: string } => entity !== null)
+    .filter((entity): entity is { shortUrl: string; title: string; url: string } => entity !== null)
+}
+
+function toTopicEntities(status: WeiboStatus) {
+  const text = getStatusText(status)
+  if (!text || !Array.isArray(status.topic_struct)) {
+    return []
+  }
+
+  return status.topic_struct
+    .map((entity) => {
+      const title = entity.topic_title?.trim() ?? ''
+      if (!title) {
+        return null
+      }
+
+      const token = `#${title}#`
+      if (!text.includes(token)) {
+        return null
+      }
+
+      return {
+        title,
+        url: `https://s.weibo.com/weibo?q=${encodeURIComponent(token)}`,
+      }
+    })
+    .filter((entity): entity is { title: string; url: string } => entity !== null)
 }
 
 function getStatusId(status: Pick<WeiboStatus, 'idstr' | 'mid' | 'id'>): string {
@@ -220,9 +319,16 @@ export function toFeedItem(status: WeiboStatus, includeRetweeted = true): FeedIt
               status.retweeted_status.url_struct.length === 0)
               ? status.url_struct
               : status.retweeted_status.url_struct,
+          topic_struct:
+            mediaBelongsToRetweeted &&
+            (!Array.isArray(status.retweeted_status.topic_struct) ||
+              status.retweeted_status.topic_struct.length === 0)
+              ? status.topic_struct
+              : status.retweeted_status.topic_struct,
         }
       : null
   const urlEntities = toUrlEntities(status)
+  const topicEntities = toTopicEntities(status)
 
   return {
     id: getStatusId(status),
@@ -239,6 +345,7 @@ export function toFeedItem(status: WeiboStatus, includeRetweeted = true): FeedIt
     images: mediaBelongsToRetweeted ? [] : toImages(status),
     media: mediaBelongsToRetweeted ? null : toMedia(status),
     ...(urlEntities.length > 0 ? { urlEntities } : {}),
+    ...(topicEntities.length > 0 ? { topicEntities } : {}),
     regionName: status.region_name ?? '',
     source: status.source ?? '',
     ...(normalizedRetweetedStatus
@@ -248,18 +355,36 @@ export function toFeedItem(status: WeiboStatus, includeRetweeted = true): FeedIt
 }
 
 export function toCommentItem(comment: WeiboStatus): CommentItem {
+  const commentImageTokens = getImageUrlStructs(comment)
+    .map((entity) => entity.short_url?.trim() ?? '')
+    .filter(Boolean)
+  const urlEntities = toUrlEntities(comment, { excludeImageEntities: true })
+  const images = toCommentImages(comment)
+  const normalizedCommentText = stripEntityTokens(getStatusText(comment), commentImageTokens)
+  const replyCommentText = getStatusText(comment.reply_comment ?? {})
+  const replyCommentImageTokens = getImageUrlStructs(comment.reply_comment ?? {})
+    .map((entity) => entity.short_url?.trim() ?? '')
+    .filter(Boolean)
+  const normalizedReplyCommentText = stripEntityTokens(replyCommentText, replyCommentImageTokens)
+
   return {
     id: getStatusId(comment),
-    text: getStatusText(comment),
+    text: normalizedCommentText,
     createdAtLabel: formatCreatedAt(comment.created_at ?? ''),
     author: getStatusAuthor(comment.user),
     likeCount: Number(comment.like_count ?? 0),
     source: comment.source ?? '',
+    ...(urlEntities.length > 0 ? { urlEntities } : {}),
+    images,
     replyComment: comment.reply_comment
       ? {
           id: getStatusId(comment.reply_comment),
-          text: getStatusText(comment.reply_comment),
+          text: normalizedReplyCommentText,
           author: getStatusAuthor(comment.reply_comment.user),
+          images: toCommentImages(comment.reply_comment),
+          ...(toUrlEntities(comment.reply_comment, { excludeImageEntities: true }).length > 0
+            ? { urlEntities: toUrlEntities(comment.reply_comment, { excludeImageEntities: true }) }
+            : {}),
         }
       : null,
     comments: Array.isArray(comment.comments) ? comment.comments.map(toCommentItem) : [],

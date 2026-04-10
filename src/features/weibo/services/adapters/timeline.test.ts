@@ -159,6 +159,7 @@ describe('adaptTimelineResponse', () => {
             {
               short_url: 'http://t.cn/AXMyKy9F',
               url_title: '大米评测的微博视频',
+              url_type: 39,
             },
           ],
         },
@@ -169,6 +170,62 @@ describe('adaptTimelineResponse', () => {
       {
         shortUrl: 'http://t.cn/AXMyKy9F',
         title: '大米评测的微博视频',
+        url: 'http://t.cn/AXMyKy9F',
+      },
+    ])
+  })
+
+  it('only maps url_struct entries with url_type to clickable links', () => {
+    const result = adaptTimelineResponse({
+      statuses: [
+        {
+          idstr: '889',
+          text_raw: '看这个视频 http://t.cn/AXMyKy9F 和这段文本 http://t.cn/PLAIN',
+          user: { idstr: '1', screen_name: 'Alice' },
+          url_struct: [
+            {
+              short_url: 'http://t.cn/AXMyKy9F',
+              url_title: '大米评测的微博视频',
+              url_type: 39,
+            },
+            {
+              short_url: 'http://t.cn/PLAIN',
+              url_title: '普通文本',
+            },
+          ],
+        },
+      ],
+    })
+
+    expect(result.items[0]?.urlEntities).toEqual([
+      {
+        shortUrl: 'http://t.cn/AXMyKy9F',
+        title: '大米评测的微博视频',
+        url: 'http://t.cn/AXMyKy9F',
+      },
+    ])
+  })
+
+  it('maps topic_struct entries to encoded topic links', () => {
+    const result = adaptTimelineResponse({
+      statuses: [
+        {
+          idstr: '889',
+          text_raw: '#天才卡丁车装修进度#\n\n今天把大路灯立起来了',
+          user: { idstr: '1', screen_name: 'Alice' },
+          topic_struct: [
+            {
+              topic_title: '天才卡丁车装修进度',
+            },
+          ],
+        },
+      ],
+    })
+
+    expect(result.items[0]?.topicEntities).toEqual([
+      {
+        title: '天才卡丁车装修进度',
+        url: 'https://s.weibo.com/weibo?q=%23%E5%A4%A9%E6%89%8D%E5%8D%A1%E4%B8%81%E8%BD%A6%E8%A3%85%E4%BF%AE%E8%BF%9B%E5%BA%A6%23',
       },
     ])
   })

@@ -1,4 +1,13 @@
-import type { FeedAuthor, FeedItem } from '@/features/weibo/models/feed'
+import type { FeedAuthor, FeedImage, FeedUrlEntity } from '@/features/weibo/models/feed'
+import type { FeedItem } from '@/features/weibo/models/feed'
+
+export interface CommentPreviewItem {
+  id: string
+  text: string
+  author: FeedAuthor
+  urlEntities?: FeedUrlEntity[]
+  images: FeedImage[]
+}
 
 export interface CommentItem {
   id: string
@@ -7,7 +16,9 @@ export interface CommentItem {
   author: FeedAuthor
   likeCount: number
   source?: string
-  replyComment: Pick<CommentItem, 'id' | 'text' | 'author'> | null
+  urlEntities?: FeedUrlEntity[]
+  images: FeedImage[]
+  replyComment: CommentPreviewItem | null
   comments: CommentItem[]
 }
 

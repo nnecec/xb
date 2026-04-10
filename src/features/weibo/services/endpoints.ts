@@ -5,6 +5,7 @@ export const WEIBO_ENDPOINTS = {
   statusDetail: '/ajax/statuses/show',
   statusComments: '/ajax/statuses/buildComments',
   statusLongText: '/ajax/statuses/longtext',
+  statusConfig: '/ajax/statuses/config',
   profileInfo: '/ajax/profile/info',
   profileDetail: '/ajax/profile/detail',
   profilePosts: '/ajax/statuses/mymblog',

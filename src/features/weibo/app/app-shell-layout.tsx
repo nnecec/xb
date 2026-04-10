@@ -49,8 +49,8 @@ export function ShellFrame({
 }: ShellFrameProps) {
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
-      <div className="mx-auto grid h-full w-full grid-cols-[88px_minmax(0,1fr)] gap-3 px-3 py-3 md:gap-4 md:px-4 md:py-4 lg:grid-cols-[88px_minmax(360px,1fr)_240px] xl:grid-cols-[248px_minmax(360px,600px)_280px] xl:max-w-[1200px]">
-        <div className="min-h-0">
+      <div className="mx-auto flex h-full w-full gap-3 px-3 py-3 md:gap-4 md:px-4 md:py-4 xl:max-w-[1200px]">
+        <div className="flex h-full shrink-0 flex-col">
           <NavigationRail
             pageKind={pageKind}
             viewingProfileUserId={viewingProfileUserId}
@@ -60,8 +60,8 @@ export function ShellFrame({
             onThemeChange={onThemeChange}
           />
         </div>
-        <main className="min-w-0 overflow-hidden">{children}</main>
-        <div className="hidden lg:flex">
+        <main className="min-w-0 flex-1 overflow-hidden pb-10">{children}</main>
+        <div className="hidden md:flex md:w-[240px] xl:w-[280px] shrink-0">
           <RightRail />
         </div>
       </div>

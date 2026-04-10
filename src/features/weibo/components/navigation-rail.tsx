@@ -1,3 +1,4 @@
+import { useMediaQuery } from '@reactuses/core'
 import { House, UserRound, Zap } from 'lucide-react'
 import { useMemo } from 'react'
 import { Link, useNavigate } from 'react-router'
@@ -53,6 +54,7 @@ export function NavigationRail({
       },
     ]
   }, [currentUserUid, pageKind, viewingProfileUserId])
+  const isXl = useMediaQuery('(min-width: 1280px)')
 
   return (
     <aside className="flex h-full min-h-0 flex-col px-1 md:px-2 xl:px-3">
@@ -60,7 +62,7 @@ export function NavigationRail({
         <img
           src={WeiboLogo}
           alt="Weibo Logo"
-          className="h-11 w-11 translate-y-[1px] object-contain fill-current"
+          className="h-9 w-9 translate-y-[1px] object-contain fill-current"
         />
       </div>
 
@@ -74,23 +76,17 @@ export function NavigationRail({
                 title={label}
                 aria-label={label}
                 variant={isActive ? 'default' : 'ghost'}
-                size="icon"
+                className={isXl ? 'justify-start' : 'justify-center'}
+                size={isXl ? 'lg' : 'icon'}
               >
                 <Icon aria-hidden="true" className="size-4 shrink-0" />
-                <span
-                  className={cn(
-                    'hidden text-xs xl:inline',
-                    isActive ? 'text-background/90' : 'text-muted-foreground',
-                  )}
-                >
-                  {label}
-                </span>
+                <span className={cn('hidden xl:inline')}>{label}</span>
               </Button>
             )
           })}
         </div>
 
-        <div className="mt-auto space-y-3 border-t border-border/60 pt-3 xl:space-y-3.5 xl:pt-4">
+        <div className="mt-auto space-y-3 border-t border-border/60 pt-3 xl:space-y-3.5 xl:pt-4 xl:w-[180px]">
           <div className="flex items-center justify-center xl:justify-between">
             <p className="hidden text-xs font-medium text-muted-foreground xl:block">返回原模式</p>
             <Button
@@ -100,7 +96,6 @@ export function NavigationRail({
               onClick={() => onRewriteEnabledChange(!rewriteEnabled)}
               aria-pressed={rewriteEnabled}
               aria-label="Toggle xb rewrite"
-              className="h-10 w-10 rounded-xl"
             >
               <Zap className="size-4" aria-hidden="true" />
             </Button>

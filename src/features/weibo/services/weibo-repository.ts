@@ -1,7 +1,12 @@
 import type { TimelinePage } from '@/features/weibo/models/feed'
+import type { WeiboEmoticonConfig } from '@/features/weibo/models/emoticon'
 import type { UserProfile } from '@/features/weibo/models/profile'
 import type { StatusCommentsPage } from '@/features/weibo/models/status'
 import type { StatusDetail } from '@/features/weibo/models/status'
+import {
+  adaptEmoticonConfigResponse,
+  type WeiboEmoticonPayload,
+} from '@/features/weibo/services/adapters/emoticon'
 import {
   adaptProfileInfoResponse,
   mergeProfileDetail,
@@ -74,6 +79,11 @@ export async function loadStatusLongText(mblogId: string): Promise<string> {
   )
 
   return payload.data?.longTextContent ?? ''
+}
+
+export async function loadEmoticonConfig(): Promise<WeiboEmoticonConfig> {
+  const payload = await fetchWeiboJson<WeiboEmoticonPayload>(WEIBO_ENDPOINTS.statusConfig)
+  return adaptEmoticonConfigResponse(payload)
 }
 
 export async function loadStatusComments(

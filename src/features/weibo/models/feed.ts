@@ -26,6 +26,12 @@ export interface FeedMedia {
 export interface FeedUrlEntity {
   shortUrl: string
   title: string
+  url: string
+}
+
+export interface FeedTopicEntity {
+  title: string
+  url: string
 }
 
 export interface FeedItem {
@@ -39,6 +45,7 @@ export interface FeedItem {
   images: FeedImage[]
   media: FeedMedia | null
   urlEntities?: FeedUrlEntity[]
+  topicEntities?: FeedTopicEntity[]
   regionName?: string
   source?: string
   retweetedStatus?: Omit<FeedItem, 'retweetedStatus'> | null
