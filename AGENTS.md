@@ -7,7 +7,8 @@ xb is a browser extension that rewrites weibo.com into a cleaner X-like reading 
 ## Developer Commands
 
 ```bash
-npm run dev          # Start dev server with hot reload
+npm run dev          # Start dev server (Chrome)
+npm run dev:firefox  # Start dev server (Firefox)
 npm run build        # Build for Chrome/Chromium
 npm run build:firefox # Build for Firefox
 npm run test:unit    # Run unit tests (Vitest + jsdom)
@@ -26,19 +27,22 @@ lint → typecheck → test → build
 ```
 src/
 ├── entrypoints/          # Extension entry points
-│   ├── weibo.content.tsx       # Main content script (weibo.com)
-│   ├── weibo-main-world.ts      # Runs in page context, installs history bridge
-│   ├── weibo-hide.content.ts    # Hides original Weibo UI
+│   ├── weibo.content.tsx      # Main content script (weibo.com)
+│   ├── weibo-main-world.ts    # Runs in page context, installs history bridge
+│   ├── weibo-hide.content.ts  # Hides original Weibo UI
 │   └── options/          # Options page
+│       └── theme.ts      # Theme settings
 ├── features/weibo/       # Core feature code
 │   ├── app/              # App shell, root, layout components
 │   ├── components/       # Feature-specific components
 │   ├── pages/            # Page-level components (home, profile, status)
 │   ├── services/         # API clients, adapters, repositories
 │   ├── models/           # Data models
-│   ├── route/            # Router sync, page descriptors
+│   ├── route/            # Router sync, page descriptors, URL parsing
 │   ├── content/          # Host selectors, shell state, page takeover
-│   └── inject/           # Script injection (history bridge)
+│   ├── inject/           # Script injection (history bridge)
+│   ├── platform/         # Platform-specific code (messages, current user)
+│   └── utils/            # Utility functions (transform, date, etc.)
 ├── components/ui/        # shadcn/ui components
 └── lib/                  # Core: utils, settings store (Zustand)
 ```
@@ -53,9 +57,10 @@ src/
 ## Key Patterns
 
 - **Host selectors** in `features/weibo/content/host-selectors.ts` wait for Weibo DOM elements before mounting
-- **Shell state** (`shell-state.ts`) binds React app to Weibo's existing DOM structure
-- **Page takeover** (`page-takeover.ts`) marks pages as handled
-- **Router sync** (`route/router-sync.ts`) keeps extension in sync with Weibo's navigation
+- **Shell state** (`features/weibo/content/shell-state.ts`) binds React app to Weibo's existing DOM structure
+- **Page takeover** (`features/weibo/content/page-takeover.ts`) marks pages as handled
+- **Router sync** (`features/weibo/route/router-sync.ts`) keeps extension in sync with Weibo's navigation
+- **URL parsing** (`features/weibo/route/parse-weibo-url.ts`) parses Weibo URLs into page descriptors
 
 ## Testing
 
