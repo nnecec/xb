@@ -22,7 +22,11 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
         <div className="grid grid-cols-3 gap-2">
           {images.map((image, index) => (
             <PhotoView key={index} src={image.largeUrl}>
-              <img src={image.thumbnailUrl} className="aspect-square w-full object-cover" alt="" />
+              <img
+                src={image.thumbnailUrl}
+                className="aspect-square w-full object-cover rounded"
+                alt=""
+              />
             </PhotoView>
           ))}
         </div>

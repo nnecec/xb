@@ -399,7 +399,7 @@ export function FeedCard({
       <Card className="gap-4 rounded-3xl" data-testid="feed-card-body">
         <FeedAuthorHeader item={item} />
         <CardContent
-          className="flex flex-col gap-4"
+          className="flex flex-col gap-4 cursor-pointer"
           onClick={handleCardClick}
           onMouseDown={handleCardMouseDown}
           onMouseUp={handleCardMouseUp}
