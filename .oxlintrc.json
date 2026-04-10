@@ -13,7 +13,8 @@
           "variables": "safe-fix"
         }
       }
-    ]
+    ],
+    "react/self-closing-comp": "error"
   },
   "env": {
     "builtin": true

@@ -1,12 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { SubmitComposeInput } from '@/features/weibo/models/compose'
-import { fetchWeiboJson } from '@/features/weibo/services/client'
-import { postWeiboForm } from '@/features/weibo/services/client'
-import {
-  loadHomeTimeline,
-  submitComposeAction,
-} from '@/features/weibo/services/weibo-repository'
+import { wbGet } from '@/features/weibo/services/client'
+import { wbPostForm } from '@/features/weibo/services/client'
+import { loadHomeTimeline, submitComposeAction } from '@/features/weibo/services/weibo-repository'
 
 vi.mock('@/features/weibo/services/client', () => ({
   fetchWeiboJson: vi.fn(),
@@ -15,9 +12,9 @@ vi.mock('@/features/weibo/services/client', () => ({
 
 describe('weibo-repository', () => {
   beforeEach(() => {
-    vi.mocked(fetchWeiboJson).mockReset()
-    vi.mocked(postWeiboForm).mockReset()
-    vi.mocked(fetchWeiboJson).mockResolvedValue({})
+    vi.mocked(wbGet).mockReset()
+    vi.mocked(wbPostForm).mockReset()
+    vi.mocked(wbGet).mockResolvedValue({})
   })
 
   it('loads the following tab from friendstimeline', async () => {
@@ -26,7 +23,7 @@ describe('weibo-repository', () => {
       nextCursor: null,
     })
 
-    expect(fetchWeiboJson).toHaveBeenCalledWith('/ajax/feed/friendstimeline', {
+    expect(wbGet).toHaveBeenCalledWith('/ajax/feed/friendstimeline', {
       count: 20,
       fid: '110001768015440',
       list_id: '110001768015440',
@@ -41,7 +38,7 @@ describe('weibo-repository', () => {
       nextCursor: null,
     })
 
-    expect(fetchWeiboJson).toHaveBeenCalledWith('/ajax/feed/unreadfriendstimeline', {
+    expect(wbGet).toHaveBeenCalledWith('/ajax/feed/unreadfriendstimeline', {
       since_id: '0',
     })
   })
@@ -49,11 +46,11 @@ describe('weibo-repository', () => {
 
 describe('submitComposeAction', () => {
   beforeEach(() => {
-    vi.mocked(postWeiboForm).mockReset()
+    vi.mocked(wbPostForm).mockReset()
   })
 
   it('posts status comments to /ajax/comments/create', async () => {
-    vi.mocked(postWeiboForm).mockResolvedValue({ ok: 1, msg: '评论成功' })
+    vi.mocked(wbPostForm).mockResolvedValue({ ok: 1, msg: '评论成功' })
 
     const input: SubmitComposeInput = {
       target: {
@@ -70,7 +67,7 @@ describe('submitComposeAction', () => {
 
     await submitComposeAction(input)
 
-    expect(postWeiboForm).toHaveBeenCalledWith('/ajax/comments/create', {
+    expect(wbPostForm).toHaveBeenCalledWith('/ajax/comments/create', {
       id: '5286131038160528',
       comment: '太酷了[色]',
       pic_id: '',
@@ -81,7 +78,7 @@ describe('submitComposeAction', () => {
   })
 
   it('posts comment replies to /ajax/comments/reply', async () => {
-    vi.mocked(postWeiboForm).mockResolvedValue({ ok: 1, msg: '回复评论成功' })
+    vi.mocked(wbPostForm).mockResolvedValue({ ok: 1, msg: '回复评论成功' })
 
     await submitComposeAction({
       target: {
@@ -96,7 +93,7 @@ describe('submitComposeAction', () => {
       alsoSecondaryAction: false,
     })
 
-    expect(postWeiboForm).toHaveBeenCalledWith('/ajax/comments/reply', {
+    expect(wbPostForm).toHaveBeenCalledWith('/ajax/comments/reply', {
       id: '5286131038160528',
       cid: '5286139894171523',
       comment: '[手指比心]',

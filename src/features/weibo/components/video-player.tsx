@@ -4,7 +4,7 @@ import '@videojs/react/video/skin.css'
 import { createPlayer, Poster, videoFeatures } from '@videojs/react'
 import { VideoSkin, Video } from '@videojs/react/video'
 
-const Player = createPlayer({ features: videoFeatures })
+const Player = createPlayer({ features: [...videoFeatures] })
 
 interface VideoPlayerProps {
   src: string

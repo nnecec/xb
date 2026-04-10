@@ -43,6 +43,8 @@ describe('ProfilePage', () => {
               createdAt: null,
               mutualFollowers: [],
               mutualFollowerTotal: null,
+              following: false,
+              followMe: false,
             }}
           />
         </MemoryRouter>

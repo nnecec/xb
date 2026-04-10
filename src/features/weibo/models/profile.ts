@@ -13,4 +13,8 @@ export interface UserProfile {
   createdAt: string | null
   mutualFollowers: { screenName: string; avatarUrl: string }[]
   mutualFollowerTotal: number | null
+  /** 我是否关注对方 */
+  following: boolean
+  /** 对方是否关注我 */
+  followMe: boolean
 }

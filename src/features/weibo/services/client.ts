@@ -13,10 +13,7 @@ const weiboClient = axios.create({
   },
 })
 
-export async function fetchWeiboJson<T>(
-  path: string,
-  params: WeiboQueryParams = {},
-): Promise<T> {
+export async function wbGet<T>(path: string, params: WeiboQueryParams = {}): Promise<T> {
   try {
     const response = await weiboClient.get<T>(path, { params })
     return response.data
@@ -36,10 +33,7 @@ export async function fetchWeiboJson<T>(
   }
 }
 
-export async function postWeiboForm<T>(
-  path: string,
-  data: Record<string, string>,
-): Promise<T> {
+export async function wbPostForm<T>(path: string, data: Record<string, string>): Promise<T> {
   try {
     const response = await weiboClient.post<T>(path, new URLSearchParams(data), {
       headers: {

@@ -5,7 +5,14 @@ import { Link } from 'react-router'
 
 import { AspectRatio } from '@/components/ui/aspect-ratio'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { ImageCarousel } from '@/features/weibo/components/image-carousel'
 import { ImageGrid } from '@/features/weibo/components/image-grid'
 import { StatusText } from '@/features/weibo/components/status-text'
@@ -217,7 +224,7 @@ function FeedActions({
   onLikeClick?: (item: FeedItem) => void
 }) {
   return (
-    <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+    <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground w-full">
       <button
         type="button"
         aria-label="回复微博"
@@ -332,6 +339,8 @@ export function FeedCard({
   }
 
   const handleCardClick = (event: MouseEvent<HTMLElement>) => {
+    event.preventDefault()
+    event.stopPropagation()
     if (!onNavigate) {
       return
     }
@@ -346,16 +355,9 @@ export function FeedCard({
 
   return (
     <>
-      <Card
-        className={[
-          'gap-4 rounded-[28px] border-border/70 bg-card/95 py-4 shadow-none',
-          onNavigate ? 'cursor-pointer' : '',
-        ].join(' ')}
-        data-testid="feed-card-body"
-        onClick={handleCardClick}
-      >
+      <Card className="gap-4 rounded-3xl" data-testid="feed-card-body">
         <FeedAuthorHeader item={item} />
-        <CardContent className="flex flex-col gap-4 px-4">
+        <CardContent className="flex flex-col gap-4" onClick={handleCardClick}>
           <FeedTextBlock
             item={item}
             text={resolvedText}
@@ -382,8 +384,10 @@ export function FeedCard({
               }}
             />
           ) : null}
-          <FeedActions item={item} onCommentClick={onCommentClick} onRepostClick={onRepostClick} />
         </CardContent>
+        <CardFooter>
+          <FeedActions item={item} onCommentClick={onCommentClick} onRepostClick={onRepostClick} />
+        </CardFooter>
       </Card>
 
       <ImageCarousel

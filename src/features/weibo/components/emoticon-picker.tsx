@@ -1,8 +1,12 @@
-import { useEffect, useState } from 'react'
 import { Smile } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useEmoticonConfigQuery } from '@/features/weibo/app/emoticon-query'
 import { useRecentEmoticons } from '@/features/weibo/app/recent-emoticons-store'
@@ -12,13 +16,11 @@ interface EmoticonEntry {
   url: string
 }
 
-export function EmoticonPicker({
-  onSelect,
-}: {
-  onSelect: (entry: EmoticonEntry) => void
-}) {
+export function EmoticonPicker({ onSelect }: { onSelect: (entry: EmoticonEntry) => void }) {
   const [open, setOpen] = useState(false)
   const { data } = useEmoticonConfigQuery()
+  console.log('🚀 ~ EmoticonPicker ~ data:', data)
+
   const isHydrated = useRecentEmoticons((state) => state.isHydrated)
   const hydrate = useRecentEmoticons((state) => state.hydrate)
   const recentItems = useRecentEmoticons((state) => state.items)

@@ -1,8 +1,8 @@
 import { BadgeCheck, CalendarDays, MapPin } from 'lucide-react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { FollowButton } from '@/features/weibo/components/follow-button'
 import {
   formatProfileCount,
   ProfileBanner,
@@ -11,6 +11,7 @@ import {
 import type { UserProfile } from '@/features/weibo/models/profile'
 
 function ProfileIdentity({ profile }: { profile: UserProfile }) {
+  console.log('🚀 ~ ProfileIdentity ~ profile:', profile)
   return (
     <>
       <div className="flex items-end justify-between">
@@ -23,9 +24,11 @@ function ProfileIdentity({ profile }: { profile: UserProfile }) {
           </Avatar>
         </div>
         <div className="flex gap-2 pb-3 pt-3">
-          <Button variant="outline" size="sm" className="rounded-full font-semibold">
-            关注
-          </Button>
+          <FollowButton
+            uid={profile.id}
+            following={profile.following}
+            followMe={profile.followMe}
+          />
         </div>
       </div>
 

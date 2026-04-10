@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -9,9 +10,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import type { ComposeTarget } from '@/features/weibo/models/compose'
-
+import { Label } from '@/components/ui/label'
 import { EmoticonPicker } from '@/features/weibo/components/emoticon-picker'
+import type { ComposeTarget } from '@/features/weibo/models/compose'
 
 function getModalCopy(target: ComposeTarget) {
   if (target.mode === 'repost') {
@@ -78,14 +79,15 @@ export function CommentModal({
         </label>
         <div className="flex items-center justify-between gap-3">
           <EmoticonPicker onSelect={(item) => setText((value) => `${value}${item.phrase}`)} />
-          <label className="flex items-center gap-2 text-sm">
-            <input
+
+          <div className="flex gap-2">
+            <Checkbox
               checked={alsoSecondaryAction}
-              type="checkbox"
-              onChange={(event) => setAlsoSecondaryAction(event.target.checked)}
+              onCheckedChange={(checked: boolean) => setAlsoSecondaryAction(checked)}
+              id="alsoSecondaryAction"
             />
-            {copy.checkboxLabel}
-          </label>
+            <Label htmlFor="alsoSecondaryAction">{copy.checkboxLabel}</Label>
+          </div>
         </div>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

@@ -13,6 +13,8 @@ import {
 } from '@/features/weibo/components/profile-shared'
 import { loadProfileHoverCard } from '@/features/weibo/services/weibo-repository'
 
+import { FollowButton } from './follow-button'
+
 function UserHoverCardSkeleton() {
   return (
     <div className="animate-pulse">
@@ -60,7 +62,6 @@ export function UserHoverCard(props: UserHoverCardProps) {
     ],
     queryFn: hasOpened ? () => loadProfileHoverCard(lookup) : skipToken,
     enabled: hasOpened,
-    staleTime: 5 * 60 * 1000,
   })
 
   return (
@@ -82,13 +83,19 @@ export function UserHoverCard(props: UserHoverCardProps) {
             />
 
             <div className="px-4 pb-4 flex flex-col gap-2">
-              <div className="-mt-8 mb-2 flex items-end gap-3">
+              <div className="-mt-8 mb-2 flex justify-between items-end gap-3">
                 <Avatar className="size-14 ring-3 ring-card">
                   <AvatarImage src={profile.avatarUrl ?? undefined} alt={profile.name} />
                   <AvatarFallback className="text-lg font-semibold">
                     {profile.name?.slice(0, 1).toUpperCase() || '?'}
                   </AvatarFallback>
                 </Avatar>
+                <FollowButton
+                  uid={profile.id}
+                  following={profile.following}
+                  followMe={profile.followMe}
+                  className="float-right z-10"
+                />
               </div>
 
               <p className="text-base font-bold leading-tight text-foreground">{profile.name}</p>
@@ -123,9 +130,7 @@ export function UserHoverCard(props: UserHoverCardProps) {
                 ) : null}
                 {profile.followersCount ? (
                   <span className="text-muted-foreground">
-                    <span className="font-semibold text-foreground">
-                      {formatProfileCount(profile.followersCount)}
-                    </span>{' '}
+                    <span className="font-semibold text-foreground">{profile.followersCount}</span>{' '}
                     粉丝
                   </span>
                 ) : null}
@@ -149,11 +154,11 @@ export function UserHoverCard(props: UserHoverCardProps) {
 
               <Button
                 variant="outline"
-                className="w-full gap-1.5"
+                className="flex-1 gap-1.5 w-full"
                 onClick={() => navigate(`/n/${encodeURIComponent(profile.name)}`)}
               >
                 <UserRound className="size-3.5" />
-                查看主页
+                主页
               </Button>
             </div>
           </div>

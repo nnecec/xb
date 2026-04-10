@@ -10,6 +10,8 @@ interface ProfileUserPayload {
   idstr?: string
   profile_image_url?: string
   screen_name?: string
+  following?: boolean
+  follow_me?: boolean
 }
 
 export interface ProfileInfoPayload {
@@ -55,6 +57,8 @@ export function adaptProfileInfoResponse(payload: ProfileInfoPayload): UserProfi
     createdAt: null,
     mutualFollowers: [],
     mutualFollowerTotal: null,
+    following: user.following ?? false,
+    followMe: user.follow_me ?? false,
   }
 }
 

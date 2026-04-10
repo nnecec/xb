@@ -11,6 +11,8 @@ export const WEIBO_ENDPOINTS = {
   profileInfo: '/ajax/profile/info',
   profileDetail: '/ajax/profile/detail',
   profilePosts: '/ajax/statuses/mymblog',
+  followCreate: '/ajax/friendships/create',
+  followDestroy: '/ajax/friendships/destory',
 } as const
 
 export type WeiboEndpointKey = keyof typeof WEIBO_ENDPOINTS

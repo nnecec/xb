@@ -1,6 +1,6 @@
 import type { SubmitComposeInput } from '@/features/weibo/models/compose'
-import type { TimelinePage } from '@/features/weibo/models/feed'
 import type { WeiboEmoticonConfig } from '@/features/weibo/models/emoticon'
+import type { TimelinePage } from '@/features/weibo/models/feed'
 import type { UserProfile } from '@/features/weibo/models/profile'
 import type { StatusCommentsPage } from '@/features/weibo/models/status'
 import type { StatusDetail } from '@/features/weibo/models/status'
@@ -20,8 +20,8 @@ import {
 } from '@/features/weibo/services/adapters/status'
 import type { WeiboTimelinePayload } from '@/features/weibo/services/adapters/timeline'
 import { adaptTimelineResponse } from '@/features/weibo/services/adapters/timeline'
-import { fetchWeiboJson } from '@/features/weibo/services/client'
-import { postWeiboForm } from '@/features/weibo/services/client'
+import { wbGet } from '@/features/weibo/services/client'
+import { wbPostForm } from '@/features/weibo/services/client'
 import type { WeiboEndpointPath } from '@/features/weibo/services/endpoints'
 import { WEIBO_ENDPOINTS } from '@/features/weibo/services/endpoints'
 
@@ -40,7 +40,7 @@ async function loadTimeline(
   path: WeiboEndpointPath,
   params: Record<string, string | number | null | undefined>,
 ): Promise<TimelinePage> {
-  const payload = await fetchWeiboJson<WeiboTimelinePayload>(path, params)
+  const payload = await wbGet<WeiboTimelinePayload>(path, params)
   return adaptTimelineResponse(payload)
 }
 
@@ -65,7 +65,7 @@ export async function loadHomeTimeline(
 }
 
 export async function loadStatusDetail(statusId: string): Promise<StatusDetail> {
-  const payload = await fetchWeiboJson<unknown>(WEIBO_ENDPOINTS.statusDetail, {
+  const payload = await wbGet<unknown>(WEIBO_ENDPOINTS.statusDetail, {
     id: statusId,
   })
 
@@ -73,7 +73,7 @@ export async function loadStatusDetail(statusId: string): Promise<StatusDetail> 
 }
 
 export async function loadStatusLongText(mblogId: string): Promise<string> {
-  const payload = await fetchWeiboJson<{ data?: { longTextContent?: string } }>(
+  const payload = await wbGet<{ data?: { longTextContent?: string } }>(
     WEIBO_ENDPOINTS.statusLongText,
     {
       id: mblogId,
@@ -84,7 +84,7 @@ export async function loadStatusLongText(mblogId: string): Promise<string> {
 }
 
 export async function loadEmoticonConfig(): Promise<WeiboEmoticonConfig> {
-  const payload = await fetchWeiboJson<WeiboEmoticonPayload>(WEIBO_ENDPOINTS.statusConfig)
+  const payload = await wbGet<WeiboEmoticonPayload>(WEIBO_ENDPOINTS.statusConfig)
   return adaptEmoticonConfigResponse(payload)
 }
 
@@ -92,7 +92,7 @@ export async function loadStatusComments(
   statusId: string,
   cursor?: string | null,
 ): Promise<StatusCommentsPage> {
-  const payload = await fetchWeiboJson<unknown>(WEIBO_ENDPOINTS.statusComments, {
+  const payload = await wbGet<unknown>(WEIBO_ENDPOINTS.statusComments, {
     flow: 0,
     is_reload: 1,
     id: statusId,
@@ -114,7 +114,7 @@ function getProfileInfoParams(lookup: ProfileLookup) {
 }
 
 async function fetchProfileInfo(lookup: ProfileLookup): Promise<UserProfile> {
-  const payload = await fetchWeiboJson<ProfileInfoPayload>(
+  const payload = await wbGet<ProfileInfoPayload>(
     WEIBO_ENDPOINTS.profileInfo,
     getProfileInfoParams(lookup),
   )
@@ -123,7 +123,7 @@ async function fetchProfileInfo(lookup: ProfileLookup): Promise<UserProfile> {
 }
 
 async function fetchProfileDetail(uid: string): Promise<ProfileDetailPayload> {
-  return fetchWeiboJson<ProfileDetailPayload>(WEIBO_ENDPOINTS.profileDetail, { uid })
+  return wbGet<ProfileDetailPayload>(WEIBO_ENDPOINTS.profileDetail, { uid })
 }
 
 export async function loadProfileHoverCard(lookup: ProfileLookup): Promise<UserProfile> {
@@ -151,6 +151,22 @@ export async function loadProfilePosts(profileId: string): Promise<TimelinePage>
     page: 1,
     feature: 0,
   })
+}
+
+export async function followUser(uid: string): Promise<UserProfile> {
+  const payload = await wbPostForm<ProfileInfoPayload>(WEIBO_ENDPOINTS.followCreate, {
+    friend_uid: uid,
+    page: 'profile',
+    lpage: 'profile',
+  })
+  return adaptProfileInfoResponse(payload)
+}
+
+export async function unfollowUser(uid: string): Promise<UserProfile> {
+  const payload = await wbPostForm<ProfileInfoPayload>(WEIBO_ENDPOINTS.followDestroy, {
+    uid,
+  })
+  return adaptProfileInfoResponse(payload)
 }
 
 interface WeiboMutationResponse {
@@ -181,14 +197,9 @@ export async function submitComposeAction(input: SubmitComposeInput): Promise<vo
   }
 
   const endpoint =
-    input.target.kind === 'comment'
-      ? WEIBO_ENDPOINTS.commentReply
-      : WEIBO_ENDPOINTS.commentCreate
+    input.target.kind === 'comment' ? WEIBO_ENDPOINTS.commentReply : WEIBO_ENDPOINTS.commentCreate
 
-  const response = await postWeiboForm<WeiboMutationResponse>(
-    endpoint,
-    buildCommentPayload(input),
-  )
+  const response = await wbPostForm<WeiboMutationResponse>(endpoint, buildCommentPayload(input))
 
   if (response.ok !== 1) {
     throw new Error(response.msg || 'weibo-compose-submit-failed')
