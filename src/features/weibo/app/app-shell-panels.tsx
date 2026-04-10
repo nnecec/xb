@@ -8,6 +8,17 @@ import { ProfilePage } from '@/features/weibo/pages/profile-page'
 import { StatusDetailPage } from '@/features/weibo/pages/status-detail-page'
 import type { HomeTimelineTab } from '@/features/weibo/services/weibo-repository'
 
+function createStatusComposeTarget(item: FeedItem, mode: 'comment' | 'repost'): ComposeTarget {
+  return {
+    kind: 'status',
+    mode,
+    statusId: item.id,
+    targetCommentId: null,
+    authorName: item.author.name,
+    excerpt: item.text.trim().slice(0, 80),
+  }
+}
+
 export function HomeStatusPanels({
   activeTimelineTab,
   isHomePageVisible,
@@ -65,9 +76,11 @@ export function HomeStatusPanels({
           hasNextPage={timelineHasNextPage}
           isFetchingNextPage={timelineIsFetchingNextPage}
           isLoading={timelineIsLoading}
+          onNavigate={onCommentClick}
           onRetry={onHomeRetry}
           onLoadNextPage={onLoadNextTimeline}
-          onCommentClick={onCommentClick}
+          onCommentClick={(item) => onStatusComment?.(createStatusComposeTarget(item, 'comment'))}
+          onRepostClick={(item) => onStatusRepost?.(createStatusComposeTarget(item, 'repost'))}
           onTabChange={onHomeTabChange}
           items={timelineItems}
         />
@@ -84,11 +97,9 @@ export function HomeStatusPanels({
           <StatusDetailPage
             detail={statusDetail}
             comments={statusComments}
-            {...({
-              onStatusComment,
-              onStatusRepost,
-              onCommentReply,
-            } as Record<string, unknown>)}
+            onStatusComment={onStatusComment}
+            onStatusRepost={onStatusRepost}
+            onCommentReply={onCommentReply}
             hasNextPage={statusCommentsHasNextPage}
             isFetchingNextPage={statusCommentsIsFetchingNextPage}
             onLoadNextPage={onLoadNextComments}
@@ -104,20 +115,30 @@ export function ProfilePanel({
   isLoading,
   posts,
   profile,
+  onNavigate,
   onCommentClick,
+  onRepostClick,
 }: {
   errorMessage: string | null
   isLoading: boolean
   posts: TimelinePage | undefined
   profile: UserProfile | undefined
+  onNavigate?: (item: FeedItem) => void
   onCommentClick?: (item: FeedItem) => void
+  onRepostClick?: (item: FeedItem) => void
 }) {
   return (
     <div className="h-full overflow-y-auto">
       {isLoading ? <PageLoadingState label="Loading this profile..." /> : null}
       {!isLoading && errorMessage ? <PageErrorState description={errorMessage} /> : null}
       {!isLoading && !errorMessage && profile && posts ? (
-        <ProfilePage posts={posts} profile={profile} onCommentClick={onCommentClick} />
+        <ProfilePage
+          posts={posts}
+          profile={profile}
+          onNavigate={onNavigate}
+          onCommentClick={onCommentClick}
+          onRepostClick={onRepostClick}
+        />
       ) : null}
     </div>
   )

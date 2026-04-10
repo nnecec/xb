@@ -8,11 +8,15 @@ import type { UserProfile } from '@/features/weibo/models/profile'
 export function ProfilePage({
   posts,
   profile,
+  onNavigate,
   onCommentClick,
+  onRepostClick,
 }: {
   posts: TimelinePage
   profile: UserProfile
+  onNavigate?: (item: FeedItem) => void
   onCommentClick?: (item: FeedItem) => void
+  onRepostClick?: (item: FeedItem) => void
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -32,7 +36,9 @@ export function ProfilePage({
           <FeedList
             items={posts.items}
             emptyLabel="暂时还没有微博内容"
+            onNavigate={onNavigate}
             onCommentClick={onCommentClick}
+            onRepostClick={onRepostClick}
           />
         </TabsContent>
 

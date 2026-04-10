@@ -181,7 +181,27 @@ export function AppShell() {
             isLoading={isProfileLoading}
             posts={profilePostsQuery.data}
             profile={profileInfoQuery.data}
-            onCommentClick={navigateToStatusDetail}
+            onNavigate={navigateToStatusDetail}
+            onCommentClick={(item) =>
+              setComposeTarget({
+                kind: 'status',
+                mode: 'comment',
+                statusId: item.id,
+                targetCommentId: null,
+                authorName: item.author.name,
+                excerpt: item.text.trim().slice(0, 80),
+              })
+            }
+            onRepostClick={(item) =>
+              setComposeTarget({
+                kind: 'status',
+                mode: 'repost',
+                statusId: item.id,
+                targetCommentId: null,
+                authorName: item.author.name,
+                excerpt: item.text.trim().slice(0, 80),
+              })
+            }
           />
         </ShellFrame>
         {composeModal}

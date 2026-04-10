@@ -4,6 +4,7 @@ import { Heart } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ImageCarousel } from '@/features/weibo/components/image-carousel'
 import { ImageGrid } from '@/features/weibo/components/image-grid'
+import type { ComposeTarget } from '@/features/weibo/models/compose'
 import { StatusText } from '@/features/weibo/components/status-text'
 import type { FeedImage } from '@/features/weibo/models/feed'
 import { CreatedAtBadge, UserAvatar } from '@/features/weibo/components/user-presenter'
@@ -21,7 +22,32 @@ function CommentImageBlock({
   return <ImageGrid images={images} onImageClick={onImageClick} className={className} />
 }
 
-function NestedCommentCard({ comment }: { comment: CommentItem }) {
+function createCommentComposeTarget({
+  rootStatusId,
+  comment,
+}: {
+  rootStatusId: string
+  comment: CommentItem
+}): ComposeTarget {
+  return {
+    kind: 'comment',
+    mode: 'comment',
+    statusId: rootStatusId,
+    targetCommentId: comment.id,
+    authorName: comment.author.name,
+    excerpt: comment.text.trim().slice(0, 80),
+  }
+}
+
+function NestedCommentCard({
+  comment,
+  rootStatusId,
+  onCommentReply,
+}: {
+  comment: CommentItem
+  rootStatusId: string
+  onCommentReply?: (target: ComposeTarget) => void
+}) {
   const [imageDialogOpen, setImageDialogOpen] = useState(false)
   const [startImageIndex, setStartImageIndex] = useState(0)
 
@@ -50,10 +76,28 @@ function NestedCommentCard({ comment }: { comment: CommentItem }) {
           }}
           className="mt-2 grid max-w-[180px] grid-cols-3 gap-1"
         />
+        <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+          <button
+            type="button"
+            className="rounded-md px-2 py-1 text-xs hover:bg-muted"
+            onClick={() => onCommentReply?.(createCommentComposeTarget({ rootStatusId, comment }))}
+          >
+            回复评论
+          </button>
+          <div className="flex items-center gap-1">
+            <Heart className="size-3.5" />
+            <span>{comment.likeCount}</span>
+          </div>
+        </div>
         {comment.comments.length > 0 ? (
           <div className="mt-2 flex flex-col gap-2 border-l border-border/70 pl-2">
             {comment.comments.map((child) => (
-              <NestedCommentCard key={child.id} comment={child} />
+              <NestedCommentCard
+                key={child.id}
+                comment={child}
+                rootStatusId={rootStatusId}
+                onCommentReply={onCommentReply}
+              />
             ))}
           </div>
         ) : null}
@@ -68,7 +112,15 @@ function NestedCommentCard({ comment }: { comment: CommentItem }) {
   )
 }
 
-export function CommentCard({ item }: { item: CommentItem }) {
+export function CommentCard({
+  item,
+  rootStatusId,
+  onCommentReply,
+}: {
+  item: CommentItem
+  rootStatusId: string
+  onCommentReply?: (target: ComposeTarget) => void
+}) {
   const [imageDialogOpen, setImageDialogOpen] = useState(false)
   const [startImageIndex, setStartImageIndex] = useState(0)
   const [replyImageDialogOpen, setReplyImageDialogOpen] = useState(false)
@@ -129,14 +181,28 @@ export function CommentCard({ item }: { item: CommentItem }) {
           {item.comments.length > 0 ? (
             <div className="flex flex-col gap-2">
               {item.comments.map((child) => (
-                <NestedCommentCard key={child.id} comment={child} />
+                <NestedCommentCard
+                  key={child.id}
+                  comment={child}
+                  rootStatusId={rootStatusId}
+                  onCommentReply={onCommentReply}
+                />
               ))}
             </div>
           ) : null}
 
-          <div className="flex items-center justify-end gap-1 text-xs text-muted-foreground">
-            <Heart className="size-3.5" />
-            <span>{item.likeCount}</span>
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <button
+              type="button"
+              className="rounded-md px-2 py-1 text-xs hover:bg-muted"
+              onClick={() => onCommentReply?.(createCommentComposeTarget({ rootStatusId, comment: item }))}
+            >
+              回复评论
+            </button>
+            <div className="flex items-center gap-1">
+              <Heart className="size-3.5" />
+              <span>{item.likeCount}</span>
+            </div>
           </div>
         </CardContent>
       </Card>

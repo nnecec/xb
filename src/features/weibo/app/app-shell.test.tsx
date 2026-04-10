@@ -230,5 +230,7 @@ describe('AppShell', () => {
     await waitFor(() => {
       expect(vi.mocked(toast.success)).toHaveBeenCalledWith('回复成功')
     })
+
+    expect(screen.queryByRole('textbox', { name: '回复内容' })).not.toBeInTheDocument()
   })
 })

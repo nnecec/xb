@@ -20,7 +20,10 @@ export function ImageGrid({
           key={image.id}
           type="button"
           className="overflow-hidden rounded-lg border border-border/70"
-          onClick={() => onImageClick(index)}
+          onClick={(event) => {
+            event.stopPropagation()
+            onImageClick(index)
+          }}
         >
           <img src={image.thumbnailUrl} alt="" className="aspect-square w-full object-cover" />
         </button>

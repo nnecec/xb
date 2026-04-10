@@ -14,9 +14,11 @@ export function HomeTimelinePage({
   errorMessage,
   hasNextPage,
   isFetchingNextPage,
+  onNavigate,
   onRetry,
   onLoadNextPage,
   onCommentClick,
+  onRepostClick,
   onTabChange,
   items,
 }: {
@@ -25,9 +27,11 @@ export function HomeTimelinePage({
   errorMessage: string | null
   hasNextPage: boolean
   isFetchingNextPage: boolean
+  onNavigate?: (item: FeedItem) => void
   onRetry: () => void
   onLoadNextPage: () => void
-  onCommentClick: (item: FeedItem) => void
+  onCommentClick?: (item: FeedItem) => void
+  onRepostClick?: (item: FeedItem) => void
   onTabChange: (value: 'for-you' | 'following') => void
   items: TimelinePage['items']
 }) {
@@ -75,7 +79,9 @@ export function HomeTimelinePage({
           <FeedList
             items={items}
             emptyLabel="No posts are available for this timeline yet."
+            onNavigate={onNavigate}
             onCommentClick={onCommentClick}
+            onRepostClick={onRepostClick}
           />
         ) : null}
         {hasNextPage ? (

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Heart, MessageCircle, Repeat2 } from 'lucide-react'
-import { useState } from 'react'
+import { type MouseEvent, useState } from 'react'
 import { Link } from 'react-router'
 
 import { AspectRatio } from '@/components/ui/aspect-ratio'
@@ -27,11 +27,23 @@ function FeedMediaBlock({ item }: { item: FeedItem }) {
   }
 
   return item.media.type === 'audio' ? (
-    <audio controls src={item.media.streamUrl} className="w-full" />
+    <div
+      onClick={(event) => {
+        event.stopPropagation()
+      }}
+    >
+      <audio controls src={item.media.streamUrl} className="w-full" />
+    </div>
   ) : (
-    <AspectRatio ratio={16 / 9}>
-      <VideoPlayer src={item.media.streamUrl} poster={item.media.coverUrl ?? undefined} />
-    </AspectRatio>
+    <div
+      onClick={(event) => {
+        event.stopPropagation()
+      }}
+    >
+      <AspectRatio ratio={16 / 9}>
+        <VideoPlayer src={item.media.streamUrl} poster={item.media.coverUrl ?? undefined} />
+      </AspectRatio>
+    </div>
   )
 }
 
@@ -43,7 +55,10 @@ function FeedAuthorHeader({
   return (
     <CardHeader className="grid grid-cols-[48px_minmax(0,1fr)] gap-3 px-4">
       <UserHoverCard uid={item.author.id}>
-        <Link to={`/n/${encodeURIComponent(item.author.name)}`}>
+        <Link
+          to={`/n/${encodeURIComponent(item.author.name)}`}
+          onClick={(event) => event.stopPropagation()}
+        >
           <UserAvatar
             author={item.author}
             sizeClassName="size-12"
@@ -54,7 +69,10 @@ function FeedAuthorHeader({
       <div className="flex min-w-0 flex-col gap-1">
         <div className="flex flex-wrap items-center gap-2">
           <UserHoverCard uid={item.author.id}>
-            <Link to={`/n/${encodeURIComponent(item.author.name)}`}>
+            <Link
+              to={`/n/${encodeURIComponent(item.author.name)}`}
+              onClick={(event) => event.stopPropagation()}
+            >
               <CardTitle className="truncate text-base hover:underline">
                 {item.author.name}
               </CardTitle>
@@ -78,7 +96,11 @@ function RetweetedAuthorHeader({
   return (
     <div className="mb-3 grid grid-cols-[36px_minmax(0,1fr)] gap-2">
       <UserHoverCard uid={item.author.id}>
-        <button type="button" className="cursor-pointer">
+        <button
+          type="button"
+          className="cursor-pointer"
+          onClick={(event) => event.stopPropagation()}
+        >
           <UserAvatar
             author={item.author}
             sizeClassName="size-9"
@@ -89,7 +111,11 @@ function RetweetedAuthorHeader({
       <div className="flex min-w-0 flex-col gap-1">
         <div className="flex flex-wrap items-center gap-2">
           <UserHoverCard uid={item.author.id}>
-            <button type="button" className="cursor-pointer text-left">
+            <button
+              type="button"
+              className="cursor-pointer text-left"
+              onClick={(event) => event.stopPropagation()}
+            >
               <p className="truncate text-sm font-medium text-foreground hover:underline">
                 {item.author.name}
               </p>
@@ -130,7 +156,10 @@ function FeedTextBlock({
             className="mt-2 inline-flex"
             size="xs"
             variant="secondary"
-            onClick={onLoadLongText}
+            onClick={(event) => {
+              event.stopPropagation()
+              onLoadLongText()
+            }}
             disabled={isLongTextLoading}
           >
             {isLongTextLoading ? '加载中...' : hasLongTextError ? '重试全文' : '全文'}
@@ -143,7 +172,7 @@ function FeedTextBlock({
 
 function useFeedLongText(item: Pick<FeedItem, 'isLongText' | 'mblogId' | 'text'>) {
   const [longTextEnabled, setLongTextEnabled] = useState(false)
-  const canLoadLongText = item.isLongText && Boolean(item.mblogId)
+  const canLoadLongText = item.isLongText
   const {
     data: longText,
     error: longTextError,
@@ -179,28 +208,58 @@ function useFeedLongText(item: Pick<FeedItem, 'isLongText' | 'mblogId' | 'text'>
 function FeedActions({
   item,
   onCommentClick,
+  onRepostClick,
+  onLikeClick,
 }: {
   item: FeedItem
   onCommentClick?: (item: FeedItem) => void
+  onRepostClick?: (item: FeedItem) => void
+  onLikeClick?: (item: FeedItem) => void
 }) {
   return (
     <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
       <button
         type="button"
-        className="flex items-center justify-center gap-1 rounded-full bg-muted px-3 py-2 text-left"
-        onClick={() => onCommentClick?.(item)}
+        aria-label="回复微博"
+        className="group flex items-center justify-center gap-1 rounded-full bg-muted px-3 py-2 text-left transition-colors hover:bg-sky-50 hover:text-sky-500"
+        onClick={(event) => {
+          event.stopPropagation()
+          onCommentClick?.(item)
+        }}
       >
-        <MessageCircle className="size-3.5" />
-        <span>{formatCount(item.stats.comments)}</span>
+        <MessageCircle className="size-3.5 transition-colors group-hover:text-sky-500" />
+        <span className="transition-colors group-hover:text-sky-500">
+          {formatCount(item.stats.comments)}
+        </span>
       </button>
-      <div className="flex items-center justify-center gap-1 rounded-full bg-muted px-3 py-2">
-        <Repeat2 className="size-3.5" />
-        <span>{formatCount(item.stats.reposts)}</span>
-      </div>
-      <div className="flex items-center justify-center gap-1 rounded-full bg-muted px-3 py-2">
-        <Heart className="size-3.5" />
-        <span>{formatCount(item.stats.likes)}</span>
-      </div>
+      <button
+        type="button"
+        aria-label="转发微博"
+        className="group flex items-center justify-center gap-1 rounded-full bg-muted px-3 py-2 transition-colors hover:bg-emerald-50 hover:text-emerald-500"
+        onClick={(event) => {
+          event.stopPropagation()
+          onRepostClick?.(item)
+        }}
+      >
+        <Repeat2 className="size-3.5 transition-colors group-hover:text-emerald-500" />
+        <span className="transition-colors group-hover:text-emerald-500">
+          {formatCount(item.stats.reposts)}
+        </span>
+      </button>
+      <button
+        type="button"
+        aria-label="点赞微博"
+        className="group flex items-center justify-center gap-1 rounded-full bg-muted px-3 py-2 transition-colors hover:bg-rose-50 hover:text-rose-500"
+        onClick={(event) => {
+          event.stopPropagation()
+          onLikeClick?.(item)
+        }}
+      >
+        <Heart className="size-3.5 transition-colors group-hover:text-rose-500" />
+        <span className="transition-colors group-hover:text-rose-500">
+          {formatCount(item.stats.likes)}
+        </span>
+      </button>
     </div>
   )
 }
@@ -245,10 +304,14 @@ function RetweetedFeedBlock({
 
 export function FeedCard({
   item,
+  onNavigate,
   onCommentClick,
+  onRepostClick,
 }: {
   item: FeedItem
+  onNavigate?: (item: FeedItem) => void
   onCommentClick?: (item: FeedItem) => void
+  onRepostClick?: (item: FeedItem) => void
 }) {
   const [imageDialogOpen, setImageDialogOpen] = useState(false)
   const [startImageIndex, setStartImageIndex] = useState(0)
@@ -268,9 +331,29 @@ export function FeedCard({
     setImageDialogOpen(true)
   }
 
+  const handleCardClick = (event: MouseEvent<HTMLElement>) => {
+    if (!onNavigate) {
+      return
+    }
+
+    const target = event.target as HTMLElement
+    if (target.closest('a,button,[role="button"],input,textarea,select,label')) {
+      return
+    }
+
+    onNavigate(item)
+  }
+
   return (
     <>
-      <Card className="gap-4 rounded-[28px] border-border/70 bg-card/95 py-4 shadow-none">
+      <Card
+        className={[
+          'gap-4 rounded-[28px] border-border/70 bg-card/95 py-4 shadow-none',
+          onNavigate ? 'cursor-pointer' : '',
+        ].join(' ')}
+        data-testid="feed-card-body"
+        onClick={handleCardClick}
+      >
         <FeedAuthorHeader item={item} />
         <CardContent className="flex flex-col gap-4 px-4">
           <FeedTextBlock
@@ -299,8 +382,7 @@ export function FeedCard({
               }}
             />
           ) : null}
-
-          <FeedActions item={item} onCommentClick={onCommentClick} />
+          <FeedActions item={item} onCommentClick={onCommentClick} onRepostClick={onRepostClick} />
         </CardContent>
       </Card>
 

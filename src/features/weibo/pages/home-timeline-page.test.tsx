@@ -15,11 +15,13 @@ describe('HomeTimelinePage', () => {
             activeTab="for-you"
             errorMessage={null}
             isLoading={false}
+            onNavigate={vi.fn()}
             onRetry={vi.fn()}
             hasNextPage={false}
             isFetchingNextPage={false}
             onLoadNextPage={vi.fn()}
             onCommentClick={vi.fn()}
+            onRepostClick={vi.fn()}
             onTabChange={vi.fn()}
             items={[
               {
