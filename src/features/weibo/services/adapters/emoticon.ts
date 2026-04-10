@@ -5,9 +5,81 @@ import type {
 } from '@/features/weibo/models/emoticon'
 
 export interface WeiboEmoticonPayload {
-  emoticon?: {
-    ZH_CN?: Record<string, Array<{ phrase?: string; url?: string }>>
+  data?: {
+    emoticon?: WeiboEmoticonLocaleGroups
   }
+  emoticon?: Record<string, WeiboEmoticonLocaleGroups>
+}
+
+type WeiboEmoticonLocaleGroups = Record<string, Array<{ phrase?: string; url?: string }>>
+
+function resolveLocaleGroups(payload: WeiboEmoticonPayload): WeiboEmoticonLocaleGroups {
+  const rootEmoticon = payload.emoticon as Record<string, unknown> | undefined
+  const nestedEmoticon = payload.data?.emoticon as Record<string, unknown> | undefined
+
+  type EmoticonArray = Array<{ phrase?: string; url?: string }>
+
+  if (nestedEmoticon && 'ZH_CN' in nestedEmoticon) {
+    const zhCn = nestedEmoticon.ZH_CN as Record<string, EmoticonArray> | undefined
+    if (zhCn && Object.keys(zhCn).length > 0) {
+      return zhCn as WeiboEmoticonLocaleGroups
+    }
+  }
+
+  if (rootEmoticon && 'ZH_CN' in rootEmoticon) {
+    const zhCn = rootEmoticon.ZH_CN as Record<string, EmoticonArray> | undefined
+    if (zhCn && Object.keys(zhCn).length > 0) {
+      return zhCn as WeiboEmoticonLocaleGroups
+    }
+  }
+
+  if (nestedEmoticon && Object.keys(nestedEmoticon).length > 0) {
+    for (const value of Object.values(nestedEmoticon)) {
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        return value as WeiboEmoticonLocaleGroups
+      }
+    }
+  }
+
+  if (
+    rootEmoticon &&
+    typeof rootEmoticon === 'object' &&
+    !Array.isArray(rootEmoticon) &&
+    Object.keys(rootEmoticon).length > 0
+  ) {
+    for (const value of Object.values(rootEmoticon)) {
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        return value as WeiboEmoticonLocaleGroups
+      }
+    }
+  }
+
+  if (nestedEmoticon) {
+    const flatGroups = resolveGroupsFromFlatLocale(nestedEmoticon as Record<string, unknown>)
+    if (flatGroups) {
+      return flatGroups
+    }
+  }
+
+  return {}
+}
+
+function isEmoticonArray(value: unknown): value is Array<{ phrase?: string; url?: string }> {
+  return Array.isArray(value) && typeof value[0] === 'object'
+}
+
+function resolveGroupsFromFlatLocale(
+  nestedEmoticon: Record<string, unknown>,
+): WeiboEmoticonLocaleGroups | null {
+  const entries = Object.entries(nestedEmoticon)
+  for (const [, value] of entries) {
+    if (isEmoticonArray(value)) {
+      const groupName = entries[0][0]
+      const emoticonArray = value as Array<{ phrase?: string; url?: string }>
+      return { [groupName]: emoticonArray } as WeiboEmoticonLocaleGroups
+    }
+  }
+  return null
 }
 
 function normalizeItem(entry: { phrase?: string; url?: string }): WeiboEmoticonItem | null {
@@ -21,7 +93,7 @@ function normalizeItem(entry: { phrase?: string; url?: string }): WeiboEmoticonI
 }
 
 export function adaptEmoticonConfigResponse(payload: WeiboEmoticonPayload): WeiboEmoticonConfig {
-  const localeGroups = payload.emoticon?.ZH_CN ?? {}
+  const localeGroups = resolveLocaleGroups(payload)
   const groups: WeiboEmoticonGroup[] = []
   const phraseMap: Record<string, WeiboEmoticonItem> = {}
 

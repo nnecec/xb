@@ -1,8 +1,9 @@
 'use client'
 
-import '@videojs/react/video/skin.css'
-import { createPlayer, Poster, videoFeatures } from '@videojs/react'
-import { VideoSkin, Video } from '@videojs/react/video'
+import { createPlayer } from '@videojs/react'
+import { MinimalVideoSkin, Video, videoFeatures } from '@videojs/react/video'
+
+import '@videojs/react/video/minimal-skin.css'
 
 const Player = createPlayer({ features: [...videoFeatures] })
 
@@ -14,10 +15,9 @@ interface VideoPlayerProps {
 export function VideoPlayer({ src, poster }: VideoPlayerProps) {
   return (
     <Player.Provider>
-      <VideoSkin>
+      <MinimalVideoSkin poster={poster}>
         <Video src={src} playsInline />
-        <Poster src={poster} />
-      </VideoSkin>
+      </MinimalVideoSkin>
     </Player.Provider>
   )
 }

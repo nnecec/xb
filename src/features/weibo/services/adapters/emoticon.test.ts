@@ -66,4 +66,58 @@ describe('adaptEmoticonConfigResponse', () => {
       phraseMap: {},
     })
   })
+
+  it('unwraps payloads that put groups under data.emoticon', () => {
+    expect(
+      adaptEmoticonConfigResponse({
+        data: {
+          emoticon: {
+            默认: [
+              {
+                phrase: '[二哈]',
+                url: 'https://face.t.sinajs.cn/erha.png',
+              },
+            ],
+          },
+        },
+      }),
+    ).toEqual({
+      groups: [
+        {
+          title: '默认',
+          items: [{ phrase: '[二哈]', url: 'https://face.t.sinajs.cn/erha.png' }],
+        },
+      ],
+      phraseMap: {
+        '[二哈]': { phrase: '[二哈]', url: 'https://face.t.sinajs.cn/erha.png' },
+      },
+    })
+  })
+
+  it('falls back to the first locale key when ZH_CN is absent', () => {
+    expect(
+      adaptEmoticonConfigResponse({
+        emoticon: {
+          EN_US: {
+            Default: [
+              {
+                phrase: '[doge]',
+                url: 'https://face.t.sinajs.cn/doge.png',
+              },
+            ],
+          },
+        },
+      }),
+    ).toEqual({
+      groups: [
+        {
+          title: 'Default',
+          items: [{ phrase: '[doge]', url: 'https://face.t.sinajs.cn/doge.png' }],
+        },
+      ],
+      phraseMap: {
+        '[doge]': { phrase: '[doge]', url: 'https://face.t.sinajs.cn/doge.png' },
+      },
+    })
+  })
 })

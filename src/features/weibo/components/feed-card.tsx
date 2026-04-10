@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Heart, MessageCircle, Repeat2 } from 'lucide-react'
-import { type MouseEvent, useState } from 'react'
+import { type MouseEvent, useRef, useState } from 'react'
 import { Link } from 'react-router'
 
 import { AspectRatio } from '@/components/ui/aspect-ratio'
@@ -14,7 +14,6 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { ImageCarousel } from '@/features/weibo/components/image-carousel'
-import { ImageGrid } from '@/features/weibo/components/image-grid'
 import { StatusText } from '@/features/weibo/components/status-text'
 import { UserHoverCard } from '@/features/weibo/components/user-hover-card'
 import { CreatedAtBadge, UserAvatar } from '@/features/weibo/components/user-presenter'
@@ -26,6 +25,17 @@ import { VideoPlayer } from './video-player'
 function formatCount(value: number) {
   if (value <= 9999) return String(value)
   return `${(value / 10000).toFixed(1)}万`
+}
+
+function hasTextSelectionWithin(container: HTMLElement) {
+  const selection = window.getSelection()
+  if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
+    return false
+  }
+
+  const range = selection.getRangeAt(0)
+  const commonAncestor = range.commonAncestorContainer
+  return commonAncestor === container || container.contains(commonAncestor)
 }
 
 function FeedMediaBlock({ item }: { item: FeedItem }) {
@@ -300,11 +310,7 @@ function RetweetedFeedBlock({
       <div className="mt-3">
         <FeedMediaBlock item={item} />
       </div>
-      <ImageGrid
-        images={item.images}
-        className="mt-3 grid grid-cols-3 gap-2"
-        onImageClick={(index) => onImageClick(item.images, index)}
-      />
+      <ImageCarousel images={item.images} />
     </div>
   )
 }
@@ -324,6 +330,8 @@ export function FeedCard({
   const [startImageIndex, setStartImageIndex] = useState(0)
   /** When set, preview dialog shows this list (retweet gallery); otherwise main post `item.images`. */
   const [carouselImages, setCarouselImages] = useState<FeedImage[] | null>(null)
+  const pointerDownPositionRef = useRef<{ x: number; y: number } | null>(null)
+  const suppressNextClickRef = useRef(false)
   const {
     resolvedText,
     shouldShowLoadLongText,
@@ -338,15 +346,48 @@ export function FeedCard({
     setImageDialogOpen(true)
   }
 
+  const handleCardMouseDown = (event: MouseEvent<HTMLElement>) => {
+    if (event.button !== 0) {
+      pointerDownPositionRef.current = null
+      return
+    }
+
+    suppressNextClickRef.current = false
+    pointerDownPositionRef.current = { x: event.clientX, y: event.clientY }
+  }
+
+  const handleCardMouseUp = (event: MouseEvent<HTMLElement>) => {
+    if (event.button !== 0 || !pointerDownPositionRef.current) {
+      return
+    }
+
+    const deltaX = event.clientX - pointerDownPositionRef.current.x
+    const deltaY = event.clientY - pointerDownPositionRef.current.y
+    suppressNextClickRef.current = Math.hypot(deltaX, deltaY) > 4
+    pointerDownPositionRef.current = null
+  }
+
   const handleCardClick = (event: MouseEvent<HTMLElement>) => {
-    event.preventDefault()
     event.stopPropagation()
     if (!onNavigate) {
       return
     }
 
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      return
+    }
+
+    if (suppressNextClickRef.current) {
+      suppressNextClickRef.current = false
+      return
+    }
+
     const target = event.target as HTMLElement
     if (target.closest('a,button,[role="button"],input,textarea,select,label')) {
+      return
+    }
+
+    if (hasTextSelectionWithin(event.currentTarget)) {
       return
     }
 
@@ -357,7 +398,12 @@ export function FeedCard({
     <>
       <Card className="gap-4 rounded-3xl" data-testid="feed-card-body">
         <FeedAuthorHeader item={item} />
-        <CardContent className="flex flex-col gap-4" onClick={handleCardClick}>
+        <CardContent
+          className="flex flex-col gap-4"
+          onClick={handleCardClick}
+          onMouseDown={handleCardMouseDown}
+          onMouseUp={handleCardMouseUp}
+        >
           <FeedTextBlock
             item={item}
             text={resolvedText}
@@ -369,12 +415,7 @@ export function FeedCard({
 
           <FeedMediaBlock item={item} />
 
-          <ImageGrid
-            images={item.images}
-            onImageClick={(index) => {
-              openImageDialog(null, index)
-            }}
-          />
+          <ImageCarousel images={carouselImages ?? item.images} />
 
           {item.retweetedStatus ? (
             <RetweetedFeedBlock
@@ -389,16 +430,6 @@ export function FeedCard({
           <FeedActions item={item} onCommentClick={onCommentClick} onRepostClick={onRepostClick} />
         </CardFooter>
       </Card>
-
-      <ImageCarousel
-        images={carouselImages ?? item.images}
-        startIndex={startImageIndex}
-        open={imageDialogOpen}
-        onOpenChange={(open) => {
-          setImageDialogOpen(open)
-          if (!open) setCarouselImages(null)
-        }}
-      />
     </>
   )
 }

@@ -1,4 +1,10 @@
-import { matchQuery, MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import {
+  matchQuery,
+  MutationCache,
+  QueryClient,
+  QueryClientProvider,
+  type QueryKey,
+} from '@tanstack/react-query'
 import { BrowserRouter, Route, Routes } from 'react-router'
 import { Toaster } from 'sonner'
 
@@ -9,10 +15,12 @@ import { WeiboHistorySync } from '@/features/weibo/app/weibo-history-sync'
 const queryClient = new QueryClient({
   mutationCache: new MutationCache({
     onSuccess(data, variables, context, mutation) {
-      if (mutation.meta?.invalidates) {
+      const invalidates = mutation.meta?.invalidates as QueryKey[] | undefined
+
+      if (invalidates) {
         queryClient.invalidateQueries({
           predicate: (query) =>
-            mutation.meta?.invalidates?.some((queryKey) => matchQuery({ queryKey }, query)) ?? true,
+            invalidates.some((queryKey: QueryKey) => matchQuery({ queryKey }, query)),
         })
       }
     },

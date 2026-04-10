@@ -105,6 +105,18 @@ describe('FeedCard', () => {
     )
   })
 
+  it('does not trigger detail callback after dragging across card body text', () => {
+    const onNavigate = vi.fn()
+    renderCard({ onNavigate })
+
+    const text = screen.getByText('preview content')
+    fireEvent.mouseDown(text, { button: 0, clientX: 10, clientY: 10 })
+    fireEvent.mouseUp(text, { button: 0, clientX: 26, clientY: 12 })
+    fireEvent.click(text, { button: 0, clientX: 26, clientY: 12 })
+
+    expect(onNavigate).not.toHaveBeenCalled()
+  })
+
   it('does not trigger card navigation when clicking comment or repost actions', () => {
     const onNavigate = vi.fn()
     const onCommentClick = vi.fn()
