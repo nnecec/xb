@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Route, Routes } from 'react-router'
+import { Toaster } from 'sonner'
 
 import { usePrewarmEmoticonConfig } from '@/features/weibo/app/emoticon-query'
 import { AppShell } from '@/features/weibo/app/app-shell'
@@ -33,6 +34,7 @@ export function AppRoot() {
   return (
     <QueryClientProvider client={queryClient}>
       <AppRootBootstrap />
+      <Toaster richColors position="top-center" />
     </QueryClientProvider>
   )
 }

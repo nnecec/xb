@@ -1,3 +1,4 @@
+import type { ComposeTarget } from '@/features/weibo/models/compose'
 import { PageErrorState, PageLoadingState } from '@/features/weibo/components/page-state'
 import type { FeedItem, TimelinePage } from '@/features/weibo/models/feed'
 import type { UserProfile } from '@/features/weibo/models/profile'
@@ -22,6 +23,9 @@ export function HomeStatusPanels({
   statusDetail,
   statusDetailErrorMessage,
   statusDetailIsLoading,
+  onStatusComment,
+  onStatusRepost,
+  onCommentReply,
   onCommentClick,
   onHomeRetry,
   onHomeTabChange,
@@ -42,6 +46,9 @@ export function HomeStatusPanels({
   statusDetail: StatusDetail | undefined
   statusDetailErrorMessage: string | null
   statusDetailIsLoading: boolean
+  onStatusComment?: (target: ComposeTarget) => void
+  onStatusRepost?: (target: ComposeTarget) => void
+  onCommentReply?: (target: ComposeTarget) => void
   onCommentClick: (item: FeedItem) => void
   onHomeRetry: () => void
   onHomeTabChange: (tab: HomeTimelineTab) => void
@@ -77,6 +84,11 @@ export function HomeStatusPanels({
           <StatusDetailPage
             detail={statusDetail}
             comments={statusComments}
+            {...({
+              onStatusComment,
+              onStatusRepost,
+              onCommentReply,
+            } as Record<string, unknown>)}
             hasNextPage={statusCommentsHasNextPage}
             isFetchingNextPage={statusCommentsIsFetchingNextPage}
             onLoadNextPage={onLoadNextComments}
