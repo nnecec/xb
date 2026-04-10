@@ -14,6 +14,8 @@ import { CreatedAtBadge, UserAvatar } from '@/features/weibo/components/user-pre
 import type { FeedImage, FeedItem } from '@/features/weibo/models/feed'
 import { loadStatusLongText } from '@/features/weibo/services/weibo-repository'
 
+import { VideoPlayer } from './video-player'
+
 function formatCount(value: number) {
   if (value <= 9999) return String(value)
   return `${(value / 10000).toFixed(1)}万`
@@ -28,12 +30,7 @@ function FeedMediaBlock({ item }: { item: FeedItem }) {
     <audio controls src={item.media.streamUrl} className="w-full" />
   ) : (
     <AspectRatio ratio={16 / 9}>
-      <video
-        controls
-        src={item.media.streamUrl}
-        poster={item.media.coverUrl ?? undefined}
-        className="w-full rounded-xl object-contain h-full"
-      />
+      <VideoPlayer src={item.media.streamUrl} poster={item.media.coverUrl ?? undefined} />
     </AspectRatio>
   )
 }
@@ -94,14 +91,14 @@ function RetweetedAuthorHeader({
           <UserHoverCard uid={item.author.id}>
             <button type="button" className="cursor-pointer text-left">
               <p className="truncate text-sm font-medium text-foreground hover:underline">
-                @{item.author.name}
+                {item.author.name}
               </p>
             </button>
           </UserHoverCard>
           <CreatedAtBadge label={item.createdAtLabel} />
         </div>
         <p className="text-xs text-muted-foreground">
-          {item.source ? `${item.source}` : ''} {item.regionName ? `· ${item.regionName}` : ''}
+          {item.source ? `${item.source}` : ''} {item.regionName ? `${item.regionName}` : ''}
         </p>
       </div>
     </div>
@@ -127,18 +124,19 @@ function FeedTextBlock({
     <div>
       <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">
         <StatusText item={item} text={text} />
+
+        {canLoadLongText ? (
+          <Button
+            className="mt-2 inline-flex"
+            size="xs"
+            variant="secondary"
+            onClick={onLoadLongText}
+            disabled={isLongTextLoading}
+          >
+            {isLongTextLoading ? '加载中...' : hasLongTextError ? '重试全文' : '全文'}
+          </Button>
+        ) : null}
       </p>
-      {canLoadLongText ? (
-        <Button
-          className="mt-2"
-          size="xs"
-          variant="secondary"
-          onClick={onLoadLongText}
-          disabled={isLongTextLoading}
-        >
-          {isLongTextLoading ? '加载中...' : hasLongTextError ? '重试全文' : '全文'}
-        </Button>
-      ) : null}
     </div>
   )
 }

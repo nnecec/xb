@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppShell } from '@/features/weibo/app/app-shell'
 import {
   loadProfileHoverCard,
+  loadHomeTimeline,
   loadProfilePosts,
   loadStatusComments,
   loadStatusDetail,
@@ -51,6 +52,19 @@ describe('AppShell', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     resetAppSettingsStoreForTest()
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: vi.fn().mockImplementation(() => ({
+        matches: false,
+        media: '',
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    })
     const store = getAppSettingsStore({
       get: async () => ({ [APP_SETTINGS_STORAGE_KEY]: undefined }),
       set: async () => {},
@@ -60,12 +74,11 @@ describe('AppShell', () => {
       ...store.getState(),
       theme: 'system',
       rewriteEnabled: true,
-      homeTimelineTab: 'for-you',
       isHydrated: true,
     })
   })
 
-  it('writes the selected home timeline tab into the global settings store', async () => {
+  it('navigates to the following timeline when the home tab changes', async () => {
     const queryClient = new QueryClient()
     render(
       <QueryClientProvider client={queryClient}>
@@ -78,7 +91,7 @@ describe('AppShell', () => {
     fireEvent.mouseDown(screen.getByRole('tab', { name: 'Following' }))
 
     await waitFor(() => {
-      expect(getAppSettingsStore().getState().homeTimelineTab).toBe('following')
+      expect(vi.mocked(loadHomeTimeline)).toHaveBeenLastCalledWith('following', { cursor: null })
     })
   })
 

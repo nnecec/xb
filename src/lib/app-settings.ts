@@ -1,11 +1,8 @@
-import type { HomeTimelineTab } from '@/features/weibo/services/weibo-repository'
-
 export type AppTheme = 'system' | 'light' | 'dark'
 
 export interface AppSettings {
   theme: AppTheme
   rewriteEnabled: boolean
-  homeTimelineTab: HomeTimelineTab
 }
 
 export interface AppSettingsStorageArea {
@@ -18,15 +15,10 @@ export const APP_SETTINGS_STORAGE_KEY = 'xb:app-settings'
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   theme: 'system',
   rewriteEnabled: true,
-  homeTimelineTab: 'for-you',
 }
 
 function isAppTheme(value: unknown): value is AppTheme {
   return value === 'system' || value === 'light' || value === 'dark'
-}
-
-function isHomeTimelineTab(value: unknown): value is HomeTimelineTab {
-  return value === 'for-you' || value === 'following'
 }
 
 export function normalizeAppSettings(value: unknown): AppSettings {
@@ -43,9 +35,6 @@ export function normalizeAppSettings(value: unknown): AppSettings {
     rewriteEnabled: typeof candidate.rewriteEnabled === 'boolean'
       ? candidate.rewriteEnabled
       : DEFAULT_APP_SETTINGS.rewriteEnabled,
-    homeTimelineTab: isHomeTimelineTab(candidate.homeTimelineTab)
-      ? candidate.homeTimelineTab
-      : DEFAULT_APP_SETTINGS.homeTimelineTab,
   }
 }
 

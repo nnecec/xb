@@ -35,6 +35,7 @@ describe('bindShellState', () => {
 
     expect(container.classList.contains('dark')).toBe(true)
     expect(appRoot.getAttribute('data-xb-hidden')).toBeNull()
+    expect(document.documentElement.style.overflow).toBe('auto')
 
     cleanup()
   })
@@ -66,10 +67,12 @@ describe('bindShellState', () => {
 
     expect(container.classList.contains('dark')).toBe(true)
     expect(appRoot.getAttribute('data-xb-hidden')).toBe('true')
+    expect(document.documentElement.style.overflow).toBe('hidden')
 
     cleanup()
 
     expect(container.classList.contains('dark')).toBe(false)
     expect(appRoot.getAttribute('data-xb-hidden')).toBeNull()
+    expect(document.documentElement.style.overflow).toBe('auto')
   })
 })

@@ -23,6 +23,11 @@ export interface FeedMedia {
   coverUrl: string | null
 }
 
+export interface FeedEmoticon {
+  phrase: string
+  url: string
+}
+
 export interface FeedUrlEntity {
   shortUrl: string
   title: string
@@ -44,6 +49,7 @@ export interface FeedItem {
   stats: FeedStats
   images: FeedImage[]
   media: FeedMedia | null
+  emoticons?: Record<string, FeedEmoticon>
   urlEntities?: FeedUrlEntity[]
   topicEntities?: FeedTopicEntity[]
   regionName?: string

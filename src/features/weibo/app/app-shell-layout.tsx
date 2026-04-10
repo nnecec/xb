@@ -49,7 +49,7 @@ export function ShellFrame({
 }: ShellFrameProps) {
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
-      <div className="mx-auto flex h-full w-full gap-3 px-3 py-3 md:gap-4 md:px-4 md:py-4 xl:max-w-[1200px]">
+      <div className="mx-auto flex h-full w-full gap-3 px-3 md:gap-4 md:px-4 xl:max-w-[1200px]">
         <div className="flex h-full shrink-0 flex-col">
           <NavigationRail
             pageKind={pageKind}
@@ -60,8 +60,8 @@ export function ShellFrame({
             onThemeChange={onThemeChange}
           />
         </div>
-        <main className="min-w-0 flex-1 overflow-hidden pb-10">{children}</main>
-        <div className="hidden md:flex md:w-[240px] xl:w-[280px] shrink-0">
+        <main className="min-w-0 flex-1 overflow-hidden pt-4">{children}</main>
+        <div className="hidden md:flex md:w-[240px] xl:w-[280px] shrink-0 pt-4">
           <RightRail />
         </div>
       </div>

@@ -6,6 +6,8 @@ import {
 import { resolveIsDarkMode } from '@/lib/app-settings'
 import type { AppSettingsStore } from '@/lib/app-settings-store'
 
+const OVERFLOW_STORAGE_KEY = 'data-xb-previous-overflow'
+
 export function bindShellState({
   container,
   appRoot,
@@ -24,10 +26,20 @@ export function bindShellState({
     container.classList.toggle('dark', isDark)
 
     if (settings.rewriteEnabled) {
+      if (!document.documentElement.hasAttribute(OVERFLOW_STORAGE_KEY)) {
+        document.documentElement.setAttribute(
+          OVERFLOW_STORAGE_KEY,
+          document.documentElement.style.overflow || '',
+        )
+      }
+      document.documentElement.style.overflow = 'hidden'
       applyPageTakeover(appRoot)
       return
     }
 
+    const previousOverflow = document.documentElement.getAttribute(OVERFLOW_STORAGE_KEY)
+    document.documentElement.style.overflow = (previousOverflow !== null && previousOverflow !== '') ? previousOverflow : 'auto'
+    document.documentElement.removeAttribute(OVERFLOW_STORAGE_KEY)
     clearPageTakeover(appRoot)
   }
 
@@ -42,6 +54,9 @@ export function bindShellState({
     unsubscribe()
     mediaQuery.removeEventListener('change', onSystemThemeChange)
     container.classList.remove('dark')
+    const previousOverflow = document.documentElement.getAttribute(OVERFLOW_STORAGE_KEY)
+    document.documentElement.style.overflow = (previousOverflow !== null && previousOverflow !== '') ? previousOverflow : 'auto'
+    document.documentElement.removeAttribute(OVERFLOW_STORAGE_KEY)
     clearPageTakeover(appRoot)
   }
 }

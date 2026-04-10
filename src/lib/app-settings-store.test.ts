@@ -28,7 +28,6 @@ describe('app-settings-store', () => {
     const storage = createStorageArea({
       theme: 'dark',
       rewriteEnabled: false,
-      homeTimelineTab: 'following',
     })
     const store = createAppSettingsStore(storage)
 
@@ -37,21 +36,20 @@ describe('app-settings-store', () => {
     expect(store.getState()).toMatchObject({
       theme: 'dark',
       rewriteEnabled: false,
-      homeTimelineTab: 'following',
       isHydrated: true,
     })
   })
 
-  it('updates memory first and persists tab changes', async () => {
+  it('updates memory first and persists rewrite changes', async () => {
     const storage = createStorageArea()
     const store = createAppSettingsStore(storage)
 
-    await store.getState().setHomeTimelineTab('following')
+    await store.getState().setRewriteEnabled(false)
 
-    expect(store.getState().homeTimelineTab).toBe('following')
+    expect(store.getState().rewriteEnabled).toBe(false)
     expect(storage.read()).toEqual({
       ...DEFAULT_APP_SETTINGS,
-      homeTimelineTab: 'following',
+      rewriteEnabled: false,
     })
   })
 })

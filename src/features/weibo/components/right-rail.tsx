@@ -1,33 +1,44 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SiGithub } from '@icons-pack/react-simple-icons'
+import { CircleDot } from 'lucide-react'
 
-const TRENDS = ["设计系统", "前端工程化", "微博体验改写"];
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export function RightRail() {
   return (
-    <div className="flex-col gap-4 flex">
-      <Card className="rounded-[28px] border-border/70 bg-card/95 shadow-none">
+    <div className="flex-col gap-4 flex w-full">
+      <Card className="rounded-3xl">
         <CardHeader>
           <CardTitle className="text-base">Trends</CardTitle>
-          <CardDescription>First-pass placeholder rail</CardDescription>
+          <CardDescription>施工中</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-2 text-sm text-muted-foreground">
-          {TRENDS.map((trend) => (
-            <div key={trend} className="rounded-2xl bg-muted px-3 py-3">
-              {trend}
-            </div>
-          ))}
-        </CardContent>
       </Card>
 
-      <Card className="rounded-[28px] border-border/70 bg-card/95 shadow-none">
+      <Card className="rounded-3xl">
         <CardHeader>
-          <CardTitle className="text-base">Fallback</CardTitle>
-          <CardDescription>Original Weibo remains reachable</CardDescription>
+          <CardTitle className="text-base">反馈</CardTitle>
+          <CardDescription>帮助我们改进</CardDescription>
         </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          More contextual modules land after the detail and profile pages are wired.
+        <CardContent className="flex flex-col gap-3 text-sm text-muted-foreground">
+          <a
+            href="https://github.com/nnecec/xb/issues"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 hover:text-foreground transition-colors"
+          >
+            <CircleDot className="h-4 w-4" />
+            <span>反馈问题</span>
+          </a>
+          <a
+            href="https://github.com/nnecec/xb"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 hover:text-foreground transition-colors"
+          >
+            <SiGithub className="h-4 w-4" />
+            <span>开源仓库</span>
+          </a>
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

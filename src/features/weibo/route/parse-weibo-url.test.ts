@@ -10,6 +10,13 @@ describe('parseWeiboUrl', () => {
     })
   })
 
+  it('parses the following timeline', () => {
+    expect(parseWeiboUrl('https://weibo.com/mygroups')).toEqual({
+      kind: 'home',
+      tab: 'following',
+    })
+  })
+
   it('parses a status detail URL', () => {
     expect(parseWeiboUrl('https://weibo.com/1969776354/PiR8A7d0z')).toEqual({
       kind: 'status',

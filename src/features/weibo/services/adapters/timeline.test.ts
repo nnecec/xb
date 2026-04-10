@@ -206,6 +206,26 @@ describe('adaptTimelineResponse', () => {
     ])
   })
 
+  it('extracts inline emoticons from html text as a fallback map', () => {
+    const result = adaptTimelineResponse({
+      statuses: [
+        {
+          idstr: '890',
+          text_raw: '不知道油价大涨带来的增量有多少[二哈]',
+          text: '不知道油价大涨带来的增量有多少<img alt="[二哈]" title="[二哈]" src="https://face.t.sinajs.cn/erha.png" />',
+          user: { idstr: '1', screen_name: 'Alice' },
+        },
+      ],
+    })
+
+    expect(result.items[0]?.emoticons).toEqual({
+      '[二哈]': {
+        phrase: '[二哈]',
+        url: 'https://face.t.sinajs.cn/erha.png',
+      },
+    })
+  })
+
   it('maps topic_struct entries to encoded topic links', () => {
     const result = adaptTimelineResponse({
       statuses: [

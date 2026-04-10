@@ -1,4 +1,4 @@
-import type { FeedAuthor, FeedItem } from '@/features/weibo/models/feed'
+import type { FeedAuthor, FeedEmoticon, FeedItem } from '@/features/weibo/models/feed'
 import type { CommentItem } from '@/features/weibo/models/status'
 
 import { formatCreatedAt } from '../services/utils/date'
@@ -159,6 +159,38 @@ function stripEntityTokens(text: string, tokens: string[]) {
     .replace(/\s+\n/g, '\n')
     .replace(/\n\s+/g, '\n')
     .trim()
+}
+
+function decodeHtmlEntities(value: string) {
+  return value
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>')
+    .replaceAll('&quot;', '"')
+    .replaceAll('&#39;', "'")
+    .replaceAll('&amp;', '&')
+}
+
+function extractEmoticonsFromHtml(html: string | undefined): Record<string, FeedEmoticon> {
+  if (!html) {
+    return {}
+  }
+
+  const emoticons: Record<string, FeedEmoticon> = {}
+  const imagePattern =
+    /<img\b[^>]*\balt="(\[[^"\]]+\])"[^>]*\bsrc="([^"]+)"[^>]*>|<img\b[^>]*\bsrc="([^"]+)"[^>]*\balt="(\[[^"\]]+\])"[^>]*>/gi
+
+  let match: RegExpExecArray | null
+  while ((match = imagePattern.exec(html)) !== null) {
+    const phrase = decodeHtmlEntities((match[1] ?? match[4] ?? '').trim())
+    const url = decodeHtmlEntities((match[2] ?? match[3] ?? '').trim())
+    if (!phrase || !url) {
+      continue
+    }
+
+    emoticons[phrase] = { phrase, url }
+  }
+
+  return emoticons
 }
 
 export function toMedia(status: WeiboStatus) {
@@ -329,6 +361,7 @@ export function toFeedItem(status: WeiboStatus, includeRetweeted = true): FeedIt
       : null
   const urlEntities = toUrlEntities(status)
   const topicEntities = toTopicEntities(status)
+  const emoticons = extractEmoticonsFromHtml(status.text)
 
   return {
     id: getStatusId(status),
@@ -344,6 +377,7 @@ export function toFeedItem(status: WeiboStatus, includeRetweeted = true): FeedIt
     },
     images: mediaBelongsToRetweeted ? [] : toImages(status),
     media: mediaBelongsToRetweeted ? null : toMedia(status),
+    ...(Object.keys(emoticons).length > 0 ? { emoticons } : {}),
     ...(urlEntities.length > 0 ? { urlEntities } : {}),
     ...(topicEntities.length > 0 ? { topicEntities } : {}),
     regionName: status.region_name ?? '',
@@ -366,6 +400,7 @@ export function toCommentItem(comment: WeiboStatus): CommentItem {
     .map((entity) => entity.short_url?.trim() ?? '')
     .filter(Boolean)
   const normalizedReplyCommentText = stripEntityTokens(replyCommentText, replyCommentImageTokens)
+  const emoticons = extractEmoticonsFromHtml(comment.text)
 
   return {
     id: getStatusId(comment),
@@ -374,6 +409,7 @@ export function toCommentItem(comment: WeiboStatus): CommentItem {
     author: getStatusAuthor(comment.user),
     likeCount: Number(comment.like_count ?? 0),
     source: comment.source ?? '',
+    ...(Object.keys(emoticons).length > 0 ? { emoticons } : {}),
     ...(urlEntities.length > 0 ? { urlEntities } : {}),
     images,
     replyComment: comment.reply_comment
@@ -381,6 +417,9 @@ export function toCommentItem(comment: WeiboStatus): CommentItem {
           id: getStatusId(comment.reply_comment),
           text: normalizedReplyCommentText,
           author: getStatusAuthor(comment.reply_comment.user),
+          ...(Object.keys(extractEmoticonsFromHtml(comment.reply_comment.text)).length > 0
+            ? { emoticons: extractEmoticonsFromHtml(comment.reply_comment.text) }
+            : {}),
           images: toCommentImages(comment.reply_comment),
           ...(toUrlEntities(comment.reply_comment, { excludeImageEntities: true }).length > 0
             ? { urlEntities: toUrlEntities(comment.reply_comment, { excludeImageEntities: true }) }

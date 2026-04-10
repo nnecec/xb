@@ -57,7 +57,7 @@ export function NavigationRail({
   const isXl = useMediaQuery('(min-width: 1280px)')
 
   return (
-    <aside className="flex h-full min-h-0 flex-col px-1 md:px-2 xl:px-3">
+    <aside className="flex h-full min-h-0 flex-col px-1 md:px-2 xl:px-3 py-3 md:py-4 xl:py-5">
       <div className="mb-3 flex justify-start md:mb-4 xl:mb-5">
         <img
           src={WeiboLogo}

@@ -99,7 +99,13 @@ function renderEntityLink(entity: FeedUrlEntity, key: string) {
 
 function renderTopicLink(entity: FeedTopicEntity, key: string) {
   return (
-    <a key={key} href={entity.url} target="_blank" rel="noreferrer" className={LINK_TEXT_CLASS_NAME}>
+    <a
+      key={key}
+      href={entity.url}
+      target="_blank"
+      rel="noreferrer"
+      className={LINK_TEXT_CLASS_NAME}
+    >
       #{entity.title}#
     </a>
   )
@@ -164,11 +170,14 @@ export function StatusText({
   item,
   text,
 }: {
-  item: Pick<FeedItem, 'urlEntities' | 'topicEntities'>
+  item: Pick<FeedItem, 'emoticons' | 'urlEntities' | 'topicEntities'>
   text: string
 }) {
   const emoticonQuery = useEmoticonConfigQuery()
-  const phraseMap = emoticonQuery.data?.phraseMap ?? {}
+  const phraseMap = {
+    ...(emoticonQuery.data?.phraseMap ?? {}),
+    ...(item.emoticons ?? {}),
+  }
   const raw = text ?? ''
   if (!raw) {
     return <>{EMPTY_STATUS_LABEL}</>

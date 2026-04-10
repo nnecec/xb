@@ -15,6 +15,10 @@ export function parseWeiboUrl(input: string): WeiboPageDescriptor {
     return { kind: 'home', tab: 'for-you' }
   }
 
+  if (parts.length === 1 && parts[0] === 'mygroups') {
+    return { kind: 'home', tab: 'following' }
+  }
+
   if (parts[0] === 'u' && parts[1]) {
     return {
       kind: 'profile',

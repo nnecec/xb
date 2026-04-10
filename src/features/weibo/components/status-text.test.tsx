@@ -86,6 +86,31 @@ describe('StatusText', () => {
     expect(container).toHaveTextContent('这个先留着[不存在]')
   })
 
+  it('renders emoticons from item fallback data when the global dictionary is empty', () => {
+    const { container } = renderWithProviders(
+      <StatusText
+        item={{
+          emoticons: {
+            '[二哈]': { phrase: '[二哈]', url: 'https://face.t.sinajs.cn/erha.png' },
+          },
+          urlEntities: [],
+          topicEntities: [],
+        }}
+        text="不知道油价大涨带来的增量有多少[二哈]"
+      />,
+      {
+        groups: [],
+        phraseMap: {},
+      },
+    )
+
+    const view = within(container)
+    expect(view.getByRole('img', { name: '[二哈]' })).toHaveAttribute(
+      'src',
+      'https://face.t.sinajs.cn/erha.png',
+    )
+  })
+
   it('replaces emoticons only in plain text chunks and keeps url/topic entity links intact', () => {
     const { container } = renderWithProviders(
       <StatusText

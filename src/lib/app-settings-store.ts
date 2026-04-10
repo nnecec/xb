@@ -1,7 +1,6 @@
 import { useStore } from 'zustand'
 import { createStore, type StoreApi } from 'zustand/vanilla'
 
-import type { HomeTimelineTab } from '@/features/weibo/services/weibo-repository'
 import {
   DEFAULT_APP_SETTINGS,
   loadAppSettings,
@@ -16,7 +15,6 @@ export interface AppSettingsStoreState extends AppSettings {
   hydrate: () => Promise<void>
   setTheme: (theme: AppTheme) => Promise<void>
   setRewriteEnabled: (enabled: boolean) => Promise<void>
-  setHomeTimelineTab: (tab: HomeTimelineTab) => Promise<void>
 }
 
 export type AppSettingsStore = StoreApi<AppSettingsStoreState>
@@ -25,7 +23,6 @@ function toPersistedSettings(state: AppSettingsStoreState): AppSettings {
   return {
     theme: state.theme,
     rewriteEnabled: state.rewriteEnabled,
-    homeTimelineTab: state.homeTimelineTab,
   }
 }
 
@@ -56,9 +53,6 @@ export function createAppSettingsStore(
       },
       async setRewriteEnabled(rewriteEnabled) {
         await updateAndPersist({ rewriteEnabled })
-      },
-      async setHomeTimelineTab(homeTimelineTab) {
-        await updateAndPersist({ homeTimelineTab })
       },
     }
   })

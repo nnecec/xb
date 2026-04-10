@@ -16,6 +16,10 @@ import {
 import { parseWeiboUrl } from '@/features/weibo/route/parse-weibo-url'
 import { useAppSettings } from '@/lib/app-settings-store'
 
+function getHomeTimelinePath(tab: 'for-you' | 'following') {
+  return tab === 'following' ? '/mygroups' : '/'
+}
+
 export function AppShell() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -27,10 +31,9 @@ export function AppShell() {
 
   const theme = useAppSettings((state) => state.theme)
   const rewriteEnabled = useAppSettings((state) => state.rewriteEnabled)
-  const activeTimelineTab = useAppSettings((state) => state.homeTimelineTab)
   const setRewriteEnabled = useAppSettings((state) => state.setRewriteEnabled)
-  const setHomeTimelineTab = useAppSettings((state) => state.setHomeTimelineTab)
   const setTheme = useAppSettings((state) => state.setTheme)
+  const activeTimelineTab = page.kind === 'home' ? page.tab : 'for-you'
 
   const { timelineQuery, items: timelineItems } = useHomeTimelineData({
     activeTimelineTab,
@@ -100,7 +103,7 @@ export function AppShell() {
           statusDetailIsLoading={statusDetailQuery.isLoading}
           onCommentClick={navigateToStatusDetail}
           onHomeRetry={() => void timelineQuery.refetch()}
-          onHomeTabChange={(tab) => void setHomeTimelineTab(tab)}
+          onHomeTabChange={(tab) => navigate(getHomeTimelinePath(tab))}
           onLoadNextComments={() => void statusCommentsQuery.fetchNextPage()}
           onLoadNextTimeline={() => void timelineQuery.fetchNextPage()}
         />

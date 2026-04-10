@@ -31,7 +31,6 @@ describe('app-settings', () => {
     expect(normalizeAppSettings({
       theme: 'unknown',
       rewriteEnabled: 'no',
-      homeTimelineTab: 'friends',
     })).toEqual(DEFAULT_APP_SETTINGS)
   })
 
@@ -39,25 +38,21 @@ describe('app-settings', () => {
     const storage = createStorageArea({
       theme: 'dark',
       rewriteEnabled: false,
-      homeTimelineTab: 'following',
     })
 
     expect(await loadAppSettings(storage)).toEqual({
       theme: 'dark',
       rewriteEnabled: false,
-      homeTimelineTab: 'following',
     })
 
     await persistAppSettings({
       theme: 'light',
       rewriteEnabled: true,
-      homeTimelineTab: 'for-you',
     }, storage)
 
     expect(storage.read()).toEqual({
       theme: 'light',
       rewriteEnabled: true,
-      homeTimelineTab: 'for-you',
     })
   })
 
