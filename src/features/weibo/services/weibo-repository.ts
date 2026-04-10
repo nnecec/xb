@@ -1,3 +1,4 @@
+import type { SubmitComposeInput } from '@/features/weibo/models/compose'
 import type { TimelinePage } from '@/features/weibo/models/feed'
 import type { WeiboEmoticonConfig } from '@/features/weibo/models/emoticon'
 import type { UserProfile } from '@/features/weibo/models/profile'
@@ -20,6 +21,7 @@ import {
 import type { WeiboTimelinePayload } from '@/features/weibo/services/adapters/timeline'
 import { adaptTimelineResponse } from '@/features/weibo/services/adapters/timeline'
 import { fetchWeiboJson } from '@/features/weibo/services/client'
+import { postWeiboForm } from '@/features/weibo/services/client'
 import type { WeiboEndpointPath } from '@/features/weibo/services/endpoints'
 import { WEIBO_ENDPOINTS } from '@/features/weibo/services/endpoints'
 
@@ -149,4 +151,46 @@ export async function loadProfilePosts(profileId: string): Promise<TimelinePage>
     page: 1,
     feature: 0,
   })
+}
+
+interface WeiboMutationResponse {
+  ok?: number
+  msg?: string
+}
+
+function buildCommentPayload(input: SubmitComposeInput): Record<string, string> {
+  const payload: Record<string, string> = {
+    id: input.target.statusId,
+    comment: input.text,
+    pic_id: '',
+    is_repost: input.alsoSecondaryAction ? '1' : '0',
+    comment_ori: '0',
+    is_comment: '0',
+  }
+
+  if (input.target.kind === 'comment') {
+    payload.cid = input.target.targetCommentId
+  }
+
+  return payload
+}
+
+export async function submitComposeAction(input: SubmitComposeInput): Promise<void> {
+  if (input.target.mode === 'repost') {
+    throw new Error('weibo-repost-endpoint-not-configured')
+  }
+
+  const endpoint =
+    input.target.kind === 'comment'
+      ? WEIBO_ENDPOINTS.commentReply
+      : WEIBO_ENDPOINTS.commentCreate
+
+  const response = await postWeiboForm<WeiboMutationResponse>(
+    endpoint,
+    buildCommentPayload(input),
+  )
+
+  if (response.ok !== 1) {
+    throw new Error(response.msg || 'weibo-compose-submit-failed')
+  }
 }
