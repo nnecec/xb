@@ -66,7 +66,7 @@ export function ProfilePage() {
 
   return (
     <div ref={scrollRef} className="relative mx-auto h-full">
-      {isLoading ? <PageLoadingState label="Loading this profile..." /> : null}
+      {isLoading ? <PageLoadingState label="正在加载此用户主页..." /> : null}
       {!isLoading && errorMessage ? <PageErrorState description={errorMessage} /> : null}
       {!isLoading && !errorMessage && profileInfoQuery.data && profilePostsQuery.data ? (
         <div className="flex flex-col gap-4">

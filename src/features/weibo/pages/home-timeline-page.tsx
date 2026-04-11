@@ -24,9 +24,7 @@ export function HomeTimelinePage() {
 
   const page = useMemo(
     () =>
-      parseWeiboUrl(
-        new URL(`${location.pathname}${location.search}`, window.location.origin).href,
-      ),
+      parseWeiboUrl(new URL(`${location.pathname}${location.search}`, window.location.origin).href),
     [location.pathname, location.search],
   )
 
@@ -42,8 +40,7 @@ export function HomeTimelinePage() {
     timelineQuery.data?.pages as TimelinePage[] | undefined,
   )
 
-  const errorMessage =
-    timelineQuery.error instanceof Error ? timelineQuery.error.message : null
+  const errorMessage = timelineQuery.error instanceof Error ? timelineQuery.error.message : null
   const hasNextPage = Boolean(timelineQuery.hasNextPage)
   const isFetchingNextPage = timelineQuery.isFetchingNextPage
   const isLoading = timelineQuery.isLoading
@@ -79,14 +76,17 @@ export function HomeTimelinePage() {
         </div>
 
         <TabsContent value={activeTab} className="flex flex-col gap-3">
-          {isLoading ? <PageLoadingState label="Loading your Weibo timeline..." /> : null}
+          {isLoading ? <PageLoadingState label="正在加载微博时间线..." /> : null}
           {!isLoading && errorMessage ? (
-            <PageErrorState description={errorMessage} onRetry={() => void timelineQuery.refetch()} />
+            <PageErrorState
+              description={errorMessage}
+              onRetry={() => void timelineQuery.refetch()}
+            />
           ) : null}
           {!isLoading && !errorMessage ? (
             <FeedList
               items={items}
-              emptyLabel="No posts are available for this timeline yet."
+              emptyLabel="此时间线暂无内容"
               onNavigate={ctx.navigateToStatusDetail}
               onCommentClick={(item) =>
                 ctx.setComposeTarget({

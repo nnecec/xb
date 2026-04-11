@@ -79,7 +79,7 @@ export function StatusDetailPage() {
 
   return (
     <div className="relative mx-auto h-full">
-      {statusDetailQuery.isLoading ? <PageLoadingState label="Loading this Weibo post..." /> : null}
+      {statusDetailQuery.isLoading ? <PageLoadingState label="正在加载此微博..." /> : null}
       {statusDetailQuery.error instanceof Error ? (
         <PageErrorState description={statusDetailQuery.error.message} />
       ) : null}
@@ -111,7 +111,7 @@ export function StatusDetailPage() {
           )}
           <CommentList
             comments={comments}
-            emptyLabel="No replies are available for this post yet."
+            emptyLabel="此微博暂无评论"
             rootStatusId={detail.status.id}
             onCommentReply={ctx.setComposeTarget}
             onNavigate={ctx.navigateToStatusDetail}

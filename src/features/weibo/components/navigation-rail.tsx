@@ -59,12 +59,12 @@ export function NavigationRail({
       <div className="mb-3 flex justify-start md:mb-4 xl:mb-5">
         <img
           src={WeiboLogo}
-          alt="Weibo Logo"
+          alt="微博 Logo"
           className="h-9 w-9 translate-y-[1px] object-contain fill-current"
         />
       </div>
 
-      <nav aria-label="Main navigation" className="flex min-h-0 flex-1 flex-col">
+      <nav aria-label="主导航" className="flex min-h-0 flex-1 flex-col">
         <div className="flex flex-col gap-2">
           {navItems.map(({ icon: Icon, label, href, isActive }) => {
             return (
@@ -93,7 +93,7 @@ export function NavigationRail({
               variant="secondary"
               onClick={() => onRewriteEnabledChange(!rewriteEnabled)}
               aria-pressed={rewriteEnabled}
-              aria-label="Toggle xb rewrite"
+              aria-label="切换 xb 重写"
             >
               <Zap className="size-4" aria-hidden="true" />
             </Button>

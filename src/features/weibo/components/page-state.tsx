@@ -25,12 +25,12 @@ export function PageErrorState({
   return (
     <Alert variant="destructive">
       <AlertCircle aria-hidden="true" />
-      <AlertTitle>Unable to load this page</AlertTitle>
+      <AlertTitle>无法加载此页面</AlertTitle>
       <AlertDescription>
         <p>{description}</p>
         {onRetry ? (
           <Button className="mt-2" size="sm" variant="outline" onClick={onRetry}>
-            Retry
+            重试
           </Button>
         ) : null}
       </AlertDescription>

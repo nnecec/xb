@@ -25,7 +25,7 @@ describe('ShellFrame', () => {
       </MemoryRouter>,
     )
 
-    expect(screen.getAllByRole('navigation', { name: 'Main navigation' })).toHaveLength(1)
+    expect(screen.getAllByRole('navigation', { name: '主导航' })).toHaveLength(1)
     expect(screen.getByText('center content')).toBeInTheDocument()
   })
 })

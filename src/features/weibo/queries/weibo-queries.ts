@@ -1,9 +1,6 @@
 import type { TimelinePage } from '@/features/weibo/models/feed'
 import type { WeiboPageDescriptor } from '@/features/weibo/route/page-descriptor'
-import {
-  loadHomeTimeline,
-  type HomeTimelineTab,
-} from '@/features/weibo/services/weibo-repository'
+import { loadHomeTimeline, type HomeTimelineTab } from '@/features/weibo/services/weibo-repository'
 
 export function flattenInfiniteItems<Item>(pages: Array<{ items: Item[] }> | undefined): Item[] {
   return pages?.flatMap((page) => page.items) ?? []

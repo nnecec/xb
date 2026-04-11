@@ -13,22 +13,22 @@ import type { WeiboPageDescriptor } from '@/features/weibo/route/page-descriptor
 import type { AppTheme } from '@/lib/app-settings'
 
 const PAGE_LABELS: Record<WeiboPageDescriptor['kind'], string> = {
-  home: 'Home',
-  profile: 'Profile',
-  status: 'Status Detail',
-  unsupported: 'Unsupported Page',
+  home: '主页',
+  profile: '个人主页',
+  status: '微博详情',
+  unsupported: '不支持的页面',
 }
 
 function describePage(page: WeiboPageDescriptor): string {
   switch (page.kind) {
     case 'home':
-      return `Active tab: ${page.tab}`
+      return `当前标签: ${page.tab}`
     case 'profile':
-      return `Profile ${page.profileId} via /${page.profileSource}`
+      return `用户 ${page.profileId} via /${page.profileSource}`
     case 'status':
-      return `Status ${page.statusId} by ${page.authorId}`
+      return `微博 ${page.statusId} by ${page.authorId}`
     case 'unsupported':
-      return `Reason: ${page.reason}`
+      return `原因: ${page.reason}`
   }
 }
 
@@ -95,7 +95,7 @@ export function RewritePausedCard({ onResume }: { onResume: () => void }) {
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <Button onClick={onResume} className="justify-between">
-            <span>Let's xb</span>
+            <span>开始 xb</span>
             <ArrowRight className="h-4 w-4" />
           </Button>
         </CardContent>
@@ -112,8 +112,8 @@ export function UnsupportedPageCard({ page }: { page: WeiboPageDescriptor }) {
         <CardDescription>{describePage(page)}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3 text-sm text-muted-foreground">
-        <p>ShadowRoot shell mounted successfully.</p>
-        <p>Route sync is active and listening for main-world history updates.</p>
+        <p>ShadowRoot 已成功挂载。</p>
+        <p>路由同步已激活，正在监听主世界历史更新。</p>
       </CardContent>
     </Card>
   )

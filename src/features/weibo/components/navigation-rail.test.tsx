@@ -44,24 +44,24 @@ describe('NavigationRail', () => {
 
   it('renders an accessible navigation landmark', () => {
     renderNavigationRail()
-    expect(screen.getByRole('navigation', { name: 'Main navigation' })).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: '主导航' })).toBeInTheDocument()
   })
 
   it('marks active links through aria-current', () => {
     renderNavigationRail()
-    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page')
-    expect(screen.getByRole('link', { name: 'Profile' })).not.toHaveAttribute('aria-current')
+    expect(screen.getByRole('link', { name: '主页' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: '个人主页' })).not.toHaveAttribute('aria-current')
   })
 
   it('marks profile as active when viewing current user profile', () => {
     renderNavigationRail({ pageKind: 'profile', viewingProfileUserId: '1001' })
-    expect(screen.getByRole('link', { name: 'Profile' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: '个人主页' })).toHaveAttribute('aria-current', 'page')
   })
 
   it('uses fallback profile href when current user id is missing', () => {
     getCurrentUserUidMock.mockReturnValue(null)
     renderNavigationRail()
-    expect(screen.getByRole('link', { name: 'Profile' })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', { name: '个人主页' })).toHaveAttribute('href', '/')
   })
 
   it('does not render the old card description text', () => {
@@ -71,7 +71,7 @@ describe('NavigationRail', () => {
 
   it('exposes rewrite toggle state through aria-pressed', () => {
     renderNavigationRail({ rewriteEnabled: true })
-    expect(screen.getByRole('button', { name: 'Toggle xb rewrite' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: '切换 xb 重写' })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
