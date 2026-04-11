@@ -1,5 +1,7 @@
-import type { ComposeTarget } from '@/features/weibo/models/compose'
+import { useRef } from 'react'
+
 import { PageErrorState, PageLoadingState } from '@/features/weibo/components/page-state'
+import type { ComposeTarget } from '@/features/weibo/models/compose'
 import type { FeedItem, TimelinePage } from '@/features/weibo/models/feed'
 import type { UserProfile } from '@/features/weibo/models/profile'
 import type { CommentItem, StatusDetail } from '@/features/weibo/models/status'
@@ -17,6 +19,31 @@ function createStatusComposeTarget(item: FeedItem, mode: 'comment' | 'repost'): 
     authorName: item.author.name,
     excerpt: item.text.trim().slice(0, 80),
   }
+}
+
+interface HomeStatusPanelsProps {
+  activeTimelineTab: HomeTimelineTab
+  isHomePageVisible: boolean
+  isStatusPageVisible: boolean
+  timelineErrorMessage: string | null
+  timelineHasNextPage: boolean
+  timelineIsFetchingNextPage: boolean
+  timelineIsLoading: boolean
+  timelineItems: TimelinePage['items']
+  statusComments: CommentItem[]
+  statusCommentsHasNextPage: boolean
+  statusCommentsIsFetchingNextPage: boolean
+  statusDetail: StatusDetail | undefined
+  statusDetailErrorMessage: string | null
+  statusDetailIsLoading: boolean
+  onStatusComment?: (target: ComposeTarget) => void
+  onStatusRepost?: (target: ComposeTarget) => void
+  onCommentReply?: (target: ComposeTarget) => void
+  onCommentClick: (item: FeedItem) => void
+  onHomeRetry: () => void
+  onHomeTabChange: (tab: HomeTimelineTab) => void
+  onLoadNextComments: () => void
+  onLoadNextTimeline: () => void
 }
 
 export function HomeStatusPanels({
@@ -42,34 +69,10 @@ export function HomeStatusPanels({
   onHomeTabChange,
   onLoadNextComments,
   onLoadNextTimeline,
-}: {
-  activeTimelineTab: HomeTimelineTab
-  isHomePageVisible: boolean
-  isStatusPageVisible: boolean
-  timelineErrorMessage: string | null
-  timelineHasNextPage: boolean
-  timelineIsFetchingNextPage: boolean
-  timelineIsLoading: boolean
-  timelineItems: TimelinePage['items']
-  statusComments: CommentItem[]
-  statusCommentsHasNextPage: boolean
-  statusCommentsIsFetchingNextPage: boolean
-  statusDetail: StatusDetail | undefined
-  statusDetailErrorMessage: string | null
-  statusDetailIsLoading: boolean
-  onStatusComment?: (target: ComposeTarget) => void
-  onStatusRepost?: (target: ComposeTarget) => void
-  onCommentReply?: (target: ComposeTarget) => void
-  onCommentClick: (item: FeedItem) => void
-  onHomeRetry: () => void
-  onHomeTabChange: (tab: HomeTimelineTab) => void
-  onLoadNextComments: () => void
-  onLoadNextTimeline: () => void
-}) {
+}: HomeStatusPanelsProps) {
   return (
-    <div className="h-full mx-auto">
-      {/* Home timeline stays mounted to preserve scroll position. */}
-      <div className={['h-full overflow-y-auto', isHomePageVisible ? 'block' : 'hidden'].join(' ')}>
+    <div className="relative h-full mx-auto">
+      <div className={['h-full', isHomePageVisible ? 'block' : 'hidden'].join(' ')}>
         <HomeTimelinePage
           activeTab={activeTimelineTab}
           errorMessage={timelineErrorMessage}
@@ -110,6 +113,16 @@ export function HomeStatusPanels({
   )
 }
 
+interface ProfilePanelProps {
+  errorMessage: string | null
+  isLoading: boolean
+  posts: TimelinePage | undefined
+  profile: UserProfile | undefined
+  onNavigate?: (item: FeedItem) => void
+  onCommentClick?: (item: FeedItem) => void
+  onRepostClick?: (item: FeedItem) => void
+}
+
 export function ProfilePanel({
   errorMessage,
   isLoading,
@@ -118,17 +131,11 @@ export function ProfilePanel({
   onNavigate,
   onCommentClick,
   onRepostClick,
-}: {
-  errorMessage: string | null
-  isLoading: boolean
-  posts: TimelinePage | undefined
-  profile: UserProfile | undefined
-  onNavigate?: (item: FeedItem) => void
-  onCommentClick?: (item: FeedItem) => void
-  onRepostClick?: (item: FeedItem) => void
-}) {
+}: ProfilePanelProps) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+
   return (
-    <div className="h-full overflow-y-auto">
+    <div ref={scrollRef} className="relative h-full overflow-y-auto">
       {isLoading ? <PageLoadingState label="Loading this profile..." /> : null}
       {!isLoading && errorMessage ? <PageErrorState description={errorMessage} /> : null}
       {!isLoading && !errorMessage && profile && posts ? (

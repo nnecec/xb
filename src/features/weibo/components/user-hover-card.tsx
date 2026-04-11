@@ -18,7 +18,7 @@ import { FollowButton } from './follow-button'
 function UserHoverCardSkeleton() {
   return (
     <div className="animate-pulse">
-      <div className="h-20 rounded-t-xl bg-muted" />
+      <div className="h-20 bg-muted" />
       <div className="px-4 pb-4">
         <div className="-mt-6 mb-3 size-14 rounded-full bg-muted ring-3 ring-card" />
         <div className="mb-2 h-4 w-24 rounded bg-muted" />
@@ -71,7 +71,7 @@ export function UserHoverCard(props: UserHoverCardProps) {
       }}
     >
       <HoverCardTrigger asChild>{children}</HoverCardTrigger>
-      <HoverCardContent className="w-80 overflow-hidden">
+      <HoverCardContent className="w-80 overflow-hidden" onClick={(e) => e.stopPropagation()}>
         {isLoading || !profile ? (
           <UserHoverCardSkeleton />
         ) : (

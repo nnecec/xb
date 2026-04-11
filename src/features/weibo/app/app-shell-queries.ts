@@ -100,24 +100,32 @@ export function useProfilePageData({
 export function useStatusPageData({
   page,
   isEnabled,
+  filterParam,
 }: {
   page: WeiboPageDescriptor
   isEnabled: boolean
+  filterParam?: string
 }) {
-  const statusId = getStatusId(page)
+  const urlStatusId = getStatusId(page)
+  const authorId = page.kind === 'status' ? page.authorId : null
 
   const statusDetailQuery = useQuery({
-    queryKey: ['weibo', 'status', statusId],
-    queryFn: statusId ? () => loadStatusDetail(statusId) : skipToken,
-    enabled: isEnabled && statusId !== null,
+    queryKey: ['weibo', 'status', urlStatusId],
+    queryFn: urlStatusId ? () => loadStatusDetail(urlStatusId) : skipToken,
+    enabled: isEnabled && urlStatusId !== null,
   })
 
+  const commentsStatusId = statusDetailQuery.data?.status.id ?? null
+
   const statusCommentsQuery = useInfiniteQuery({
-    queryKey: ['weibo', 'status-comments', statusId],
-    queryFn: statusId ? ({ pageParam }) => loadStatusComments(statusId, pageParam) : skipToken,
+    queryKey: ['weibo', 'status-comments', commentsStatusId, filterParam],
+    queryFn:
+      commentsStatusId && authorId
+        ? ({ pageParam }) => loadStatusComments(commentsStatusId, authorId, pageParam, filterParam)
+        : skipToken,
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-    enabled: isEnabled && statusId !== null,
+    enabled: isEnabled && commentsStatusId !== null && authorId !== null,
   })
 
   return {
@@ -126,6 +134,7 @@ export function useStatusPageData({
     comments: flattenInfiniteItems<CommentItem>(
       statusCommentsQuery.data?.pages as StatusCommentsPage[] | undefined,
     ),
+    filterGroup: statusCommentsQuery.data?.pages[0]?.filterGroup,
   }
 }
 

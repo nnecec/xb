@@ -59,7 +59,7 @@ export function FollowButton({
   if (following) {
     return (
       <Button
-        variant="outline"
+        variant="secondary"
         size={size}
         className={className}
         onClick={handleClick}

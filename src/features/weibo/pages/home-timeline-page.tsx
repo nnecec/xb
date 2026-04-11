@@ -59,18 +59,14 @@ export function HomeTimelinePage({
       className="flex flex-col"
       onValueChange={(value) => onTabChange(value as 'for-you' | 'following')}
     >
-      <div className="sticky top-0 z-10 px-4 pb-2 backdrop-blur">
-        <TabsList className="grid w-full grid-cols-2 rounded-full">
-          <TabsTrigger value="for-you" className="rounded-full">
-            For You
-          </TabsTrigger>
-          <TabsTrigger value="following" className="rounded-full">
-            Following
-          </TabsTrigger>
+      <div className="sticky top-0 z-10 backdrop-blur">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="for-you">推荐</TabsTrigger>
+          <TabsTrigger value="following">我关注的</TabsTrigger>
         </TabsList>
       </div>
 
-      <TabsContent value={activeTab} className="flex flex-col gap-3 px-4 pb-4">
+      <TabsContent value={activeTab} className="flex flex-col gap-3">
         {isLoading ? <PageLoadingState label="Loading your Weibo timeline..." /> : null}
         {!isLoading && errorMessage ? (
           <PageErrorState description={errorMessage} onRetry={onRetry} />

@@ -107,7 +107,7 @@ function ProfileHeaderMutualFollowers({ profile }: { profile: UserProfile }) {
 
 export function ProfileHeader({ profile }: { profile: UserProfile }) {
   return (
-    <Card className="rounded-3xl pt-0 overflow-hidden">
+    <Card className="pt-0 overflow-hidden">
       <CardContent className="p-0">
         <ProfileBanner
           bannerUrl={profile.bannerUrl}

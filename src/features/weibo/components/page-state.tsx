@@ -40,7 +40,7 @@ export function PageErrorState({
 
 export function PageEmptyState({ label }: { label: string }) {
   return (
-    <div className="flex min-h-64 items-center justify-center rounded-[28px] border border-dashed border-border/70 bg-card/70 px-6 py-10 text-sm text-muted-foreground">
+    <div className="flex min-h-64 items-center justify-center border border-dashed border-border/70 bg-card/70 px-6 py-10 text-sm text-muted-foreground">
       {label}
     </div>
   )

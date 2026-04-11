@@ -17,7 +17,7 @@ import { ImageCarousel } from '@/features/weibo/components/image-carousel'
 import { StatusText } from '@/features/weibo/components/status-text'
 import { UserHoverCard } from '@/features/weibo/components/user-hover-card'
 import { CreatedAtBadge, UserAvatar } from '@/features/weibo/components/user-presenter'
-import type { FeedImage, FeedItem } from '@/features/weibo/models/feed'
+import type { FeedItem } from '@/features/weibo/models/feed'
 import { loadStatusLongText } from '@/features/weibo/services/weibo-repository'
 
 import { VideoPlayer } from './video-player'
@@ -164,25 +164,23 @@ function FeedTextBlock({
   onLoadLongText: () => void
 }) {
   return (
-    <div>
-      <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">
-        <StatusText item={item} text={text} />
+    <div className="whitespace-pre-wrap text-sm leading-6 text-foreground">
+      <StatusText item={item} text={text} />
 
-        {canLoadLongText ? (
-          <Button
-            className="mt-2 inline-flex"
-            size="xs"
-            variant="secondary"
-            onClick={(event) => {
-              event.stopPropagation()
-              onLoadLongText()
-            }}
-            disabled={isLongTextLoading}
-          >
-            {isLongTextLoading ? '加载中...' : hasLongTextError ? '重试全文' : '全文'}
-          </Button>
-        ) : null}
-      </p>
+      {canLoadLongText ? (
+        <Button
+          className="inline-flex"
+          size="xs"
+          variant="secondary"
+          onClick={(event) => {
+            event.stopPropagation()
+            onLoadLongText()
+          }}
+          disabled={isLongTextLoading}
+        >
+          {isLongTextLoading ? '加载中...' : hasLongTextError ? '重试全文' : '全文'}
+        </Button>
+      ) : null}
     </div>
   )
 }
@@ -283,10 +281,10 @@ function FeedActions({
 
 function RetweetedFeedBlock({
   item,
-  onImageClick,
+  onNavigate,
 }: {
   item: NonNullable<FeedItem['retweetedStatus']>
-  onImageClick: (images: FeedImage[], index: number) => void
+  onNavigate?: (item: FeedItem) => void
 }) {
   const {
     resolvedText,
@@ -296,8 +294,22 @@ function RetweetedFeedBlock({
     onLoadLongText,
   } = useFeedLongText(item)
 
+  const handleRetweetedClick = (event: MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation()
+    if (!onNavigate) {
+      return
+    }
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      return
+    }
+    onNavigate(item)
+  }
+
   return (
-    <div className="rounded-xl border border-border/70 bg-muted/40 p-3">
+    <div
+      className="border border-border/70 bg-muted/40 p-3 cursor-pointer flex flex-col gap-3"
+      onClick={handleRetweetedClick}
+    >
       <RetweetedAuthorHeader item={item} />
       <FeedTextBlock
         item={item}
@@ -307,10 +319,12 @@ function RetweetedFeedBlock({
         hasLongTextError={hasLongTextError}
         onLoadLongText={onLoadLongText}
       />
-      <div className="mt-3">
-        <FeedMediaBlock item={item} />
-      </div>
+
+      <FeedMediaBlock item={item} />
+
       <ImageCarousel images={item.images} />
+
+      <FeedActions item={item} />
     </div>
   )
 }
@@ -326,10 +340,6 @@ export function FeedCard({
   onCommentClick?: (item: FeedItem) => void
   onRepostClick?: (item: FeedItem) => void
 }) {
-  const [imageDialogOpen, setImageDialogOpen] = useState(false)
-  const [startImageIndex, setStartImageIndex] = useState(0)
-  /** When set, preview dialog shows this list (retweet gallery); otherwise main post `item.images`. */
-  const [carouselImages, setCarouselImages] = useState<FeedImage[] | null>(null)
   const pointerDownPositionRef = useRef<{ x: number; y: number } | null>(null)
   const suppressNextClickRef = useRef(false)
   const {
@@ -339,12 +349,6 @@ export function FeedCard({
     hasLongTextError,
     onLoadLongText,
   } = useFeedLongText(item)
-
-  const openImageDialog = (images: FeedImage[] | null, index: number) => {
-    setCarouselImages(images)
-    setStartImageIndex(index)
-    setImageDialogOpen(true)
-  }
 
   const handleCardMouseDown = (event: MouseEvent<HTMLElement>) => {
     if (event.button !== 0) {
@@ -396,7 +400,7 @@ export function FeedCard({
 
   return (
     <>
-      <Card className="gap-4 rounded-3xl" data-testid="feed-card-body">
+      <Card className="gap-4" data-testid="feed-card-body">
         <FeedAuthorHeader item={item} />
         <CardContent
           className="flex flex-col gap-4 cursor-pointer"
@@ -415,15 +419,10 @@ export function FeedCard({
 
           <FeedMediaBlock item={item} />
 
-          <ImageCarousel images={carouselImages ?? item.images} />
+          <ImageCarousel images={item.images} />
 
           {item.retweetedStatus ? (
-            <RetweetedFeedBlock
-              item={item.retweetedStatus}
-              onImageClick={(images, index) => {
-                openImageDialog(images, index)
-              }}
-            />
+            <RetweetedFeedBlock item={item.retweetedStatus} onNavigate={onNavigate} />
           ) : null}
         </CardContent>
         <CardFooter>

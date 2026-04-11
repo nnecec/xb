@@ -6,14 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 export function RightRail() {
   return (
     <div className="flex-col gap-4 flex w-full">
-      <Card className="rounded-3xl">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-base">Trends</CardTitle>
+          <CardTitle className="text-base">热搜</CardTitle>
           <CardDescription>施工中</CardDescription>
         </CardHeader>
       </Card>
 
-      <Card className="rounded-3xl">
+      <Card>
         <CardHeader>
           <CardTitle className="text-base">反馈</CardTitle>
           <CardDescription>帮助我们改进</CardDescription>

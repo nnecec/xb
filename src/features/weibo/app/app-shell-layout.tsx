@@ -1,8 +1,12 @@
 import { ArrowRight, Sparkles } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { useRef } from 'react'
+import { useOutletContext } from 'react-router'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import type { AppShellContext } from '@/features/weibo/app/app-shell'
+import { BackToTop } from '@/features/weibo/components/back-to-top'
 import { NavigationRail } from '@/features/weibo/components/navigation-rail'
 import { RightRail } from '@/features/weibo/components/right-rail'
 import type { WeiboPageDescriptor } from '@/features/weibo/route/page-descriptor'
@@ -38,6 +42,10 @@ interface ShellFrameProps {
   children: ReactNode
 }
 
+export function useAppShellContext() {
+  return useOutletContext<AppShellContext>()
+}
+
 export function ShellFrame({
   pageKind,
   viewingProfileUserId,
@@ -47,9 +55,11 @@ export function ShellFrame({
   onThemeChange,
   children,
 }: ShellFrameProps) {
+  const mainRef = useRef<HTMLDivElement>(null)
+
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
-      <div className="mx-auto flex h-full w-full gap-3 px-3 md:gap-4 md:px-4 xl:max-w-[1200px]">
+      <div className="relative mx-auto flex h-full w-full gap-3 px-3 md:gap-4 md:px-4 lg:max-w-[1000px] xl:max-w-[1200px]">
         <div className="flex h-full shrink-0 flex-col">
           <NavigationRail
             pageKind={pageKind}
@@ -60,10 +70,13 @@ export function ShellFrame({
             onThemeChange={onThemeChange}
           />
         </div>
-        <main className="min-w-0 flex-1 overflow-hidden pt-4">{children}</main>
-        <div className="hidden md:flex md:w-[240px] xl:w-[280px] shrink-0 pt-4">
+        <main className="min-w-0 flex-1 overflow-y-auto pt-4" ref={mainRef}>
+          {children}
+        </main>
+        <div className="hidden md:flex md:w-[200px] xl:w-[240px] shrink-0 pt-4">
           <RightRail />
         </div>
+        <BackToTop container={mainRef.current} />
       </div>
     </div>
   )
@@ -72,7 +85,7 @@ export function ShellFrame({
 export function RewritePausedCard({ onResume }: { onResume: () => void }) {
   return (
     <div className="fixed bottom-4 left-4 z-2147483647">
-      <Card className="rounded-[28px] bg-card/95 shadow-lg shadow-black/5 backdrop-blur w-40 md:w-60 lg:w-60">
+      <Card className="bg-card/95 shadow-lg shadow-black/5 backdrop-blur w-40 md:w-60 lg:w-60">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Sparkles className="h-4 w-4 text-primary" />
@@ -93,7 +106,7 @@ export function RewritePausedCard({ onResume }: { onResume: () => void }) {
 
 export function UnsupportedPageCard({ page }: { page: WeiboPageDescriptor }) {
   return (
-    <Card className="rounded-[28px] border-border/70 bg-card/95 shadow-none">
+    <Card className="border-border/70 bg-card/95 shadow-none">
       <CardHeader>
         <CardTitle className="text-xl">{PAGE_LABELS[page.kind]}</CardTitle>
         <CardDescription>{describePage(page)}</CardDescription>

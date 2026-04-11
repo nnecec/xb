@@ -1,4 +1,4 @@
-import type { StatusCommentsPage, StatusDetail } from '@/features/weibo/models/status'
+import type { CommentFilterOption, StatusCommentsPage, StatusDetail } from '@/features/weibo/models/status'
 import {
   type WeiboStatus,
   toCommentItem,
@@ -10,6 +10,7 @@ export type { WeiboStatus }
 interface StatusCommentsPayload {
   data?: WeiboStatus[]
   max_id?: string | number
+  filter_group?: CommentFilterOption[]
 }
 
 function isWeiboStatusLike(value: unknown): value is WeiboStatus {
@@ -58,5 +59,6 @@ export function adaptStatusCommentsResponse(payload: StatusCommentsPayload): Sta
   return {
     items: Array.isArray(payload.data) ? payload.data.map(toCommentItem) : [],
     nextCursor: normalizeCursor(payload.max_id),
+    filterGroup: payload.filter_group,
   }
 }

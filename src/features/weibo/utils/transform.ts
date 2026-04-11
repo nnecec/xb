@@ -161,6 +161,10 @@ function stripEntityTokens(text: string, tokens: string[]) {
     .trim()
 }
 
+function stripHtmlTags(text: string): string {
+  return text.replace(/<[^>]+>/g, '').trim()
+}
+
 function decodeHtmlEntities(value: string) {
   return value
     .replaceAll('&lt;', '<')
@@ -381,7 +385,7 @@ export function toFeedItem(status: WeiboStatus, includeRetweeted = true): FeedIt
     ...(urlEntities.length > 0 ? { urlEntities } : {}),
     ...(topicEntities.length > 0 ? { topicEntities } : {}),
     regionName: status.region_name ?? '',
-    source: status.source ?? '',
+    source: stripHtmlTags(status.source ?? ''),
     ...(normalizedRetweetedStatus
       ? { retweetedStatus: toFeedItem(normalizedRetweetedStatus, false) }
       : {}),
@@ -402,13 +406,24 @@ export function toCommentItem(comment: WeiboStatus): CommentItem {
   const normalizedReplyCommentText = stripEntityTokens(replyCommentText, replyCommentImageTokens)
   const emoticons = extractEmoticonsFromHtml(comment.text)
 
+  const normalizedRetweetedStatus =
+    comment.retweeted_status
+      ? {
+          ...comment.retweeted_status,
+          pic_ids: comment.retweeted_status.pic_ids ?? [],
+          pic_infos: comment.retweeted_status.pic_infos ?? {},
+          url_struct: comment.retweeted_status.url_struct ?? [],
+          topic_struct: comment.retweeted_status.topic_struct ?? [],
+        }
+      : null
+
   return {
     id: getStatusId(comment),
     text: normalizedCommentText,
     createdAtLabel: formatCreatedAt(comment.created_at ?? ''),
     author: getStatusAuthor(comment.user),
     likeCount: Number(comment.like_count ?? 0),
-    source: comment.source ?? '',
+    source: stripHtmlTags(comment.source ?? ''),
     ...(Object.keys(emoticons).length > 0 ? { emoticons } : {}),
     ...(urlEntities.length > 0 ? { urlEntities } : {}),
     images,
@@ -427,5 +442,8 @@ export function toCommentItem(comment: WeiboStatus): CommentItem {
         }
       : null,
     comments: Array.isArray(comment.comments) ? comment.comments.map(toCommentItem) : [],
+    ...(normalizedRetweetedStatus
+      ? { retweetedStatus: toFeedItem(normalizedRetweetedStatus, false) }
+      : {}),
   }
 }

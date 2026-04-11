@@ -90,18 +90,30 @@ export async function loadEmoticonConfig(): Promise<WeiboEmoticonConfig> {
 
 export async function loadStatusComments(
   statusId: string,
+  uid: string,
   cursor?: string | null,
+  filterParam?: string,
 ): Promise<StatusCommentsPage> {
+  const filterParams: Record<string, string> = {}
+  if (filterParam) {
+    const [key, value] = filterParam.split('=')
+    if (key && value) {
+      filterParams[key] = value
+    }
+  }
+
   const payload = await wbGet<unknown>(WEIBO_ENDPOINTS.statusComments, {
+    id: statusId,
+    uid,
     flow: 0,
     is_reload: 1,
-    id: statusId,
     is_show_bulletin: 2,
     is_mix: 0,
     count: 10,
     fetch_level: 0,
     locale: 'zh',
     max_id: cursor ?? undefined,
+    ...filterParams,
   })
 
   return adaptStatusCommentsResponse(payload as Parameters<typeof adaptStatusCommentsResponse>[0])

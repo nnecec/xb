@@ -10,6 +10,12 @@ export interface CommentPreviewItem {
   images: FeedImage[]
 }
 
+export interface CommentFilterOption {
+  param: string
+  title: string
+  isDefault: number
+}
+
 export interface CommentItem {
   id: string
   text: string
@@ -22,11 +28,13 @@ export interface CommentItem {
   images: FeedImage[]
   replyComment: CommentPreviewItem | null
   comments: CommentItem[]
+  retweetedStatus?: FeedItem | null
 }
 
 export interface StatusCommentsPage {
   items: CommentItem[]
   nextCursor: string | null
+  filterGroup?: CommentFilterOption[]
 }
 
 export interface StatusDetail {

@@ -23,13 +23,9 @@ export function ProfilePage({
       <ProfileHeader profile={profile} />
 
       <Tabs defaultValue="posts" className="flex flex-col gap-4">
-        <TabsList className="sticky top-0 z-10 grid w-full grid-cols-2 rounded-full">
-          <TabsTrigger value="posts" className="rounded-full">
-            微博
-          </TabsTrigger>
-          <TabsTrigger value="pictures" className="rounded-full">
-            图片
-          </TabsTrigger>
+        <TabsList className="sticky top-0 z-10 grid w-full grid-cols-2">
+          <TabsTrigger value="posts">微博</TabsTrigger>
+          <TabsTrigger value="pictures">图片</TabsTrigger>
         </TabsList>
 
         <TabsContent value="posts" className="flex flex-col gap-4">

@@ -1,7 +1,7 @@
 import { useMediaQuery } from '@reactuses/core'
 import { House, UserRound, Zap } from 'lucide-react'
 import { useMemo } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 
 import WeiboLogo from '@/assets/icons/weibo.svg'
 import { Button } from '@/components/ui/button'
@@ -26,8 +26,6 @@ export function NavigationRail({
   theme: AppTheme
   onRewriteEnabledChange: (enabled: boolean) => void
   onThemeChange: (theme: AppTheme) => void
-  /** @deprecated Navigation rail is now always responsive; this prop is ignored. */
-  logoOnly?: boolean
 }) {
   const currentUserUid = useMemo(() => getCurrentUserUid(), [])
   const navigate = useNavigate()
@@ -42,13 +40,13 @@ export function NavigationRail({
     return [
       {
         icon: House,
-        label: 'Home',
+        label: '主页',
         href: '/',
         isActive: pageKind === 'home' || pageKind === 'status',
       },
       {
         icon: UserRound,
-        label: 'Profile',
+        label: '个人主页',
         href: profileHref,
         isActive: isOwnProfileActive,
       },

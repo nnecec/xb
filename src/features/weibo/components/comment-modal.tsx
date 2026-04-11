@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { EmoticonPicker } from '@/features/weibo/components/emoticon-picker'
 import type { ComposeTarget } from '@/features/weibo/models/compose'
 
@@ -67,16 +68,15 @@ export function CommentModal({
             @{target.authorName} · {target.excerpt || '没有可预览的内容'}
           </DialogDescription>
         </DialogHeader>
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium">回复内容</span>
-          <textarea
-            aria-label="回复内容"
-            autoFocus
-            className="min-h-32 rounded-xl border bg-background px-3 py-2 text-sm outline-none"
-            value={text}
-            onChange={(event) => setText(event.target.value)}
-          />
-        </label>
+
+        <Textarea
+          aria-label="回复内容"
+          autoFocus
+          className="min-h-32"
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+        />
+
         <div className="flex items-center justify-between gap-3">
           <EmoticonPicker onSelect={(item) => setText((value) => `${value}${item.phrase}`)} />
 

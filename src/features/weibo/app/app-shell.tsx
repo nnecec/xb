@@ -1,19 +1,13 @@
-import { useMemo, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router'
+import { useState } from 'react'
+import { Outlet, useLocation, useNavigate } from 'react-router'
+import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import {
   RewritePausedCard,
   ShellFrame,
-  UnsupportedPageCard,
 } from '@/features/weibo/app/app-shell-layout'
-import { HomeStatusPanels, ProfilePanel } from '@/features/weibo/app/app-shell-panels'
-import {
-  type StatusDetailNavigationItem,
-  useHomeTimelineData,
-  useProfilePageData,
-  useStatusPageData,
-} from '@/features/weibo/app/app-shell-queries'
+import { type StatusDetailNavigationItem } from '@/features/weibo/app/app-shell-queries'
 import { CommentModal } from '@/features/weibo/components/comment-modal'
 import type { ComposeTarget } from '@/features/weibo/models/compose'
 import { parseWeiboUrl } from '@/features/weibo/route/parse-weibo-url'
@@ -24,14 +18,29 @@ function getHomeTimelinePath(tab: 'for-you' | 'following') {
   return tab === 'following' ? '/mygroups' : '/'
 }
 
-export function AppShell() {
+function usePage() {
   const location = useLocation()
-  const navigate = useNavigate()
-  const page = useMemo(
-    () =>
-      parseWeiboUrl(new URL(`${location.pathname}${location.search}`, window.location.origin).href),
-    [location.pathname, location.search],
+  return parseWeiboUrl(
+    new URL(`${location.pathname}${location.search}`, window.location.origin).href,
   )
+}
+
+export interface AppShellContext {
+  page: ReturnType<typeof usePage>
+  navigateToStatusDetail: (item: StatusDetailNavigationItem) => void
+  composeTarget: ComposeTarget | null
+  setComposeTarget: (target: ComposeTarget | null) => void
+  isComposeSubmitting: boolean
+  handleComposeSubmit: (payload: { text: string; alsoSecondaryAction: boolean }) => Promise<void>
+  viewingProfileUserId: string | null
+  onProfileUserIdChange: (userId: string | null) => void
+  onHomeTabChange: (tab: 'for-you' | 'following') => void
+}
+
+export function AppShell() {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const page = usePage()
 
   const theme = useAppSettings((state) => state.theme)
   const rewriteEnabled = useAppSettings((state) => state.rewriteEnabled)
@@ -39,30 +48,7 @@ export function AppShell() {
   const setTheme = useAppSettings((state) => state.setTheme)
   const [composeTarget, setComposeTarget] = useState<ComposeTarget | null>(null)
   const [isComposeSubmitting, setIsComposeSubmitting] = useState(false)
-  const activeTimelineTab = page.kind === 'home' ? page.tab : 'for-you'
-
-  const { timelineQuery, items: timelineItems } = useHomeTimelineData({
-    activeTimelineTab,
-    isEnabled: rewriteEnabled && page.kind === 'home',
-  })
-  const {
-    profileInfoQuery,
-    profilePostsQuery,
-    isLoading: isProfileLoading,
-    errorMessage: profileErrorMessage,
-    viewingProfileUserId,
-  } = useProfilePageData({
-    page,
-    isEnabled: rewriteEnabled && page.kind === 'profile',
-  })
-  const {
-    statusDetailQuery,
-    statusCommentsQuery,
-    comments: statusComments,
-  } = useStatusPageData({
-    page,
-    isEnabled: rewriteEnabled && page.kind === 'status',
-  })
+  const [viewingProfileUserId, setViewingProfileUserId] = useState<string | null>(null)
 
   const navigateToStatusDetail = (item: StatusDetailNavigationItem) => {
     const statusId = item.mblogId ?? item.id
@@ -72,10 +58,7 @@ export function AppShell() {
     navigate(`/${item.author.id}/${statusId}`)
   }
 
-  async function handleComposeSubmit(payload: {
-    text: string
-    alsoSecondaryAction: boolean
-  }) {
+  async function handleComposeSubmit(payload: { text: string; alsoSecondaryAction: boolean }) {
     if (!composeTarget) {
       return
     }
@@ -89,9 +72,7 @@ export function AppShell() {
         alsoSecondaryAction: payload.alsoSecondaryAction,
       })
 
-      if (page.kind === 'status') {
-        await Promise.all([statusDetailQuery.refetch(), statusCommentsQuery.refetch()])
-      }
+      await queryClient.invalidateQueries({ queryKey: ['weibo'] })
 
       toast.success(composeTarget.mode === 'repost' ? '转发成功' : '回复成功')
       setComposeTarget(null)
@@ -100,6 +81,18 @@ export function AppShell() {
     } finally {
       setIsComposeSubmitting(false)
     }
+  }
+
+  const context: AppShellContext = {
+    page,
+    navigateToStatusDetail,
+    composeTarget,
+    setComposeTarget,
+    isComposeSubmitting,
+    handleComposeSubmit,
+    viewingProfileUserId,
+    onProfileUserIdChange: setViewingProfileUserId,
+    onHomeTabChange: (tab) => navigate(getHomeTimelinePath(tab)),
   }
 
   const composeModal = (
@@ -125,98 +118,17 @@ export function AppShell() {
     )
   }
 
-  const shellFrameProps = {
-    pageKind: page.kind,
-    viewingProfileUserId,
-    rewriteEnabled,
-    theme,
-    onRewriteEnabledChange: (enabled: boolean) => void setRewriteEnabled(enabled),
-    onThemeChange: (nextTheme: typeof theme) => void setTheme(nextTheme),
-  }
-
-  if (page.kind === 'home' || page.kind === 'status') {
-    return (
-      <>
-        <ShellFrame {...shellFrameProps}>
-          <HomeStatusPanels
-            activeTimelineTab={activeTimelineTab}
-            isHomePageVisible={page.kind === 'home'}
-            isStatusPageVisible={page.kind === 'status'}
-            timelineErrorMessage={
-              timelineQuery.error instanceof Error ? timelineQuery.error.message : null
-            }
-            timelineHasNextPage={Boolean(timelineQuery.hasNextPage)}
-            timelineIsFetchingNextPage={timelineQuery.isFetchingNextPage}
-            timelineIsLoading={timelineQuery.isLoading}
-            timelineItems={timelineItems}
-            statusComments={statusComments}
-            statusCommentsHasNextPage={Boolean(statusCommentsQuery.hasNextPage)}
-            statusCommentsIsFetchingNextPage={statusCommentsQuery.isFetchingNextPage}
-            statusDetail={statusDetailQuery.data}
-            statusDetailErrorMessage={
-              statusDetailQuery.error instanceof Error ? statusDetailQuery.error.message : null
-            }
-            statusDetailIsLoading={statusDetailQuery.isLoading}
-            onStatusComment={setComposeTarget}
-            onStatusRepost={setComposeTarget}
-            onCommentReply={setComposeTarget}
-            onCommentClick={navigateToStatusDetail}
-            onHomeRetry={() => void timelineQuery.refetch()}
-            onHomeTabChange={(tab) => navigate(getHomeTimelinePath(tab))}
-            onLoadNextComments={() => void statusCommentsQuery.fetchNextPage()}
-            onLoadNextTimeline={() => void timelineQuery.fetchNextPage()}
-          />
-        </ShellFrame>
-        {composeModal}
-      </>
-    )
-  }
-
-  if (page.kind === 'profile') {
-    return (
-      <>
-        <ShellFrame {...shellFrameProps}>
-          <ProfilePanel
-            errorMessage={profileErrorMessage}
-            isLoading={isProfileLoading}
-            posts={profilePostsQuery.data}
-            profile={profileInfoQuery.data}
-            onNavigate={navigateToStatusDetail}
-            onCommentClick={(item) =>
-              setComposeTarget({
-                kind: 'status',
-                mode: 'comment',
-                statusId: item.id,
-                targetCommentId: null,
-                authorName: item.author.name,
-                excerpt: item.text.trim().slice(0, 80),
-              })
-            }
-            onRepostClick={(item) =>
-              setComposeTarget({
-                kind: 'status',
-                mode: 'repost',
-                statusId: item.id,
-                targetCommentId: null,
-                authorName: item.author.name,
-                excerpt: item.text.trim().slice(0, 80),
-              })
-            }
-          />
-        </ShellFrame>
-        {composeModal}
-      </>
-    )
-  }
-
   return (
-    <>
-      <ShellFrame {...shellFrameProps}>
-        <div className="h-full overflow-y-auto">
-          <UnsupportedPageCard page={page} />
-        </div>
-      </ShellFrame>
+    <ShellFrame
+      pageKind={page.kind}
+      viewingProfileUserId={viewingProfileUserId}
+      rewriteEnabled={rewriteEnabled}
+      theme={theme}
+      onRewriteEnabledChange={(enabled: boolean) => void setRewriteEnabled(enabled)}
+      onThemeChange={(nextTheme: typeof theme) => void setTheme(nextTheme)}
+    >
+      <Outlet context={context} />
       {composeModal}
-    </>
+    </ShellFrame>
   )
 }

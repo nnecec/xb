@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 
+import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import { useEmoticonConfigQuery } from '@/features/weibo/app/emoticon-query'
 import { UserHoverCard } from '@/features/weibo/components/user-hover-card'
 import type { WeiboEmoticonItem } from '@/features/weibo/models/emoticon'
@@ -13,15 +14,32 @@ function escapeRegExp(value: string) {
 /** `@name` followed by `:` or whitespace or end — matches Weibo `text_raw` mention style (e.g. `//@AIMIKKKK:`). */
 const MENTION_PATTERN = /@([A-Za-z0-9_\u4e00-\u9fff-]+)(?=[:\s]|$)/g
 const EMOTICON_PATTERN = /\[[^[\]]+\]/g
+const REPLY_CHAIN_MARKER_PATTERN = /\/\/@([A-Za-z0-9_\u4e00-\u9fff-]+):/g
 const LINK_TEXT_CLASS_NAME = 'text-primary underline underline-offset-2'
 const INLINE_EMOTICON_CLASS_NAME = 'inline h-[1.2em] w-auto align-[-0.22em]'
 const EMPTY_COMMENT_LABEL = 'No content.'
 const EMPTY_STATUS_LABEL = 'No text content.'
 
-function renderMentionLink(screenName: string, key: string) {
+type ReplyChainSegment = {
+  screenName: string
+  text: string
+}
+
+type ParsedReplyChainText =
+  | {
+      kind: 'plain'
+      text: string
+    }
+  | {
+      kind: 'reply-chain'
+      leading: string
+      replyChain: ReplyChainSegment[]
+    }
+
+function renderMentionLink(screenName: string, key: string, className = LINK_TEXT_CLASS_NAME) {
   return (
     <UserHoverCard key={key} screenName={screenName}>
-      <Link to={`/n/${encodeURIComponent(screenName)}`} className={LINK_TEXT_CLASS_NAME}>
+      <Link to={`/n/${encodeURIComponent(screenName)}`} className={className}>
         @{screenName}
       </Link>
     </UserHoverCard>
@@ -113,6 +131,7 @@ function renderTopicLink(entity: FeedTopicEntity, key: string) {
 
 function renderTextWithEntities(
   text: string,
+  keyPrefix: string,
   urlEntities: FeedUrlEntity[],
   topicEntities: FeedTopicEntity[] = [],
   phraseMap: Record<string, WeiboEmoticonItem>,
@@ -125,7 +144,11 @@ function renderTextWithEntities(
   ]
 
   if (patternParts.length === 0) {
-    return [<span key="chunk-0">{renderTextWithMentionsAndEmoticons(text, 'c0', phraseMap)}</span>]
+    return [
+      <span key={`${keyPrefix}-chunk-0`}>
+        {renderTextWithMentionsAndEmoticons(text, `${keyPrefix}-c0`, phraseMap)}
+      </span>,
+    ]
   }
 
   const pattern = patternParts.join('|')
@@ -134,20 +157,159 @@ function renderTextWithEntities(
   return chunks.map((chunk, index) => {
     const urlEntity = urlEntityMap.get(chunk)
     if (urlEntity) {
-      return renderEntityLink(urlEntity, `url-${index}`)
+      return renderEntityLink(urlEntity, `${keyPrefix}-url-${index}`)
     }
 
     const topicEntity = topicEntityMap.get(chunk)
     if (topicEntity) {
-      return renderTopicLink(topicEntity, `topic-${index}`)
+      return renderTopicLink(topicEntity, `${keyPrefix}-topic-${index}`)
     }
 
     return (
-      <span key={`chunk-${index}`}>
-        {renderTextWithMentionsAndEmoticons(chunk, `c${index}`, phraseMap)}
+      <span key={`${keyPrefix}-chunk-${index}`}>
+        {renderTextWithMentionsAndEmoticons(chunk, `${keyPrefix}-c${index}`, phraseMap)}
       </span>
     )
   })
+}
+
+function parseReplyChainText(text: string): ParsedReplyChainText {
+  if (!text.includes('//@')) {
+    return { kind: 'plain', text }
+  }
+
+  const matches = Array.from(text.matchAll(REPLY_CHAIN_MARKER_PATTERN))
+  if (matches.length === 0) {
+    return { kind: 'plain', text }
+  }
+
+  const markerIndexes: number[] = []
+  let markerSearchStart = 0
+  while (true) {
+    const markerIndex = text.indexOf('//@', markerSearchStart)
+    if (markerIndex === -1) {
+      break
+    }
+    markerIndexes.push(markerIndex)
+    markerSearchStart = markerIndex + 3
+  }
+
+  if (
+    markerIndexes.length !== matches.length ||
+    matches.some((match, index) => match.index !== markerIndexes[index])
+  ) {
+    return { kind: 'plain', text }
+  }
+
+  const firstMatchIndex = matches[0]?.index
+  if (firstMatchIndex === undefined) {
+    return { kind: 'plain', text }
+  }
+
+  const replyChain: ReplyChainSegment[] = []
+  const leading = text.slice(0, firstMatchIndex).trimEnd()
+
+  for (const [index, match] of matches.entries()) {
+    const matchIndex = match.index
+    const marker = match[0]
+    const rawScreenName = match[1]
+    const nextMatchIndex = matches[index + 1]?.index ?? text.length
+
+    if (matchIndex === undefined || !marker || !rawScreenName) {
+      return { kind: 'plain', text }
+    }
+
+    const screenName = rawScreenName.trim()
+    if (!screenName) {
+      return { kind: 'plain', text }
+    }
+
+    replyChain.push({
+      screenName,
+      text: text.slice(matchIndex + marker.length, nextMatchIndex).trim(),
+    })
+  }
+
+  if (replyChain.length === 0) {
+    return { kind: 'plain', text }
+  }
+
+  return {
+    kind: 'reply-chain',
+    leading,
+    replyChain,
+  }
+}
+
+function renderInlineText(
+  text: string,
+  keyPrefix: string,
+  urlEntities: FeedUrlEntity[],
+  topicEntities: FeedTopicEntity[],
+  phraseMap: Record<string, WeiboEmoticonItem>,
+) {
+  return renderTextWithEntities(text, keyPrefix, urlEntities, topicEntities, phraseMap)
+}
+
+function renderReplyChainText(
+  parsed: Extract<ParsedReplyChainText, { kind: 'reply-chain' }>,
+  urlEntities: FeedUrlEntity[],
+  topicEntities: FeedTopicEntity[],
+  phraseMap: Record<string, WeiboEmoticonItem>,
+) {
+  return (
+    <span className="flex flex-col">
+      {parsed.leading ? (
+        <span>
+          {renderInlineText(parsed.leading, 'leading', urlEntities, topicEntities, phraseMap)}
+        </span>
+      ) : null}
+      <ItemGroup data-testid="reply-chain">
+        {parsed.replyChain.map((segment, index) => (
+          <Item
+            key={`chain-${segment.screenName}-${index}`}
+            variant="muted"
+            size="sm"
+            className="bg-muted/40"
+          >
+            <ItemContent>
+              <ItemTitle>
+                {renderMentionLink(segment.screenName, `chain-label-${index}`, 'text-sm')}
+              </ItemTitle>
+              <ItemDescription className="text-sm">
+                {renderInlineText(
+                  segment.text,
+                  `chain-${index}`,
+                  urlEntities,
+                  topicEntities,
+                  phraseMap,
+                )}
+              </ItemDescription>
+            </ItemContent>
+          </Item>
+          // <span
+          //   key={`chain-${segment.screenName}-${index}`}
+          //   className={`${REPLY_CHAIN_SEGMENT_CLASS_NAME}${index < parsed.replyChain.length - 1 ? ' pb-2' : ''}`}
+          // >
+          //   {renderMentionLink(
+          //     segment.screenName,
+          //     `chain-label-${index}`,
+          //     `${LINK_TEXT_CLASS_NAME} ${REPLY_CHAIN_AUTHOR_CLASS_NAME}`,
+          //   )}
+          //   <span className="block text-foreground/80">
+          //     {renderInlineText(
+          //       segment.text,
+          //       `chain-${index}`,
+          //       urlEntities,
+          //       topicEntities,
+          //       phraseMap,
+          //     )}
+          //   </span>
+          // </span>
+        ))}
+      </ItemGroup>
+    </span>
+  )
 }
 
 /** Plain text with @昵称 links (e.g. comments — no `urlEntities`). */
@@ -175,8 +337,8 @@ export function StatusText({
 }) {
   const emoticonQuery = useEmoticonConfigQuery()
   const phraseMap = {
-    ...(emoticonQuery.data?.phraseMap ?? {}),
-    ...(item.emoticons ?? {}),
+    ...emoticonQuery.data?.phraseMap,
+    ...item.emoticons,
   }
   const raw = text ?? ''
   if (!raw) {
@@ -185,6 +347,20 @@ export function StatusText({
 
   const hasUrlEntities = Boolean(item.urlEntities && item.urlEntities.length > 0)
   const hasTopicEntities = Boolean(item.topicEntities && item.topicEntities.length > 0)
+  const parsedReplyChain = parseReplyChainText(raw)
+
+  if (parsedReplyChain.kind === 'reply-chain') {
+    return (
+      <span className="whitespace-pre-wrap">
+        {renderReplyChainText(
+          parsedReplyChain,
+          item.urlEntities ?? [],
+          item.topicEntities ?? [],
+          phraseMap,
+        )}
+      </span>
+    )
+  }
 
   if (!hasUrlEntities && !hasTopicEntities) {
     return (
@@ -196,7 +372,13 @@ export function StatusText({
 
   return (
     <span className="whitespace-pre-wrap">
-      {renderTextWithEntities(raw, item.urlEntities ?? [], item.topicEntities ?? [], phraseMap)}
+      {renderTextWithEntities(
+        raw,
+        'status',
+        item.urlEntities ?? [],
+        item.topicEntities ?? [],
+        phraseMap,
+      )}
     </span>
   )
 }
