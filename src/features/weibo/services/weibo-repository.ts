@@ -67,6 +67,7 @@ export async function loadHomeTimeline(
 export async function loadStatusDetail(statusId: string): Promise<StatusDetail> {
   const payload = await wbGet<unknown>(WEIBO_ENDPOINTS.statusDetail, {
     id: statusId,
+    isGetLongText: 1,
   })
 
   return adaptStatusDetailResponse(payload)

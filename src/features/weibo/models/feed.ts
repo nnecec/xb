@@ -61,3 +61,6 @@ export interface TimelinePage {
   items: FeedItem[]
   nextCursor: string | null
 }
+
+/** Minimal fields needed to navigate to a status detail URL from the shell. */
+export type StatusDetailNavigationItem = Pick<FeedItem, 'author' | 'id' | 'mblogId'>

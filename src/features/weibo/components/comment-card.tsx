@@ -100,8 +100,10 @@ function NestedCommentCard({
 
         <div className="text-muted-foreground">
           <Button
+            type="button"
             size="icon-sm"
             variant="ghost"
+            aria-label="回复评论"
             onClick={() => onCommentReply?.(createCommentComposeTarget({ rootStatusId, comment }))}
           >
             <MessageCircleIcon className="size-3" />
@@ -200,8 +202,10 @@ export function CommentCard({
 
           <div className="text-muted-foreground">
             <Button
+              type="button"
               variant="ghost"
               size="icon-sm"
+              aria-label="回复评论"
               onClick={() =>
                 onCommentReply?.(createCommentComposeTarget({ rootStatusId, comment: item }))
               }

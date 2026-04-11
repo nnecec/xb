@@ -7,7 +7,7 @@ import {
   RewritePausedCard,
   ShellFrame,
 } from '@/features/weibo/app/app-shell-layout'
-import { type StatusDetailNavigationItem } from '@/features/weibo/app/app-shell-queries'
+import type { StatusDetailNavigationItem } from '@/features/weibo/models/feed'
 import { CommentModal } from '@/features/weibo/components/comment-modal'
 import type { ComposeTarget } from '@/features/weibo/models/compose'
 import { parseWeiboUrl } from '@/features/weibo/route/parse-weibo-url'

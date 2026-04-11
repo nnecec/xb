@@ -10,10 +10,10 @@ import { Toaster } from 'sonner'
 
 import { AppShell } from '@/features/weibo/app/app-shell'
 import { usePrewarmEmoticonConfig } from '@/features/weibo/app/emoticon-query'
-import { HomePageContent } from '@/features/weibo/app/pages/home-page-content'
-import { ProfilePageContent } from '@/features/weibo/app/pages/profile-page-content'
-import { StatusPageContent } from '@/features/weibo/app/pages/status-page-content'
 import { UnsupportedPageContent } from '@/features/weibo/app/pages/unsupported-page-content'
+import { HomeTimelinePage } from '@/features/weibo/pages/home-timeline-page'
+import { ProfilePage } from '@/features/weibo/pages/profile-page'
+import { StatusDetailPage } from '@/features/weibo/pages/status-detail-page'
 import { WeiboHistorySync } from '@/features/weibo/app/weibo-history-sync'
 
 const queryClient = new QueryClient({
@@ -47,11 +47,11 @@ function AppRootBootstrap() {
       <WeiboHistorySync />
       <Routes>
         <Route path="*" element={<AppShell />}>
-          <Route index element={<HomePageContent />} />
-          <Route path="mygroups" element={<HomePageContent tab="following" />} />
-          <Route path=":authorId/:statusId" element={<StatusPageContent />} />
-          <Route path="u/:uid" element={<ProfilePageContent />} />
-          <Route path="n/:uname" element={<ProfilePageContent />} />
+          <Route index element={<HomeTimelinePage />} />
+          <Route path="mygroups" element={<HomeTimelinePage />} />
+          <Route path=":authorId/:statusId" element={<StatusDetailPage />} />
+          <Route path="u/:uid" element={<ProfilePage />} />
+          <Route path="n/:uname" element={<ProfilePage />} />
           <Route path="unsupported" element={<UnsupportedPageContent />} />
         </Route>
       </Routes>

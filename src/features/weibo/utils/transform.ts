@@ -70,6 +70,7 @@ export interface WeiboStatus {
   created_at?: string
   idstr?: string
   isLongText?: boolean
+  longText?: object
   mid?: number | string
   mblogid?: string
   page_info?: WeiboPageInfo
@@ -128,7 +129,9 @@ function getImageUrlStructs(status: Pick<WeiboStatus, 'url_struct'>) {
   }
 
   return status.url_struct.filter(
-    (entity): entity is WeiboUrlStruct & { pic_ids: string[]; pic_infos: Record<string, WeiboPicInfo> } =>
+    (
+      entity,
+    ): entity is WeiboUrlStruct & { pic_ids: string[]; pic_infos: Record<string, WeiboPicInfo> } =>
       Array.isArray(entity.pic_ids) && entity.pic_ids.length > 0 && Boolean(entity.pic_infos),
   )
 }
@@ -370,7 +373,7 @@ export function toFeedItem(status: WeiboStatus, includeRetweeted = true): FeedIt
   return {
     id: getStatusId(status),
     mblogId: status.mblogid ?? null,
-    isLongText: Boolean(status.isLongText),
+    isLongText: Boolean(status.isLongText && !status.longText),
     text: getStatusText(status),
     createdAtLabel: formatCreatedAt(status.created_at ?? ''),
     author: getStatusAuthor(status.user),
@@ -406,16 +409,15 @@ export function toCommentItem(comment: WeiboStatus): CommentItem {
   const normalizedReplyCommentText = stripEntityTokens(replyCommentText, replyCommentImageTokens)
   const emoticons = extractEmoticonsFromHtml(comment.text)
 
-  const normalizedRetweetedStatus =
-    comment.retweeted_status
-      ? {
-          ...comment.retweeted_status,
-          pic_ids: comment.retweeted_status.pic_ids ?? [],
-          pic_infos: comment.retweeted_status.pic_infos ?? {},
-          url_struct: comment.retweeted_status.url_struct ?? [],
-          topic_struct: comment.retweeted_status.topic_struct ?? [],
-        }
-      : null
+  const normalizedRetweetedStatus = comment.retweeted_status
+    ? {
+        ...comment.retweeted_status,
+        pic_ids: comment.retweeted_status.pic_ids ?? [],
+        pic_infos: comment.retweeted_status.pic_infos ?? {},
+        url_struct: comment.retweeted_status.url_struct ?? [],
+        topic_struct: comment.retweeted_status.topic_struct ?? [],
+      }
+    : null
 
   return {
     id: getStatusId(comment),

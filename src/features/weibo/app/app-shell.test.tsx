@@ -1,10 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, Route, Routes } from 'react-router'
 import { toast } from 'sonner'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppShell } from '@/features/weibo/app/app-shell'
+import { HomeTimelinePage } from '@/features/weibo/pages/home-timeline-page'
+import { ProfilePage } from '@/features/weibo/pages/profile-page'
+import { StatusDetailPage } from '@/features/weibo/pages/status-detail-page'
 import {
   loadProfileHoverCard,
   loadHomeTimeline,
@@ -23,43 +26,30 @@ vi.mock('sonner', () => ({
   },
 }))
 
-vi.mock('@/features/weibo/app/app-shell-panels', () => ({
-  HomeStatusPanels: ({
-    onHomeTabChange,
-    onStatusComment,
+vi.mock('@/features/weibo/components/emoticon-picker', () => ({
+  EmoticonPicker: () => null,
+}))
+
+vi.mock('@/features/weibo/components/comment-modal', () => ({
+  CommentModal: ({
+    open,
+    target,
+    onSubmit,
   }: {
-    onHomeTabChange: (tab: 'for-you' | 'following') => void
-    onStatusComment?: (target: {
-      kind: 'status'
-      mode: 'comment'
-      statusId: string
-      targetCommentId: null
-      authorName: string
-      excerpt: string
-    }) => void
-  }) => (
-    <div>
-      <button role="tab" type="button" onMouseDown={() => onHomeTabChange('following')}>
-        Following
-      </button>
-      <button
-        type="button"
-        onClick={() =>
-          onStatusComment?.({
-            kind: 'status',
-            mode: 'comment',
-            statusId: '501',
-            targetCommentId: null,
-            authorName: 'Alice',
-            excerpt: 'main post',
-          })
-        }
-      >
-        回复微博
-      </button>
-    </div>
-  ),
-  ProfilePanel: () => null,
+    open: boolean
+    target: unknown
+    onSubmit: (payload: { text: string; alsoSecondaryAction: boolean }) => void
+  }) =>
+    open && target ? (
+      <div role="dialog" aria-label="回复微博">
+        <button
+          type="button"
+          onClick={() => onSubmit({ text: '太酷了', alsoSecondaryAction: false })}
+        >
+          发送
+        </button>
+      </div>
+    ) : null,
 }))
 
 vi.mock('@/features/weibo/services/weibo-repository', async () => {
@@ -76,7 +66,7 @@ vi.mock('@/features/weibo/services/weibo-repository', async () => {
     loadProfileHoverCard: vi.fn(async () => ({
       id: '1969776354',
       name: 'Alice',
-      bio: null,
+      bio: '',
       avatarUrl: null,
       bannerUrl: null,
       followersCount: null,
@@ -86,6 +76,8 @@ vi.mock('@/features/weibo/services/weibo-repository', async () => {
       createdAt: null,
       mutualFollowers: [],
       mutualFollowerTotal: null,
+      following: false,
+      followMe: false,
     })),
     loadProfilePosts: vi.fn(async () => ({
       items: [],
@@ -96,6 +88,28 @@ vi.mock('@/features/weibo/services/weibo-repository', async () => {
     submitComposeAction: vi.fn(async () => {}),
   }
 })
+
+function renderWeiboShell(initialEntries: string[]) {
+  const queryClient = new QueryClient()
+  return {
+    queryClient,
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={initialEntries}>
+          <Routes>
+            <Route path="*" element={<AppShell />}>
+              <Route index element={<HomeTimelinePage />} />
+              <Route path="mygroups" element={<HomeTimelinePage />} />
+              <Route path=":authorId/:statusId" element={<StatusDetailPage />} />
+              <Route path="u/:uid" element={<ProfilePage />} />
+              <Route path="n/:uname" element={<ProfilePage />} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    ),
+  }
+}
 
 describe('AppShell', () => {
   beforeEach(() => {
@@ -139,16 +153,9 @@ describe('AppShell', () => {
   })
 
   it('navigates to the following timeline when the home tab changes', async () => {
-    const queryClient = new QueryClient()
-    render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={['/']}>
-          <AppShell />
-        </MemoryRouter>
-      </QueryClientProvider>,
-    )
+    renderWeiboShell(['/'])
 
-    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Following' }))
+    fireEvent.mouseDown(screen.getByRole('tab', { name: '我关注的' }))
 
     await waitFor(() => {
       expect(vi.mocked(loadHomeTimeline)).toHaveBeenLastCalledWith('following', { cursor: null })
@@ -156,15 +163,7 @@ describe('AppShell', () => {
   })
 
   it('does not trigger status queries on profile pages', async () => {
-    const queryClient = new QueryClient()
-
-    render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={['/u/1969776354']}>
-          <AppShell />
-        </MemoryRouter>
-      </QueryClientProvider>,
-    )
+    renderWeiboShell(['/u/1969776354'])
 
     await waitFor(() => {
       expect(vi.mocked(loadProfileHoverCard)).toHaveBeenCalledWith({ uid: '1969776354' })
@@ -179,8 +178,6 @@ describe('AppShell', () => {
   })
 
   it('refetches detail queries after a successful status-detail reply', async () => {
-    const queryClient = new QueryClient()
-
     vi.mocked(loadStatusDetail).mockResolvedValue({
       status: {
         id: '501',
@@ -202,13 +199,9 @@ describe('AppShell', () => {
     })
     vi.mocked(submitComposeAction).mockResolvedValue()
 
-    render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={['/1/501']}>
-          <AppShell />
-        </MemoryRouter>
-      </QueryClientProvider>,
-    )
+    const { queryClient } = renderWeiboShell(['/1/501'])
+    // Real invalidation waits for all matching refetches; keep this case focused on compose + toast.
+    vi.spyOn(queryClient, 'invalidateQueries').mockResolvedValue(undefined as never)
 
     await waitFor(() => {
       expect(loadStatusDetail).toHaveBeenCalledTimes(1)
@@ -216,8 +209,8 @@ describe('AppShell', () => {
     })
 
     fireEvent.click(screen.getAllByRole('button', { name: '回复微博' })[0]!)
-    fireEvent.change(screen.getByRole('textbox', { name: '回复内容' }), {
-      target: { value: '太酷了[色]' },
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { name: '回复微博' })).toBeInTheDocument()
     })
     fireEvent.click(screen.getByRole('button', { name: '发送' }))
 
