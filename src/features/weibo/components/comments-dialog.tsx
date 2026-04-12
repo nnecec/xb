@@ -37,7 +37,7 @@ export function CommentsDialog({
     enabled: open && statusId !== '' && authorUid !== '',
   })
 
-  const comments = data?.items ?? []
+  const comments = data?.items ? [...data.items].reverse() : []
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -58,7 +58,7 @@ export function CommentsDialog({
             <PageEmptyState label="暂无评论" />
           ) : (
             <CommentList
-              comments={comments.reverse()}
+              comments={comments}
               emptyLabel="此微博暂无评论"
               rootStatusId={statusId}
               authorUid={authorUid ?? undefined}

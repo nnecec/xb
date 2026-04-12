@@ -22,13 +22,11 @@ export function CommentCard({
   rootStatusId,
   authorUid,
   onCommentReply,
-  depth = 0,
 }: {
   item: CommentItem
   rootStatusId: string
   authorUid?: string
   onCommentReply?: (target: ComposeTarget) => void
-  depth?: number
 }) {
   const [showNestedCommentsDialog, setShowNestedCommentsDialog] = useState(false)
   const uid = getCurrentUserUid()
@@ -105,7 +103,6 @@ export function CommentCard({
                 key={child.id}
                 item={child}
                 rootStatusId={rootStatusId}
-                depth={depth + 1}
                 authorUid={authorUid}
                 onCommentReply={onCommentReply}
               />

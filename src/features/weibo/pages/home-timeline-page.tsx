@@ -1,6 +1,5 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useRef } from 'react'
-import { useLocation } from 'react-router'
+import { useEffect, useRef } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
@@ -14,20 +13,14 @@ import {
   flattenInfiniteItems,
   homeTimelineInfiniteOptions,
 } from '@/features/weibo/queries/weibo-queries'
-import { parseWeiboUrl } from '@/features/weibo/route/parse-weibo-url'
+import { useWeiboPage } from '@/features/weibo/route/use-weibo-page'
 import { useAppSettings } from '@/lib/app-settings-store'
 
 export function HomeTimelinePage() {
   const ctx = useAppShellContext()
-  const location = useLocation()
+  const page = useWeiboPage()
   const rewriteEnabled = useAppSettings((s) => s.rewriteEnabled)
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
-
-  const page = useMemo(
-    () =>
-      parseWeiboUrl(new URL(`${location.pathname}${location.search}`, window.location.origin).href),
-    [location.pathname, location.search],
-  )
 
   const activeTab = page.kind === 'home' ? page.tab : 'for-you'
   const isEnabled = rewriteEnabled && page.kind === 'home'

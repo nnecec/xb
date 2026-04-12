@@ -108,7 +108,7 @@ describe('ProfilePage', () => {
     )
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Alice' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: '微博' })).toBeInTheDocument()
+    expect(await screen.findByRole('tab', { name: '微博' })).toBeInTheDocument()
     expect(await screen.findByText('profile post')).toBeInTheDocument()
     expect(vi.mocked(loadProfileHoverCard)).toHaveBeenCalledWith({ uid: '1' })
     expect(vi.mocked(loadProfilePosts)).toHaveBeenCalledWith('1')

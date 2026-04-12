@@ -80,7 +80,6 @@ function FeedAuthorHeader({
 }: {
   item: Pick<FeedItem, 'author' | 'createdAtLabel' | 'source' | 'regionName'>
   trailing?: ReactNode
-  title?: string
 }) {
   return (
     <CardHeader className="flex flex-row gap-3 px-4">

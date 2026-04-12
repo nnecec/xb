@@ -11,8 +11,6 @@ vi.mock('@/features/weibo/app/app-shell-layout', () => ({
     navigateToStatusDetail: vi.fn(),
     composeTarget: null,
     setComposeTarget,
-    isComposeSubmitting: false,
-    handleComposeSubmit: vi.fn(async () => {}),
     viewingProfileUserId: null,
     onProfileUserIdChange: vi.fn(),
     onHomeTabChange: vi.fn(),

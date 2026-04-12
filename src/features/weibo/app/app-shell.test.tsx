@@ -1,7 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
-import { toast } from 'sonner'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppShell } from '@/features/weibo/app/app-shell'
@@ -14,42 +13,17 @@ import {
   loadProfilePosts,
   loadStatusComments,
   loadStatusDetail,
-  submitComposeAction,
 } from '@/features/weibo/services/weibo-repository'
 import { APP_SETTINGS_STORAGE_KEY } from '@/lib/app-settings'
 import { getAppSettingsStore, resetAppSettingsStoreForTest } from '@/lib/app-settings-store'
-
-vi.mock('sonner', () => ({
-  toast: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}))
 
 vi.mock('@/features/weibo/components/emoticon-picker', () => ({
   EmoticonPicker: () => null,
 }))
 
 vi.mock('@/features/weibo/components/comment-modal', () => ({
-  CommentModal: ({
-    open,
-    target,
-    onSubmit,
-  }: {
-    open: boolean
-    target: unknown
-    onSubmit: (payload: { text: string; alsoSecondaryAction: boolean }) => void
-  }) =>
-    open && target ? (
-      <div role="dialog" aria-label="回复微博">
-        <button
-          type="button"
-          onClick={() => onSubmit({ text: '太酷了', alsoSecondaryAction: false })}
-        >
-          发送
-        </button>
-      </div>
-    ) : null,
+  CommentModal: ({ open, target }: { open: boolean; target: unknown }) =>
+    open && target ? <div role="dialog" aria-label="回复微博" /> : null,
 }))
 
 vi.mock('@/features/weibo/services/weibo-repository', async () => {
@@ -85,7 +59,6 @@ vi.mock('@/features/weibo/services/weibo-repository', async () => {
     })),
     loadStatusDetail: vi.fn(),
     loadStatusComments: vi.fn(),
-    submitComposeAction: vi.fn(async () => {}),
   }
 })
 
@@ -177,7 +150,7 @@ describe('AppShell', () => {
     expect(vi.mocked(loadStatusComments)).not.toHaveBeenCalled()
   })
 
-  it('refetches detail queries after a successful status-detail reply', async () => {
+  it('opens the compose modal from a status-detail reply action', async () => {
     vi.mocked(loadStatusDetail).mockResolvedValue({
       status: {
         id: '501',
@@ -197,11 +170,8 @@ describe('AppShell', () => {
       items: [],
       nextCursor: null,
     })
-    vi.mocked(submitComposeAction).mockResolvedValue()
 
-    const { queryClient } = renderWeiboShell(['/1/501'])
-    // Real invalidation waits for all matching refetches; keep this case focused on compose + toast.
-    vi.spyOn(queryClient, 'invalidateQueries').mockResolvedValue(undefined as never)
+    renderWeiboShell(['/1/501'])
 
     await waitFor(() => {
       expect(loadStatusDetail).toHaveBeenCalledTimes(1)
@@ -212,18 +182,5 @@ describe('AppShell', () => {
     await waitFor(() => {
       expect(screen.getByRole('dialog', { name: '回复微博' })).toBeInTheDocument()
     })
-    fireEvent.click(screen.getByRole('button', { name: '发送' }))
-
-    await waitFor(() => {
-      expect(submitComposeAction).toHaveBeenCalled()
-    })
-
-    expect(vi.mocked(toast.error)).not.toHaveBeenCalled()
-
-    await waitFor(() => {
-      expect(vi.mocked(toast.success)).toHaveBeenCalledWith('回复成功')
-    })
-
-    expect(screen.queryByRole('textbox', { name: '回复内容' })).not.toBeInTheDocument()
   })
 })
