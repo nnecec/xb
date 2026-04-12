@@ -63,7 +63,7 @@ export function HomeTimelinePage() {
   }, [hasNextPage, isFetchingNextPage, timelineQuery])
 
   return (
-    <div className="relative mx-auto h-full">
+    <div>
       <Tabs
         value={activeTab}
         className="flex flex-col"

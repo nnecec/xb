@@ -1,22 +1,41 @@
 import { SiGithub } from '@icons-pack/react-simple-icons'
+import { useQuery } from '@tanstack/react-query'
 import { CircleDot } from 'lucide-react'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Spinner } from '@/components/ui/spinner'
+import { HotSearchList } from '@/features/weibo/components/hotsearch-list'
+import { hotSearchQueryOptions } from '@/features/weibo/queries/weibo-queries'
 
 export function RightRail() {
+  const hotSearchQuery = useQuery(hotSearchQueryOptions)
+  const items =
+    hotSearchQuery.data?.items.map((item) => ({
+      word: item.word,
+      num: item.num,
+      realpos: item.realpos,
+      labelName: item.labelName,
+    })) ?? []
+
   return (
     <div className="flex-col gap-4 flex w-full">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">热搜</CardTitle>
-          <CardDescription>施工中</CardDescription>
-        </CardHeader>
+      <Card className="p-2 gap-2">
+        <div className="px-2 text-sm font-medium text-muted-foreground">热搜</div>
+        {hotSearchQuery.isLoading ? (
+          <div className="flex justify-center py-4">
+            <Spinner />
+          </div>
+        ) : hotSearchQuery.isError ? (
+          <CardDescription>加载失败</CardDescription>
+        ) : (
+          <HotSearchList items={items} />
+        )}
       </Card>
 
       <Card>
         <CardHeader>
           <CardTitle className="text-base">反馈</CardTitle>
-          <CardDescription>帮助我们改进</CardDescription>
+          <CardDescription>正在 beta 测试阶段，反馈问题以帮助我们改进</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3 text-sm text-muted-foreground">
           <a

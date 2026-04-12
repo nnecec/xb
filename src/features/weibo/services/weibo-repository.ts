@@ -9,6 +9,11 @@ import {
   type WeiboEmoticonPayload,
 } from '@/features/weibo/services/adapters/emoticon'
 import {
+  adaptHotSearchResponse,
+  HotSearchPayload,
+  type HotSearchPage,
+} from '@/features/weibo/services/adapters/hotsearch'
+import {
   adaptProfileInfoResponse,
   mergeProfileDetail,
   type ProfileDetailPayload,
@@ -289,8 +294,9 @@ export async function submitComposeAction(input: SubmitComposeInput): Promise<vo
       buildRepostPayload(input),
     )
     if (!isWeiboMutationSuccess(response)) {
-      throw new Error(response.msg || 'weibo-repost-failed')
+      throw new Error(response.msg || 'weibo-compose-submit-failed')
     }
+
     return
   }
 
@@ -302,4 +308,11 @@ export async function submitComposeAction(input: SubmitComposeInput): Promise<vo
   if (response.ok !== 1) {
     throw new Error(response.msg || 'weibo-compose-submit-failed')
   }
+}
+
+export async function loadHotSearch(): Promise<HotSearchPage> {
+  const payload = await wbGet<HotSearchPayload>(WEIBO_ENDPOINTS.searchBand, {
+    last_tab: 'hot',
+  })
+  return adaptHotSearchResponse(payload)
 }

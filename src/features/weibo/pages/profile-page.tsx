@@ -1,10 +1,9 @@
 import { skipToken, useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useLocation } from 'react-router'
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAppShellContext } from '@/features/weibo/app/app-shell-layout'
-import { BackToTop } from '@/features/weibo/components/back-to-top'
 import { FeedList } from '@/features/weibo/components/feed-list'
 import {
   PageEmptyState,
@@ -21,7 +20,6 @@ import { useAppSettings } from '@/lib/app-settings-store'
 export function ProfilePage() {
   const ctx = useAppShellContext()
   const location = useLocation()
-  const scrollRef = useRef<HTMLDivElement>(null)
   const rewriteEnabled = useAppSettings((s) => s.rewriteEnabled)
 
   const page = useMemo(
@@ -66,7 +64,7 @@ export function ProfilePage() {
     null
 
   return (
-    <div ref={scrollRef} className="relative mx-auto h-full">
+    <div>
       {isLoading ? <PageLoadingState label="正在加载此用户主页..." /> : null}
       {!isLoading && errorMessage ? <PageErrorState description={errorMessage} /> : null}
       {!isLoading && !errorMessage && profileInfoQuery.data && profilePostsQuery.data ? (
@@ -99,7 +97,6 @@ export function ProfilePage() {
           </Tabs>
         </div>
       ) : null}
-      <BackToTop container={scrollRef.current} />
     </div>
   )
 }

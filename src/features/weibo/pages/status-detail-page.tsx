@@ -62,7 +62,7 @@ export function StatusDetailPage() {
   const selectedFilter = filterGroup?.find((f) => f.param === filterParam) ?? filterGroup?.[0]
 
   return (
-    <div className="relative mx-auto h-full">
+    <div>
       {statusDetailQuery.isLoading ? <PageLoadingState label="正在加载此微博..." /> : null}
       {statusDetailQuery.error instanceof Error ? (
         <PageErrorState description={statusDetailQuery.error.message} />

@@ -113,7 +113,7 @@ export function ShellFrame({
             onRefresh={onRefresh}
           />
         </div>
-        <main className="min-w-0 flex-1 overflow-y-auto pt-4 no-scrollbar" ref={mainRef}>
+        <main className="min-w-0 flex-1 overflow-y-auto py-4 no-scrollbar" ref={mainRef}>
           {children}
         </main>
         <div className="hidden md:flex md:w-[200px] xl:w-[240px] shrink-0 pt-4">

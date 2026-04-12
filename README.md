@@ -30,3 +30,7 @@ xb currently enhances the following pages:
 - **Home Timeline**
 - **Profile Page**
 - **Status Detail**
+
+## Credits
+
+- Inspired by [BewlyBewly](https://github.com/BewlyBewly/BewlyBewly)

@@ -1,6 +1,6 @@
 import type { TimelinePage } from '@/features/weibo/models/feed'
 import type { WeiboPageDescriptor } from '@/features/weibo/route/page-descriptor'
-import { loadHomeTimeline, type HomeTimelineTab } from '@/features/weibo/services/weibo-repository'
+import { loadHotSearch, loadHomeTimeline, type HomeTimelineTab } from '@/features/weibo/services/weibo-repository'
 
 export function flattenInfiniteItems<Item>(pages: Array<{ items: Item[] }> | undefined): Item[] {
   return pages?.flatMap((page) => page.items) ?? []
@@ -25,4 +25,10 @@ export function homeTimelineInfiniteOptions(activeTimelineTab: HomeTimelineTab) 
     getNextPageParam: (lastPage: TimelinePage) => lastPage.nextCursor ?? undefined,
     staleTime: 30 * 60 * 1000,
   }
+}
+
+export const hotSearchQueryOptions = {
+  queryKey: ['weibo', 'hotsearch'] as const,
+  queryFn: () => loadHotSearch(),
+  staleTime: 5 * 60 * 1000,
 }

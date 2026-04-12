@@ -1,5 +1,14 @@
 import { useMediaQuery } from '@reactuses/core'
-import { House, RefreshCw, UserRound, ZapOff } from 'lucide-react'
+import {
+  Bell,
+  Bookmark,
+  Compass,
+  House,
+  RefreshCw,
+  Settings,
+  UserRound,
+  ZapOff,
+} from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 
@@ -66,7 +75,6 @@ export function NavigationRail({
 
       <nav aria-label="主导航" className="flex min-h-0 flex-1 flex-col">
         <div className="flex flex-col gap-2">
-          {/* Home button - special handling for refresh on hover in timeline */}
           <Button
             onClick={handleHomeClick}
             onMouseEnter={() => setIsHomeHovered(true)}
@@ -88,7 +96,36 @@ export function NavigationRail({
             </span>
           </Button>
 
-          {/* Profile button */}
+          <Button
+            variant="ghost"
+            className={isXl ? 'justify-start' : 'justify-center'}
+            size={isXl ? 'lg' : 'icon'}
+            disabled
+          >
+            <Compass aria-hidden="true" className="size-4 shrink-0" />
+            <span className={cn('hidden xl:inline')}>探索</span>
+          </Button>
+
+          <Button
+            variant="ghost"
+            className={isXl ? 'justify-start' : 'justify-center'}
+            size={isXl ? 'lg' : 'icon'}
+            disabled
+          >
+            <Bookmark aria-hidden="true" className="size-4 shrink-0" />
+            <span className={cn('hidden xl:inline')}>收藏</span>
+          </Button>
+
+          <Button
+            variant="ghost"
+            className={isXl ? 'justify-start' : 'justify-center'}
+            size={isXl ? 'lg' : 'icon'}
+            disabled
+          >
+            <Bell aria-hidden="true" className="size-4 shrink-0" />
+            <span className={cn('hidden xl:inline')}>通知</span>
+          </Button>
+
           <Button
             onClick={() => navigate(profileHref)}
             title="个人主页"
@@ -104,6 +141,13 @@ export function NavigationRail({
         </div>
 
         <div className="mt-auto space-y-3 border-t border-border/60 pt-3 xl:space-y-3.5 xl:pt-4 xl:w-[180px]">
+          <div className="flex items-center justify-center xl:justify-between">
+            <p className="hidden text-xs font-medium text-muted-foreground xl:block">设置</p>
+            <Button type="button" size="icon" variant="secondary" disabled>
+              <Settings className="size-4" aria-hidden="true" />
+            </Button>
+          </div>
+
           <div className="flex items-center justify-center xl:justify-between">
             <p className="hidden text-xs font-medium text-muted-foreground xl:block">返回原模式</p>
             <Button

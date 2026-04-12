@@ -18,6 +18,7 @@ export const WEIBO_ENDPOINTS = {
   profilePosts: '/ajax/statuses/mymblog',
   followCreate: '/ajax/friendships/create',
   followDestroy: '/ajax/friendships/destory',
+  searchBand: '/ajax/side/searchBand',
 } as const
 
 export type WeiboEndpointKey = keyof typeof WEIBO_ENDPOINTS

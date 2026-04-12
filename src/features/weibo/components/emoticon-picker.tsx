@@ -41,7 +41,8 @@ export function EmoticonPicker({ onSelect }: { onSelect: (entry: EmoticonEntry) 
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="p-3" align="start">
-        <div className="grid max-h-56 grid-cols-8 gap-2 overflow-y-auto">
+        <div className="text-xs text-muted-foreground">最近使用</div>
+        <div className="grid max-h-56 grid-cols-10 gap-1 overflow-y-auto">
           {recentItems.map((item) => (
             <Button
               variant="ghost"
@@ -58,7 +59,7 @@ export function EmoticonPicker({ onSelect }: { onSelect: (entry: EmoticonEntry) 
           ))}
         </div>
         <Tabs defaultValue={defaultTab}>
-          <TabsList className="mb-3 flex w-full overflow-x-auto">
+          <TabsList className="my-1 flex w-full overflow-x-auto">
             {data?.groups.map((group) => (
               <TabsTrigger key={group.title} value={group.title} className="gap-1 px-2 py-1.5">
                 <img alt="" className="size-5" src={group.items[0].url} />
@@ -68,7 +69,7 @@ export function EmoticonPicker({ onSelect }: { onSelect: (entry: EmoticonEntry) 
           </TabsList>
           {data?.groups.map((group) => (
             <TabsContent key={group.title} value={group.title}>
-              <div className="grid max-h-56 grid-cols-8 gap-2 overflow-y-auto">
+              <div className="grid max-h-56 grid-cols-10 gap-1 overflow-y-auto">
                 {group.items.map((item) => (
                   <Button
                     variant="ghost"

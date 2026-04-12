@@ -28,3 +28,7 @@ xb 现已为以下页面提供增强体验：
 - **首页时间线**
 - **个人主页**
 - **微博详情**
+
+## 致谢
+
+- 受 [BewlyBewly](https://github.com/BewlyBewly/BewlyBewly) 启发

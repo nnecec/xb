@@ -5,6 +5,7 @@ import { Link } from 'react-router'
 import { toast } from 'sonner'
 
 import { AspectRatio } from '@/components/ui/aspect-ratio'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -342,6 +343,7 @@ export function FeedCard({
   onCommentClick,
   onRepostClick,
   onStatusDeleted,
+  className,
 }: {
   item: FeedItem
   surface?: StatusFeedSurface
@@ -350,6 +352,7 @@ export function FeedCard({
   onRepostClick?: (item: FeedItem) => void
   /** After deleting this status (owner only), e.g. navigate back from detail. */
   onStatusDeleted?: () => void
+  className?: string
 }) {
   const pointerDownPositionRef = useRef<{ x: number; y: number } | null>(null)
   const suppressNextClickRef = useRef(false)
@@ -446,9 +449,11 @@ export function FeedCard({
   }
 
   return (
-    <Card className="gap-4" data-testid="feed-card-body">
+    <Card className={cn('gap-4', className)} data-testid="feed-card-body">
       {item.title ? (
-        <div className="px-4 text-xs font-medium text-muted-foreground">{item.title.text}</div>
+        <div className="px-4">
+          <Badge variant="secondary">{item.title.text}</Badge>
+        </div>
       ) : null}
       <FeedAuthorHeader
         item={item}
