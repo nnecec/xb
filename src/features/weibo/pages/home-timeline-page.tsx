@@ -13,6 +13,7 @@ import {
   flattenInfiniteItems,
   homeTimelineInfiniteOptions,
 } from '@/features/weibo/queries/weibo-queries'
+import { composeTargetFromFeedItem } from '@/features/weibo/models/compose'
 import { parseWeiboUrl } from '@/features/weibo/route/parse-weibo-url'
 import { useAppSettings } from '@/lib/app-settings-store'
 
@@ -89,24 +90,10 @@ export function HomeTimelinePage() {
               emptyLabel="此时间线暂无内容"
               onNavigate={ctx.navigateToStatusDetail}
               onCommentClick={(item) =>
-                ctx.setComposeTarget({
-                  kind: 'status',
-                  mode: 'comment',
-                  statusId: item.id,
-                  targetCommentId: null,
-                  authorName: item.author.name,
-                  excerpt: item.text.trim().slice(0, 80),
-                })
+                ctx.setComposeTarget(composeTargetFromFeedItem(item, 'comment'))
               }
               onRepostClick={(item) =>
-                ctx.setComposeTarget({
-                  kind: 'status',
-                  mode: 'repost',
-                  statusId: item.id,
-                  targetCommentId: null,
-                  authorName: item.author.name,
-                  excerpt: item.text.trim().slice(0, 80),
-                })
+                ctx.setComposeTarget(composeTargetFromFeedItem(item, 'repost'))
               }
             />
           ) : null}

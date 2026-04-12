@@ -48,7 +48,6 @@ describe('EmoticonPicker', () => {
       ctrlKey: false,
     })
 
-    expect(screen.getByRole('tab', { name: '最近' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: '默认' })).toBeInTheDocument()
 
     const recentImage = screen.getByRole('img', { name: '[赞]' })

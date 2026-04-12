@@ -37,6 +37,7 @@ describe('adaptTimelineResponse', () => {
         {
           id: '501',
           isLongText: false,
+          liked: false,
           mblogId: null,
           text: 'hello world',
           createdAtLabel: '10:00',
@@ -85,6 +86,7 @@ describe('adaptTimelineResponse', () => {
         {
           id: '777',
           isLongText: false,
+          liked: false,
           mblogId: null,
           text: 'nested payload',
           createdAtLabel: '',
@@ -125,6 +127,7 @@ describe('adaptTimelineResponse', () => {
         {
           id: '901',
           isLongText: false,
+          liked: false,
           mblogId: null,
           text: 'last page item',
           createdAtLabel: '',

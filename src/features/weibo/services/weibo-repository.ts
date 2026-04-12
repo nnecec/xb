@@ -185,6 +185,64 @@ export async function unfollowUser(uid: string): Promise<UserProfile> {
 interface WeiboMutationResponse {
   ok?: number
   msg?: string
+  result?: boolean
+}
+
+function isWeiboMutationSuccess(response: WeiboMutationResponse): boolean {
+  return response.ok === 1 || response.result === true
+}
+
+function buildRepostPayload(input: SubmitComposeInput): Record<string, string> {
+  if (input.target.kind !== 'status') {
+    throw new Error('weibo-repost-requires-status-target')
+  }
+
+  return {
+    id: input.target.statusId,
+    comment: input.text,
+    pic_id: '',
+    is_repost: '0',
+    comment_ori: '0',
+    is_comment: input.alsoSecondaryAction ? '1' : '0',
+    visible: '0',
+    share_id: '',
+  }
+}
+
+export async function setStatusLike(statusId: string): Promise<void> {
+  const response = await wbPostForm<WeiboMutationResponse>(WEIBO_ENDPOINTS.setLike, {
+    id: statusId,
+  })
+  if (!isWeiboMutationSuccess(response)) {
+    throw new Error(response.msg || 'weibo-like-failed')
+  }
+}
+
+export async function cancelStatusLike(statusId: string): Promise<void> {
+  const response = await wbPostForm<WeiboMutationResponse>(WEIBO_ENDPOINTS.cancelLike, {
+    id: statusId,
+  })
+  if (!isWeiboMutationSuccess(response)) {
+    throw new Error(response.msg || 'weibo-unlike-failed')
+  }
+}
+
+export async function deleteWeiboStatus(statusId: string): Promise<void> {
+  const response = await wbPostForm<WeiboMutationResponse>(WEIBO_ENDPOINTS.statusDestroy, {
+    id: statusId,
+  })
+  if (!isWeiboMutationSuccess(response)) {
+    throw new Error(response.msg || 'weibo-delete-status-failed')
+  }
+}
+
+export async function deleteWeiboComment(commentId: string): Promise<void> {
+  const response = await wbPostForm<WeiboMutationResponse>(WEIBO_ENDPOINTS.destroyComment, {
+    cid: commentId,
+  })
+  if (!isWeiboMutationSuccess(response)) {
+    throw new Error(response.msg || 'weibo-delete-comment-failed')
+  }
 }
 
 function buildCommentPayload(input: SubmitComposeInput): Record<string, string> {
@@ -206,7 +264,14 @@ function buildCommentPayload(input: SubmitComposeInput): Record<string, string> 
 
 export async function submitComposeAction(input: SubmitComposeInput): Promise<void> {
   if (input.target.mode === 'repost') {
-    throw new Error('weibo-repost-endpoint-not-configured')
+    const response = await wbPostForm<WeiboMutationResponse>(
+      WEIBO_ENDPOINTS.normalRepost,
+      buildRepostPayload(input),
+    )
+    if (!isWeiboMutationSuccess(response)) {
+      throw new Error(response.msg || 'weibo-repost-failed')
+    }
+    return
   }
 
   const endpoint =

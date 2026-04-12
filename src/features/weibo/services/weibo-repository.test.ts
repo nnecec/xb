@@ -1,13 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { SubmitComposeInput } from '@/features/weibo/models/compose'
-import { wbGet } from '@/features/weibo/services/client'
-import { wbPostForm } from '@/features/weibo/services/client'
 import { loadHomeTimeline, submitComposeAction } from '@/features/weibo/services/weibo-repository'
 
+const { wbGet, wbPostForm } = vi.hoisted(() => ({
+  wbGet: vi.fn(),
+  wbPostForm: vi.fn(),
+}))
+
 vi.mock('@/features/weibo/services/client', () => ({
-  fetchWeiboJson: vi.fn(),
-  postWeiboForm: vi.fn(),
+  wbGet,
+  wbPostForm,
 }))
 
 describe('weibo-repository', () => {
@@ -104,20 +107,31 @@ describe('submitComposeAction', () => {
     })
   })
 
-  it('throws a clear placeholder error for repost mode', async () => {
-    await expect(
-      submitComposeAction({
-        target: {
-          kind: 'status',
-          mode: 'repost',
-          statusId: '5286131038160528',
-          targetCommentId: null,
-          authorName: '雷军',
-          excerpt: '车载相机上线之后',
-        },
-        text: '转一下',
-        alsoSecondaryAction: true,
-      }),
-    ).rejects.toThrow('weibo-repost-endpoint-not-configured')
+  it('posts status reposts to /ajax/statuses/normal_repost', async () => {
+    vi.mocked(wbPostForm).mockResolvedValue({ ok: 1, msg: '转发成功' })
+
+    await submitComposeAction({
+      target: {
+        kind: 'status',
+        mode: 'repost',
+        statusId: '5286131038160528',
+        targetCommentId: null,
+        authorName: '雷军',
+        excerpt: '车载相机上线之后',
+      },
+      text: '转一下',
+      alsoSecondaryAction: true,
+    })
+
+    expect(wbPostForm).toHaveBeenCalledWith('/ajax/statuses/normal_repost', {
+      id: '5286131038160528',
+      comment: '转一下',
+      pic_id: '',
+      is_repost: '0',
+      comment_ori: '0',
+      is_comment: '1',
+      visible: '0',
+      share_id: '',
+    })
   })
 })

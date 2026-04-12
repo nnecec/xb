@@ -43,6 +43,7 @@ export interface FeedItem {
   id: string
   mblogId: string | null
   isLongText: boolean
+  liked?: boolean
   author: FeedAuthor
   text: string
   createdAtLabel: string

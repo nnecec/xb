@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
-import { useLocation } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -14,32 +14,16 @@ import { useAppShellContext } from '@/features/weibo/app/app-shell-layout'
 import { CommentList } from '@/features/weibo/components/comment-list'
 import { FeedCard } from '@/features/weibo/components/feed-card'
 import { PageErrorState, PageLoadingState } from '@/features/weibo/components/page-state'
-import type { ComposeTarget } from '@/features/weibo/models/compose'
-import type { CommentItem, StatusDetail } from '@/features/weibo/models/status'
+import { composeTargetFromFeedItem } from '@/features/weibo/models/compose'
+import type { CommentItem } from '@/features/weibo/models/status'
 import { flattenInfiniteItems } from '@/features/weibo/queries/weibo-queries'
 import { parseWeiboUrl } from '@/features/weibo/route/parse-weibo-url'
 import { loadStatusComments, loadStatusDetail } from '@/features/weibo/services/weibo-repository'
 import { useAppSettings } from '@/lib/app-settings-store'
 
-function createStatusComposeTarget({
-  detail,
-  mode,
-}: {
-  detail: StatusDetail
-  mode: 'comment' | 'repost'
-}): ComposeTarget {
-  return {
-    kind: 'status',
-    mode,
-    statusId: detail.status.id,
-    targetCommentId: null,
-    authorName: detail.status.author.name,
-    excerpt: detail.status.text.trim().slice(0, 80),
-  }
-}
-
 export function StatusDetailPage() {
   const ctx = useAppShellContext()
+  const navigate = useNavigate()
   const location = useLocation()
   const rewriteEnabled = useAppSettings((s) => s.rewriteEnabled)
   const [filterParam, setFilterParam] = useState<string | undefined>(undefined)
@@ -87,13 +71,15 @@ export function StatusDetailPage() {
         <div className="flex flex-col gap-4">
           <FeedCard
             item={detail.status}
+            surface="detail"
             onNavigate={ctx.navigateToStatusDetail}
-            onCommentClick={() =>
-              ctx.setComposeTarget(createStatusComposeTarget({ detail, mode: 'comment' }))
+            onCommentClick={(item) =>
+              ctx.setComposeTarget(composeTargetFromFeedItem(item, 'comment'))
             }
-            onRepostClick={() =>
-              ctx.setComposeTarget(createStatusComposeTarget({ detail, mode: 'repost' }))
+            onRepostClick={(item) =>
+              ctx.setComposeTarget(composeTargetFromFeedItem(item, 'repost'))
             }
+            onStatusDeleted={() => navigate(-1)}
           />
           {filterGroup && filterGroup.length > 0 && selectedFilter && (
             <Select value={selectedFilter.param} onValueChange={(value) => setFilterParam(value)}>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
-import { useQueryClient } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import {
@@ -39,7 +39,6 @@ export interface AppShellContext {
 
 export function AppShell() {
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const page = usePage()
 
   const theme = useAppSettings((state) => state.theme)
@@ -49,6 +48,13 @@ export function AppShell() {
   const [composeTarget, setComposeTarget] = useState<ComposeTarget | null>(null)
   const [isComposeSubmitting, setIsComposeSubmitting] = useState(false)
   const [viewingProfileUserId, setViewingProfileUserId] = useState<string | null>(null)
+
+  const composeMutation = useMutation({
+    mutationFn: submitComposeAction,
+    meta: {
+      invalidates: [['weibo']],
+    },
+  })
 
   const navigateToStatusDetail = (item: StatusDetailNavigationItem) => {
     const statusId = item.mblogId ?? item.id
@@ -66,13 +72,11 @@ export function AppShell() {
     setIsComposeSubmitting(true)
 
     try {
-      await submitComposeAction({
+      await composeMutation.mutateAsync({
         target: composeTarget,
         text: payload.text,
         alsoSecondaryAction: payload.alsoSecondaryAction,
       })
-
-      await queryClient.invalidateQueries({ queryKey: ['weibo'] })
 
       toast.success(composeTarget.mode === 'repost' ? '转发成功' : '回复成功')
       setComposeTarget(null)

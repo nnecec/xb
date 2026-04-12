@@ -15,6 +15,9 @@ vi.mock('@/features/weibo/services/weibo-repository', async () => {
   return {
     ...actual,
     loadStatusLongText: vi.fn(),
+    setStatusLike: vi.fn().mockResolvedValue(undefined),
+    cancelStatusLike: vi.fn().mockResolvedValue(undefined),
+    deleteWeiboStatus: vi.fn().mockResolvedValue(undefined),
   }
 })
 
@@ -132,8 +135,8 @@ describe('FeedCard', () => {
     expect(onNavigate).not.toHaveBeenCalled()
     expect(onCommentClick).toHaveBeenCalledWith(expect.objectContaining({ id: '501' }))
     expect(onRepostClick).toHaveBeenCalledWith(expect.objectContaining({ id: '501' }))
-    expect(commentButton).toHaveClass('hover:text-sky-500')
-    expect(repostButton).toHaveClass('hover:text-emerald-500')
-    expect(screen.getByRole('button', { name: '点赞微博' })).toHaveClass('hover:text-rose-500')
+    expect(commentButton.className).toContain('rounded-full')
+    expect(repostButton.className).toContain('rounded-full')
+    expect(screen.getByRole('button', { name: '点赞微博' }).className).toContain('rounded-full')
   })
 })

@@ -73,6 +73,7 @@ export function NavigationRail({
                 onClick={() => navigate(href)}
                 title={label}
                 aria-label={label}
+                aria-current={isActive ? 'page' : undefined}
                 variant={isActive ? 'default' : 'ghost'}
                 className={isXl ? 'justify-start' : 'justify-center'}
                 size={isXl ? 'lg' : 'icon'}

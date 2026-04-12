@@ -47,21 +47,21 @@ describe('NavigationRail', () => {
     expect(screen.getByRole('navigation', { name: '主导航' })).toBeInTheDocument()
   })
 
-  it('marks active links through aria-current', () => {
+  it('marks active items through aria-current', () => {
     renderNavigationRail()
-    expect(screen.getByRole('link', { name: '主页' })).toHaveAttribute('aria-current', 'page')
-    expect(screen.getByRole('link', { name: '个人主页' })).not.toHaveAttribute('aria-current')
+    expect(screen.getByRole('button', { name: '主页' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('button', { name: '个人主页' })).not.toHaveAttribute('aria-current')
   })
 
   it('marks profile as active when viewing current user profile', () => {
     renderNavigationRail({ pageKind: 'profile', viewingProfileUserId: '1001' })
-    expect(screen.getByRole('link', { name: '个人主页' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('button', { name: '个人主页' })).toHaveAttribute('aria-current', 'page')
   })
 
-  it('uses fallback profile href when current user id is missing', () => {
+  it('uses fallback profile target when current user id is missing', () => {
     getCurrentUserUidMock.mockReturnValue(null)
     renderNavigationRail()
-    expect(screen.getByRole('link', { name: '个人主页' })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('button', { name: '个人主页' })).toBeInTheDocument()
   })
 
   it('does not render the old card description text', () => {

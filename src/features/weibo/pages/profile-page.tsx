@@ -12,6 +12,7 @@ import {
   PageLoadingState,
 } from '@/features/weibo/components/page-state'
 import { ProfileHeader } from '@/features/weibo/components/profile-header'
+import { composeTargetFromFeedItem } from '@/features/weibo/models/compose'
 import { profileLookupFromPage } from '@/features/weibo/queries/weibo-queries'
 import { parseWeiboUrl } from '@/features/weibo/route/parse-weibo-url'
 import { loadProfileHoverCard, loadProfilePosts } from '@/features/weibo/services/weibo-repository'
@@ -84,24 +85,10 @@ export function ProfilePage() {
                 emptyLabel="暂时还没有微博内容"
                 onNavigate={ctx.navigateToStatusDetail}
                 onCommentClick={(item) =>
-                  ctx.setComposeTarget({
-                    kind: 'status',
-                    mode: 'comment',
-                    statusId: item.id,
-                    targetCommentId: null,
-                    authorName: item.author.name,
-                    excerpt: item.text.trim().slice(0, 80),
-                  })
+                  ctx.setComposeTarget(composeTargetFromFeedItem(item, 'comment'))
                 }
                 onRepostClick={(item) =>
-                  ctx.setComposeTarget({
-                    kind: 'status',
-                    mode: 'repost',
-                    statusId: item.id,
-                    targetCommentId: null,
-                    authorName: item.author.name,
-                    excerpt: item.text.trim().slice(0, 80),
-                  })
+                  ctx.setComposeTarget(composeTargetFromFeedItem(item, 'repost'))
                 }
               />
             </TabsContent>

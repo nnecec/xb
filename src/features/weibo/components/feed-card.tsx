@@ -1,7 +1,8 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import { Heart, MessageCircle, Repeat2 } from 'lucide-react'
-import { type MouseEvent, useRef, useState } from 'react'
+import { type MouseEvent, type ReactNode, useRef } from 'react'
 import { Link } from 'react-router'
+import { toast } from 'sonner'
 
 import { AspectRatio } from '@/components/ui/aspect-ratio'
 import { Button } from '@/components/ui/button'
@@ -14,18 +15,26 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { ImageCarousel } from '@/features/weibo/components/image-carousel'
+import { OwnContentMoreMenu } from '@/features/weibo/components/own-content-more-menu'
 import { StatusText } from '@/features/weibo/components/status-text'
 import { UserHoverCard } from '@/features/weibo/components/user-hover-card'
 import { CreatedAtBadge, UserAvatar } from '@/features/weibo/components/user-presenter'
+import { useFeedLongText } from '@/features/weibo/hooks/use-feed-long-text'
 import type { FeedItem } from '@/features/weibo/models/feed'
-import { loadStatusLongText } from '@/features/weibo/services/weibo-repository'
+import {
+  type StatusFeedSurface,
+  statusAllowsCardNavigate,
+} from '@/features/weibo/models/status-presentation'
+import { getCurrentUserUid } from '@/features/weibo/platform/current-user'
+import {
+  cancelStatusLike,
+  deleteWeiboStatus,
+  setStatusLike,
+} from '@/features/weibo/services/weibo-repository'
+import { formatWeiboCount } from '@/features/weibo/utils/format-weibo-count'
+import { cn } from '@/lib/utils'
 
 import { VideoPlayer } from './video-player'
-
-function formatCount(value: number) {
-  if (value <= 9999) return String(value)
-  return `${(value / 10000).toFixed(1)}万`
-}
 
 function hasTextSelectionWithin(container: HTMLElement) {
   const selection = window.getSelection()
@@ -66,11 +75,13 @@ function FeedMediaBlock({ item }: { item: FeedItem }) {
 
 function FeedAuthorHeader({
   item,
+  trailing,
 }: {
   item: Pick<FeedItem, 'author' | 'createdAtLabel' | 'source' | 'regionName'>
+  trailing?: ReactNode
 }) {
   return (
-    <CardHeader className="grid grid-cols-[48px_minmax(0,1fr)] gap-3 px-4">
+    <CardHeader className="flex flex-row gap-3 px-4">
       <UserHoverCard uid={item.author.id}>
         <Link
           to={`/n/${encodeURIComponent(item.author.name)}`}
@@ -83,23 +94,28 @@ function FeedAuthorHeader({
           />
         </Link>
       </UserHoverCard>
-      <div className="flex min-w-0 flex-col gap-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <UserHoverCard uid={item.author.id}>
-            <Link
-              to={`/n/${encodeURIComponent(item.author.name)}`}
-              onClick={(event) => event.stopPropagation()}
-            >
-              <CardTitle className="truncate text-base hover:underline">
-                {item.author.name}
-              </CardTitle>
-            </Link>
-          </UserHoverCard>
-          <CreatedAtBadge label={item.createdAtLabel} />
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <UserHoverCard uid={item.author.id}>
+                <Link
+                  to={`/n/${encodeURIComponent(item.author.name)}`}
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <CardTitle className="truncate text-base hover:underline">
+                    {item.author.name}
+                  </CardTitle>
+                </Link>
+              </UserHoverCard>
+              <CreatedAtBadge label={item.createdAtLabel} />
+            </div>
+            <CardDescription className="text-xs">
+              {item.source ? `${item.source}` : ''} {item.regionName ? `${item.regionName}` : ''}
+            </CardDescription>
+          </div>
+          {trailing ? <div className="shrink-0 pt-0.5">{trailing}</div> : null}
         </div>
-        <CardDescription className="text-xs">
-          {item.source ? `${item.source}` : ''} {item.regionName ? `${item.regionName}` : ''}
-        </CardDescription>
       </div>
     </CardHeader>
   )
@@ -185,58 +201,28 @@ function FeedTextBlock({
   )
 }
 
-function useFeedLongText(item: Pick<FeedItem, 'isLongText' | 'mblogId' | 'text'>) {
-  const [longTextEnabled, setLongTextEnabled] = useState(false)
-  const canLoadLongText = item.isLongText
-  const {
-    data: longText,
-    error: longTextError,
-    isLoading: isLongTextLoading,
-    refetch: refetchLongText,
-  } = useQuery({
-    queryKey: ['weibo', 'longtext', item.mblogId],
-    queryFn: () => loadStatusLongText(item.mblogId!),
-    enabled: longTextEnabled && canLoadLongText,
-    staleTime: 30 * 60 * 1000,
-    retry: false,
-  })
-  const resolvedText =
-    longTextEnabled && longText !== undefined && longText !== '' ? longText : item.text
-  const hasLongTextError = longTextError instanceof Error
-
-  return {
-    resolvedText,
-    shouldShowLoadLongText: canLoadLongText && (!longTextEnabled || hasLongTextError),
-    isLongTextLoading,
-    hasLongTextError,
-    onLoadLongText: () => {
-      if (!longTextEnabled) {
-        setLongTextEnabled(true)
-        return
-      }
-
-      void refetchLongText()
-    },
-  }
-}
-
 function FeedActions({
   item,
   onCommentClick,
   onRepostClick,
   onLikeClick,
+  likePending,
 }: {
   item: FeedItem
   onCommentClick?: (item: FeedItem) => void
   onRepostClick?: (item: FeedItem) => void
   onLikeClick?: (item: FeedItem) => void
+  likePending?: boolean
 }) {
+  const liked = item.liked === true
+
   return (
-    <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground w-full">
-      <button
+    <div className="grid w-full grid-cols-3 gap-2 text-xs text-muted-foreground">
+      <Button
         type="button"
+        variant="secondary"
         aria-label="回复微博"
-        className="group flex items-center justify-center gap-1 rounded-full bg-muted px-3 py-2 text-left transition-colors hover:bg-sky-50 hover:text-sky-500"
+        className="group h-auto rounded-full bg-muted py-2 font-normal hover:bg-sky-50 hover:text-sky-500"
         onClick={(event) => {
           event.stopPropagation()
           onCommentClick?.(item)
@@ -244,13 +230,14 @@ function FeedActions({
       >
         <MessageCircle className="size-3.5 transition-colors group-hover:text-sky-500" />
         <span className="transition-colors group-hover:text-sky-500">
-          {formatCount(item.stats.comments)}
+          {formatWeiboCount(item.stats.comments)}
         </span>
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
+        variant="secondary"
         aria-label="转发微博"
-        className="group flex items-center justify-center gap-1 rounded-full bg-muted px-3 py-2 transition-colors hover:bg-emerald-50 hover:text-emerald-500"
+        className="group h-auto rounded-full bg-muted py-2 font-normal hover:bg-emerald-50 hover:text-emerald-500"
         onClick={(event) => {
           event.stopPropagation()
           onRepostClick?.(item)
@@ -258,23 +245,33 @@ function FeedActions({
       >
         <Repeat2 className="size-3.5 transition-colors group-hover:text-emerald-500" />
         <span className="transition-colors group-hover:text-emerald-500">
-          {formatCount(item.stats.reposts)}
+          {formatWeiboCount(item.stats.reposts)}
         </span>
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
-        aria-label="点赞微博"
-        className="group flex items-center justify-center gap-1 rounded-full bg-muted px-3 py-2 transition-colors hover:bg-rose-50 hover:text-rose-500"
+        variant="secondary"
+        aria-label={liked ? '取消点赞' : '点赞微博'}
+        aria-pressed={liked}
+        disabled={likePending}
+        className="group h-auto rounded-full bg-muted py-2 font-normal hover:bg-rose-50 hover:text-rose-500"
         onClick={(event) => {
           event.stopPropagation()
           onLikeClick?.(item)
         }}
       >
-        <Heart className="size-3.5 transition-colors group-hover:text-rose-500" />
-        <span className="transition-colors group-hover:text-rose-500">
-          {formatCount(item.stats.likes)}
+        <Heart
+          className={cn(
+            'size-3.5 transition-colors group-hover:text-rose-500',
+            liked && 'fill-rose-500 text-rose-500',
+          )}
+        />
+        <span
+          className={cn('transition-colors group-hover:text-rose-500', liked && 'text-rose-500')}
+        >
+          {formatWeiboCount(item.stats.likes)}
         </span>
-      </button>
+      </Button>
     </div>
   )
 }
@@ -282,9 +279,13 @@ function FeedActions({
 function RetweetedFeedBlock({
   item,
   onNavigate,
+  onLikeClick,
+  likePendingForId,
 }: {
   item: NonNullable<FeedItem['retweetedStatus']>
   onNavigate?: (item: FeedItem) => void
+  onLikeClick?: (item: FeedItem) => void
+  likePendingForId: string | null
 }) {
   const {
     resolvedText,
@@ -307,7 +308,7 @@ function RetweetedFeedBlock({
 
   return (
     <div
-      className="border border-border/70 bg-muted/40 p-3 cursor-pointer flex flex-col gap-3"
+      className="flex cursor-pointer flex-col gap-3 border border-border/70 bg-muted/40 p-3"
       onClick={handleRetweetedClick}
     >
       <RetweetedAuthorHeader item={item} />
@@ -324,21 +325,30 @@ function RetweetedFeedBlock({
 
       <ImageCarousel images={item.images} />
 
-      <FeedActions item={item} />
+      <FeedActions
+        item={item}
+        onLikeClick={onLikeClick}
+        likePending={likePendingForId === item.id}
+      />
     </div>
   )
 }
 
 export function FeedCard({
   item,
+  surface: surfaceProp = 'timeline',
   onNavigate,
   onCommentClick,
   onRepostClick,
+  onStatusDeleted,
 }: {
   item: FeedItem
+  surface?: StatusFeedSurface
   onNavigate?: (item: FeedItem) => void
   onCommentClick?: (item: FeedItem) => void
   onRepostClick?: (item: FeedItem) => void
+  /** After deleting this status (owner only), e.g. navigate back from detail. */
+  onStatusDeleted?: () => void
 }) {
   const pointerDownPositionRef = useRef<{ x: number; y: number } | null>(null)
   const suppressNextClickRef = useRef(false)
@@ -349,6 +359,42 @@ export function FeedCard({
     hasLongTextError,
     onLoadLongText,
   } = useFeedLongText(item)
+
+  const uid = getCurrentUserUid()
+  const showOwnerMenu = uid !== null && uid === item.author.id
+
+  const likeMutation = useMutation({
+    mutationFn: async (target: FeedItem) => {
+      if (target.liked) {
+        await cancelStatusLike(target.id)
+      } else {
+        await setStatusLike(target.id)
+      }
+    },
+    meta: {
+      invalidates: [['weibo']],
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : '操作失败')
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteWeiboStatus(item.id),
+    meta: {
+      invalidates: [['weibo']],
+    },
+    onSuccess: () => {
+      toast.success('已删除')
+      onStatusDeleted?.()
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : '删除失败')
+    },
+  })
+
+  const likePendingId =
+    likeMutation.isPending && likeMutation.variables ? likeMutation.variables.id : null
 
   const handleCardMouseDown = (event: MouseEvent<HTMLElement>) => {
     if (event.button !== 0) {
@@ -373,7 +419,7 @@ export function FeedCard({
 
   const handleCardClick = (event: MouseEvent<HTMLElement>) => {
     event.stopPropagation()
-    if (!onNavigate) {
+    if (!onNavigate || !statusAllowsCardNavigate(surfaceProp, 'root')) {
       return
     }
 
@@ -399,36 +445,56 @@ export function FeedCard({
   }
 
   return (
-    <>
-      <Card className="gap-4" data-testid="feed-card-body">
-        <FeedAuthorHeader item={item} />
-        <CardContent
-          className="flex flex-col gap-4 cursor-pointer"
-          onClick={handleCardClick}
-          onMouseDown={handleCardMouseDown}
-          onMouseUp={handleCardMouseUp}
-        >
-          <FeedTextBlock
-            item={item}
-            text={resolvedText}
-            canLoadLongText={shouldShowLoadLongText}
-            isLongTextLoading={isLongTextLoading}
-            hasLongTextError={hasLongTextError}
-            onLoadLongText={onLoadLongText}
+    <Card className="gap-4" data-testid="feed-card-body">
+      <FeedAuthorHeader
+        item={item}
+        trailing={
+          showOwnerMenu ? (
+            <OwnContentMoreMenu
+              contentLabel="这条微博"
+              isDeleting={deleteMutation.isPending}
+              onDelete={() => deleteMutation.mutateAsync()}
+            />
+          ) : null
+        }
+      />
+      <CardContent
+        className="flex cursor-pointer flex-col gap-4"
+        onClick={handleCardClick}
+        onMouseDown={handleCardMouseDown}
+        onMouseUp={handleCardMouseUp}
+      >
+        <FeedTextBlock
+          item={item}
+          text={resolvedText}
+          canLoadLongText={shouldShowLoadLongText}
+          isLongTextLoading={isLongTextLoading}
+          hasLongTextError={hasLongTextError}
+          onLoadLongText={onLoadLongText}
+        />
+
+        <FeedMediaBlock item={item} />
+
+        <ImageCarousel images={item.images} />
+
+        {item.retweetedStatus ? (
+          <RetweetedFeedBlock
+            item={item.retweetedStatus}
+            onNavigate={onNavigate}
+            onLikeClick={(target) => likeMutation.mutate(target)}
+            likePendingForId={likePendingId}
           />
-
-          <FeedMediaBlock item={item} />
-
-          <ImageCarousel images={item.images} />
-
-          {item.retweetedStatus ? (
-            <RetweetedFeedBlock item={item.retweetedStatus} onNavigate={onNavigate} />
-          ) : null}
-        </CardContent>
-        <CardFooter>
-          <FeedActions item={item} onCommentClick={onCommentClick} onRepostClick={onRepostClick} />
-        </CardFooter>
-      </Card>
-    </>
+        ) : null}
+      </CardContent>
+      <CardFooter>
+        <FeedActions
+          item={item}
+          onCommentClick={onCommentClick}
+          onRepostClick={onRepostClick}
+          onLikeClick={(target) => likeMutation.mutate(target)}
+          likePending={likePendingId === item.id}
+        />
+      </CardFooter>
+    </Card>
   )
 }

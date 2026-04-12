@@ -91,6 +91,7 @@ export interface WeiboStatus {
   url_struct?: WeiboUrlStruct[]
   topic_struct?: WeiboTopicStruct[]
   isAd?: number
+  attitudes_status?: boolean
 }
 
 // ─── Transform helpers ────────────────────────────────────────────────────────
@@ -374,6 +375,7 @@ export function toFeedItem(status: WeiboStatus, includeRetweeted = true): FeedIt
     id: getStatusId(status),
     mblogId: status.mblogid ?? null,
     isLongText: Boolean(status.isLongText && !status.longText),
+    liked: Boolean(status.attitudes_status),
     text: getStatusText(status),
     createdAtLabel: formatCreatedAt(status.created_at ?? ''),
     author: getStatusAuthor(status.user),

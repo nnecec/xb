@@ -1,7 +1,10 @@
+import { Fragment } from 'react'
+
+import { Separator } from '@/components/ui/separator'
 import { CommentCard } from '@/features/weibo/components/comment-card'
+import { PageEmptyState } from '@/features/weibo/components/page-state'
 import type { ComposeTarget } from '@/features/weibo/models/compose'
 import type { FeedItem } from '@/features/weibo/models/feed'
-import { PageEmptyState } from '@/features/weibo/components/page-state'
 import type { CommentItem } from '@/features/weibo/models/status'
 
 export function CommentList({
@@ -21,13 +24,19 @@ export function CommentList({
     return <PageEmptyState label={emptyLabel} />
   }
 
-  return comments.map((item) => (
-    <CommentCard
-      key={item.id}
-      item={item}
-      rootStatusId={rootStatusId}
-      onCommentReply={onCommentReply}
-      onNavigate={onNavigate}
-    />
-  ))
+  return (
+    <div className="flex flex-col gap-0">
+      {comments.map((item, index) => (
+        <Fragment key={item.id}>
+          {index > 0 ? <Separator className="my-3" /> : null}
+          <CommentCard
+            item={item}
+            rootStatusId={rootStatusId}
+            onCommentReply={onCommentReply}
+            onNavigate={onNavigate}
+          />
+        </Fragment>
+      ))}
+    </div>
+  )
 }
