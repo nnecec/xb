@@ -1,6 +1,6 @@
 import { useMediaQuery } from '@reactuses/core'
-import { House, UserRound, Zap } from 'lucide-react'
-import { useMemo } from 'react'
+import { House, RefreshCw, UserRound, Zap } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 
 import WeiboLogo from '@/assets/icons/weibo.svg'
@@ -18,6 +18,7 @@ export function NavigationRail({
   theme,
   onRewriteEnabledChange,
   onThemeChange,
+  onRefresh,
 }: {
   pageKind: WeiboPageDescriptor['kind']
   /** Resolved numeric user id when on a profile page (from API); used to match logged-in user. */
@@ -26,33 +27,32 @@ export function NavigationRail({
   theme: AppTheme
   onRewriteEnabledChange: (enabled: boolean) => void
   onThemeChange: (theme: AppTheme) => void
+  onRefresh?: () => void
 }) {
   const currentUserUid = useMemo(() => getCurrentUserUid(), [])
   const navigate = useNavigate()
-  const navItems = useMemo(() => {
-    const profileHref = currentUserUid ? `/u/${currentUserUid}` : '/'
-    const isOwnProfileActive =
-      pageKind === 'profile' &&
-      Boolean(currentUserUid) &&
-      Boolean(viewingProfileUserId) &&
-      currentUserUid === viewingProfileUserId
+  const [isHomeHovered, setIsHomeHovered] = useState(false)
+  const isHomePage = pageKind === 'home'
 
-    return [
-      {
-        icon: House,
-        label: '主页',
-        href: '/',
-        isActive: pageKind === 'home' || pageKind === 'status',
-      },
-      {
-        icon: UserRound,
-        label: '个人主页',
-        href: profileHref,
-        isActive: isOwnProfileActive,
-      },
-    ]
-  }, [currentUserUid, pageKind, viewingProfileUserId])
+  const profileHref = useMemo(
+    () => (currentUserUid ? `/u/${currentUserUid}` : '/'),
+    [currentUserUid],
+  )
+  const isOwnProfileActive =
+    pageKind === 'profile' &&
+    Boolean(currentUserUid) &&
+    Boolean(viewingProfileUserId) &&
+    currentUserUid === viewingProfileUserId
+
   const isXl = useMediaQuery('(min-width: 1280px)')
+
+  const handleHomeClick = () => {
+    if (isHomePage && onRefresh) {
+      onRefresh()
+    } else {
+      navigate('/')
+    }
+  }
 
   return (
     <aside className="flex h-full min-h-0 flex-col px-1 md:px-2 xl:px-3 py-3 md:py-4 xl:py-5">
@@ -66,23 +66,41 @@ export function NavigationRail({
 
       <nav aria-label="主导航" className="flex min-h-0 flex-1 flex-col">
         <div className="flex flex-col gap-2">
-          {navItems.map(({ icon: Icon, label, href, isActive }) => {
-            return (
-              <Button
-                key={label}
-                onClick={() => navigate(href)}
-                title={label}
-                aria-label={label}
-                aria-current={isActive ? 'page' : undefined}
-                variant={isActive ? 'default' : 'ghost'}
-                className={isXl ? 'justify-start' : 'justify-center'}
-                size={isXl ? 'lg' : 'icon'}
-              >
-                <Icon aria-hidden="true" className="size-4 shrink-0" />
-                <span className={cn('hidden xl:inline')}>{label}</span>
-              </Button>
-            )
-          })}
+          {/* Home button - special handling for refresh on hover in timeline */}
+          <Button
+            onClick={handleHomeClick}
+            onMouseEnter={() => setIsHomeHovered(true)}
+            onMouseLeave={() => setIsHomeHovered(false)}
+            title={isHomePage && isHomeHovered ? '刷新' : '主页'}
+            aria-label={isHomePage && isHomeHovered ? '刷新' : '主页'}
+            aria-current={isOwnProfileActive ? undefined : isHomePage ? 'page' : undefined}
+            variant={isOwnProfileActive ? 'ghost' : isHomePage ? 'default' : 'ghost'}
+            className={isXl ? 'justify-start' : 'justify-center'}
+            size={isXl ? 'lg' : 'icon'}
+          >
+            {isHomePage && isHomeHovered ? (
+              <RefreshCw aria-hidden="true" className="size-4 shrink-0" />
+            ) : (
+              <House aria-hidden="true" className="size-4 shrink-0" />
+            )}
+            <span className={cn('hidden xl:inline')}>
+              {isHomePage && isHomeHovered ? '刷新' : '主页'}
+            </span>
+          </Button>
+
+          {/* Profile button */}
+          <Button
+            onClick={() => navigate(profileHref)}
+            title="个人主页"
+            aria-label="个人主页"
+            aria-current={isOwnProfileActive ? 'page' : undefined}
+            variant={isOwnProfileActive ? 'default' : 'ghost'}
+            className={isXl ? 'justify-start' : 'justify-center'}
+            size={isXl ? 'lg' : 'icon'}
+          >
+            <UserRound aria-hidden="true" className="size-4 shrink-0" />
+            <span className={cn('hidden xl:inline')}>个人主页</span>
+          </Button>
         </div>
 
         <div className="mt-auto space-y-3 border-t border-border/60 pt-3 xl:space-y-3.5 xl:pt-4 xl:w-[180px]">

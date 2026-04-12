@@ -127,7 +127,7 @@ describe('adaptStatusCommentsResponse', () => {
           idstr: '1001',
           text_raw: '一级评论',
           created_at: 'today',
-          like_count: 3,
+          like_counts: 3,
           source: '来自北京',
           user: { idstr: '1', screen_name: 'Alice' },
           reply_comment: {
@@ -140,7 +140,7 @@ describe('adaptStatusCommentsResponse', () => {
               idstr: '1002',
               text_raw: '二级评论',
               created_at: 'today',
-              like_count: 1,
+              like_counts: 1,
               user: { idstr: '2', screen_name: 'Bob' },
             },
           ],

@@ -39,6 +39,7 @@ interface ShellFrameProps {
   theme: AppTheme
   onRewriteEnabledChange: (enabled: boolean) => void
   onThemeChange: (theme: AppTheme) => void
+  onRefresh?: () => void
   children: ReactNode
 }
 
@@ -53,6 +54,7 @@ export function ShellFrame({
   theme,
   onRewriteEnabledChange,
   onThemeChange,
+  onRefresh,
   children,
 }: ShellFrameProps) {
   const mainRef = useRef<HTMLDivElement>(null)
@@ -68,6 +70,7 @@ export function ShellFrame({
             theme={theme}
             onRewriteEnabledChange={onRewriteEnabledChange}
             onThemeChange={onThemeChange}
+            onRefresh={onRefresh}
           />
         </div>
         <main className="min-w-0 flex-1 overflow-y-auto pt-4" ref={mainRef}>

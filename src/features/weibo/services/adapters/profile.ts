@@ -1,5 +1,10 @@
 import type { UserProfile } from '@/features/weibo/models/profile'
 
+function stripUrlQuery(url: string | null | undefined): string | null {
+  if (!url) return null
+  return url.split('?')[0]
+}
+
 interface ProfileUserPayload {
   avatar_hd?: string
   cover_image_phone?: string
@@ -48,7 +53,7 @@ export function adaptProfileInfoResponse(payload: ProfileInfoPayload): UserProfi
     id: String(user.idstr ?? user.id ?? ''),
     name: user.screen_name ?? '',
     bio: user.description ?? '',
-    avatarUrl: user.avatar_hd ?? user.profile_image_url ?? null,
+    avatarUrl: stripUrlQuery(user.avatar_hd) ?? stripUrlQuery(user.profile_image_url) ?? null,
     bannerUrl: user.cover_image_phone?.split(';')[0] ?? null,
     followersCount: user.followers_count_str ?? null,
     friendsCount: user.friends_count ?? null,
@@ -86,7 +91,7 @@ export function mergeProfileDetail(
     createdAt: formatCreatedAtDate(data?.created_at),
     mutualFollowers: (data?.followers?.users ?? []).map((u) => ({
       screenName: u.screen_name ?? '',
-      avatarUrl: u.avatar_large ?? '',
+      avatarUrl: stripUrlQuery(u.avatar_large) ?? '',
     })),
     mutualFollowerTotal: data?.followers?.total_number ?? null,
   }

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import {
@@ -35,11 +35,13 @@ export interface AppShellContext {
   viewingProfileUserId: string | null
   onProfileUserIdChange: (userId: string | null) => void
   onHomeTabChange: (tab: 'for-you' | 'following') => void
+  refreshTimeline: () => void
 }
 
 export function AppShell() {
   const navigate = useNavigate()
   const page = usePage()
+  const queryClient = useQueryClient()
 
   const theme = useAppSettings((state) => state.theme)
   const rewriteEnabled = useAppSettings((state) => state.rewriteEnabled)
@@ -87,6 +89,10 @@ export function AppShell() {
     }
   }
 
+  const refreshTimeline = () => {
+    void queryClient.invalidateQueries({ queryKey: ['weibo', 'timeline'] })
+  }
+
   const context: AppShellContext = {
     page,
     navigateToStatusDetail,
@@ -97,6 +103,7 @@ export function AppShell() {
     viewingProfileUserId,
     onProfileUserIdChange: setViewingProfileUserId,
     onHomeTabChange: (tab) => navigate(getHomeTimelinePath(tab)),
+    refreshTimeline,
   }
 
   const composeModal = (
@@ -130,6 +137,7 @@ export function AppShell() {
       theme={theme}
       onRewriteEnabledChange={(enabled: boolean) => void setRewriteEnabled(enabled)}
       onThemeChange={(nextTheme: typeof theme) => void setTheme(nextTheme)}
+      onRefresh={refreshTimeline}
     >
       <Outlet context={context} />
       {composeModal}

@@ -84,7 +84,7 @@ export interface WeiboStatus {
   source?: string
   comments?: WeiboStatus[]
   reply_comment?: WeiboStatus
-  like_count?: number
+  like_counts?: number
   text?: string
   retweeted_status?: WeiboStatus
   analysis_extra?: string
@@ -95,6 +95,11 @@ export interface WeiboStatus {
 }
 
 // ─── Transform helpers ────────────────────────────────────────────────────────
+
+function stripUrlQuery(url: string | null | undefined): string | null {
+  if (!url) return null
+  return url.split('?')[0]
+}
 
 function toImagesFromParts(picIds?: string[], picInfos?: Record<string, WeiboPicInfo>) {
   if (!Array.isArray(picIds) || !picInfos) {
@@ -124,16 +129,26 @@ export function toImages(status: WeiboStatus) {
   return toImagesFromParts(status.pic_ids, status.pic_infos)
 }
 
-function getImageUrlStructs(status: Pick<WeiboStatus, 'url_struct'>) {
+function getImageUrlStructs(status: Pick<WeiboStatus, 'url_struct' | 'text_raw' | 'text'>) {
   if (!Array.isArray(status.url_struct)) {
     return []
   }
 
+  const text = status.text_raw ?? status.text ?? ''
+
   return status.url_struct.filter(
     (
       entity,
-    ): entity is WeiboUrlStruct & { pic_ids: string[]; pic_infos: Record<string, WeiboPicInfo> } =>
-      Array.isArray(entity.pic_ids) && entity.pic_ids.length > 0 && Boolean(entity.pic_infos),
+    ): entity is WeiboUrlStruct & { pic_ids: string[]; pic_infos: Record<string, WeiboPicInfo> } => {
+      const shortUrl = entity.short_url?.trim() ?? ''
+      return (
+        Array.isArray(entity.pic_ids) &&
+        entity.pic_ids.length > 0 &&
+        Boolean(entity.pic_infos) &&
+        Boolean(shortUrl) &&
+        text.includes(shortUrl)
+      )
+    },
   )
 }
 
@@ -326,7 +341,7 @@ function getStatusAuthor(user: WeiboStatusUser | undefined): FeedAuthor {
   return {
     id: String(user?.idstr ?? user?.id ?? ''),
     name: user?.screen_name ?? '',
-    avatarUrl: user?.avatar_hd ?? user?.profile_image_url ?? null,
+    avatarUrl: stripUrlQuery(user?.avatar_hd) ?? stripUrlQuery(user?.profile_image_url) ?? null,
   }
 }
 
@@ -426,7 +441,7 @@ export function toCommentItem(comment: WeiboStatus): CommentItem {
     text: normalizedCommentText,
     createdAtLabel: formatCreatedAt(comment.created_at ?? ''),
     author: getStatusAuthor(comment.user),
-    likeCount: Number(comment.like_count ?? 0),
+    likeCount: Number(comment.like_counts ?? 0),
     source: stripHtmlTags(comment.source ?? ''),
     ...(Object.keys(emoticons).length > 0 ? { emoticons } : {}),
     ...(urlEntities.length > 0 ? { urlEntities } : {}),
