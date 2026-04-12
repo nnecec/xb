@@ -1,4 +1,9 @@
-import type { FeedAuthor, FeedEmoticon, FeedImage, FeedUrlEntity } from '@/features/weibo/models/feed'
+import type {
+  FeedAuthor,
+  FeedEmoticon,
+  FeedImage,
+  FeedUrlEntity,
+} from '@/features/weibo/models/feed'
 import type { FeedItem } from '@/features/weibo/models/feed'
 
 export interface CommentPreviewItem {

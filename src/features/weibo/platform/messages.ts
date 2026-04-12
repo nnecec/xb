@@ -8,9 +8,11 @@ export interface RouteChangeMessage {
 }
 
 export function isRouteChangeMessage(value: unknown): value is RouteChangeMessage {
-  return typeof value === 'object'
-    && value !== null
-    && (value as RouteChangeMessage).source === XB_SOURCE
-    && (value as RouteChangeMessage).type === ROUTE_CHANGE_EVENT
-    && typeof (value as RouteChangeMessage).href === 'string'
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    (value as RouteChangeMessage).source === XB_SOURCE &&
+    (value as RouteChangeMessage).type === ROUTE_CHANGE_EVENT &&
+    typeof (value as RouteChangeMessage).href === 'string'
+  )
 }

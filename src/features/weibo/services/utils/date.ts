@@ -10,7 +10,20 @@ function parseWeiboDate(dateStr: string): Date | null {
   const parts = dateStr.trim().split(/\s+/)
   if (parts.length < 6) return null
 
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ]
   const monthIndex = months.indexOf(parts[1])
   if (monthIndex < 0) return null
 

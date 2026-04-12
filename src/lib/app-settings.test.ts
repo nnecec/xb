@@ -28,10 +28,12 @@ function createStorageArea(initialValue?: unknown) {
 describe('app-settings', () => {
   it('normalizes invalid values to the defaults', () => {
     expect(normalizeAppSettings(null)).toEqual(DEFAULT_APP_SETTINGS)
-    expect(normalizeAppSettings({
-      theme: 'unknown',
-      rewriteEnabled: 'no',
-    })).toEqual(DEFAULT_APP_SETTINGS)
+    expect(
+      normalizeAppSettings({
+        theme: 'unknown',
+        rewriteEnabled: 'no',
+      }),
+    ).toEqual(DEFAULT_APP_SETTINGS)
   })
 
   it('loads and persists settings through storage', async () => {
@@ -45,10 +47,13 @@ describe('app-settings', () => {
       rewriteEnabled: false,
     })
 
-    await persistAppSettings({
-      theme: 'light',
-      rewriteEnabled: true,
-    }, storage)
+    await persistAppSettings(
+      {
+        theme: 'light',
+        rewriteEnabled: true,
+      },
+      storage,
+    )
 
     expect(storage.read()).toEqual({
       theme: 'light',

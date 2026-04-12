@@ -29,12 +29,11 @@ export function normalizeAppSettings(value: unknown): AppSettings {
   const candidate = value as Partial<AppSettings>
 
   return {
-    theme: isAppTheme(candidate.theme)
-      ? candidate.theme
-      : DEFAULT_APP_SETTINGS.theme,
-    rewriteEnabled: typeof candidate.rewriteEnabled === 'boolean'
-      ? candidate.rewriteEnabled
-      : DEFAULT_APP_SETTINGS.rewriteEnabled,
+    theme: isAppTheme(candidate.theme) ? candidate.theme : DEFAULT_APP_SETTINGS.theme,
+    rewriteEnabled:
+      typeof candidate.rewriteEnabled === 'boolean'
+        ? candidate.rewriteEnabled
+        : DEFAULT_APP_SETTINGS.rewriteEnabled,
   }
 }
 

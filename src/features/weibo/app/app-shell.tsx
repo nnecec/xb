@@ -1,15 +1,12 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
-import {
-  RewritePausedCard,
-  ShellFrame,
-} from '@/features/weibo/app/app-shell-layout'
-import type { StatusDetailNavigationItem } from '@/features/weibo/models/feed'
+import { RewritePausedCard, ShellFrame } from '@/features/weibo/app/app-shell-layout'
 import { CommentModal } from '@/features/weibo/components/comment-modal'
 import type { ComposeTarget } from '@/features/weibo/models/compose'
+import type { StatusDetailNavigationItem } from '@/features/weibo/models/feed'
 import { parseWeiboUrl } from '@/features/weibo/route/parse-weibo-url'
 import { submitComposeAction } from '@/features/weibo/services/weibo-repository'
 import { useAppSettings } from '@/lib/app-settings-store'

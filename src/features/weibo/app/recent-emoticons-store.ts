@@ -1,5 +1,5 @@
-import { createStore, type StoreApi } from 'zustand/vanilla'
 import { useStore } from 'zustand'
+import { createStore, type StoreApi } from 'zustand/vanilla'
 
 import type { AppSettingsStorageArea } from '@/lib/app-settings'
 
@@ -26,9 +26,9 @@ function normalizeRecentEntries(value: unknown): RecentEmoticonEntry[] {
     .filter((item): item is RecentEmoticonEntry => {
       return Boolean(
         item &&
-          typeof item === 'object' &&
-          typeof (item as RecentEmoticonEntry).phrase === 'string' &&
-          typeof (item as RecentEmoticonEntry).url === 'string',
+        typeof item === 'object' &&
+        typeof (item as RecentEmoticonEntry).phrase === 'string' &&
+        typeof (item as RecentEmoticonEntry).url === 'string',
       )
     })
     .slice(0, 10)

@@ -6,13 +6,15 @@ describe('createRouteStore', () => {
   it('updates the descriptor from a route-change message', () => {
     const store = createRouteStore('https://weibo.com/')
 
-    window.dispatchEvent(new MessageEvent('message', {
-      data: {
-        source: 'xb',
-        type: 'route-change',
-        href: 'https://weibo.com/u/1969776354',
-      },
-    }))
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: {
+          source: 'xb',
+          type: 'route-change',
+          href: 'https://weibo.com/u/1969776354',
+        },
+      }),
+    )
 
     expect(store.getSnapshot()).toEqual({
       kind: 'profile',

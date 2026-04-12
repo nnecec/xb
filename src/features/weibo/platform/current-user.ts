@@ -10,9 +10,7 @@ export function getCurrentUserUid(): string | null {
   if (!fifthChild) return null
 
   const anchor =
-    fifthChild.tagName === 'A'
-      ? (fifthChild as HTMLAnchorElement)
-      : fifthChild.querySelector('a')
+    fifthChild.tagName === 'A' ? (fifthChild as HTMLAnchorElement) : fifthChild.querySelector('a')
   if (!anchor) return null
 
   const href = anchor.getAttribute('href')

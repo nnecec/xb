@@ -1,9 +1,10 @@
-import type { CommentFilterOption, StatusCommentsPage, StatusDetail } from '@/features/weibo/models/status'
-import {
-  type WeiboStatus,
-  toCommentItem,
-  toFeedItem,
-} from '../../utils/transform'
+import type {
+  CommentFilterOption,
+  StatusCommentsPage,
+  StatusDetail,
+} from '@/features/weibo/models/status'
+
+import { type WeiboStatus, toCommentItem, toFeedItem } from '../../utils/transform'
 
 export type { WeiboStatus }
 
@@ -33,7 +34,12 @@ function unwrapStatusDetailPayload(payload: unknown): WeiboStatus {
     return {} as WeiboStatus
   }
   const root = payload as Record<string, unknown>
-  if ('data' in root && root.data != null && typeof root.data === 'object' && !Array.isArray(root.data)) {
+  if (
+    'data' in root &&
+    root.data != null &&
+    typeof root.data === 'object' &&
+    !Array.isArray(root.data)
+  ) {
     const data = root.data
     if (isWeiboStatusLike(data)) {
       return data as WeiboStatus

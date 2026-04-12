@@ -1,8 +1,6 @@
 let uiPortalContainer: HTMLElement | undefined
 
-function normalizePortalContainer(
-  container: Node | null | undefined,
-): HTMLElement | undefined {
+function normalizePortalContainer(container: Node | null | undefined): HTMLElement | undefined {
   if (!container) {
     return undefined
   }

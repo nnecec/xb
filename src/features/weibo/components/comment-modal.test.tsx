@@ -9,10 +9,7 @@ vi.mock('@/features/weibo/components/emoticon-picker', () => ({
   }: {
     onSelect: (entry: { phrase: string; url: string }) => void
   }) => (
-    <button
-      type="button"
-      onClick={() => onSelect({ phrase: '[色]', url: 'https://face/se.png' })}
-    >
+    <button type="button" onClick={() => onSelect({ phrase: '[色]', url: 'https://face/se.png' })}>
       选择表情
     </button>
   ),

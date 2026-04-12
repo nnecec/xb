@@ -8,12 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAppShellContext } from '@/features/weibo/app/app-shell-layout'
 import { FeedList } from '@/features/weibo/components/feed-list'
 import { PageErrorState, PageLoadingState } from '@/features/weibo/components/page-state'
+import { composeTargetFromFeedItem } from '@/features/weibo/models/compose'
 import type { FeedItem, TimelinePage } from '@/features/weibo/models/feed'
 import {
   flattenInfiniteItems,
   homeTimelineInfiniteOptions,
 } from '@/features/weibo/queries/weibo-queries'
-import { composeTargetFromFeedItem } from '@/features/weibo/models/compose'
 import { parseWeiboUrl } from '@/features/weibo/route/parse-weibo-url'
 import { useAppSettings } from '@/lib/app-settings-store'
 

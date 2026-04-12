@@ -139,7 +139,10 @@ function getImageUrlStructs(status: Pick<WeiboStatus, 'url_struct' | 'text_raw' 
   return status.url_struct.filter(
     (
       entity,
-    ): entity is WeiboUrlStruct & { pic_ids: string[]; pic_infos: Record<string, WeiboPicInfo> } => {
+    ): entity is WeiboUrlStruct & {
+      pic_ids: string[]
+      pic_infos: Record<string, WeiboPicInfo>
+    } => {
       const shortUrl = entity.short_url?.trim() ?? ''
       return (
         Array.isArray(entity.pic_ids) &&

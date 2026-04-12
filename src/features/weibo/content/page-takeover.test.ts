@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  applyPageTakeover,
-  clearPageTakeover,
-} from '@/features/weibo/content/page-takeover'
+import { applyPageTakeover, clearPageTakeover } from '@/features/weibo/content/page-takeover'
 
 describe('applyPageTakeover', () => {
   it('marks the original host app root as hidden and restores it', () => {

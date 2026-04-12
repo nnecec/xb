@@ -2,15 +2,9 @@ export interface WeiboHostRegions {
   appRoot: HTMLElement
 }
 
-const APP_ROOT_SELECTORS = [
-  '#app',
-]
+const APP_ROOT_SELECTORS = ['#app']
 
-const CONTENT_SELECTORS = [
-  '[data-testid="mainCore"]',
-  'main',
-  '#app > div',
-]
+const CONTENT_SELECTORS = ['[data-testid="mainCore"]', 'main', '#app > div']
 
 export function waitForWeiboHostRegions(
   doc: Document,

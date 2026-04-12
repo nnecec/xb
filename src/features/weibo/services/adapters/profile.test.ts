@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import { adaptProfileInfoResponse, mergeProfileDetail } from '@/features/weibo/services/adapters/profile'
+import {
+  adaptProfileInfoResponse,
+  mergeProfileDetail,
+} from '@/features/weibo/services/adapters/profile'
 
 describe('adaptProfileInfoResponse', () => {
   it('normalizes user identity and bio fields', () => {

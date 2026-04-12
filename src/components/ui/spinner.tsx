@@ -1,5 +1,6 @@
-import * as React from 'react'
 import { Loader2 } from 'lucide-react'
+import * as React from 'react'
+
 import { cn } from '@/lib/utils'
 
 interface SpinnerProps extends React.ComponentProps<'div'> {
@@ -15,19 +16,13 @@ function Spinner({ className, size = 'md', ...props }: SpinnerProps) {
 
   return (
     <div
-      data-slot='spinner'
+      data-slot="spinner"
       className={cn('flex items-center justify-center', className)}
       {...props}
     >
-      <Loader2
-        className={cn(
-          'animate-spin text-muted-foreground',
-          sizeClasses[size],
-        )}
-      />
+      <Loader2 className={cn('animate-spin text-muted-foreground', sizeClasses[size])} />
     </div>
   )
 }
 
 export { Spinner }
-

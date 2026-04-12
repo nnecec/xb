@@ -38,7 +38,8 @@ export function bindShellState({
     }
 
     const previousOverflow = document.documentElement.getAttribute(OVERFLOW_STORAGE_KEY)
-    document.documentElement.style.overflow = (previousOverflow !== null && previousOverflow !== '') ? previousOverflow : 'auto'
+    document.documentElement.style.overflow =
+      previousOverflow !== null && previousOverflow !== '' ? previousOverflow : 'auto'
     document.documentElement.removeAttribute(OVERFLOW_STORAGE_KEY)
     clearPageTakeover(appRoot)
   }
@@ -55,7 +56,8 @@ export function bindShellState({
     mediaQuery.removeEventListener('change', onSystemThemeChange)
     container.classList.remove('dark')
     const previousOverflow = document.documentElement.getAttribute(OVERFLOW_STORAGE_KEY)
-    document.documentElement.style.overflow = (previousOverflow !== null && previousOverflow !== '') ? previousOverflow : 'auto'
+    document.documentElement.style.overflow =
+      previousOverflow !== null && previousOverflow !== '' ? previousOverflow : 'auto'
     document.documentElement.removeAttribute(OVERFLOW_STORAGE_KEY)
     clearPageTakeover(appRoot)
   }

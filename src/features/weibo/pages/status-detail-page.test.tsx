@@ -57,10 +57,7 @@ vi.mock('@/features/weibo/components/feed-card', () => ({
 }))
 
 import { StatusDetailPage } from '@/features/weibo/pages/status-detail-page'
-import {
-  loadStatusComments,
-  loadStatusDetail,
-} from '@/features/weibo/services/weibo-repository'
+import { loadStatusComments, loadStatusDetail } from '@/features/weibo/services/weibo-repository'
 import { APP_SETTINGS_STORAGE_KEY } from '@/lib/app-settings'
 import { getAppSettingsStore, resetAppSettingsStoreForTest } from '@/lib/app-settings-store'
 

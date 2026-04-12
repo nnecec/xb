@@ -20,6 +20,9 @@ export function mapFeedItemToStatusView(
   return { item, surface, role }
 }
 
-export function statusAllowsCardNavigate(surface: StatusFeedSurface, role: StatusCardRole): boolean {
+export function statusAllowsCardNavigate(
+  surface: StatusFeedSurface,
+  role: StatusCardRole,
+): boolean {
   return role === 'root' && (surface === 'timeline' || surface === 'detail')
 }

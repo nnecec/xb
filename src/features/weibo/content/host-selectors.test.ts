@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import { findWeiboHostRegions, waitForWeiboHostRegions } from '@/features/weibo/content/host-selectors'
+import {
+  findWeiboHostRegions,
+  waitForWeiboHostRegions,
+} from '@/features/weibo/content/host-selectors'
 
 describe('findWeiboHostRegions', () => {
   it('prefers the full host app root for takeover', () => {
@@ -13,9 +16,7 @@ describe('findWeiboHostRegions', () => {
       </div>
     `
 
-    expect(findWeiboHostRegions(document)?.appRoot).toBe(
-      document.querySelector('#app'),
-    )
+    expect(findWeiboHostRegions(document)?.appRoot).toBe(document.querySelector('#app'))
   })
 
   it('falls back to the content root parent when the app id is unavailable', () => {

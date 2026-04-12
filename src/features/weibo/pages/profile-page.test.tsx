@@ -5,10 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppShell } from '@/features/weibo/app/app-shell'
 import { ProfilePage } from '@/features/weibo/pages/profile-page'
-import {
-  loadProfileHoverCard,
-  loadProfilePosts,
-} from '@/features/weibo/services/weibo-repository'
+import { loadProfileHoverCard, loadProfilePosts } from '@/features/weibo/services/weibo-repository'
 import { APP_SETTINGS_STORAGE_KEY } from '@/lib/app-settings'
 import { getAppSettingsStore, resetAppSettingsStoreForTest } from '@/lib/app-settings-store'
 

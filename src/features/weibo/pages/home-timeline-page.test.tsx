@@ -77,7 +77,6 @@ describe('HomeTimelinePage', () => {
   })
 
   it('renders tabs and feed cards', async () => {
-
     const queryClient = new QueryClient()
     render(
       <QueryClientProvider client={queryClient}>

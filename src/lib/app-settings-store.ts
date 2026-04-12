@@ -32,10 +32,13 @@ export function createAppSettingsStore(
   return createStore<AppSettingsStoreState>((set, get) => {
     async function updateAndPersist(patch: Partial<AppSettings>) {
       set(patch)
-      await persistAppSettings({
-        ...toPersistedSettings(get()),
-        ...patch,
-      }, storageArea)
+      await persistAppSettings(
+        {
+          ...toPersistedSettings(get()),
+          ...patch,
+        },
+        storageArea,
+      )
     }
 
     return {
@@ -60,9 +63,7 @@ export function createAppSettingsStore(
 
 let appSettingsStore: AppSettingsStore | null = null
 
-export function getAppSettingsStore(
-  storageArea?: AppSettingsStorageArea,
-): AppSettingsStore {
+export function getAppSettingsStore(storageArea?: AppSettingsStorageArea): AppSettingsStore {
   if (!appSettingsStore) {
     appSettingsStore = createAppSettingsStore(storageArea)
   }
@@ -74,8 +75,6 @@ export function resetAppSettingsStoreForTest() {
   appSettingsStore = null
 }
 
-export function useAppSettings<T>(
-  selector: (state: AppSettingsStoreState) => T,
-): T {
+export function useAppSettings<T>(selector: (state: AppSettingsStoreState) => T): T {
   return useStore(getAppSettingsStore(), selector)
 }

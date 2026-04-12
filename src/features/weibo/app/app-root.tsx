@@ -11,10 +11,10 @@ import { Toaster } from 'sonner'
 import { AppShell } from '@/features/weibo/app/app-shell'
 import { usePrewarmEmoticonConfig } from '@/features/weibo/app/emoticon-query'
 import { UnsupportedPageContent } from '@/features/weibo/app/pages/unsupported-page-content'
+import { WeiboHistorySync } from '@/features/weibo/app/weibo-history-sync'
 import { HomeTimelinePage } from '@/features/weibo/pages/home-timeline-page'
 import { ProfilePage } from '@/features/weibo/pages/profile-page'
 import { StatusDetailPage } from '@/features/weibo/pages/status-detail-page'
-import { WeiboHistorySync } from '@/features/weibo/app/weibo-history-sync'
 
 const queryClient = new QueryClient({
   mutationCache: new MutationCache({
