@@ -36,3 +36,7 @@ docs
 skills*
 .superpowers/
 docs/
+
+# Environment
+.env
+.env.submit

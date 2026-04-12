@@ -1,6 +1,6 @@
 # xb
 
-Make WB simpler than X.
+🥷 xb - Make weibo X-liked and simpler.
 
 [English](./README.md)
 
