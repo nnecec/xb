@@ -10,9 +10,9 @@ import {
 import type { AppTheme } from '@/lib/app-settings'
 
 const THEME_META: Record<AppTheme, { label: string; Icon: typeof SunMoon }> = {
-  system: { label: 'System', Icon: SunMoon },
-  light: { label: 'Light', Icon: Sun },
-  dark: { label: 'Dark', Icon: MoonStar },
+  system: { label: '跟随系统', Icon: SunMoon },
+  light: { label: '浅色', Icon: Sun },
+  dark: { label: '深色', Icon: MoonStar },
 }
 
 export function ThemeModeToggle({
@@ -27,7 +27,13 @@ export function ThemeModeToggle({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button type="button" size="icon" variant="secondary" aria-label="切换主题模式">
+        <Button
+          type="button"
+          size="icon"
+          variant="secondary"
+          aria-label={`主题模式：${current.label}`}
+          title={`主题模式：${current.label}`}
+        >
           <current.Icon className="size-4" />
           <span className="sr-only">当前主题: {current.label}</span>
         </Button>

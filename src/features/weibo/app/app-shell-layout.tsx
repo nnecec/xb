@@ -119,7 +119,7 @@ export function ShellFrame({
         <div className="hidden md:flex md:w-[200px] xl:w-[240px] shrink-0 pt-4">
           <RightRail />
         </div>
-        <BackToTop container={mainRef.current} />
+        <BackToTop containerRef={mainRef} />
       </div>
     </div>
   )

@@ -11,7 +11,6 @@ import {
 import type { UserProfile } from '@/features/weibo/models/profile'
 
 function ProfileIdentity({ profile }: { profile: UserProfile }) {
-  console.log('🚀 ~ ProfileIdentity ~ profile:', profile)
   return (
     <>
       <div className="flex items-end justify-between">
@@ -77,7 +76,10 @@ function ProfileMetadata({ profile }: { profile: UserProfile }) {
         ) : null}
         {profile.followersCount != null ? (
           <span className="text-muted-foreground">
-            <span className="font-bold text-foreground">{profile.followersCount}</span> 粉丝
+            <span className="font-bold text-foreground">
+              {formatProfileCount(profile.followersCount)}
+            </span>{' '}
+            粉丝
           </span>
         ) : null}
       </div>

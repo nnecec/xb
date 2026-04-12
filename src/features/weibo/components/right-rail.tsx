@@ -18,15 +18,15 @@ export function RightRail() {
     })) ?? []
 
   return (
-    <div className="flex-col gap-4 flex w-full">
-      <Card className="p-2 gap-2">
+    <div className="flex w-full flex-col gap-4">
+      <Card className="gap-2 p-2">
         <div className="px-2 text-sm font-medium text-muted-foreground">热搜</div>
         {hotSearchQuery.isLoading ? (
           <div className="flex justify-center py-4">
             <Spinner />
           </div>
         ) : hotSearchQuery.isError ? (
-          <CardDescription>加载失败</CardDescription>
+          <CardDescription className="px-2 pb-2">热搜加载失败</CardDescription>
         ) : (
           <HotSearchList items={items} />
         )}
@@ -42,7 +42,7 @@ export function RightRail() {
             href="https://github.com/nnecec/xb/issues"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 hover:text-foreground transition-colors"
+            className="flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
           >
             <CircleDot className="h-4 w-4" />
             <span>反馈问题</span>
@@ -51,7 +51,7 @@ export function RightRail() {
             href="https://github.com/nnecec/xb"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 hover:text-foreground transition-colors"
+            className="flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
           >
             <SiGithub className="h-4 w-4" />
             <span>开源仓库</span>
