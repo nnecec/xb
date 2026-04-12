@@ -29,7 +29,7 @@ describe('CommentCard', () => {
     const { container } = render(
       <QueryClientProvider client={queryClient}>
         <MemoryRouter>
-          <CommentCard item={item} rootStatusId="s1" />
+          <CommentCard item={item} rootStatusId="s1" authorUid="u1" />
         </MemoryRouter>
       </QueryClientProvider>,
     )

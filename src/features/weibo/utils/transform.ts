@@ -92,6 +92,12 @@ export interface WeiboStatus {
   topic_struct?: WeiboTopicStruct[]
   isAd?: number
   attitudes_status?: boolean
+  more_info?: {
+    text?: string
+  }
+  title?: {
+    text?: string
+  }
 }
 
 // ─── Transform helpers ────────────────────────────────────────────────────────
@@ -409,6 +415,7 @@ export function toFeedItem(status: WeiboStatus, includeRetweeted = true): FeedIt
     ...(topicEntities.length > 0 ? { topicEntities } : {}),
     regionName: status.region_name ?? '',
     source: stripHtmlTags(status.source ?? ''),
+    ...(status.title?.text ? { title: { text: status.title.text } } : {}),
     ...(normalizedRetweetedStatus
       ? { retweetedStatus: toFeedItem(normalizedRetweetedStatus, false) }
       : {}),
@@ -464,6 +471,7 @@ export function toCommentItem(comment: WeiboStatus): CommentItem {
         }
       : null,
     comments: Array.isArray(comment.comments) ? comment.comments.map(toCommentItem) : [],
+    moreInfoText: comment.more_info?.text ?? undefined,
     ...(normalizedRetweetedStatus
       ? { retweetedStatus: toFeedItem(normalizedRetweetedStatus, false) }
       : {}),

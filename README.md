@@ -4,7 +4,7 @@
 
 [中文](./README.cn.md)
 
----
+![preview](./assets/weibo.com_1783497251_QArOv1yd0.jpeg)
 
 xb strips away the noise and gives you a focused, distraction-free reading
 experience — similar to X (Twitter).

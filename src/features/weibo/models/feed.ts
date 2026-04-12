@@ -55,6 +55,9 @@ export interface FeedItem {
   topicEntities?: FeedTopicEntity[]
   regionName?: string
   source?: string
+  title?: {
+    text: string
+  }
   retweetedStatus?: Omit<FeedItem, 'retweetedStatus'> | null
 }
 

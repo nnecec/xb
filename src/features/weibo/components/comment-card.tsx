@@ -1,9 +1,11 @@
 import { useMutation } from '@tanstack/react-query'
 import { Heart, MessageCircleIcon } from 'lucide-react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { CommentsDialog } from '@/features/weibo/components/comments-dialog'
 import { ImageCarousel } from '@/features/weibo/components/image-carousel'
 import { OwnContentMoreMenu } from '@/features/weibo/components/own-content-more-menu'
 import { StatusText } from '@/features/weibo/components/status-text'
@@ -19,13 +21,17 @@ function CommentNode({
   rootStatusId,
   depth,
   onCommentReply,
+  authorUid,
+  onNavigate,
 }: {
   comment: CommentItem
   rootStatusId: string
   depth: number
+  authorUid?: string
   onCommentReply?: (target: ComposeTarget) => void
   onNavigate?: (item: FeedItem) => void
 }) {
+  const [showNestedCommentsDialog, setShowNestedCommentsDialog] = useState(false)
   const uid = getCurrentUserUid()
   const showOwnerMenu = uid !== null && uid === comment.author.id
 
@@ -85,11 +91,44 @@ function CommentNode({
                 comment={child}
                 rootStatusId={rootStatusId}
                 depth={depth + 1}
+                authorUid={authorUid}
                 onCommentReply={onCommentReply}
+                onNavigate={onNavigate}
               />
             ))}
+            {comment.moreInfoText && authorUid ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-1"
+                onClick={() => setShowNestedCommentsDialog(true)}
+              >
+                {comment.moreInfoText}
+              </Button>
+            ) : null}
           </div>
         ) : null}
+
+        {comment.moreInfoText && authorUid && comment.comments.length === 0 && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-1"
+            onClick={() => setShowNestedCommentsDialog(true)}
+          >
+            {comment.moreInfoText}
+          </Button>
+        )}
+
+        <CommentsDialog
+          open={showNestedCommentsDialog}
+          statusId={comment.id}
+          authorUid={authorUid ?? ''}
+          onOpenChange={setShowNestedCommentsDialog}
+          onCommentReply={onCommentReply}
+        />
 
         <div className="text-muted-foreground">
           <Button
@@ -114,11 +153,13 @@ function CommentNode({
 export function CommentCard({
   item,
   rootStatusId,
+  authorUid,
   onCommentReply,
   onNavigate,
 }: {
   item: CommentItem
   rootStatusId: string
+  authorUid?: string
   onCommentReply?: (target: ComposeTarget) => void
   onNavigate?: (item: FeedItem) => void
 }) {
@@ -127,6 +168,7 @@ export function CommentCard({
       comment={item}
       rootStatusId={rootStatusId}
       depth={0}
+      authorUid={authorUid}
       onCommentReply={onCommentReply}
       onNavigate={onNavigate}
     />

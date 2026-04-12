@@ -1,7 +1,7 @@
-import { ArrowRight, Sparkles } from 'lucide-react'
+import { Sparkles, Zap } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useRef } from 'react'
-import { useOutletContext } from 'react-router'
+import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useLocation, useOutletContext } from 'react-router'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,6 +10,7 @@ import { BackToTop } from '@/features/weibo/components/back-to-top'
 import { NavigationRail } from '@/features/weibo/components/navigation-rail'
 import { RightRail } from '@/features/weibo/components/right-rail'
 import type { WeiboPageDescriptor } from '@/features/weibo/route/page-descriptor'
+import { parseWeiboUrl } from '@/features/weibo/route/parse-weibo-url'
 import type { AppTheme } from '@/lib/app-settings'
 
 const PAGE_LABELS: Record<WeiboPageDescriptor['kind'], string> = {
@@ -30,6 +31,15 @@ function describePage(page: WeiboPageDescriptor): string {
     case 'unsupported':
       return `原因: ${page.reason}`
   }
+}
+
+/** Routes whose primary feed scrolls inside ShellFrame `<main>` (timeline + profile posts). */
+function mainScrollRestorationKey(pathname: string, search: string): string | null {
+  const page = parseWeiboUrl(new URL(`${pathname}${search}`, window.location.origin).href)
+  if (page.kind === 'home' || page.kind === 'profile') {
+    return `${pathname}${search}`
+  }
+  return null
 }
 
 interface ShellFrameProps {
@@ -57,7 +67,37 @@ export function ShellFrame({
   onRefresh,
   children,
 }: ShellFrameProps) {
+  const location = useLocation()
   const mainRef = useRef<HTMLDivElement>(null)
+  const savedMainScrollByRouteRef = useRef<Partial<Record<string, number>>>({})
+  const locationRef = useRef(location)
+  locationRef.current = location
+
+  useEffect(() => {
+    const main = mainRef.current
+    if (!main) {
+      return
+    }
+    const onScroll = () => {
+      const { pathname, search } = locationRef.current
+      const key = mainScrollRestorationKey(pathname, search)
+      if (key) {
+        savedMainScrollByRouteRef.current[key] = main.scrollTop
+      }
+    }
+    main.addEventListener('scroll', onScroll, { passive: true })
+    return () => main.removeEventListener('scroll', onScroll)
+  }, [])
+
+  useLayoutEffect(() => {
+    const main = mainRef.current
+    const key = mainScrollRestorationKey(location.pathname, location.search)
+    if (!main || !key) {
+      return
+    }
+    const y = savedMainScrollByRouteRef.current[key] ?? 0
+    main.scrollTop = y
+  }, [location.pathname, location.search])
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
@@ -73,7 +113,7 @@ export function ShellFrame({
             onRefresh={onRefresh}
           />
         </div>
-        <main className="min-w-0 flex-1 overflow-y-auto pt-4" ref={mainRef}>
+        <main className="min-w-0 flex-1 overflow-y-auto pt-4 no-scrollbar" ref={mainRef}>
           {children}
         </main>
         <div className="hidden md:flex md:w-[200px] xl:w-[240px] shrink-0 pt-4">
@@ -98,8 +138,8 @@ export function RewritePausedCard({ onResume }: { onResume: () => void }) {
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <Button onClick={onResume} className="justify-between">
-            <span>开始 xb</span>
-            <ArrowRight className="h-4 w-4" />
+            <span>启动 xb !</span>
+            <Zap className="h-4 w-4" />
           </Button>
         </CardContent>
       </Card>

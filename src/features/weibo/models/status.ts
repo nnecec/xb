@@ -33,6 +33,7 @@ export interface CommentItem {
   images: FeedImage[]
   replyComment: CommentPreviewItem | null
   comments: CommentItem[]
+  moreInfoText?: string
   retweetedStatus?: FeedItem | null
 }
 

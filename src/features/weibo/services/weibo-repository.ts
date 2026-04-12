@@ -89,6 +89,26 @@ export async function loadEmoticonConfig(): Promise<WeiboEmoticonConfig> {
   return adaptEmoticonConfigResponse(payload)
 }
 
+export async function loadNestedComments(
+  statusId: string,
+  uid: string,
+): Promise<StatusCommentsPage> {
+  const payload = await wbGet<unknown>(WEIBO_ENDPOINTS.statusComments, {
+    flow: 1,
+    id: statusId,
+    uid,
+    is_reload: 1,
+    is_show_bulletin: 2,
+    is_mix: 1,
+    fetch_level: 1,
+    count: 20,
+    max_id: 0,
+    locale: 'en',
+  })
+
+  return adaptStatusCommentsResponse(payload as Parameters<typeof adaptStatusCommentsResponse>[0])
+}
+
 export async function loadStatusComments(
   statusId: string,
   uid: string,

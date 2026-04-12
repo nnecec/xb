@@ -99,8 +99,8 @@ export function StatusDetailPage() {
             comments={comments}
             emptyLabel="此微博暂无评论"
             rootStatusId={detail.status.id}
+            authorUid={authorId ?? undefined}
             onCommentReply={ctx.setComposeTarget}
-            onNavigate={ctx.navigateToStatusDetail}
           />
           {statusCommentsQuery.hasNextPage ? (
             <Button

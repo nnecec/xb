@@ -79,6 +79,7 @@ function FeedAuthorHeader({
 }: {
   item: Pick<FeedItem, 'author' | 'createdAtLabel' | 'source' | 'regionName'>
   trailing?: ReactNode
+  title?: string
 }) {
   return (
     <CardHeader className="flex flex-row gap-3 px-4">
@@ -446,6 +447,9 @@ export function FeedCard({
 
   return (
     <Card className="gap-4" data-testid="feed-card-body">
+      {item.title ? (
+        <div className="px-4 text-xs font-medium text-muted-foreground">{item.title.text}</div>
+      ) : null}
       <FeedAuthorHeader
         item={item}
         trailing={

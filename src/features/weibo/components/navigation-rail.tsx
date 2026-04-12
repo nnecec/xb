@@ -1,5 +1,5 @@
 import { useMediaQuery } from '@reactuses/core'
-import { House, RefreshCw, UserRound, Zap } from 'lucide-react'
+import { House, RefreshCw, UserRound, ZapOff } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 
@@ -114,7 +114,7 @@ export function NavigationRail({
               aria-pressed={rewriteEnabled}
               aria-label="切换 xb 重写"
             >
-              <Zap className="size-4" aria-hidden="true" />
+              <ZapOff className="size-4" aria-hidden="true" />
             </Button>
           </div>
 
