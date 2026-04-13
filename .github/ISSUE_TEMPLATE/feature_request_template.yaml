@@ -1,0 +1,48 @@
+name: Feature Request
+description: Submit a new feature request
+title: '[Feature Request] '
+labels: [Feature Request]
+
+body:
+  - type: dropdown
+    attributes:
+      label: 功能涉及页面
+      description: 请选择此功能请求涉及的页面
+      options:
+        - 首页时间线
+        - 个人主页
+        - 微博详情
+        - 全局/其他
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: 页面地址
+      description: 如果涉及特定页面，请提供页面地址
+      placeholder: '例如：https://weibo.com/u/1234567890'
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: 需求描述
+      description: 请详细描述你希望添加的功能
+      placeholder: 请描述你的功能需求，包括期望的行为、使用场景等
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: 参考信息
+      description: 如果你知道其他插件/脚本已经实现了类似功能，请提供参考说明
+      placeholder: '例如：插件名称或脚本名称和说明'
+    validations:
+      required: false
+
+  - type: checkboxes
+    attributes:
+      label: 参与贡献
+      options:
+        - label: 我将自行创建 PR 实现此功能
+          required: false
