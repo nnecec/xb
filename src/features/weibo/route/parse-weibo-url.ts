@@ -20,6 +20,12 @@ export function parseWeiboUrl(input: string): WeiboPageDescriptor {
   }
 
   if (parts[0] === 'u' && parts[1]) {
+    if (parts[1] === 'page' && parts[2] === 'fav' && parts[3]) {
+      return {
+        kind: 'favorites',
+        uid: parts[3],
+      }
+    }
     return {
       kind: 'profile',
       profileId: parts[1],

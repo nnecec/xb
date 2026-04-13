@@ -47,11 +47,16 @@ export function NavigationRail({
     () => (currentUserUid ? `/u/${currentUserUid}` : '/'),
     [currentUserUid],
   )
+  const favoritesHref = useMemo(
+    () => (currentUserUid ? `/u/page/fav/${currentUserUid}` : '/'),
+    [currentUserUid],
+  )
   const isOwnProfileActive =
     pageKind === 'profile' &&
     Boolean(currentUserUid) &&
     Boolean(viewingProfileUserId) &&
     currentUserUid === viewingProfileUserId
+  const isFavoritesActive = pageKind === 'favorites'
 
   const isXl = useMediaQuery('(min-width: 1280px)')
 
@@ -107,10 +112,13 @@ export function NavigationRail({
           </Button>
 
           <Button
-            variant="ghost"
+            variant={isFavoritesActive ? 'default' : 'ghost'}
             className={isXl ? 'justify-start' : 'justify-center'}
             size={isXl ? 'lg' : 'icon'}
-            disabled
+            onClick={() => navigate(favoritesHref)}
+            title="收藏"
+            aria-label="收藏"
+            aria-current={isFavoritesActive ? 'page' : undefined}
           >
             <Bookmark aria-hidden="true" className="size-4 shrink-0" />
             <span className={cn('hidden xl:inline')}>收藏</span>

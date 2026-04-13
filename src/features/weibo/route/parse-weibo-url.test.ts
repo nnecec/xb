@@ -43,6 +43,13 @@ describe('parseWeiboUrl', () => {
     })
   })
 
+  it('parses a favorites URL', () => {
+    expect(parseWeiboUrl('https://weibo.com/u/page/fav/1969776354')).toEqual({
+      kind: 'favorites',
+      uid: '1969776354',
+    })
+  })
+
   it('returns unsupported for unknown paths', () => {
     expect(parseWeiboUrl('https://weibo.com/settings')).toEqual({
       kind: 'unsupported',

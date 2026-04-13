@@ -16,6 +16,7 @@ import type { AppTheme } from '@/lib/app-settings'
 const PAGE_LABELS: Record<WeiboPageDescriptor['kind'], string> = {
   home: '主页',
   profile: '个人主页',
+  favorites: '收藏',
   status: '微博详情',
   unsupported: '不支持的页面',
 }
@@ -26,6 +27,8 @@ function describePage(page: WeiboPageDescriptor): string {
       return `当前标签: ${page.tab}`
     case 'profile':
       return `用户 ${page.profileId} via /${page.profileSource}`
+    case 'favorites':
+      return `用户 ${page.uid} 的收藏`
     case 'status':
       return `微博 ${page.statusId} by ${page.authorId}`
     case 'unsupported':
@@ -36,7 +39,7 @@ function describePage(page: WeiboPageDescriptor): string {
 /** Routes whose primary feed scrolls inside ShellFrame `<main>` (timeline + profile posts). */
 function mainScrollRestorationKey(pathname: string, search: string): string | null {
   const page = parseWeiboUrl(new URL(`${pathname}${search}`, window.location.origin).href)
-  if (page.kind === 'home' || page.kind === 'profile') {
+  if (page.kind === 'home' || page.kind === 'profile' || page.kind === 'favorites') {
     return `${pathname}${search}`
   }
   return null

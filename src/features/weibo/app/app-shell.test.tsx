@@ -143,7 +143,7 @@ describe('AppShell', () => {
     })
 
     await waitFor(() => {
-      expect(vi.mocked(loadProfilePosts)).toHaveBeenCalledWith('1969776354')
+      expect(vi.mocked(loadProfilePosts)).toHaveBeenCalledWith('1969776354', 1)
     })
 
     expect(vi.mocked(loadStatusDetail)).not.toHaveBeenCalled()

@@ -7,4 +7,5 @@ export type WeiboPageDescriptor =
       profileSource: 'u' | 'n'
       tab: 'posts' | 'replies' | 'media'
     }
+  | { kind: 'favorites'; uid: string }
   | { kind: 'unsupported'; reason: 'invalid-url' | 'unmatched-path' }

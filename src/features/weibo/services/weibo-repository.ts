@@ -183,12 +183,27 @@ export async function loadProfileHoverCard(lookup: ProfileLookup): Promise<UserP
   return mergeProfileDetail(profile, detailPayload)
 }
 
-export async function loadProfilePosts(profileId: string): Promise<TimelinePage> {
-  return loadTimeline(WEIBO_ENDPOINTS.profilePosts, {
+export async function loadProfilePosts(profileId: string, page: number): Promise<TimelinePage> {
+  const payload = await wbGet<WeiboTimelinePayload>(WEIBO_ENDPOINTS.profilePosts, {
     uid: profileId,
-    page: 1,
+    page,
     feature: 0,
   })
+  return adaptTimelineResponse(payload, page)
+}
+
+export interface LoadFavoritesOptions {
+  page?: number
+}
+
+export async function loadFavorites(uid: string, options: LoadFavoritesOptions = {}): Promise<TimelinePage> {
+  const page = options.page ?? 1
+  const payload = await wbGet<WeiboTimelinePayload>(WEIBO_ENDPOINTS.favoritesAll, {
+    uid,
+    page,
+    ...(page === 1 ? { with_total: 'true' } : {}),
+  })
+  return adaptTimelineResponse(payload, page)
 }
 
 export async function followUser(uid: string): Promise<UserProfile> {

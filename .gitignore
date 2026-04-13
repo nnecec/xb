@@ -38,5 +38,5 @@ skills*
 docs/
 
 # Environment
-.env
-.env.submit
+.env*
+!.env.example

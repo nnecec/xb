@@ -1,6 +1,8 @@
-import { skipToken, useQuery } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { skipToken, useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { useEffect, useRef } from 'react'
 
+import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAppShellContext } from '@/features/weibo/app/app-shell-layout'
 import { FeedList } from '@/features/weibo/components/feed-list'
@@ -11,9 +13,14 @@ import {
 } from '@/features/weibo/components/page-state'
 import { ProfileHeader } from '@/features/weibo/components/profile-header'
 import { composeTargetFromFeedItem } from '@/features/weibo/models/compose'
-import { profileLookupFromPage } from '@/features/weibo/queries/weibo-queries'
+import type { FeedItem, TimelinePage } from '@/features/weibo/models/feed'
+import {
+  flattenInfiniteItems,
+  profileLookupFromPage,
+  profilePostsInfiniteOptions,
+} from '@/features/weibo/queries/weibo-queries'
 import { useWeiboPage } from '@/features/weibo/route/use-weibo-page'
-import { loadProfileHoverCard, loadProfilePosts } from '@/features/weibo/services/weibo-repository'
+import { loadProfileHoverCard } from '@/features/weibo/services/weibo-repository'
 import { useAppSettings } from '@/lib/app-settings-store'
 
 function ProfilePostsTabs({
@@ -27,13 +34,37 @@ function ProfilePostsTabs({
   onCommentClick: (item: Parameters<typeof composeTargetFromFeedItem>[0]) => void
   onRepostClick: (item: Parameters<typeof composeTargetFromFeedItem>[0]) => void
 }) {
-  const postsQuery = useQuery({
-    queryKey: ['weibo', 'profile', 'posts', profileId],
-    queryFn: () => loadProfilePosts(profileId),
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
+
+  const postsQuery = useInfiniteQuery({
+    ...profilePostsInfiniteOptions(profileId),
     enabled: profileId !== '',
   })
 
+  const items = flattenInfiniteItems<FeedItem>(
+    postsQuery.data?.pages as TimelinePage[] | undefined,
+  )
+
   const errorMessage = postsQuery.error instanceof Error ? postsQuery.error.message : null
+  const hasNextPage = Boolean(postsQuery.hasNextPage)
+  const isFetchingNextPage = postsQuery.isFetchingNextPage
+  const isLoading = postsQuery.isLoading
+
+  useEffect(() => {
+    if (!loadMoreRef.current || !hasNextPage || isFetchingNextPage) {
+      return
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          void postsQuery.fetchNextPage()
+        }
+      },
+      { threshold: 0.2 },
+    )
+    observer.observe(loadMoreRef.current)
+    return () => observer.disconnect()
+  }, [hasNextPage, isFetchingNextPage])
 
   if (postsQuery.isLoading) {
     return <PageLoadingState label="正在加载此用户微博..." />
@@ -52,12 +83,22 @@ function ProfilePostsTabs({
 
       <TabsContent value="posts" className="flex flex-col gap-4">
         <FeedList
-          items={postsQuery.data?.items ?? []}
+          items={items}
           emptyLabel="暂时还没有微博内容"
           onNavigate={onNavigate}
           onCommentClick={onCommentClick}
           onRepostClick={onRepostClick}
         />
+        {hasNextPage ? (
+          <div ref={loadMoreRef} className="flex justify-center py-3">
+            {isFetchingNextPage ? <Spinner size="sm" /> : null}
+          </div>
+        ) : null}
+        {hasNextPage && !isFetchingNextPage ? (
+          <Button variant="outline" onClick={() => void postsQuery.fetchNextPage()}>
+            加载下一页
+          </Button>
+        ) : null}
       </TabsContent>
 
       <TabsContent value="pictures" className="flex flex-col gap-0">
