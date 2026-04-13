@@ -4,18 +4,6 @@ title: '[Feature Request] '
 labels: [Feature Request]
 
 body:
-  - type: dropdown
-    attributes:
-      label: 功能涉及页面
-      description: 请选择此功能请求涉及的页面
-      options:
-        - 首页时间线
-        - 个人主页
-        - 微博详情
-        - 全局/其他
-    validations:
-      required: true
-
   - type: input
     attributes:
       label: 页面地址

@@ -9,7 +9,7 @@ body:
       value: |
         标题不填或随便写类似「bug」「错误」「有问题」的 issue 将直接关闭。
 
-        功能请求请不要在这里提交，请使用[功能请求模板](https://github.com/nnecec/xb/issues/new?template=feature_request.md)。
+        功能请求请不要在这里提交，请使用[功能请求模板](https://github.com/nnecec/xb/issues/new?template=feature_request_template.yaml)。
 
         若遇到页面相关问题（比如某页面下出现了不该出现的元素），建议一并附上发生问题的页面链接。
 
@@ -41,6 +41,26 @@ body:
         - 自行编译
     validations:
       required: true
+
+  - type: dropdown
+    attributes:
+      label: 功能涉及页面
+      description: 请选择此功能请求涉及的页面
+      options:
+        - 首页时间线
+        - 个人主页
+        - 微博详情
+        - 全局/其他
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: 页面地址
+      description: 如果涉及特定页面，请提供页面地址
+      placeholder: '例如：https://weibo.com/u/1234567890'
+    validations:
+      required: false
 
   - type: textarea
     attributes:
