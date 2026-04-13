@@ -12,7 +12,9 @@ experience — similar to X (Twitter).
 xb runs directly in your browser. Once installed, simply browse Weibo as usual
 and enjoy the beautifully redesigned interface.
 
----
+## Install
+
+[Chrome Web Store](https://chromewebstore.google.com/detail/xb/ffhppkcianllofhhjohbfbobjfppbeao)
 
 ## Features
 
@@ -20,8 +22,6 @@ and enjoy the beautifully redesigned interface.
 2. 🔓 **Fully Open Source** — No privacy concerns
 3. 🎯 **Focus on Reading** — Distraction-free feed
 4. 🚫 **No Interruptions** — No stickers, ads, or supertopics
-
----
 
 ## Supported Pages
 
