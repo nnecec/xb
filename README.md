@@ -34,3 +34,4 @@ xb currently enhances the following pages:
 ## Credits
 
 - Inspired by [BewlyBewly](https://github.com/BewlyBewly/BewlyBewly)
+- [Linux Do](https://linux.do/)

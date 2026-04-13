@@ -32,3 +32,4 @@ xb 现已为以下页面提供增强体验：
 ## 致谢
 
 - 受 [BewlyBewly](https://github.com/BewlyBewly/BewlyBewly) 启发
+- [Linux Do](https://linux.do/)
