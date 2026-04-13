@@ -8,6 +8,12 @@ export default defineConfig({
   manifest: {
     name: 'xb',
     description: 'xb rewrites weibo.com into a cleaner X-like reading experience',
+    icons: {
+      16: 'icon/logo-16.png',
+      32: 'icon/logo-32.png',
+      48: 'icon/logo-48.png',
+      128: 'icon/logo-128.png',
+    },
     permissions: ['storage'],
     host_permissions: ['https://weibo.com/*', 'https://www.weibo.com/*'],
     web_accessible_resources: [
