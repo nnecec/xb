@@ -123,6 +123,7 @@ export interface WeiboStatus {
   topic_struct?: WeiboTopicStruct[]
   isAd?: number
   attitudes_status?: boolean
+  favorited?: boolean
   more_info?: {
     text?: string
   }
@@ -622,6 +623,7 @@ export function toFeedItem(status: WeiboStatus, includeRetweeted = true): FeedIt
     mblogId: status.mblogid ?? null,
     isLongText: Boolean(status.isLongText && !status.longText),
     liked: Boolean(status.attitudes_status),
+    favorited: Boolean(status.favorited),
     text: getStatusText(status),
     createdAtLabel: formatCreatedAt(status.created_at ?? ''),
     author: getStatusAuthor(status.user),

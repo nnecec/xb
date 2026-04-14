@@ -285,6 +285,24 @@ export async function deleteWeiboComment(commentId: string): Promise<void> {
   }
 }
 
+export async function createFavorite(statusId: string): Promise<void> {
+  const response = await wbPostForm<WeiboMutationResponse>(WEIBO_ENDPOINTS.createFavorites, {
+    id: statusId,
+  })
+  if (!isWeiboMutationSuccess(response)) {
+    throw new Error(response.msg || 'weibo-favorite-failed')
+  }
+}
+
+export async function destroyFavorite(statusId: string): Promise<void> {
+  const response = await wbPostForm<WeiboMutationResponse>(WEIBO_ENDPOINTS.destroyFavorites, {
+    id: statusId,
+  })
+  if (!isWeiboMutationSuccess(response)) {
+    throw new Error(response.msg || 'weibo-unfavorite-failed')
+  }
+}
+
 function buildCommentPayload(input: SubmitComposeInput): Record<string, string> {
   const payload: Record<string, string> = {
     id: input.target.statusId,

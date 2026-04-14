@@ -20,6 +20,8 @@ export const WEIBO_ENDPOINTS = {
   followDestroy: '/ajax/friendships/destory',
   searchBand: '/ajax/side/searchBand',
   favoritesAll: '/ajax/favorites/all_fav',
+  createFavorites: '/ajax/statuses/createFavorites',
+  destroyFavorites: '/ajax/statuses/destoryFavorites',
 } as const
 
 export type WeiboEndpointKey = keyof typeof WEIBO_ENDPOINTS

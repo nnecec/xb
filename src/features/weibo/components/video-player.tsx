@@ -71,6 +71,7 @@ export function VideoPlayer({ progressiveSrc, poster, dash }: VideoPlayerProps) 
   const qualityRef = useRef('auto')
   const [qualityId, setQualityId] = useState('auto')
   const [useNativeFallback, setUseNativeFallback] = useState(false)
+  const [shouldLoad, setShouldLoad] = useState(false)
 
   qualityRef.current = qualityId
 
@@ -80,10 +81,11 @@ export function VideoPlayer({ progressiveSrc, poster, dash }: VideoPlayerProps) 
   useEffect(() => {
     setUseNativeFallback(false)
     setQualityId('auto')
+    setShouldLoad(false)
   }, [progressiveSrc, dash?.manifestXml])
 
   useEffect(() => {
-    if (!showDash) {
+    if (!showDash || !shouldLoad) {
       streamInitRef.current = false
       if (playerRef.current) {
         try {
@@ -160,7 +162,7 @@ export function VideoPlayer({ progressiveSrc, poster, dash }: VideoPlayerProps) 
         blobUrlRef.current = null
       }
     }
-  }, [showDash, dash?.manifestXml, progressiveSrc])
+  }, [showDash, dash?.manifestXml, progressiveSrc, shouldLoad])
 
   useEffect(() => {
     const p = playerRef.current
@@ -178,7 +180,18 @@ export function VideoPlayer({ progressiveSrc, poster, dash }: VideoPlayerProps) 
             key={showDash ? 'dash' : `progressive-${progressiveSrc}`}
             ref={videoRef}
             src={videoSrc}
+            preload="none"
             playsInline
+            onPointerDownCapture={() => {
+              if (!shouldLoad) {
+                setShouldLoad(true)
+              }
+            }}
+            onPlay={() => {
+              if (!shouldLoad) {
+                setShouldLoad(true)
+              }
+            }}
           />
         </MinimalVideoSkin>
         {dash && showDash ? (

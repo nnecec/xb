@@ -6,8 +6,8 @@ import {
   type QueryKey,
 } from '@tanstack/react-query'
 import { BrowserRouter, Route, Routes } from 'react-router'
-import { Toaster } from 'sonner'
 
+import { Toaster } from '@/components/ui/sonner'
 import { AppShell } from '@/features/weibo/app/app-shell'
 import { usePrewarmEmoticonConfig } from '@/features/weibo/app/emoticon-query'
 import { UnsupportedPageContent } from '@/features/weibo/app/pages/unsupported-page-content'
@@ -65,7 +65,7 @@ export function AppRoot() {
   return (
     <QueryClientProvider client={queryClient}>
       <AppRootBootstrap />
-      <Toaster richColors position="top-center" />
+      <Toaster />
     </QueryClientProvider>
   )
 }

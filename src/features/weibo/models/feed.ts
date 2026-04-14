@@ -56,6 +56,7 @@ export interface FeedItem {
   mblogId: string | null
   isLongText: boolean
   liked?: boolean
+  favorited?: boolean
   author: FeedAuthor
   text: string
   createdAtLabel: string

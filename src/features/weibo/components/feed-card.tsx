@@ -30,7 +30,9 @@ import {
 import { getCurrentUserUid } from '@/features/weibo/platform/current-user'
 import {
   cancelStatusLike,
+  createFavorite,
   deleteWeiboStatus,
+  destroyFavorite,
   setStatusLike,
 } from '@/features/weibo/services/weibo-repository'
 import { formatWeiboCount } from '@/features/weibo/utils/format-weibo-count'
@@ -81,7 +83,6 @@ function FeedMediaBlock({ item }: { item: FeedItem }) {
 
 function FeedAuthorHeader({
   item,
-  trailing,
 }: {
   item: Pick<FeedItem, 'author' | 'createdAtLabel' | 'source' | 'regionName'>
   trailing?: ReactNode
@@ -120,7 +121,6 @@ function FeedAuthorHeader({
               {item.source ? `${item.source}` : ''} {item.regionName ? `${item.regionName}` : ''}
             </CardDescription>
           </div>
-          {trailing ? <div className="shrink-0 pt-0.5">{trailing}</div> : null}
         </div>
       </div>
     </CardHeader>
@@ -409,6 +409,24 @@ export function FeedCard({
     },
   })
 
+  const favoriteMutation = useMutation({
+    mutationFn: async () => {
+      if (item.favorited) {
+        await destroyFavorite(item.id)
+        toast.success('取消收藏成功')
+      } else {
+        await createFavorite(item.id)
+        toast.success('收藏成功')
+      }
+    },
+    meta: {
+      invalidates: [['weibo']],
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : '操作失败')
+    },
+  })
+
   const likePendingId =
     likeMutation.isPending && likeMutation.variables ? likeMutation.variables.id : null
 
@@ -461,24 +479,23 @@ export function FeedCard({
   }
 
   return (
-    <Card className={cn('gap-4', className)} data-testid="feed-card-body">
+    <Card className={cn('gap-4 py-4 relative', className)} data-testid="feed-card-body">
+      <OwnContentMoreMenu
+        type="status"
+        isOwner={showOwnerMenu}
+        favorited={item.favorited}
+        onFavorite={() => favoriteMutation.mutateAsync()}
+        contentLabel="这条微博"
+        isDeleting={deleteMutation.isPending}
+        onDelete={() => deleteMutation.mutateAsync()}
+        className="absolute top-4 right-4"
+      />
       {item.title ? (
         <div className="px-4">
           <Badge variant="secondary">{item.title.text}</Badge>
         </div>
       ) : null}
-      <FeedAuthorHeader
-        item={item}
-        trailing={
-          showOwnerMenu ? (
-            <OwnContentMoreMenu
-              contentLabel="这条微博"
-              isDeleting={deleteMutation.isPending}
-              onDelete={() => deleteMutation.mutateAsync()}
-            />
-          ) : null
-        }
-      />
+      <FeedAuthorHeader item={item} />
       <CardContent
         className="flex cursor-pointer flex-col gap-4"
         onClick={handleCardClick}

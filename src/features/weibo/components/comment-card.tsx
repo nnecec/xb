@@ -85,6 +85,8 @@ export function CommentCard({
             </div>
             {showOwnerMenu ? (
               <OwnContentMoreMenu
+                type="comment"
+                isOwner={showOwnerMenu}
                 contentLabel="这条评论"
                 isDeleting={deleteMutation.isPending}
                 onDelete={() => deleteMutation.mutateAsync()}

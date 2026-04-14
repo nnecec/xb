@@ -8,12 +8,24 @@ import { markWeiboPageReady } from '@/features/weibo/content/page-takeover'
 import { bindShellState } from '@/features/weibo/content/shell-state'
 import { getAppSettingsStore } from '@/lib/app-settings-store'
 
+import sonnerStyles from 'sonner/dist/styles.css?raw'
+
 interface MountedWeiboUi {
   root: Root
   cleanup: () => void
 }
 
 export let ui: ShadowRootContentScriptUi<MountedWeiboUi>
+
+function injectSonnerStyles(shadow: ShadowRoot) {
+  const existingStyle = shadow.querySelector('[data-sonner-styles]')
+  if (existingStyle) return
+
+  const style = document.createElement('style')
+  style.setAttribute('data-sonner-styles', '')
+  style.textContent = sonnerStyles
+  shadow.appendChild(style)
+}
 
 export default defineContentScript({
   matches: ['https://weibo.com/*', 'https://www.weibo.com/*'],
@@ -35,10 +47,11 @@ export default defineContentScript({
       position: 'inline',
       anchor: 'body',
       append: 'first',
-      onMount(container) {
+      onMount(container, shadow) {
+        injectSonnerStyles(shadow)
         setUiPortalContainer(container)
         const cleanup = bindShellState({
-          container,
+          container: container as unknown as HTMLElement,
           appRoot: regions.appRoot,
           settingsStore,
         })

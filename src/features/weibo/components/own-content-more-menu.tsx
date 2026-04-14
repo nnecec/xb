@@ -1,4 +1,4 @@
-import { MoreHorizontal } from 'lucide-react'
+import { MoreHorizontal, Star } from 'lucide-react'
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -15,18 +15,36 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { cn } from '@/lib/utils'
 
-export function OwnContentMoreMenu({
-  onDelete,
-  isDeleting,
-  contentLabel = '这条内容',
-}: {
+export type ContentType = 'status' | 'comment'
+
+export interface OwnContentMoreMenuProps {
+  type: ContentType
+  isOwner: boolean
+  favorited?: boolean
+  onFavorite?: () => void | Promise<void>
   onDelete: () => void | Promise<void>
   isDeleting?: boolean
   contentLabel?: string
-}) {
+  className?: string
+}
+
+export function OwnContentMoreMenu({
+  type,
+  isOwner,
+  favorited = false,
+  onFavorite,
+  onDelete,
+  isDeleting,
+  contentLabel = '这条内容',
+  className,
+}: OwnContentMoreMenuProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [favoriteLoading, setFavoriteLoading] = useState(false)
+
+  const showFavorite = type === 'status' && onFavorite !== undefined
 
   return (
     <>
@@ -36,7 +54,7 @@ export function OwnContentMoreMenu({
             type="button"
             variant="ghost"
             size="icon"
-            className="size-8 shrink-0"
+            className={cn('size-8 shrink-0', className)}
             aria-label="更多操作"
             onClick={(event) => event.stopPropagation()}
           >
@@ -44,15 +62,38 @@ export function OwnContentMoreMenu({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" onCloseAutoFocus={(event) => event.preventDefault()}>
-          <DropdownMenuItem
-            variant="destructive"
-            onSelect={() => {
-              setMenuOpen(false)
-              setConfirmOpen(true)
-            }}
-          >
-            删除
-          </DropdownMenuItem>
+          {showFavorite && (
+            <DropdownMenuItem
+              onSelect={() => {
+                setMenuOpen(false)
+                if (onFavorite) {
+                  void (async () => {
+                    setFavoriteLoading(true)
+                    try {
+                      await onFavorite()
+                    } finally {
+                      setFavoriteLoading(false)
+                    }
+                  })()
+                }
+              }}
+              disabled={favoriteLoading}
+            >
+              <Star className="mr-2 size-4" fill={favorited ? 'currentColor' : 'none'} />
+              {favorited ? '取消收藏' : '收藏'}
+            </DropdownMenuItem>
+          )}
+          {isOwner && (
+            <DropdownMenuItem
+              variant="destructive"
+              onSelect={() => {
+                setMenuOpen(false)
+                setConfirmOpen(true)
+              }}
+            >
+              删除
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
