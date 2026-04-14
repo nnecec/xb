@@ -1,36 +1,13 @@
 import { SiGithub } from '@icons-pack/react-simple-icons'
-import { useQuery } from '@tanstack/react-query'
 import { CircleDot } from 'lucide-react'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Spinner } from '@/components/ui/spinner'
-import { HotSearchList } from '@/features/weibo/components/hotsearch-list'
-import { hotSearchQueryOptions } from '@/features/weibo/queries/weibo-queries'
+import { HotSearchCard } from '@/features/weibo/components/hotsearch-list'
 
 export function RightRail() {
-  const hotSearchQuery = useQuery(hotSearchQueryOptions)
-  const items =
-    hotSearchQuery.data?.items.map((item) => ({
-      word: item.word,
-      num: item.num,
-      realpos: item.realpos,
-      labelName: item.labelName,
-    })) ?? []
-
   return (
     <div className="flex w-full flex-col gap-4">
-      <Card className="gap-2 p-2">
-        <div className="px-2 text-sm font-medium text-muted-foreground">热搜</div>
-        {hotSearchQuery.isLoading ? (
-          <div className="flex justify-center py-4">
-            <Spinner />
-          </div>
-        ) : hotSearchQuery.isError ? (
-          <CardDescription className="px-2 pb-2">热搜加载失败</CardDescription>
-        ) : (
-          <HotSearchList items={items} />
-        )}
-      </Card>
+      <HotSearchCard className="gap-2 p-2" />
 
       <Card>
         <CardHeader>

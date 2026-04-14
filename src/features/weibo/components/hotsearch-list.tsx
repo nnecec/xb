@@ -1,15 +1,19 @@
+import { useQuery } from '@tanstack/react-query'
+import { RefreshCw } from 'lucide-react'
+
+import { Button } from '@/components/ui/button'
+import { Card, CardDescription } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Spinner } from '@/components/ui/spinner'
+import { hotSearchQueryOptions } from '@/features/weibo/queries/weibo-queries'
 import { formatWeiboCount } from '@/features/weibo/utils/format-weibo-count'
+import { cn } from '@/lib/utils'
 
 export interface HotSearchListData {
   word: string
   num: number
   realpos: number
   labelName: string
-}
-
-interface HotSearchListProps {
-  items: HotSearchListData[]
 }
 
 function normalizeWord(word: string): string {
@@ -34,7 +38,9 @@ function HotSearchItemComponent({ item, index }: { item: HotSearchListData; inde
       rel="noopener noreferrer"
       className="group flex min-w-0 items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-accent/80 focus-visible:bg-accent/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
     >
-      <span className={getRankClassName(index) + ' w-4 shrink-0 text-xs font-medium tabular-nums'}>
+      <span
+        className={cn(getRankClassName(index), 'w-4 shrink-0 text-xs font-medium tabular-nums')}
+      >
         {index + 1}
       </span>
       <span className="min-w-0 flex-1 truncate text-sm text-foreground transition-colors group-hover:text-foreground">
@@ -49,16 +55,49 @@ function HotSearchItemComponent({ item, index }: { item: HotSearchListData; inde
   )
 }
 
-export function HotSearchList({ items }: HotSearchListProps) {
-  if (items.length === 0) {
-    return <div className="py-4 text-center text-sm text-muted-foreground">暂无热搜</div>
-  }
+interface HotSearchCardProps {
+  className?: string
+}
+
+export function HotSearchCard({ className }: HotSearchCardProps) {
+  const hotSearchQuery = useQuery(hotSearchQueryOptions)
+  const items =
+    hotSearchQuery.data?.items.map((item) => ({
+      word: item.word,
+      num: item.num,
+      realpos: item.realpos,
+      labelName: item.labelName,
+    })) ?? []
 
   return (
-    <ScrollArea className="h-[400px] w-full overflow-x-hidden">
-      {items.map((item, index) => (
-        <HotSearchItemComponent key={item.realpos || index} item={item} index={index} />
-      ))}
-    </ScrollArea>
+    <Card className={className}>
+      <div className="flex items-center justify-between pl-2">
+        <span className="text-sm font-medium text-muted-foreground">热搜</span>
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          onClick={() => hotSearchQuery.refetch()}
+          disabled={hotSearchQuery.isFetching}
+          title="刷新热搜"
+        >
+          <RefreshCw className={cn(hotSearchQuery.isFetching && 'animate-spin')} />
+        </Button>
+      </div>
+      {hotSearchQuery.isLoading ? (
+        <div className="flex justify-center py-4">
+          <Spinner />
+        </div>
+      ) : hotSearchQuery.isError ? (
+        <CardDescription className="px-2 pb-2">热搜加载失败</CardDescription>
+      ) : items.length === 0 ? (
+        <CardDescription className="px-2 pb-2">暂无热搜</CardDescription>
+      ) : (
+        <ScrollArea className="h-[400px] w-full overflow-x-hidden">
+          {items.map((item, index) => (
+            <HotSearchItemComponent key={item.realpos || index} item={item} index={index} />
+          ))}
+        </ScrollArea>
+      )}
+    </Card>
   )
 }

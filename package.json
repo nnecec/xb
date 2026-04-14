@@ -1,6 +1,6 @@
 {
   "name": "xb",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "private": true,
   "description": "xb enhances your X.com experience",
   "type": "module",
@@ -49,10 +49,10 @@
     "@types/react-dom": "^19.2.3",
     "@wxt-dev/module-react": "^1.2.2",
     "jsdom": "^29.0.2",
-    "oxfmt": "^0.44.0",
-    "oxlint": "^1.59.0",
+    "oxfmt": "^0.45.0",
+    "oxlint": "^1.60.0",
     "typescript": "^6.0.2",
     "vitest": "^4.1.4",
-    "wxt": "^0.20.20"
+    "wxt": "^0.20.21"
   }
 }

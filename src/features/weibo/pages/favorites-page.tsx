@@ -52,16 +52,13 @@ export function FavoritesPage() {
     )
     observer.observe(loadMoreRef.current)
     return () => observer.disconnect()
-  }, [hasNextPage, isFetchingNextPage])
+  }, [hasNextPage, isFetchingNextPage, favoritesQuery])
 
   return (
     <div className="flex flex-col gap-3">
       {isLoading ? <PageLoadingState label="正在加载收藏..." /> : null}
       {!isLoading && errorMessage ? (
-        <PageErrorState
-          description={errorMessage}
-          onRetry={() => void favoritesQuery.refetch()}
-        />
+        <PageErrorState description={errorMessage} onRetry={() => void favoritesQuery.refetch()} />
       ) : null}
       {!isLoading && !errorMessage ? (
         <FeedList
@@ -71,9 +68,7 @@ export function FavoritesPage() {
           onCommentClick={(item) =>
             ctx.setComposeTarget(composeTargetFromFeedItem(item, 'comment'))
           }
-          onRepostClick={(item) =>
-            ctx.setComposeTarget(composeTargetFromFeedItem(item, 'repost'))
-          }
+          onRepostClick={(item) => ctx.setComposeTarget(composeTargetFromFeedItem(item, 'repost'))}
         />
       ) : null}
       {hasNextPage ? (
