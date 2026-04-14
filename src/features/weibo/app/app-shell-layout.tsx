@@ -53,6 +53,7 @@ interface ShellFrameProps {
   onRewriteEnabledChange: (enabled: boolean) => void
   onThemeChange: (theme: AppTheme) => void
   onRefresh?: () => void
+  onSettingsOpen: () => void
   children: ReactNode
 }
 
@@ -68,6 +69,7 @@ export function ShellFrame({
   onRewriteEnabledChange,
   onThemeChange,
   onRefresh,
+  onSettingsOpen,
   children,
 }: ShellFrameProps) {
   const location = useLocation()
@@ -114,6 +116,7 @@ export function ShellFrame({
             onRewriteEnabledChange={onRewriteEnabledChange}
             onThemeChange={onThemeChange}
             onRefresh={onRefresh}
+            onSettingsOpen={onSettingsOpen}
           />
         </div>
         <main className="min-w-0 flex-1 overflow-y-auto py-4 no-scrollbar" ref={mainRef}>

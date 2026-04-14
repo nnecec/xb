@@ -1,10 +1,17 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { CommentCard } from '@/features/weibo/components/comment-card'
 import type { CommentItem } from '@/features/weibo/models/status'
+
+vi.mock('@/features/weibo/hooks/use-font-settings', () => ({
+  useFontSettings: () => ({
+    fontSizeClass: 'text-sm',
+    fontFamily: '',
+  }),
+}))
 
 const thumb = 'https://example.com/t.jpg'
 const large = 'https://example.com/l.jpg'

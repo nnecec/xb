@@ -37,6 +37,7 @@ describe('NavigationRail', () => {
           theme="system"
           onRewriteEnabledChange={vi.fn()}
           onThemeChange={vi.fn()}
+          onSettingsOpen={vi.fn()}
         />
       </MemoryRouter>,
     )

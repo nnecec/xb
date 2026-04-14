@@ -28,6 +28,7 @@ export function NavigationRail({
   onRewriteEnabledChange,
   onThemeChange,
   onRefresh,
+  onSettingsOpen,
 }: {
   pageKind: WeiboPageDescriptor['kind']
   /** Resolved numeric user id when on a profile page (from API); used to match logged-in user. */
@@ -37,6 +38,7 @@ export function NavigationRail({
   onRewriteEnabledChange: (enabled: boolean) => void
   onThemeChange: (theme: AppTheme) => void
   onRefresh?: () => void
+  onSettingsOpen: () => void
 }) {
   const currentUserUid = useMemo(() => getCurrentUserUid(), [])
   const navigate = useNavigate()
@@ -151,7 +153,7 @@ export function NavigationRail({
         <div className="mt-auto space-y-3 border-t border-border/60 pt-3 xl:space-y-3.5 xl:pt-4 xl:w-[180px]">
           <div className="flex items-center justify-center xl:justify-between">
             <p className="hidden text-xs font-medium text-muted-foreground xl:block">设置</p>
-            <Button type="button" size="icon" variant="secondary" disabled>
+            <Button type="button" size="icon" variant="secondary" onClick={onSettingsOpen}>
               <Settings className="size-4" aria-hidden="true" />
             </Button>
           </div>

@@ -21,6 +21,7 @@ import { StatusText } from '@/features/weibo/components/status-text'
 import { UserHoverCard } from '@/features/weibo/components/user-hover-card'
 import { CreatedAtBadge, UserAvatar } from '@/features/weibo/components/user-presenter'
 import { useFeedLongText } from '@/features/weibo/hooks/use-feed-long-text'
+import { useFontSettings } from '@/features/weibo/hooks/use-font-settings'
 import type { FeedItem } from '@/features/weibo/models/feed'
 import {
   type StatusFeedSurface,
@@ -180,8 +181,13 @@ function FeedTextBlock({
   hasLongTextError: boolean
   onLoadLongText: () => void
 }) {
+  const { fontSizeClass, fontFamily } = useFontSettings()
+
   return (
-    <div className="whitespace-pre-wrap text-sm leading-6 text-foreground">
+    <div
+      className={cn('whitespace-pre-wrap leading-6 text-foreground', fontSizeClass)}
+      style={fontFamily ? { fontFamily } : undefined}
+    >
       <StatusText item={item} text={text} />
 
       {canLoadLongText ? (

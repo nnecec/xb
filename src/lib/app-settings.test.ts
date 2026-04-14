@@ -40,17 +40,26 @@ describe('app-settings', () => {
     const storage = createStorageArea({
       theme: 'dark',
       rewriteEnabled: false,
+      fontSize: 'small',
+      fontFamily: 'Georgia',
+      showHotSearchCard: false,
     })
 
     expect(await loadAppSettings(storage)).toEqual({
       theme: 'dark',
       rewriteEnabled: false,
+      fontSize: 'small',
+      fontFamily: 'Georgia',
+      showHotSearchCard: false,
     })
 
     await persistAppSettings(
       {
         theme: 'light',
         rewriteEnabled: true,
+        fontSize: 'large',
+        fontFamily: 'system-ui',
+        showHotSearchCard: true,
       },
       storage,
     )
@@ -58,6 +67,9 @@ describe('app-settings', () => {
     expect(storage.read()).toEqual({
       theme: 'light',
       rewriteEnabled: true,
+      fontSize: 'large',
+      fontFamily: 'system-ui',
+      showHotSearchCard: true,
     })
   })
 

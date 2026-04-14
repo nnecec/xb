@@ -8,6 +8,7 @@ import {
   type AppSettings,
   type AppSettingsStorageArea,
   type AppTheme,
+  type FontSize,
 } from '@/lib/app-settings'
 
 export interface AppSettingsStoreState extends AppSettings {
@@ -15,6 +16,9 @@ export interface AppSettingsStoreState extends AppSettings {
   hydrate: () => Promise<void>
   setTheme: (theme: AppTheme) => Promise<void>
   setRewriteEnabled: (enabled: boolean) => Promise<void>
+  setFontSize: (fontSize: FontSize) => Promise<void>
+  setFontFamily: (fontFamily: string) => Promise<void>
+  setShowHotSearchCard: (show: boolean) => Promise<void>
 }
 
 export type AppSettingsStore = StoreApi<AppSettingsStoreState>
@@ -23,6 +27,9 @@ function toPersistedSettings(state: AppSettingsStoreState): AppSettings {
   return {
     theme: state.theme,
     rewriteEnabled: state.rewriteEnabled,
+    fontSize: state.fontSize,
+    fontFamily: state.fontFamily,
+    showHotSearchCard: state.showHotSearchCard,
   }
 }
 
@@ -56,6 +63,15 @@ export function createAppSettingsStore(
       },
       async setRewriteEnabled(rewriteEnabled) {
         await updateAndPersist({ rewriteEnabled })
+      },
+      async setFontSize(fontSize) {
+        await updateAndPersist({ fontSize })
+      },
+      async setFontFamily(fontFamily) {
+        await updateAndPersist({ fontFamily })
+      },
+      async setShowHotSearchCard(showHotSearchCard) {
+        await updateAndPersist({ showHotSearchCard })
       },
     }
   })

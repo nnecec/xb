@@ -1,8 +1,13 @@
 export type AppTheme = 'system' | 'light' | 'dark'
 
+export type FontSize = 'small' | 'medium' | 'large'
+
 export interface AppSettings {
   theme: AppTheme
   rewriteEnabled: boolean
+  fontSize: FontSize
+  fontFamily: string
+  showHotSearchCard: boolean
 }
 
 export interface AppSettingsStorageArea {
@@ -15,10 +20,17 @@ export const APP_SETTINGS_STORAGE_KEY = 'xb:app-settings'
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   theme: 'system',
   rewriteEnabled: true,
+  fontSize: 'medium',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+  showHotSearchCard: true,
 }
 
 function isAppTheme(value: unknown): value is AppTheme {
   return value === 'system' || value === 'light' || value === 'dark'
+}
+
+function isFontSize(value: unknown): value is FontSize {
+  return value === 'small' || value === 'medium' || value === 'large'
 }
 
 export function normalizeAppSettings(value: unknown): AppSettings {
@@ -34,6 +46,15 @@ export function normalizeAppSettings(value: unknown): AppSettings {
       typeof candidate.rewriteEnabled === 'boolean'
         ? candidate.rewriteEnabled
         : DEFAULT_APP_SETTINGS.rewriteEnabled,
+    fontSize: isFontSize(candidate.fontSize) ? candidate.fontSize : DEFAULT_APP_SETTINGS.fontSize,
+    fontFamily:
+      typeof candidate.fontFamily === 'string' && candidate.fontFamily.length > 0
+        ? candidate.fontFamily
+        : DEFAULT_APP_SETTINGS.fontFamily,
+    showHotSearchCard:
+      typeof candidate.showHotSearchCard === 'boolean'
+        ? candidate.showHotSearchCard
+        : DEFAULT_APP_SETTINGS.showHotSearchCard,
   }
 }
 

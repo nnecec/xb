@@ -4,6 +4,7 @@ import { Outlet, useNavigate } from 'react-router'
 
 import { RewritePausedCard, ShellFrame } from '@/features/weibo/app/app-shell-layout'
 import { CommentModal } from '@/features/weibo/components/comment-modal'
+import { SettingsDialog } from '@/features/weibo/components/settings-dialog'
 import type { ComposeTarget } from '@/features/weibo/models/compose'
 import type { StatusDetailNavigationItem } from '@/features/weibo/models/feed'
 import { useWeiboPage } from '@/features/weibo/route/use-weibo-page'
@@ -35,6 +36,7 @@ export function AppShell() {
   const setTheme = useAppSettings((state) => state.setTheme)
   const [composeTarget, setComposeTarget] = useState<ComposeTarget | null>(null)
   const [viewingProfileUserId, setViewingProfileUserId] = useState<string | null>(null)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const navigateToStatusDetail = (item: StatusDetailNavigationItem) => {
     const statusId = item.mblogId ?? item.id
@@ -89,9 +91,11 @@ export function AppShell() {
       onRewriteEnabledChange={(enabled: boolean) => void setRewriteEnabled(enabled)}
       onThemeChange={(nextTheme: typeof theme) => void setTheme(nextTheme)}
       onRefresh={refreshTimeline}
+      onSettingsOpen={() => setSettingsOpen(true)}
     >
       <Outlet context={context} />
       {composeModal}
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </ShellFrame>
   )
 }

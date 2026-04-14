@@ -21,6 +21,13 @@ vi.mock('@/features/weibo/services/weibo-repository', async () => {
   }
 })
 
+vi.mock('@/features/weibo/hooks/use-font-settings', () => ({
+  useFontSettings: () => ({
+    fontSizeClass: 'text-sm',
+    fontFamily: '',
+  }),
+}))
+
 describe('FeedCard', () => {
   beforeEach(() => {
     vi.clearAllMocks()

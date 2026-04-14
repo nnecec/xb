@@ -14,6 +14,9 @@ export interface WeiboStatusUser {
 }
 
 export interface WeiboMediaInfo {
+  video_title?: string
+  mp4_720p_mp4?: string
+  h265_mp4_hd?: string
   playback_list?: Array<{
     meta?: {
       quality_index?: number | string
@@ -55,6 +58,7 @@ export interface WeiboTopicStruct {
 }
 
 export interface WeiboPicInfo {
+  largest?: { url?: string }
   bmiddle?: { url?: string }
   large?: { url?: string }
   original?: { url?: string }
@@ -117,9 +121,10 @@ function toImagesFromParts(picIds?: string[], picInfos?: Record<string, WeiboPic
       const info = picInfos?.[picId]
       const thumbnailUrl = info?.large?.url ?? info?.bmiddle?.url ?? info?.thumbnail?.url
       const largeUrl =
+        info?.largest?.url ??
         info?.woriginal?.url ??
-        info?.original?.url ??
         info?.large?.url ??
+        info?.original?.url ??
         info?.bmiddle?.url ??
         info?.thumbnail?.url
       if (!thumbnailUrl || !largeUrl) {
@@ -227,15 +232,16 @@ function extractEmoticonsFromHtml(html: string | undefined): Record<string, Feed
 
 export function toMedia(status: WeiboStatus) {
   const mediaInfo = status.page_info?.media_info
-  const bestPlaybackUrl = Array.isArray(mediaInfo?.playback_list)
-    ? mediaInfo.playback_list
-        .map((item) => ({
-          quality: Number(item?.meta?.quality_index ?? -1),
-          url: item?.play_info?.url ?? '',
-        }))
-        .filter((item) => Boolean(item.url))
-        .sort((a, b) => b.quality - a.quality)[0]?.url
-    : null
+  // const bestPlaybackUrl = Array.isArray(mediaInfo?.playback_list)
+  //   ? mediaInfo.playback_list
+  //       .map((item) => ({
+  //         quality: Number(item?.meta?.quality_index ?? -1),
+  //         url: item?.play_info?.url ?? '',
+  //       }))
+  //       .filter((item) => Boolean(item.url))
+  //       .sort((a, b) => b.quality - a.quality)[0]?.url
+  //   : null
+  const bestPlaybackUrl = mediaInfo?.mp4_720p_mp4 ?? mediaInfo?.h265_mp4_hd
   const streamUrl = bestPlaybackUrl ?? mediaInfo?.stream_url_hd ?? mediaInfo?.stream_url
   if (!streamUrl) {
     return null
@@ -244,7 +250,7 @@ export function toMedia(status: WeiboStatus) {
   return {
     type: status.page_info?.object_type === 'music' ? ('audio' as const) : ('video' as const),
     streamUrl,
-    title: mediaInfo?.name ?? '',
+    title: mediaInfo?.video_title ?? '',
     coverUrl: mediaInfo?.big_pic_info?.pic_big?.url ?? null,
   }
 }
