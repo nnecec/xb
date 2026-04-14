@@ -31,7 +31,7 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
             <PhotoView key={index} src={image.largeUrl}>
               <img
                 src={image.thumbnailUrl}
-                className="aspect-square w-full object-cover rounded"
+                className="aspect-square w-full rounded object-cover"
                 alt=""
               />
             </PhotoView>

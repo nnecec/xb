@@ -14,15 +14,15 @@ function ProfileIdentity({ profile }: { profile: UserProfile }) {
   return (
     <>
       <div className="flex items-end justify-between">
-        <div className="-mt-[15%] relative">
-          <Avatar className="size-[22%] min-h-20 min-w-20 max-h-[134px] max-w-[134px] border-4 border-background">
+        <div className="relative -mt-[15%]">
+          <Avatar className="border-background size-[22%] max-h-[134px] min-h-20 max-w-[134px] min-w-20 border-4">
             <AvatarImage src={profile.avatarUrl ?? undefined} alt={profile.name} />
             <AvatarFallback className="text-3xl font-bold">
               {profile.name?.slice(0, 1).toUpperCase() || '?'}
             </AvatarFallback>
           </Avatar>
         </div>
-        <div className="flex gap-2 pb-3 pt-3">
+        <div className="flex gap-2 pt-3 pb-3">
           <FollowButton
             uid={profile.id}
             following={profile.following}
@@ -33,15 +33,15 @@ function ProfileIdentity({ profile }: { profile: UserProfile }) {
 
       <div className="mt-1 flex flex-col">
         <div className="flex items-center gap-1">
-          <h1 className="text-xl font-extrabold leading-tight">{profile.name}</h1>
+          <h1 className="text-xl leading-tight font-extrabold">{profile.name}</h1>
           {profile.descText ? <BadgeCheck className="size-5 fill-blue-500 text-white" /> : null}
         </div>
-        <p className="text-sm text-muted-foreground">@{profile.name}</p>
+        <p className="text-muted-foreground text-sm">@{profile.name}</p>
       </div>
 
       {profile.bio ? <p className="mt-3 text-sm leading-relaxed">{profile.bio}</p> : null}
       {profile.descText ? (
-        <p className="mt-1 text-xs text-muted-foreground">{profile.descText}</p>
+        <p className="text-muted-foreground mt-1 text-xs">{profile.descText}</p>
       ) : null}
     </>
   )
@@ -50,7 +50,7 @@ function ProfileIdentity({ profile }: { profile: UserProfile }) {
 function ProfileMetadata({ profile }: { profile: UserProfile }) {
   return (
     <>
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+      <div className="text-muted-foreground mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
         {profile.ipLocation ? (
           <span className="flex items-center gap-1">
             <MapPin className="size-4" />
@@ -68,7 +68,7 @@ function ProfileMetadata({ profile }: { profile: UserProfile }) {
       <div className="mt-3 flex items-center gap-5 text-sm">
         {profile.friendsCount != null ? (
           <span className="text-muted-foreground">
-            <span className="font-bold text-foreground">
+            <span className="text-foreground font-bold">
               {formatProfileCount(profile.friendsCount)}
             </span>{' '}
             正在关注
@@ -76,7 +76,7 @@ function ProfileMetadata({ profile }: { profile: UserProfile }) {
         ) : null}
         {profile.followersCount != null ? (
           <span className="text-muted-foreground">
-            <span className="font-bold text-foreground">
+            <span className="text-foreground font-bold">
               {formatProfileCount(profile.followersCount)}
             </span>{' '}
             粉丝
@@ -109,11 +109,11 @@ function ProfileHeaderMutualFollowers({ profile }: { profile: UserProfile }) {
 
 export function ProfileHeader({ profile }: { profile: UserProfile }) {
   return (
-    <Card className="pt-0 overflow-hidden">
+    <Card className="overflow-hidden pt-0">
       <CardContent className="p-0">
         <ProfileBanner
           bannerUrl={profile.bannerUrl}
-          className="relative aspect-3/1 w-full overflow-hidden bg-muted"
+          className="bg-muted relative aspect-3/1 w-full overflow-hidden"
           fallbackClassName="h-full w-full bg-linear-to-br from-blue-400 via-purple-400 to-pink-400"
         />
         <div className="relative px-4">

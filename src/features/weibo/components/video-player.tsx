@@ -195,11 +195,11 @@ export function VideoPlayer({ progressiveSrc, poster, dash }: VideoPlayerProps) 
           />
         </MinimalVideoSkin>
         {dash && showDash ? (
-          <div className="pointer-events-auto absolute right-4 top-4 z-20 max-w-[min(100%,12rem)]">
+          <div className="pointer-events-auto absolute top-4 right-4 z-20 max-w-[min(100%,12rem)]">
             <Select value={qualityId} onValueChange={setQualityId}>
               <SelectTrigger
                 size="sm"
-                className="h-8 border-border/80 bg-background/90 text-xs shadow-sm"
+                className="border-border/80 bg-background/90 h-8 text-xs shadow-sm"
               >
                 <SelectValue placeholder="清晰度" />
               </SelectTrigger>

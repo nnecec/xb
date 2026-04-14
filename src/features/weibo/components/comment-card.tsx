@@ -49,7 +49,7 @@ export function CommentCard({
   })
 
   return (
-    <Card className="gap-3 border-border/70 bg-card/95 py-3 shadow-none">
+    <Card className="border-border/70 bg-card/95 gap-3 py-3 shadow-none">
       <CardHeader className="flex flex-row gap-3 px-4">
         <UserHoverCard uid={item.author.id}>
           <Link
@@ -80,7 +80,7 @@ export function CommentCard({
                 <CreatedAtBadge label={item.createdAtLabel} className="text-[10px]" />
               </div>
               {item.source ? (
-                <p className="truncate text-[11px] text-muted-foreground">{item.source}</p>
+                <p className="text-muted-foreground truncate text-[11px]">{item.source}</p>
               ) : null}
             </div>
             {showOwnerMenu ? (
@@ -97,7 +97,11 @@ export function CommentCard({
       </CardHeader>
       <CardContent className="flex flex-col gap-3 px-4">
         <div
-          className={cn('whitespace-pre-wrap leading-6 text-foreground', fontSizeClass, fontFamilyClass)}
+          className={cn(
+            'whitespace-pre-wrap leading-6 text-foreground',
+            fontSizeClass,
+            fontFamilyClass,
+          )}
         >
           <StatusText item={item} text={item.text || ''} />
         </div>

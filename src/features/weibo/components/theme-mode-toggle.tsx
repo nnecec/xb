@@ -48,7 +48,7 @@ export function ThemeModeToggle({
             <DropdownMenuItem key={theme} onClick={() => onChange(theme)}>
               <Icon className="size-4" />
               <span className="flex-1">{label}</span>
-              {isActive ? <span className="text-xs text-muted-foreground">当前</span> : null}
+              {isActive ? <span className="text-muted-foreground text-xs">当前</span> : null}
             </DropdownMenuItem>
           )
         })}

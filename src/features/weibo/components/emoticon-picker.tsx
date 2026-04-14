@@ -41,7 +41,7 @@ export function EmoticonPicker({ onSelect }: { onSelect: (entry: EmoticonEntry) 
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="p-3" align="start">
-        <div className="text-xs text-muted-foreground">最近使用</div>
+        <div className="text-muted-foreground text-xs">最近使用</div>
         <div className="grid max-h-56 grid-cols-10 gap-1 overflow-y-auto">
           {recentItems.map((item) => (
             <Button

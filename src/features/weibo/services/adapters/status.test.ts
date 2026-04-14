@@ -214,7 +214,12 @@ describe('adaptStatusDetailResponse', () => {
           playback_list: [
             {
               meta: { type: 1, label: 'dash_720p', quality_index: 720, quality_label: '720p' },
-              play_info: { type: 1, protocol: 'dash', label: 'dash_720p', url: 'https://example.com/v.mp4' },
+              play_info: {
+                type: 1,
+                protocol: 'dash',
+                label: 'dash_720p',
+                url: 'https://example.com/v.mp4',
+              },
             },
             {
               meta: { type: 2, label: 'dash_audio', quality_index: 360 },

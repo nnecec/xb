@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react'
 import { useScroll } from '@reactuses/core'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { BackToTop } from '@/features/weibo/components/back-to-top'
@@ -17,15 +17,13 @@ describe('BackToTop', () => {
       writable: true,
     })
 
-    vi.mocked(useScroll).mockReturnValue(
-      [
-        0,
-        320,
-        false,
-        { bottom: false, left: false, right: false, top: false },
-        { x: 'none', y: 'none' },
-      ] as unknown as ReturnType<typeof useScroll>,
-    )
+    vi.mocked(useScroll).mockReturnValue([
+      0,
+      320,
+      false,
+      { bottom: false, left: false, right: false, top: false },
+      { x: 'none', y: 'none' },
+    ] as unknown as ReturnType<typeof useScroll>)
 
     render(<BackToTop containerRef={{ current: container }} threshold={200} />)
 

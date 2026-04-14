@@ -71,12 +71,12 @@ export function NavigationRail({
   }
 
   return (
-    <aside className="flex h-full min-h-0 flex-col px-1 md:px-2 xl:px-3 py-3 md:py-4 xl:py-5">
+    <aside className="flex h-full min-h-0 flex-col px-1 py-3 md:px-2 md:py-4 xl:px-3 xl:py-5">
       <div className="mb-3 flex justify-start md:mb-4 xl:mb-5">
         <img
           src={WeiboLogo}
           alt="微博 Logo"
-          className="h-9 w-9 translate-y-[1px] object-contain fill-current"
+          className="h-9 w-9 translate-y-[1px] fill-current object-contain"
         />
       </div>
 
@@ -150,16 +150,16 @@ export function NavigationRail({
           </Button>
         </div>
 
-        <div className="mt-auto space-y-3 border-t border-border/60 pt-3 xl:space-y-3.5 xl:pt-4 xl:w-[180px]">
+        <div className="border-border/60 mt-auto space-y-3 border-t pt-3 xl:w-[180px] xl:space-y-3.5 xl:pt-4">
           <div className="flex items-center justify-center xl:justify-between">
-            <p className="hidden text-xs font-medium text-muted-foreground xl:block">设置</p>
+            <p className="text-muted-foreground hidden text-xs font-medium xl:block">设置</p>
             <Button type="button" size="icon" variant="secondary" onClick={onSettingsOpen}>
               <Settings className="size-4" aria-hidden="true" />
             </Button>
           </div>
 
           <div className="flex items-center justify-center xl:justify-between">
-            <p className="hidden text-xs font-medium text-muted-foreground xl:block">返回原模式</p>
+            <p className="text-muted-foreground hidden text-xs font-medium xl:block">返回原模式</p>
             <Button
               type="button"
               size="icon"
@@ -173,7 +173,7 @@ export function NavigationRail({
           </div>
 
           <div className="flex items-center justify-center xl:justify-between">
-            <p className="hidden text-xs font-medium text-muted-foreground xl:block">深色模式</p>
+            <p className="text-muted-foreground hidden text-xs font-medium xl:block">深色模式</p>
             <ThemeModeToggle value={theme} onChange={onThemeChange} />
           </div>
         </div>

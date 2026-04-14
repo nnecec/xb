@@ -101,7 +101,7 @@ export function OwnContentMoreMenu({
           <DialogHeader>
             <DialogTitle>确认删除</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             确定要删除{contentLabel}吗？此操作无法撤销。
           </p>
           <DialogFooter>

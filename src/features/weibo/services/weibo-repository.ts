@@ -196,7 +196,10 @@ export interface LoadFavoritesOptions {
   page?: number
 }
 
-export async function loadFavorites(uid: string, options: LoadFavoritesOptions = {}): Promise<TimelinePage> {
+export async function loadFavorites(
+  uid: string,
+  options: LoadFavoritesOptions = {},
+): Promise<TimelinePage> {
   const page = options.page ?? 1
   const payload = await wbGet<WeiboTimelinePayload>(WEIBO_ENDPOINTS.favoritesAll, {
     uid,

@@ -375,7 +375,11 @@ function buildMpdFromPlaybackList(mediaInfo: WeiboMediaInfo): string | undefined
     mediaType: 'video' | 'audio',
   ) => {
     const play = item.play_info ?? {}
-    const id = (item.meta?.label ?? play.label ?? `${mediaType}_${item.meta?.quality_index ?? '0'}`).trim()
+    const id = (
+      item.meta?.label ??
+      play.label ??
+      `${mediaType}_${item.meta?.quality_index ?? '0'}`
+    ).trim()
     const bitrate = Number(play.bandwidth ?? 0)
     const attrs = [`id="${escapeXml(id)}"`]
     if (bitrate > 0) attrs.push(`bandwidth="${bitrate}"`)
@@ -455,7 +459,9 @@ export function toMedia(status: WeiboStatus) {
   const rawMpdXml = getMpdXml(mediaInfo)
   const mpdXml = rawMpdXml ?? buildMpdFromPlaybackList(mediaInfo)
   const qualities = dashQualitiesFromPlaybackList(mediaInfo)
-  const hasAudioTrack = rawMpdXml ? hasAudioAdaptationInMpd(rawMpdXml) : hasDashAudioInPlaybackList(mediaInfo)
+  const hasAudioTrack = rawMpdXml
+    ? hasAudioAdaptationInMpd(rawMpdXml)
+    : hasDashAudioInPlaybackList(mediaInfo)
   const dash =
     mpdXml && hasAudioTrack && qualities.length > 0 ? { manifestXml: mpdXml, qualities } : undefined
 

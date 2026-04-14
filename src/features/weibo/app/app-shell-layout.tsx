@@ -105,7 +105,7 @@ export function ShellFrame({
   }, [location.pathname, location.search])
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
+    <div className="bg-background text-foreground flex h-screen flex-col overflow-hidden">
       <div className="relative mx-auto flex h-full w-full gap-3 px-3 md:gap-4 md:px-4 lg:max-w-[1000px] xl:max-w-[1200px]">
         <div className="flex h-full shrink-0 flex-col">
           <NavigationRail
@@ -119,10 +119,10 @@ export function ShellFrame({
             onSettingsOpen={onSettingsOpen}
           />
         </div>
-        <main className="min-w-0 flex-1 overflow-y-auto py-4 no-scrollbar" ref={mainRef}>
+        <main className="no-scrollbar min-w-0 flex-1 overflow-y-auto py-4" ref={mainRef}>
           {children}
         </main>
-        <div className="hidden md:flex md:w-[200px] xl:w-[240px] shrink-0 pt-4">
+        <div className="hidden shrink-0 pt-4 md:flex md:w-[200px] xl:w-[240px]">
           <RightRail />
         </div>
         <BackToTop containerRef={mainRef} />
@@ -134,10 +134,10 @@ export function ShellFrame({
 export function RewritePausedCard({ onResume }: { onResume: () => void }) {
   return (
     <div className="fixed bottom-4 left-4 z-2147483647">
-      <Card className="bg-card/95 shadow-lg shadow-black/5 backdrop-blur w-40 md:w-60 lg:w-60">
+      <Card className="bg-card/95 w-40 shadow-lg shadow-black/5 backdrop-blur md:w-60 lg:w-60">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Sparkles className="h-4 w-4 text-primary" />
+            <Sparkles className="text-primary h-4 w-4" />
             xb
           </CardTitle>
           <CardDescription>一键切换「更清爽、更 X 的」超级体验</CardDescription>
@@ -160,7 +160,7 @@ export function UnsupportedPageCard({ page }: { page: WeiboPageDescriptor }) {
         <CardTitle className="text-xl">{PAGE_LABELS[page.kind]}</CardTitle>
         <CardDescription>{describePage(page)}</CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col gap-3 text-sm text-muted-foreground">
+      <CardContent className="text-muted-foreground flex flex-col gap-3 text-sm">
         <p>ShadowRoot 已成功挂载。</p>
         <p>路由同步已激活，正在监听主世界历史更新。</p>
       </CardContent>

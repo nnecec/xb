@@ -36,18 +36,18 @@ function HotSearchItemComponent({ item, index }: { item: HotSearchListData; inde
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex min-w-0 items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-accent/80 focus-visible:bg-accent/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+      className="group hover:bg-accent/80 focus-visible:bg-accent/80 focus-visible:ring-ring/50 flex min-w-0 items-center gap-3 rounded-lg px-2 py-2 transition-colors focus-visible:ring-2 focus-visible:outline-none"
     >
       <span
         className={cn(getRankClassName(index), 'w-4 shrink-0 text-xs font-medium tabular-nums')}
       >
         {index + 1}
       </span>
-      <span className="min-w-0 flex-1 truncate text-sm text-foreground transition-colors group-hover:text-foreground">
+      <span className="text-foreground group-hover:text-foreground min-w-0 flex-1 truncate text-sm transition-colors">
         {word}
       </span>
       {item.num > 0 ? (
-        <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
+        <span className="text-muted-foreground shrink-0 text-[11px] tabular-nums">
           {formatWeiboCount(item.num)}
         </span>
       ) : null}
@@ -72,7 +72,7 @@ export function HotSearchCard({ className }: HotSearchCardProps) {
   return (
     <Card className={className}>
       <div className="flex items-center justify-between pl-2">
-        <span className="text-sm font-medium text-muted-foreground">热搜</span>
+        <span className="text-muted-foreground text-sm font-medium">热搜</span>
         <Button
           variant="ghost"
           size="icon-xs"

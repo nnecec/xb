@@ -18,14 +18,14 @@ import { FollowButton } from './follow-button'
 function UserHoverCardSkeleton() {
   return (
     <div className="animate-pulse">
-      <div className="h-20 bg-muted" />
+      <div className="bg-muted h-20" />
       <div className="px-4 pb-4">
-        <div className="-mt-6 mb-3 size-14 rounded-full bg-muted ring-3 ring-card" />
-        <div className="mb-2 h-4 w-24 rounded bg-muted" />
-        <div className="mb-3 h-3 w-40 rounded bg-muted" />
+        <div className="bg-muted ring-card -mt-6 mb-3 size-14 rounded-full ring-3" />
+        <div className="bg-muted mb-2 h-4 w-24 rounded" />
+        <div className="bg-muted mb-3 h-3 w-40 rounded" />
         <div className="flex gap-4">
-          <div className="h-3 w-16 rounded bg-muted" />
-          <div className="h-3 w-16 rounded bg-muted" />
+          <div className="bg-muted h-3 w-16 rounded" />
+          <div className="bg-muted h-3 w-16 rounded" />
         </div>
       </div>
     </div>
@@ -82,9 +82,9 @@ export function UserHoverCard(props: UserHoverCardProps) {
               fallbackClassName="h-full w-full bg-linear-to-r from-blue-400 to-purple-500"
             />
 
-            <div className="px-4 pb-4 flex flex-col gap-2">
-              <div className="-mt-8 mb-2 flex justify-between items-end gap-3">
-                <Avatar className="size-14 ring-3 ring-card">
+            <div className="flex flex-col gap-2 px-4 pb-4">
+              <div className="-mt-8 mb-2 flex items-end justify-between gap-3">
+                <Avatar className="ring-card size-14 ring-3">
                   <AvatarImage src={profile.avatarUrl ?? undefined} alt={profile.name} />
                   <AvatarFallback className="text-lg font-semibold">
                     {profile.name?.slice(0, 1).toUpperCase() || '?'}
@@ -94,26 +94,26 @@ export function UserHoverCard(props: UserHoverCardProps) {
                   uid={profile.id}
                   following={profile.following}
                   followMe={profile.followMe}
-                  className="float-right z-10"
+                  className="z-10 float-right"
                 />
               </div>
 
-              <p className="text-base font-bold leading-tight text-foreground">{profile.name}</p>
+              <p className="text-foreground text-base leading-tight font-bold">{profile.name}</p>
 
               {profile.descText ? (
-                <p className="text-xs text-muted-foreground" title="认证信息">
+                <p className="text-muted-foreground text-xs" title="认证信息">
                   {profile.descText}
                 </p>
               ) : null}
 
               {profile.bio ? (
-                <p className="text-sm leading-snug text-foreground" title="简介">
+                <p className="text-foreground text-sm leading-snug" title="简介">
                   {profile.bio}
                 </p>
               ) : null}
 
               {profile.ipLocation ? (
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <div className="text-muted-foreground flex items-center gap-1 text-xs">
                   <MapPin className="size-3" />
                   <span>{profile.ipLocation}</span>
                 </div>
@@ -122,7 +122,7 @@ export function UserHoverCard(props: UserHoverCardProps) {
               <div className="flex items-center gap-4 text-sm">
                 {profile.friendsCount != null ? (
                   <span className="text-muted-foreground">
-                    <span className="font-semibold text-foreground">
+                    <span className="text-foreground font-semibold">
                       {formatProfileCount(profile.friendsCount)}
                     </span>{' '}
                     关注
@@ -130,7 +130,7 @@ export function UserHoverCard(props: UserHoverCardProps) {
                 ) : null}
                 {profile.followersCount ? (
                   <span className="text-muted-foreground">
-                    <span className="font-semibold text-foreground">{profile.followersCount}</span>{' '}
+                    <span className="text-foreground font-semibold">{profile.followersCount}</span>{' '}
                     粉丝
                   </span>
                 ) : null}
@@ -154,7 +154,7 @@ export function UserHoverCard(props: UserHoverCardProps) {
 
               <Button
                 variant="outline"
-                className="flex-1 gap-1.5 w-full"
+                className="w-full flex-1 gap-1.5"
                 onClick={() => navigate(`/n/${encodeURIComponent(profile.name)}`)}
               >
                 <UserRound className="size-3.5" />

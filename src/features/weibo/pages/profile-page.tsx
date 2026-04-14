@@ -41,9 +41,7 @@ function ProfilePostsTabs({
     enabled: profileId !== '',
   })
 
-  const items = flattenInfiniteItems<FeedItem>(
-    postsQuery.data?.pages as TimelinePage[] | undefined,
-  )
+  const items = flattenInfiniteItems<FeedItem>(postsQuery.data?.pages as TimelinePage[] | undefined)
 
   const errorMessage = postsQuery.error instanceof Error ? postsQuery.error.message : null
   const hasNextPage = Boolean(postsQuery.hasNextPage)
