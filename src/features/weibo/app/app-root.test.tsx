@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -10,6 +11,10 @@ vi.mock('@/features/weibo/app/app-shell', () => ({
 
 vi.mock('@/features/weibo/app/weibo-history-sync', () => ({
   WeiboHistorySync: () => null,
+}))
+
+vi.mock('@/features/weibo/app/error-boundary', () => ({
+  AppErrorBoundary: ({ children }: { children: React.ReactNode }) => children,
 }))
 
 vi.mock('@/features/weibo/services/weibo-repository', async () => {
@@ -25,7 +30,13 @@ vi.mock('@/features/weibo/services/weibo-repository', async () => {
 
 describe('AppRoot', () => {
   it('prewarms emoticon config once on mount', async () => {
-    render(<AppRoot />)
+    const queryClient = new QueryClient()
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AppRoot />
+      </QueryClientProvider>,
+    )
 
     await waitFor(() => {
       expect(vi.mocked(repositoryModule.loadEmoticonConfig)).toHaveBeenCalledTimes(1)

@@ -9,6 +9,7 @@ import { BrowserRouter, Route, Routes } from 'react-router'
 
 import { Toaster } from '@/components/ui/sonner'
 import { AppShell } from '@/features/weibo/app/app-shell'
+import { AppErrorBoundary } from '@/features/weibo/app/error-boundary'
 import { usePrewarmEmoticonConfig } from '@/features/weibo/app/emoticon-query'
 import { UnsupportedPageContent } from '@/features/weibo/app/pages/unsupported-page-content'
 import { WeiboHistorySync } from '@/features/weibo/app/weibo-history-sync'
@@ -42,7 +43,6 @@ const queryClient = new QueryClient({
 
 function AppRootBootstrap() {
   usePrewarmEmoticonConfig()
-
   return (
     <BrowserRouter>
       <WeiboHistorySync />
@@ -64,8 +64,10 @@ function AppRootBootstrap() {
 export function AppRoot() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppRootBootstrap />
-      <Toaster />
+      <AppErrorBoundary>
+        <AppRootBootstrap />
+        <Toaster />
+      </AppErrorBoundary>
     </QueryClientProvider>
   )
 }
