@@ -41,7 +41,7 @@ describe('app-settings', () => {
       theme: 'dark',
       rewriteEnabled: false,
       fontSize: 'small',
-      fontFamily: 'Georgia',
+      fontFamilyClass: 'font-serif',
       showHotSearchCard: false,
     })
 
@@ -49,7 +49,7 @@ describe('app-settings', () => {
       theme: 'dark',
       rewriteEnabled: false,
       fontSize: 'small',
-      fontFamily: 'Georgia',
+      fontFamilyClass: 'font-serif',
       showHotSearchCard: false,
     })
 
@@ -58,7 +58,7 @@ describe('app-settings', () => {
         theme: 'light',
         rewriteEnabled: true,
         fontSize: 'large',
-        fontFamily: 'system-ui',
+        fontFamilyClass: 'font-serif',
         showHotSearchCard: true,
       },
       storage,
@@ -68,7 +68,7 @@ describe('app-settings', () => {
       theme: 'light',
       rewriteEnabled: true,
       fontSize: 'large',
-      fontFamily: 'system-ui',
+      fontFamilyClass: 'font-serif',
       showHotSearchCard: true,
     })
   })

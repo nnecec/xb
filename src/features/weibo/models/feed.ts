@@ -16,11 +16,23 @@ export interface FeedImage {
   largeUrl: string
 }
 
+export interface FeedDashQuality {
+  id: string
+  label: string
+}
+
+/** DASH manifest + representation ids (aligned with `playback_list` / MPD `Representation@id`). */
+export interface FeedDashSource {
+  manifestXml: string
+  qualities: FeedDashQuality[]
+}
+
 export interface FeedMedia {
   type: 'video' | 'audio'
   streamUrl: string
   title: string
   coverUrl: string | null
+  dash?: FeedDashSource
 }
 
 export interface FeedEmoticon {

@@ -1,3 +1,5 @@
+import React from 'react'
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import {
@@ -8,8 +10,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import type { FontFamilyClass, FontSize } from '@/lib/app-settings'
 import { useAppSettings } from '@/lib/app-settings-store'
-import type { FontSize } from '@/lib/app-settings'
 
 function Field({
   label,
@@ -24,9 +26,7 @@ function Field({
     <div className="flex items-center justify-between gap-4">
       <div className="flex flex-col gap-1">
         <Label>{label}</Label>
-        {description && (
-          <p className="text-xs text-muted-foreground">{description}</p>
-        )}
+        {description && <p className="text-xs text-muted-foreground">{description}</p>}
       </div>
       {children}
     </div>
@@ -39,11 +39,11 @@ interface SettingsDialogProps {
 }
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
-  const fontSize = useAppSettings((s) => s.fontSize)
-  const fontFamily = useAppSettings((s) => s.fontFamily)
+  const fontSizeClass = useAppSettings((s) => s.fontSizeClass)
+  const fontFamilyClass = useAppSettings((s) => s.fontFamilyClass)
   const showHotSearchCard = useAppSettings((s) => s.showHotSearchCard)
-  const setFontSize = useAppSettings((s) => s.setFontSize)
-  const setFontFamily = useAppSettings((s) => s.setFontFamily)
+  const setFontSizeClass = useAppSettings((s) => s.setFontSizeClass)
+  const setFontFamilyClass = useAppSettings((s) => s.setFontFamilyClass)
   const setShowHotSearchCard = useAppSettings((s) => s.setShowHotSearchCard)
 
   return (
@@ -54,49 +54,39 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         </DialogHeader>
 
         <div className="flex flex-col gap-6 py-4">
-          <Field
-            label="字体大小"
-            description="微博正文和评论的字体大小"
-          >
+          <Field label="字体大小" description="微博正文和评论的字体大小">
             <Select
-              value={fontSize}
-              onValueChange={(value) => setFontSize(value as FontSize)}
+              value={fontSizeClass}
+              onValueChange={(value) => setFontSizeClass(value as FontSize)}
             >
               <SelectTrigger className="w-[140px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="small">小</SelectItem>
-                <SelectItem value="medium">中</SelectItem>
-                <SelectItem value="large">大</SelectItem>
+                <SelectItem value="text-sm">小</SelectItem>
+                <SelectItem value="text-base">标准</SelectItem>
+                <SelectItem value="text-lg">大</SelectItem>
+                <SelectItem value="text-xl">更大</SelectItem>
               </SelectContent>
             </Select>
           </Field>
 
-          <Field
-            label="字体样式"
-            description="微博正文和评论的字体"
-          >
+          <Field label="字体样式" description="微博正文和评论的字体">
             <Select
-              value={fontFamily}
-              onValueChange={(value) => setFontFamily(value)}
+              value={fontFamilyClass}
+              onValueChange={(value) => setFontFamilyClass(value as FontFamilyClass)}
             >
               <SelectTrigger className="w-[140px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="system-ui, -apple-system, sans-serif">系统默认</SelectItem>
-                <SelectItem value="'PingFang SC', 'Hiragino Sans GB', sans-serif">苹方</SelectItem>
-                <SelectItem value="'Microsoft YaHei', sans-serif">微软雅黑</SelectItem>
-                <SelectItem value="Georgia, serif">衬线体</SelectItem>
+                <SelectItem value="font-sans">无衬线</SelectItem>
+                <SelectItem value="font-serif">衬线</SelectItem>
               </SelectContent>
             </Select>
           </Field>
 
-          <Field
-            label="热搜卡片"
-            description="在右侧边栏显示热搜内容"
-          >
+          <Field label="热搜卡片" description="在右侧边栏显示热搜内容">
             <Switch
               checked={showHotSearchCard}
               onCheckedChange={(checked) => setShowHotSearchCard(checked)}

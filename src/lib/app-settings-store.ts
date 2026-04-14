@@ -8,6 +8,7 @@ import {
   type AppSettings,
   type AppSettingsStorageArea,
   type AppTheme,
+  type FontFamilyClass,
   type FontSize,
 } from '@/lib/app-settings'
 
@@ -16,8 +17,8 @@ export interface AppSettingsStoreState extends AppSettings {
   hydrate: () => Promise<void>
   setTheme: (theme: AppTheme) => Promise<void>
   setRewriteEnabled: (enabled: boolean) => Promise<void>
-  setFontSize: (fontSize: FontSize) => Promise<void>
-  setFontFamily: (fontFamily: string) => Promise<void>
+  setFontSizeClass: (fontSizeClass: FontSize) => Promise<void>
+  setFontFamilyClass: (fontFamilyClass: FontFamilyClass) => Promise<void>
   setShowHotSearchCard: (show: boolean) => Promise<void>
 }
 
@@ -27,8 +28,8 @@ function toPersistedSettings(state: AppSettingsStoreState): AppSettings {
   return {
     theme: state.theme,
     rewriteEnabled: state.rewriteEnabled,
-    fontSize: state.fontSize,
-    fontFamily: state.fontFamily,
+    fontSizeClass: state.fontSizeClass,
+    fontFamilyClass: state.fontFamilyClass,
     showHotSearchCard: state.showHotSearchCard,
   }
 }
@@ -64,11 +65,11 @@ export function createAppSettingsStore(
       async setRewriteEnabled(rewriteEnabled) {
         await updateAndPersist({ rewriteEnabled })
       },
-      async setFontSize(fontSize) {
-        await updateAndPersist({ fontSize })
+      async setFontSizeClass(fontSizeClass) {
+        await updateAndPersist({ fontSizeClass })
       },
-      async setFontFamily(fontFamily) {
-        await updateAndPersist({ fontFamily })
+      async setFontFamilyClass(fontFamilyClass) {
+        await updateAndPersist({ fontFamilyClass })
       },
       async setShowHotSearchCard(showHotSearchCard) {
         await updateAndPersist({ showHotSearchCard })

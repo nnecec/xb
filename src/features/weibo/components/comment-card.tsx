@@ -16,8 +16,8 @@ import { useFontSettings } from '@/features/weibo/hooks/use-font-settings'
 import { type ComposeTarget, composeTargetFromComment } from '@/features/weibo/models/compose'
 import type { CommentItem } from '@/features/weibo/models/status'
 import { getCurrentUserUid } from '@/features/weibo/platform/current-user'
-import { cn } from '@/lib/utils'
 import { deleteWeiboComment } from '@/features/weibo/services/weibo-repository'
+import { cn } from '@/lib/utils'
 
 export function CommentCard({
   item,
@@ -33,7 +33,7 @@ export function CommentCard({
   const [showNestedCommentsDialog, setShowNestedCommentsDialog] = useState(false)
   const uid = getCurrentUserUid()
   const showOwnerMenu = uid !== null && uid === item.author.id
-  const { fontSizeClass, fontFamily } = useFontSettings()
+  const { fontSizeClass, fontFamilyClass } = useFontSettings()
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteWeiboComment(item.id),
@@ -95,8 +95,7 @@ export function CommentCard({
       </CardHeader>
       <CardContent className="flex flex-col gap-3 px-4">
         <div
-          className={cn('whitespace-pre-wrap leading-6 text-foreground', fontSizeClass)}
-          style={fontFamily ? { fontFamily } : undefined}
+          className={cn('whitespace-pre-wrap leading-6 text-foreground', fontSizeClass, fontFamilyClass)}
         >
           <StatusText item={item} text={item.text || ''} />
         </div>

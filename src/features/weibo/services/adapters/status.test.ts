@@ -70,6 +70,170 @@ describe('adaptStatusDetailResponse', () => {
     expect(result.status.media).toBeNull()
   })
 
+  it('maps DASH mpd + playback_list to media.dash and keeps progressive fallback', () => {
+    const mpd = `<?xml version="1.0"?><MPD xmlns="urn:mpeg:dash:schema:mpd:2011" type="static"><Period id="1"><AdaptationSet mimeType="video/mp4"><Representation id="dash_720p" bandwidth="1"/></AdaptationSet><AdaptationSet mimeType="audio/mp4"><Representation id="dash_audio" bandwidth="1"/></AdaptationSet></Period></MPD>`
+    const result = adaptStatusDetailResponse({
+      idstr: '601',
+      text_raw: 'dash test',
+      user: { idstr: '1', screen_name: 'Alice' },
+      page_info: {
+        object_type: 'video',
+        media_info: {
+          mp4_720p_mp4: 'https://example.com/fallback-720.mp4',
+          stream_url: 'https://example.com/sd.mp4',
+          video_title: 't',
+          mpdInfo: { mpdcontent: mpd },
+          playback_list: [
+            {
+              meta: {
+                type: 1,
+                label: 'dash_1080p',
+                quality_index: 1080,
+                quality_label: '1080p',
+              },
+              play_info: {
+                type: 1,
+                protocol: 'dash',
+                label: 'dash_1080p',
+                url: 'https://example.com/dash-1080.mp4',
+              },
+            },
+            {
+              meta: { type: 2, label: 'dash_audio', quality_index: 360 },
+              play_info: {
+                type: 2,
+                protocol: 'dash',
+                url: 'https://example.com/dash-audio.mp4',
+              },
+            },
+          ],
+        },
+      },
+    })
+
+    expect(result.status.media?.streamUrl).toContain('fallback-720.mp4')
+    expect(result.status.media?.dash?.manifestXml).toContain('dash_720p')
+    expect(result.status.media?.dash?.qualities.map((q) => q.id)).toEqual(['dash_1080p'])
+  })
+
+  it('builds DASH manifest from playback_list when mpdInfo is missing', () => {
+    const result = adaptStatusDetailResponse({
+      idstr: '701',
+      text_raw: 'dash without mpdInfo',
+      user: { idstr: '1', screen_name: 'Alice' },
+      page_info: {
+        object_type: 'video',
+        media_info: {
+          stream_url: 'https://example.com/fallback.mp4',
+          playback_list: [
+            {
+              meta: { type: 1, label: 'dash_720p', quality_index: 720, quality_label: '720p' },
+              play_info: {
+                type: 1,
+                protocol: 'dash',
+                label: 'dash_720p',
+                url: 'https://example.com/v-720.mp4',
+                bandwidth: 1000,
+                width: 1280,
+                height: 720,
+                video_codecs: 'avc1.64001f',
+                init_range: '0-100',
+                index_range: '101-200',
+              },
+            },
+            {
+              meta: { type: 2, label: 'dash_audio', quality_index: 360 },
+              play_info: {
+                type: 2,
+                protocol: 'dash',
+                label: 'dash_audio',
+                url: 'https://example.com/a.mp4',
+                bandwidth: 128000,
+                audio_codecs: 'mp4a.40.5',
+                audio_sample_rate: 44100,
+                init_range: '0-50',
+                index_range: '51-90',
+              },
+            },
+          ],
+        },
+      },
+    })
+
+    expect(result.status.media?.dash?.manifestXml).toContain('<AdaptationSet mimeType="video/mp4"')
+    expect(result.status.media?.dash?.manifestXml).toContain('<AdaptationSet mimeType="audio/mp4"')
+    expect(result.status.media?.dash?.manifestXml).toContain('id="dash_720p"')
+    expect(result.status.media?.dash?.manifestXml).toContain('id="dash_audio"')
+  })
+
+  it('falls back to progressive when DASH has no audio track', () => {
+    const result = adaptStatusDetailResponse({
+      idstr: '702',
+      text_raw: 'dash video only',
+      user: { idstr: '1', screen_name: 'Alice' },
+      page_info: {
+        object_type: 'video',
+        media_info: {
+          stream_url: 'https://example.com/fallback-with-audio.mp4',
+          mpdInfo: {
+            mpdcontent:
+              '<?xml version="1.0"?><MPD><Period><AdaptationSet mimeType="video/mp4"><Representation id="dash_720p" /></AdaptationSet></Period></MPD>',
+          },
+          playback_list: [
+            {
+              meta: { type: 1, label: 'dash_720p', quality_index: 720, quality_label: '720p' },
+              play_info: {
+                type: 1,
+                protocol: 'dash',
+                label: 'dash_720p',
+                url: 'https://example.com/v-720.mp4',
+              },
+            },
+          ],
+        },
+      },
+    })
+
+    expect(result.status.media?.streamUrl).toContain('fallback-with-audio.mp4')
+    expect(result.status.media?.dash).toBeUndefined()
+  })
+
+  it('trusts mpdInfo audio structure over playback_list audio hints', () => {
+    const result = adaptStatusDetailResponse({
+      idstr: '703',
+      text_raw: 'mpd no audio but playback says has audio',
+      user: { idstr: '1', screen_name: 'Alice' },
+      page_info: {
+        object_type: 'video',
+        media_info: {
+          stream_url: 'https://example.com/fallback.mp4',
+          mpdInfo: {
+            mpdcontent:
+              '<?xml version="1.0"?><MPD><Period><AdaptationSet mimeType="video/mp4"><Representation id="dash_720p" /></AdaptationSet></Period></MPD>',
+          },
+          playback_list: [
+            {
+              meta: { type: 1, label: 'dash_720p', quality_index: 720, quality_label: '720p' },
+              play_info: { type: 1, protocol: 'dash', label: 'dash_720p', url: 'https://example.com/v.mp4' },
+            },
+            {
+              meta: { type: 2, label: 'dash_audio', quality_index: 360 },
+              play_info: {
+                type: 2,
+                protocol: 'dash',
+                label: 'dash_audio',
+                url: 'https://example.com/a.mp4',
+              },
+            },
+          ],
+        },
+      },
+    })
+
+    expect(result.status.media?.streamUrl).toContain('fallback.mp4')
+    expect(result.status.media?.dash).toBeUndefined()
+  })
+
   it('unwraps { ok, data } so retweeted_status is visible (PC ajax shape)', () => {
     const result = adaptStatusDetailResponse({
       ok: 1,

@@ -69,7 +69,11 @@ function FeedMediaBlock({ item }: { item: FeedItem }) {
       }}
     >
       <AspectRatio ratio={16 / 9}>
-        <VideoPlayer src={item.media.streamUrl} poster={item.media.coverUrl ?? undefined} />
+        <VideoPlayer
+          progressiveSrc={item.media.streamUrl}
+          poster={item.media.coverUrl ?? undefined}
+          dash={item.media.dash}
+        />
       </AspectRatio>
     </div>
   )
@@ -181,12 +185,15 @@ function FeedTextBlock({
   hasLongTextError: boolean
   onLoadLongText: () => void
 }) {
-  const { fontSizeClass, fontFamily } = useFontSettings()
+  const { fontSizeClass, fontFamilyClass } = useFontSettings()
 
   return (
     <div
-      className={cn('whitespace-pre-wrap leading-6 text-foreground', fontSizeClass)}
-      style={fontFamily ? { fontFamily } : undefined}
+      className={cn(
+        'whitespace-pre-wrap leading-6 text-foreground',
+        fontSizeClass,
+        fontFamilyClass,
+      )}
     >
       <StatusText item={item} text={text} />
 
