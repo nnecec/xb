@@ -23,6 +23,10 @@ import {
   type WeiboCommentsPayload,
 } from '@/features/weibo/services/adapters/comments'
 import {
+  adaptLikes,
+  type WeiboLikesPayload,
+} from '@/features/weibo/services/adapters/likes'
+import {
   adaptProfileInfoResponse,
   mergeProfileDetail,
   type ProfileDetailPayload,
@@ -92,6 +96,14 @@ export async function loadComments(cursor?: string | null) {
     count: 20,
   })
   return adaptCommentsResponse(payload)
+}
+
+export async function loadLikes(cursor?: string | null) {
+  const payload = await wbGet<WeiboLikesPayload>(WEIBO_ENDPOINTS.likes, {
+    ...(cursor ? { max_id: cursor } : {}),
+    count: 20,
+  })
+  return adaptLikes(payload)
 }
 
 export async function loadStatusDetail(statusId: string): Promise<StatusDetail> {

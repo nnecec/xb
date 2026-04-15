@@ -56,7 +56,10 @@ function AppRootBootstrap() {
           <Route path="u/page/fav/:uid" element={<FavoritesPage />} />
           <Route path="n/:uname" element={<ProfilePage />} />
           <Route path="unsupported" element={<UnsupportedPageContent />} />
-          <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="at/weibo" element={<NotificationsPage />} />
+          <Route path="comment/inbox" element={<NotificationsPage />} />
+          <Route path="like/inbox" element={<NotificationsPage />} />
+
         </Route>
       </Routes>
     </BrowserRouter>

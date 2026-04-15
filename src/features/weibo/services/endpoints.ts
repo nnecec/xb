@@ -24,6 +24,7 @@ export const WEIBO_ENDPOINTS = {
   destroyFavorites: '/ajax/statuses/destoryFavorites',
   mentions: '/ajax/statuses/mentions',
   comments: '/ajax/message/cmt',
+  likes: '/ajax/message/attitudes',
 } as const
 
 export type WeiboEndpointKey = keyof typeof WEIBO_ENDPOINTS

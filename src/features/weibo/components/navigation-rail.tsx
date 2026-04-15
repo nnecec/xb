@@ -130,7 +130,7 @@ export function NavigationRail({
             variant={pageKind === 'notifications' ? 'default' : 'ghost'}
             className={isXl ? 'justify-start' : 'justify-center'}
             size={isXl ? 'lg' : 'icon'}
-            onClick={() => navigate('/notifications')}
+            onClick={() => navigate('/at/weibo')}
             title="通知"
             aria-label="通知"
             aria-current={pageKind === 'notifications' ? 'page' : undefined}

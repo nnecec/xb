@@ -39,6 +39,13 @@ interface WeiboLikeAttitude {
       }
     }
   }
+  page_info?: {
+    page_pic?: string
+    content1?: string
+    uidPageInfo?: string
+    content2?: string
+    mblogid?: string
+  }
   created_at?: string
   source?: string
 }
@@ -94,18 +101,27 @@ function adaptUser(user?: { id: string; name?: string; screen_name?: string; ava
 }
 
 function adaptLikeAttitude(att: WeiboLikeAttitude) {
-  // Build the status object from the liked comment's associated status/post
-  const status = att.comment?.status
+  const status = att.comment?.text
     ? {
-        id: String(att.comment.status.id),
-        text: att.comment.status.text ?? '',
-        author: adaptUser(att.comment.status.user),
+        id: att.comment.status?.id ? String(att.comment.status.id) : '',
+        text: att.comment.reply_original_text ?? att.comment.text,
+        author: adaptUser(att.comment.user),
       }
-    : {
-        id: '',
-        text: '',
-        author: adaptUser(undefined),
-      }
+    : att.page_info?.content2
+      ? {
+          id: att.page_info.mblogid ? String(att.page_info.mblogid) : '',
+          text: att.page_info.content2,
+          author: {
+            id: att.page_info.uidPageInfo ?? '',
+            name: att.page_info.content1?.replace(/^@/, '') ?? '',
+            avatarUrl: att.page_info.page_pic ?? null,
+          },
+        }
+      : {
+          id: '',
+          text: '',
+          author: adaptUser(undefined),
+        }
 
   return {
     id: String(att.id),

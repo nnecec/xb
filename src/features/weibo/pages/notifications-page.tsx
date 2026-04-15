@@ -1,5 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router'
 
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
@@ -7,8 +8,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { NotificationList } from '@/features/weibo/components/notification-list'
 import { PageErrorState, PageLoadingState } from '@/features/weibo/components/page-state'
 import type { NotificationItem } from '@/features/weibo/models/notification'
+import type { NotificationTab } from '@/features/weibo/route/page-descriptor'
 import { useWeiboPage } from '@/features/weibo/route/use-weibo-page'
 import { useAppSettings } from '@/lib/app-settings-store'
+
+const TAB_ROUTES: Record<NotificationTab, string> = {
+  mentions: '/at/weibo',
+  comments: '/comment/inbox',
+  likes: '/like/inbox',
+}
 
 function NotificationTabContent({
   items,
@@ -74,9 +82,14 @@ function NotificationTabContent({
 
 export function NotificationsPage() {
   const page = useWeiboPage()
+  const navigate = useNavigate()
   const rewriteEnabled = useAppSettings((s) => s.rewriteEnabled)
   const activeTab = page.kind === 'notifications' ? page.tab : 'mentions'
   const isEnabled = rewriteEnabled && page.kind === 'notifications'
+
+  const handleTabChange = (tab: string) => {
+    navigate(TAB_ROUTES[tab as NotificationTab])
+  }
 
   const notificationsQuery = useInfiniteQuery({
     queryKey: ['weibo', 'notifications', activeTab],
@@ -88,6 +101,10 @@ export function NotificationsPage() {
       if (activeTab === 'comments') {
         const { loadComments } = await import('@/features/weibo/services/weibo-repository')
         return loadComments(pageParam)
+      }
+      if (activeTab === 'likes') {
+        const { loadLikes } = await import('@/features/weibo/services/weibo-repository')
+        return loadLikes(pageParam)
       }
       return { items: [], nextCursor: null }
     },
@@ -103,7 +120,7 @@ export function NotificationsPage() {
 
   return (
     <div>
-      <Tabs value={activeTab} className="flex flex-col">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col">
         <div className="sticky top-0 z-10 backdrop-blur">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="mentions">@我</TabsTrigger>
@@ -139,7 +156,16 @@ export function NotificationsPage() {
         </TabsContent>
 
         <TabsContent value="likes" className="flex flex-col gap-3">
-          <PageLoadingState label="赞功能开发中..." />
+          <NotificationTabContent
+            items={items}
+            hasNextPage={Boolean(notificationsQuery.hasNextPage)}
+            isFetchingNextPage={notificationsQuery.isFetchingNextPage}
+            isLoading={notificationsQuery.isLoading}
+            errorMessage={errorMessage}
+            onFetchNextPage={() => void notificationsQuery.fetchNextPage()}
+            onRefetch={() => void notificationsQuery.refetch()}
+            emptyLabel="暂无赞"
+          />
         </TabsContent>
       </Tabs>
     </div>
