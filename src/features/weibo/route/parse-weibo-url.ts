@@ -43,6 +43,27 @@ export function parseWeiboUrl(input: string): WeiboPageDescriptor {
     }
   }
 
+  if (parts[0] === 'at' && parts[1] === 'weibo') {
+    return {
+      kind: 'notifications',
+      tab: 'mentions',
+    }
+  }
+
+  if (parts[0] === 'comment' && parts[1] === 'inbox') {
+    return {
+      kind: 'notifications',
+      tab: 'comments',
+    }
+  }
+
+  if (parts[0] === 'like' && parts[1] === 'inbox') {
+    return {
+      kind: 'notifications',
+      tab: 'likes',
+    }
+  }
+
   if (parts.length >= 2 && /^\d+$/.test(parts[0])) {
     return {
       kind: 'status',

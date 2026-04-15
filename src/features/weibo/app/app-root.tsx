@@ -15,6 +15,7 @@ import { UnsupportedPageContent } from '@/features/weibo/app/pages/unsupported-p
 import { WeiboHistorySync } from '@/features/weibo/app/weibo-history-sync'
 import { FavoritesPage } from '@/features/weibo/pages/favorites-page'
 import { HomeTimelinePage } from '@/features/weibo/pages/home-timeline-page'
+import { NotificationsPage } from '@/features/weibo/pages/notifications-page'
 import { ProfilePage } from '@/features/weibo/pages/profile-page'
 import { StatusDetailPage } from '@/features/weibo/pages/status-detail-page'
 
@@ -55,6 +56,7 @@ function AppRootBootstrap() {
           <Route path="u/page/fav/:uid" element={<FavoritesPage />} />
           <Route path="n/:uname" element={<ProfilePage />} />
           <Route path="unsupported" element={<UnsupportedPageContent />} />
+          <Route path="notifications" element={<NotificationsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

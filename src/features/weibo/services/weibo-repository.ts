@@ -1,5 +1,6 @@
 import type { SubmitComposeInput } from '@/features/weibo/models/compose'
 import type { WeiboEmoticonConfig } from '@/features/weibo/models/emoticon'
+import type { NotificationsPage } from '@/features/weibo/models/notification'
 import type { TimelinePage } from '@/features/weibo/models/feed'
 import type { UserProfile } from '@/features/weibo/models/profile'
 import type { StatusCommentsPage } from '@/features/weibo/models/status'
@@ -13,6 +14,14 @@ import {
   HotSearchPayload,
   type HotSearchPage,
 } from '@/features/weibo/services/adapters/hotsearch'
+import {
+  adaptMentionsResponse,
+  type WeiboMentionsPayload,
+} from '@/features/weibo/services/adapters/mentions'
+import {
+  adaptCommentsResponse,
+  type WeiboCommentsPayload,
+} from '@/features/weibo/services/adapters/comments'
 import {
   adaptProfileInfoResponse,
   mergeProfileDetail,
@@ -67,6 +76,22 @@ export async function loadHomeTimeline(
   return loadTimeline(getTimelinePath(tab), {
     [isFirstPage ? 'since_id' : 'max_id']: isFirstPage ? '0' : options.cursor,
   })
+}
+
+export async function loadMentions(cursor?: string | null): Promise<NotificationsPage> {
+  const payload = await wbGet<WeiboMentionsPayload>(WEIBO_ENDPOINTS.mentions, {
+    ...(cursor ? { max_id: cursor } : { since_id: '0' }),
+    count: 20,
+  })
+  return adaptMentionsResponse(payload)
+}
+
+export async function loadComments(cursor?: string | null) {
+  const payload = await wbGet<WeiboCommentsPayload>(WEIBO_ENDPOINTS.comments, {
+    ...(cursor ? { max_id: cursor } : {}),
+    count: 20,
+  })
+  return adaptCommentsResponse(payload)
 }
 
 export async function loadStatusDetail(statusId: string): Promise<StatusDetail> {

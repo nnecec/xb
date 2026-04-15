@@ -127,10 +127,13 @@ export function NavigationRail({
           </Button>
 
           <Button
-            variant="ghost"
+            variant={pageKind === 'notifications' ? 'default' : 'ghost'}
             className={isXl ? 'justify-start' : 'justify-center'}
             size={isXl ? 'lg' : 'icon'}
-            disabled
+            onClick={() => navigate('/notifications')}
+            title="通知"
+            aria-label="通知"
+            aria-current={pageKind === 'notifications' ? 'page' : undefined}
           >
             <Bell aria-hidden="true" className="size-4 shrink-0" />
             <span className={cn('hidden xl:inline')}>通知</span>

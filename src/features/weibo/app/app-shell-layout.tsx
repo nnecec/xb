@@ -18,6 +18,7 @@ const PAGE_LABELS: Record<WeiboPageDescriptor['kind'], string> = {
   profile: '个人主页',
   favorites: '收藏',
   status: '微博详情',
+  notifications: '通知',
   unsupported: '不支持的页面',
 }
 
@@ -31,6 +32,8 @@ function describePage(page: WeiboPageDescriptor): string {
       return `用户 ${page.uid} 的收藏`
     case 'status':
       return `微博 ${page.statusId} by ${page.authorId}`
+    case 'notifications':
+      return `通知 - ${page.tab}`
     case 'unsupported':
       return `原因: ${page.reason}`
   }
@@ -39,7 +42,7 @@ function describePage(page: WeiboPageDescriptor): string {
 /** Routes whose primary feed scrolls inside ShellFrame `<main>` (timeline + profile posts). */
 function mainScrollRestorationKey(pathname: string, search: string): string | null {
   const page = parseWeiboUrl(new URL(`${pathname}${search}`, window.location.origin).href)
-  if (page.kind === 'home' || page.kind === 'profile' || page.kind === 'favorites') {
+  if (page.kind === 'home' || page.kind === 'profile' || page.kind === 'favorites' || page.kind === 'notifications') {
     return `${pathname}${search}`
   }
   return null

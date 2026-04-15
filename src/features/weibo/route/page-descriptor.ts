@@ -1,3 +1,5 @@
+export type NotificationTab = 'mentions' | 'comments' | 'likes'
+
 export type WeiboPageDescriptor =
   | { kind: 'home'; tab: 'for-you' | 'following' }
   | { kind: 'status'; authorId: string; statusId: string }
@@ -8,4 +10,5 @@ export type WeiboPageDescriptor =
       tab: 'posts' | 'replies' | 'media'
     }
   | { kind: 'favorites'; uid: string }
+  | { kind: 'notifications'; tab: NotificationTab }
   | { kind: 'unsupported'; reason: 'invalid-url' | 'unmatched-path' }

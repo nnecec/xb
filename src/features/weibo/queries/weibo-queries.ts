@@ -1,9 +1,13 @@
 import type { TimelinePage } from '@/features/weibo/models/feed'
+import type { NotificationsPage } from '@/features/weibo/models/notification'
+import type { NotificationTab } from '@/features/weibo/route/page-descriptor'
 import type { WeiboPageDescriptor } from '@/features/weibo/route/page-descriptor'
 import {
+  loadComments,
   loadFavorites,
   loadHotSearch,
   loadHomeTimeline,
+  loadMentions,
   loadProfilePosts,
   type HomeTimelineTab,
 } from '@/features/weibo/services/weibo-repository'
@@ -51,6 +55,24 @@ export function favoritesInfiniteOptions(uid: string) {
       loadFavorites(uid, { page: pageParam ? Number(pageParam) : 1 }),
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage: TimelinePage) => lastPage.nextCursor ?? undefined,
+    staleTime: 30 * 60 * 1000,
+  }
+}
+
+export function notificationsInfiniteOptions(_tab: NotificationTab) {
+  return {
+    queryKey: ['weibo', 'notifications', _tab] as const,
+    queryFn: ({ pageParam }: { pageParam: string | null }) => {
+      if (_tab === 'mentions') {
+        return loadMentions(pageParam)
+      }
+      if (_tab === 'comments') {
+        return loadComments(pageParam)
+      }
+      return Promise.resolve({ items: [], nextCursor: null } as NotificationsPage)
+    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage: NotificationsPage) => lastPage.nextCursor ?? undefined,
     staleTime: 30 * 60 * 1000,
   }
 }
