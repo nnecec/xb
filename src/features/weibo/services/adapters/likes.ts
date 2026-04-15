@@ -13,6 +13,7 @@ interface WeiboLikeAttitude {
   comment?: {
     id: number | string
     text: string
+    reply_original_text?: string
     user?: {
       id: string
       name?: string
@@ -89,7 +90,13 @@ function parseWeiboDate(dateStr: string | undefined): string {
   }
 }
 
-function adaptUser(user?: { id: string; name?: string; screen_name?: string; avatar_large?: string; avatar_hd?: string }) {
+function adaptUser(user?: {
+  id: string
+  name?: string
+  screen_name?: string
+  avatar_large?: string
+  avatar_hd?: string
+}) {
   if (!user) {
     return { id: '', name: '', avatarUrl: null as string | null }
   }

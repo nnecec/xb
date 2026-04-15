@@ -12,6 +12,8 @@ experience — similar to X (Twitter).
 xb runs directly in your browser. Once installed, simply browse Weibo as usual
 and enjoy the beautifully redesigned interface.
 
+Visit [Landing Page](https://xb-extension.vercel.app/) for more.
+
 ## Install
 
 [Chrome Web Store](https://chromewebstore.google.com/detail/xb/ffhppkcianllofhhjohbfbobjfppbeao)

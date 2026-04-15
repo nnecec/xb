@@ -48,7 +48,7 @@ describe('app-settings', () => {
     expect(await loadAppSettings(storage)).toEqual({
       theme: 'dark',
       rewriteEnabled: false,
-      fontSize: 'small',
+      fontSizeClass: 'text-sm',
       fontFamilyClass: 'font-serif',
       showHotSearchCard: false,
     })
@@ -57,7 +57,7 @@ describe('app-settings', () => {
       {
         theme: 'light',
         rewriteEnabled: true,
-        fontSize: 'large',
+        fontSizeClass: 'text-lg',
         fontFamilyClass: 'font-serif',
         showHotSearchCard: true,
       },
@@ -67,7 +67,7 @@ describe('app-settings', () => {
     expect(storage.read()).toEqual({
       theme: 'light',
       rewriteEnabled: true,
-      fontSize: 'large',
+      fontSizeClass: 'text-lg',
       fontFamilyClass: 'font-serif',
       showHotSearchCard: true,
     })

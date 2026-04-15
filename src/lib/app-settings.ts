@@ -1,6 +1,7 @@
 export type AppTheme = 'system' | 'light' | 'dark'
 
 export type FontSize = 'text-xs' | 'text-sm' | 'text-base' | 'text-lg' | 'text-xl'
+type LegacyFontSize = 'small' | 'medium' | 'large'
 
 export type FontFamilyClass = 'font-sans' | 'font-serif'
 
@@ -41,6 +42,26 @@ function isFontSize(value: unknown): value is FontSize {
   )
 }
 
+function toFontSize(value: unknown): FontSize | null {
+  if (isFontSize(value)) {
+    return value
+  }
+
+  if (value === 'small') {
+    return 'text-sm'
+  }
+
+  if (value === 'medium') {
+    return 'text-base'
+  }
+
+  if (value === 'large') {
+    return 'text-lg'
+  }
+
+  return null
+}
+
 function isFontFamilyClass(value: unknown): value is FontFamilyClass {
   return value === 'font-sans' || value === 'font-serif'
 }
@@ -50,7 +71,8 @@ export function normalizeAppSettings(value: unknown): AppSettings {
     return { ...DEFAULT_APP_SETTINGS }
   }
 
-  const candidate = value as Partial<AppSettings>
+  const candidate = value as Partial<AppSettings> & { fontSize?: LegacyFontSize | FontSize }
+  const normalizedFontSize = toFontSize(candidate.fontSizeClass ?? candidate.fontSize)
 
   return {
     theme: isAppTheme(candidate.theme) ? candidate.theme : DEFAULT_APP_SETTINGS.theme,
@@ -58,9 +80,7 @@ export function normalizeAppSettings(value: unknown): AppSettings {
       typeof candidate.rewriteEnabled === 'boolean'
         ? candidate.rewriteEnabled
         : DEFAULT_APP_SETTINGS.rewriteEnabled,
-    fontSizeClass: isFontSize(candidate.fontSizeClass)
-      ? candidate.fontSizeClass
-      : DEFAULT_APP_SETTINGS.fontSizeClass,
+    fontSizeClass: normalizedFontSize ?? DEFAULT_APP_SETTINGS.fontSizeClass,
     fontFamilyClass: isFontFamilyClass(candidate.fontFamilyClass)
       ? candidate.fontFamilyClass
       : DEFAULT_APP_SETTINGS.fontFamilyClass,
