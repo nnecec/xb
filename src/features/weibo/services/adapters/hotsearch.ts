@@ -7,6 +7,7 @@ export interface HotSearchItem {
   iconDesc: string
   iconDescColor: string
   topicFlag: number
+  is_ad?: number
 }
 
 export interface HotSearchGovItem {
@@ -48,16 +49,18 @@ export function adaptHotSearchResponse(payload: HotSearchPayload): HotSearchPage
   const govItem = payload.data?.hotgov ?? null
 
   return {
-    items: realtime.map((item) => ({
-      word: item.word,
-      num: item.num,
-      realpos: item.realpos,
-      labelName: normalizeLabel(item),
-      icon: item.icon,
-      iconDesc: item.iconDesc ?? '',
-      iconDescColor: item.iconDescColor ?? '',
-      topicFlag: item.topicFlag,
-    })),
+    items: realtime
+      .filter((item) => item.is_ad !== 1)
+      .map((item) => ({
+        word: item.word,
+        num: item.num,
+        realpos: item.realpos,
+        labelName: normalizeLabel(item),
+        icon: item.icon,
+        iconDesc: item.iconDesc ?? '',
+        iconDescColor: item.iconDescColor ?? '',
+        topicFlag: item.topicFlag,
+      })),
     govItem: govItem
       ? {
           name: govItem.name,

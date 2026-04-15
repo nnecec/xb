@@ -27,9 +27,13 @@ and enjoy the beautifully redesigned interface.
 
 xb currently enhances the following pages:
 
-- **Home Timeline**
-- **Profile Page**
-- **Status Detail**
+- [x] Home Timeline
+- [x] Profile Page
+- [x] Weibo Detail
+- [x] Notifications
+- [x] Favorites
+- [ ] Explore/Search
+- [ ] Hot Timeline
 
 ## Credits
 

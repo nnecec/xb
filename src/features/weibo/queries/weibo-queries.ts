@@ -81,5 +81,5 @@ export const hotSearchQueryOptions = {
   queryKey: ['weibo', 'hotsearch'] as const,
   queryFn: () => loadHotSearch(),
   staleTime: 5 * 60 * 1000,
-  refetchInterval: 5 * 60 * 1000,
+  refetchInterval: 10 * 60 * 1000,
 }

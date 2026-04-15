@@ -42,7 +42,12 @@ function describePage(page: WeiboPageDescriptor): string {
 /** Routes whose primary feed scrolls inside ShellFrame `<main>` (timeline + profile posts). */
 function mainScrollRestorationKey(pathname: string, search: string): string | null {
   const page = parseWeiboUrl(new URL(`${pathname}${search}`, window.location.origin).href)
-  if (page.kind === 'home' || page.kind === 'profile' || page.kind === 'favorites' || page.kind === 'notifications') {
+  if (
+    page.kind === 'home' ||
+    page.kind === 'profile' ||
+    page.kind === 'favorites' ||
+    page.kind === 'notifications'
+  ) {
     return `${pathname}${search}`
   }
   return null
