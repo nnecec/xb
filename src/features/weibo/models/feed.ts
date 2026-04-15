@@ -21,11 +21,22 @@ export interface FeedDashQuality {
   label: string
 }
 
-/** DASH manifest + representation ids (aligned with `playback_list` / MPD `Representation@id`). */
-export interface FeedDashSource {
+/** DASH manifest from original mpdInfo */
+export interface FeedMpdSource {
+  type: 'mpd'
   manifestXml: string
   qualities: FeedDashQuality[]
 }
+
+/** Progressive URL list from playback_list without MPD */
+export interface FeedPlaybackSource {
+  type: 'playback'
+  sources: Array<{ id: string; label: string; url: string }>
+  selectedIndex: number
+}
+
+/** DASH manifest + representation ids (aligned with `playback_list` / MPD `Representation@id`). */
+export type FeedDashSource = FeedMpdSource | FeedPlaybackSource
 
 export interface FeedMedia {
   type: 'video' | 'audio'

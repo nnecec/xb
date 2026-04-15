@@ -4,7 +4,7 @@ import { createPlayer } from '@videojs/react'
 import { MinimalVideoSkin, Video, videoFeatures } from '@videojs/react/video'
 import { MediaPlayer } from 'dashjs'
 import type { MediaPlayerClass } from 'dashjs'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import {
   Select,
@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { FeedDashSource } from '@/features/weibo/models/feed'
+import type { FeedDashSource, FeedPlaybackSource } from '@/features/weibo/models/feed'
 
 import '@videojs/react/video/minimal-skin.css'
 
@@ -70,22 +70,48 @@ export function VideoPlayer({ progressiveSrc, poster, dash }: VideoPlayerProps) 
   const streamInitRef = useRef(false)
   const qualityRef = useRef('auto')
   const [qualityId, setQualityId] = useState('auto')
-  const [useNativeFallback, setUseNativeFallback] = useState(false)
   const [shouldLoad, setShouldLoad] = useState(false)
+
+  const dashType = dash?.type
+  const playbackSource = dash?.type === 'playback' ? (dash as FeedPlaybackSource) : undefined
+  const sources = useMemo(() => playbackSource?.sources ?? [], [playbackSource])
+  const selectedIndex = playbackSource?.selectedIndex ?? 0
+
+  const [currentSrc, setCurrentSrc] = useState(() => {
+    if (dashType === 'playback' && sources.length > 0) {
+      return sources[selectedIndex]?.url ?? progressiveSrc
+    }
+    return progressiveSrc
+  })
 
   qualityRef.current = qualityId
 
-  const showDash = Boolean(dash && !useNativeFallback)
-  const videoSrc = showDash ? undefined : progressiveSrc || undefined
+  const isMpd = dashType === 'mpd'
+  const isPlayback = dashType === 'playback'
+  const showSelect = Boolean(isMpd || isPlayback)
 
   useEffect(() => {
-    setUseNativeFallback(false)
     setQualityId('auto')
     setShouldLoad(false)
-  }, [progressiveSrc, dash?.manifestXml])
+    if (dashType === 'playback' && sources.length > 0) {
+      setCurrentSrc(sources[selectedIndex]?.url ?? progressiveSrc)
+    }
+  }, [progressiveSrc, dashType, sources, selectedIndex])
 
   useEffect(() => {
-    if (!showDash || !shouldLoad) {
+    if (dashType !== 'playback') {
+      return
+    }
+    if (qualityId === 'auto') {
+      setCurrentSrc(sources[selectedIndex]?.url ?? progressiveSrc)
+    } else {
+      const source = sources.find((s) => s.id === qualityId)
+      setCurrentSrc(source?.url ?? sources[selectedIndex]?.url ?? progressiveSrc)
+    }
+  }, [qualityId, dashType, sources, selectedIndex, progressiveSrc])
+
+  useEffect(() => {
+    if (!isMpd || !shouldLoad) {
       streamInitRef.current = false
       if (playerRef.current) {
         try {
@@ -108,10 +134,22 @@ export function VideoPlayer({ progressiveSrc, poster, dash }: VideoPlayerProps) 
       return
     }
 
-    const manifestXml = dash?.manifestXml?.trim()
+    const mpdDash = dash as { manifestXml?: string } | undefined
+    const manifestXml = mpdDash?.manifestXml?.trim()
     if (!manifestXml) {
-      if (progressiveSrc.trim()) {
-        setUseNativeFallback(true)
+      streamInitRef.current = false
+      if (playerRef.current) {
+        try {
+          playerRef.current.reset()
+          playerRef.current.destroy()
+        } catch {
+          // ignore
+        }
+        playerRef.current = null
+      }
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current)
+        blobUrlRef.current = null
       }
       return
     }
@@ -131,24 +169,16 @@ export function VideoPlayer({ progressiveSrc, poster, dash }: VideoPlayerProps) 
     const url = URL.createObjectURL(blob)
     blobUrlRef.current = url
 
-    const onError = () => {
-      if (progressiveSrc.trim()) {
-        setUseNativeFallback(true)
-      }
-    }
-
     const onStreamInit = () => {
       streamInitRef.current = true
       applyVideoQuality(player, qualityRef.current as 'auto' | string)
     }
 
-    player.on(MediaPlayer.events.ERROR, onError)
     player.on(MediaPlayer.events.STREAM_INITIALIZED, onStreamInit)
     player.attachSource(url)
 
     return () => {
       streamInitRef.current = false
-      player.off(MediaPlayer.events.ERROR, onError)
       player.off(MediaPlayer.events.STREAM_INITIALIZED, onStreamInit)
       try {
         player.reset()
@@ -162,39 +192,47 @@ export function VideoPlayer({ progressiveSrc, poster, dash }: VideoPlayerProps) 
         blobUrlRef.current = null
       }
     }
-  }, [showDash, dash?.manifestXml, progressiveSrc, shouldLoad])
+  }, [isMpd, dashType, shouldLoad, dash])
 
   useEffect(() => {
     const p = playerRef.current
-    if (!p || !showDash || !streamInitRef.current) {
+    if (!p || !isMpd || !streamInitRef.current) {
       return
     }
     applyVideoQuality(p, qualityId as 'auto' | string)
-  }, [qualityId, showDash])
+  }, [qualityId, isMpd])
+
+  const handlePointerDown = useCallback(() => {
+    if (!shouldLoad) {
+      setShouldLoad(true)
+    }
+  }, [shouldLoad])
+
+  const handlePlay = useCallback(() => {
+    if (!shouldLoad) {
+      setShouldLoad(true)
+    }
+  }, [shouldLoad])
+
+  const videoSrc = isMpd ? undefined : currentSrc || undefined
 
   return (
     <div className="relative h-full w-full">
       <Player.Provider>
         <MinimalVideoSkin poster={poster}>
           <Video
-            key={showDash ? 'dash' : `progressive-${progressiveSrc}`}
+            key={
+              isMpd ? 'dash' : isPlayback ? `playback-${currentSrc}` : `progressive-${currentSrc}`
+            }
             ref={videoRef}
             src={videoSrc}
             preload="none"
             playsInline
-            onPointerDownCapture={() => {
-              if (!shouldLoad) {
-                setShouldLoad(true)
-              }
-            }}
-            onPlay={() => {
-              if (!shouldLoad) {
-                setShouldLoad(true)
-              }
-            }}
+            onPointerDownCapture={handlePointerDown}
+            onPlay={handlePlay}
           />
         </MinimalVideoSkin>
-        {dash && showDash ? (
+        {showSelect && dash ? (
           <div className="pointer-events-auto absolute top-4 right-4 z-20 max-w-[min(100%,12rem)]">
             <Select value={qualityId} onValueChange={setQualityId}>
               <SelectTrigger
@@ -205,11 +243,19 @@ export function VideoPlayer({ progressiveSrc, poster, dash }: VideoPlayerProps) 
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="auto">自动</SelectItem>
-                {dash.qualities.map((q) => (
-                  <SelectItem key={q.id} value={q.id}>
-                    {q.label}
-                  </SelectItem>
-                ))}
+                {isMpd && 'qualities' in dash
+                  ? dash.qualities.map((q) => (
+                      <SelectItem key={q.id} value={q.id}>
+                        {q.label}
+                      </SelectItem>
+                    ))
+                  : isPlayback
+                    ? sources.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.label}
+                        </SelectItem>
+                      ))
+                    : null}
               </SelectContent>
             </Select>
           </div>

@@ -33,7 +33,7 @@ export function homeTimelineInfiniteOptions(activeTimelineTab: HomeTimelineTab) 
       loadHomeTimeline(activeTimelineTab, { cursor: pageParam }),
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage: TimelinePage) => lastPage.nextCursor ?? undefined,
-    staleTime: 30 * 60 * 1000,
+    staleTime: 0,
   }
 }
 

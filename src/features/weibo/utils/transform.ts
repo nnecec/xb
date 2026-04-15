@@ -1,8 +1,10 @@
 import type {
   FeedAuthor,
   FeedDashQuality,
+  FeedDashSource,
   FeedEmoticon,
   FeedItem,
+  FeedPlaybackSource,
 } from '@/features/weibo/models/feed'
 import type { CommentItem } from '@/features/weibo/models/status'
 
@@ -435,6 +437,44 @@ function progressiveFallbackUrl(mediaInfo: WeiboMediaInfo): string | undefined {
   )
 }
 
+function playbackSourcesFromList(mediaInfo: WeiboMediaInfo): Array<{ id: string; label: string; url: string }> {
+  if (!Array.isArray(mediaInfo.playback_list)) {
+    return []
+  }
+
+  const seen = new Set<string>()
+  const out: Array<{ id: string; label: string; url: string }> = []
+
+  for (const item of mediaInfo.playback_list) {
+    if (isPlaybackAudioItem(item) || item.meta?.is_hidden) {
+      continue
+    }
+    const id = (item.meta?.label ?? item.play_info?.label)?.trim()
+    const url = pickNonEmptyUrl(item.play_info?.url)
+    if (!id || !url) {
+      continue
+    }
+    if (seen.has(id)) {
+      continue
+    }
+    seen.add(id)
+    const label = (item.meta?.quality_label ?? id).trim()
+    out.push({ id, label, url })
+  }
+
+  out.sort((a, b) => {
+    const qA = Number(mediaInfo.playback_list!.find(
+      (i) => (i.meta?.label ?? i.play_info?.label)?.trim() === a.id,
+    )?.meta?.quality_index ?? -1)
+    const qB = Number(mediaInfo.playback_list!.find(
+      (i) => (i.meta?.label ?? i.play_info?.label)?.trim() === b.id,
+    )?.meta?.quality_index ?? -1)
+    return qB - qA
+  })
+
+  return out
+}
+
 export function toMedia(status: WeiboStatus) {
   const mediaInfo = status.page_info?.media_info
   if (!mediaInfo) {
@@ -457,24 +497,60 @@ export function toMedia(status: WeiboStatus) {
   }
 
   const rawMpdXml = getMpdXml(mediaInfo)
-  const mpdXml = rawMpdXml ?? buildMpdFromPlaybackList(mediaInfo)
-  const qualities = dashQualitiesFromPlaybackList(mediaInfo)
-  const hasAudioTrack = rawMpdXml
-    ? hasAudioAdaptationInMpd(rawMpdXml)
-    : hasDashAudioInPlaybackList(mediaInfo)
-  const dash =
-    mpdXml && hasAudioTrack && qualities.length > 0 ? { manifestXml: mpdXml, qualities } : undefined
 
-  if (!progressiveUrl && !dash) {
+  if (rawMpdXml) {
+    if (hasAudioAdaptationInMpd(rawMpdXml)) {
+      const qualities = dashQualitiesFromPlaybackList(mediaInfo)
+      if (qualities.length > 0) {
+        return {
+          type: 'video' as const,
+          streamUrl: progressiveUrl ?? '',
+          title: mediaInfo.video_title ?? '',
+          coverUrl: mediaInfo.big_pic_info?.pic_big?.url ?? null,
+          dash: {
+            type: 'mpd' as const,
+            manifestXml: rawMpdXml,
+            qualities,
+          },
+        }
+      }
+    }
+    // mpdInfo exists but has no audio - trust it, don't fallback to playback_list
+    if (!progressiveUrl) {
+      return null
+    }
+    return {
+      type: 'video' as const,
+      streamUrl: progressiveUrl,
+      title: mediaInfo.video_title ?? '',
+      coverUrl: mediaInfo.big_pic_info?.pic_big?.url ?? null,
+    }
+  }
+
+  const sources = playbackSourcesFromList(mediaInfo)
+  if (sources.length > 0) {
+    return {
+      type: 'video' as const,
+      streamUrl: sources[0].url,
+      title: mediaInfo.video_title ?? '',
+      coverUrl: mediaInfo.big_pic_info?.pic_big?.url ?? null,
+      dash: {
+        type: 'playback' as const,
+        sources,
+        selectedIndex: 0,
+      },
+    }
+  }
+
+  if (!progressiveUrl) {
     return null
   }
 
   return {
     type: 'video' as const,
-    streamUrl: progressiveUrl ?? '',
+    streamUrl: progressiveUrl,
     title: mediaInfo.video_title ?? '',
     coverUrl: mediaInfo.big_pic_info?.pic_big?.url ?? null,
-    ...(dash ? { dash } : {}),
   }
 }
 

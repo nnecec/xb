@@ -112,8 +112,11 @@ describe('adaptStatusDetailResponse', () => {
     })
 
     expect(result.status.media?.streamUrl).toContain('fallback-720.mp4')
-    expect(result.status.media?.dash?.manifestXml).toContain('dash_720p')
-    expect(result.status.media?.dash?.qualities.map((q) => q.id)).toEqual(['dash_1080p'])
+    expect(result.status.media?.dash?.type).toBe('mpd')
+    if (result.status.media?.dash?.type === 'mpd') {
+      expect(result.status.media?.dash?.manifestXml).toContain('dash_720p')
+      expect(result.status.media?.dash?.qualities.map((q) => q.id)).toEqual(['dash_1080p'])
+    }
   })
 
   it('builds DASH manifest from playback_list when mpdInfo is missing', () => {
@@ -160,10 +163,11 @@ describe('adaptStatusDetailResponse', () => {
       },
     })
 
-    expect(result.status.media?.dash?.manifestXml).toContain('<AdaptationSet mimeType="video/mp4"')
-    expect(result.status.media?.dash?.manifestXml).toContain('<AdaptationSet mimeType="audio/mp4"')
-    expect(result.status.media?.dash?.manifestXml).toContain('id="dash_720p"')
-    expect(result.status.media?.dash?.manifestXml).toContain('id="dash_audio"')
+    expect(result.status.media?.dash?.type).toBe('playback')
+    if (result.status.media?.dash?.type === 'playback') {
+      expect(result.status.media?.dash?.sources.length).toBe(1)
+      expect(result.status.media?.dash?.sources[0].url).toContain('v-720.mp4')
+    }
   })
 
   it('falls back to progressive when DASH has no audio track', () => {
