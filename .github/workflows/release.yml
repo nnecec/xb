@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing release tag to publish to stores, for example v0.1.0
+        required: false
+        type: string
 
 concurrency:
   group: release-main
@@ -11,13 +17,14 @@ concurrency:
 
 jobs:
   release:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     outputs:
-      new_release: ${{ steps.semantic_release.outputs.new_release || 'false' }}
-      release_version: ${{ steps.semantic_release.outputs.release_version }}
-      release_git_tag: ${{ steps.semantic_release.outputs.release_git_tag }}
+      new_release: ${{ steps.release_meta.outputs.new_release || 'false' }}
+      release_version: ${{ steps.release_meta.outputs.release_version }}
+      release_git_tag: ${{ steps.release_meta.outputs.release_git_tag }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -46,22 +53,76 @@ jobs:
       - name: Build
         run: bun run build
 
+      - name: Capture current release tag
+        id: release_base
+        run: |
+          latest_tag="$(git tag --sort=-version:refname | head -n 1)"
+          echo "latest_tag=$latest_tag" >> "$GITHUB_OUTPUT"
+
       - name: Release
         id: semantic_release
         run: bunx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+
+      - name: Capture release metadata
+        id: release_meta
+        run: |
+          before_tag="${{ steps.release_base.outputs.latest_tag }}"
+          after_tag="$(git tag --sort=-version:refname | head -n 1)"
+
+          if [ -n "$after_tag" ] && [ "$after_tag" != "$before_tag" ]; then
+            echo "new_release=true" >> "$GITHUB_OUTPUT"
+            echo "release_git_tag=$after_tag" >> "$GITHUB_OUTPUT"
+            echo "release_version=${after_tag#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "new_release=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  resolve-release:
+    needs: release
+    if: always()
+    runs-on: ubuntu-latest
+    outputs:
+      should_publish: ${{ steps.resolve.outputs.should_publish || 'false' }}
+      release_version: ${{ steps.resolve.outputs.release_version }}
+      release_git_tag: ${{ steps.resolve.outputs.release_git_tag }}
+    steps:
+      - name: Resolve release target
+        id: resolve
+        run: |
+          manual_tag="${{ github.event.inputs.release_tag }}"
+
+          if [ -n "$manual_tag" ]; then
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
+            echo "release_git_tag=$manual_tag" >> "$GITHUB_OUTPUT"
+            echo "release_version=${manual_tag#v}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "${{ needs.release.result }}" = "success" ] && [ "${{ needs.release.outputs.new_release }}" = "true" ]; then
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
+            echo "release_git_tag=${{ needs.release.outputs.release_git_tag }}" >> "$GITHUB_OUTPUT"
+            echo "release_version=${{ needs.release.outputs.release_version }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "should_publish=false" >> "$GITHUB_OUTPUT"
 
   publish-stores:
-    needs: release
-    if: needs.release.outputs.new_release == 'true'
+    needs: resolve-release
+    if: needs.resolve-release.outputs.should_publish == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ needs.release.outputs.release_git_tag }}
+          ref: ${{ needs.resolve-release.outputs.release_git_tag }}
 
       - uses: actions/setup-node@v6
         with:
@@ -76,14 +137,14 @@ jobs:
 
       - name: Zip extensions
         env:
-          EXTENSION_VERSION: ${{ needs.release.outputs.release_version }}
+          EXTENSION_VERSION: ${{ needs.resolve-release.outputs.release_version }}
         run: |
           bun run zip
           bun run zip:firefox
 
       - name: Submit to stores
         env:
-          EXTENSION_VERSION: ${{ needs.release.outputs.release_version }}
+          EXTENSION_VERSION: ${{ needs.resolve-release.outputs.release_version }}
           CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
           CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
           CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}

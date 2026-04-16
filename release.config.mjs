@@ -14,6 +14,12 @@ export default {
       },
     ],
     [
+      '@semantic-release/npm',
+      {
+        npmPublish: false,
+      },
+    ],
+    [
       '@semantic-release/github',
       {
         successComment: false,
@@ -21,17 +27,10 @@ export default {
       },
     ],
     [
-      '@semantic-release/exec',
+      '@semantic-release/git',
       {
-        publishCmd: [
-          'if [ -n "$GITHUB_OUTPUT" ]; then',
-          '  {',
-          '    echo "new_release=true"',
-          '    echo "release_version=${nextRelease.version}"',
-          '    echo "release_git_tag=${nextRelease.gitTag}"',
-          '  } >> "$GITHUB_OUTPUT"',
-          'fi',
-        ].join('\n'),
+        assets: ['package.json', 'bun.lock'],
+        message: 'chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}',
       },
     ],
   ],
