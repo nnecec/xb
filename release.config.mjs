@@ -24,7 +24,7 @@ export default {
       '@semantic-release/exec',
       {
         publishCmd: [
-          'if [ -n "${GITHUB_OUTPUT:-}" ]; then',
+          'if [ -n "$GITHUB_OUTPUT" ]; then',
           '  {',
           '    echo "new_release=true"',
           '    echo "release_version=${nextRelease.version}"',

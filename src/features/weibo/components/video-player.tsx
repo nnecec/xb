@@ -6,6 +6,7 @@ import {
   Controls,
   FullscreenButton,
   MuteButton,
+  PiPButton,
   Popover,
   PlayButton,
   Time,
@@ -16,7 +17,17 @@ import {
 import { Video, videoFeatures } from '@videojs/react/video'
 import { MediaPlayer } from 'dashjs'
 import type { MediaPlayerClass } from 'dashjs'
-import { Maximize, Minimize, Pause, Play, Volume1, Volume2, VolumeX } from 'lucide-react'
+import {
+  Maximize,
+  Minimize,
+  Pause,
+  PictureInPicture,
+  PictureInPicture2,
+  Play,
+  Volume1,
+  Volume2,
+  VolumeX,
+} from 'lucide-react'
 import {
   forwardRef,
   type ComponentPropsWithoutRef,
@@ -523,6 +534,23 @@ export function VideoPlayer({ progressiveSrc, poster, dash }: VideoPlayerProps) 
               <PlaybackRateControl />
 
               <VolumeControl />
+
+              <PiPButton
+                className="media-button--pip"
+                render={(props, state) => (
+                  <IconButton
+                    {...props}
+                    aria-label={state.pip ? '退出画中画' : '进入画中画'}
+                    disabled={state.availability !== 'available'}
+                  >
+                    {state.pip ? (
+                      <PictureInPicture className="media-icon size-[18px]" />
+                    ) : (
+                      <PictureInPicture2 className="media-icon size-[18px]" />
+                    )}
+                  </IconButton>
+                )}
+              />
 
               <FullscreenButton
                 className="media-button--fullscreen"

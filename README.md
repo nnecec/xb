@@ -18,23 +18,6 @@ Visit [Landing Page](https://xb-extension.vercel.app/) for more.
 
 [Chrome Web Store](https://chromewebstore.google.com/detail/xb/ffhppkcianllofhhjohbfbobjfppbeao)
 
-## Release
-
-- Pushes to `main` automatically evaluate release eligibility.
-- Use Conventional Commits so `semantic-release` can determine the next version.
-- Only `feat`, `fix`, `perf`, and breaking changes produce a release.
-- Before enabling the workflow, bootstrap the existing version with:
-
-```bash
-git tag v0.0.5
-git push origin v0.0.5
-```
-
-- Configure these GitHub repository secrets before the first automated release:
-  `CHROME_EXTENSION_ID`, `CHROME_CLIENT_ID`, `CHROME_CLIENT_SECRET`,
-  `CHROME_REFRESH_TOKEN`, `FIREFOX_EXTENSION_ID`, `FIREFOX_JWT_ISSUER`,
-  `FIREFOX_JWT_SECRET`.
-
 ## Features
 
 1. ✨ **X like Style** — Clean, reading-first
