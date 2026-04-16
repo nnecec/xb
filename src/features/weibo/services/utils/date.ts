@@ -1,8 +1,20 @@
-import { format, isToday, isYesterday } from 'date-fns'
+const WEIBO_TIME_ZONE = 'Asia/Shanghai'
+const DAY_FORMATTER = new Intl.DateTimeFormat('en-CA', {
+  timeZone: WEIBO_TIME_ZONE,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
+const TIME_FORMATTER = new Intl.DateTimeFormat('en-GB', {
+  timeZone: WEIBO_TIME_ZONE,
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+})
 
 /**
  * Parse Weibo API date string: "Tue Apr 08 10:00:00 +0800 2026"
- * Converts from Weibo timezone (+0800) to local time.
+ * Converts the serialized Weibo timestamp into an absolute Date.
  */
 function parseWeiboDate(dateStr: string): Date | null {
   if (!dateStr) return null
@@ -40,19 +52,45 @@ function parseWeiboDate(dateStr: string): Date | null {
   return new Date(utcDate.getTime() - tzOffsetMinutes * 60 * 1000)
 }
 
+function getFormatterParts(
+  formatter: Intl.DateTimeFormat,
+  date: Date,
+): Record<string, string> {
+  return Object.fromEntries(
+    formatter
+      .formatToParts(date)
+      .filter((part) => part.type !== 'literal')
+      .map((part) => [part.type, part.value]),
+  )
+}
+
+function getDayKey(date: Date): string {
+  const { year, month, day } = getFormatterParts(DAY_FORMATTER, date)
+  return `${year}-${month}-${day}`
+}
+
+function formatTime(date: Date): string {
+  const { hour, minute } = getFormatterParts(TIME_FORMATTER, date)
+  return `${hour}:${minute}`
+}
+
 export function formatCreatedAt(dateStr: string): string {
   const date = parseWeiboDate(dateStr)
   if (!date || isNaN(date.getTime())) {
     return ''
   }
 
-  if (isToday(date)) {
-    return format(date, 'HH:mm')
+  const todayKey = getDayKey(new Date())
+  const createdDayKey = getDayKey(date)
+
+  if (createdDayKey === todayKey) {
+    return formatTime(date)
   }
 
-  if (isYesterday(date)) {
-    return `昨天 ${format(date, 'HH:mm')}`
+  const yesterdayKey = getDayKey(new Date(Date.now() - 24 * 60 * 60 * 1000))
+  if (createdDayKey === yesterdayKey) {
+    return `昨天 ${formatTime(date)}`
   }
 
-  return format(date, 'yyyy-MM-dd HH:mm')
+  return `${createdDayKey} ${formatTime(date)}`
 }
