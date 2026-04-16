@@ -78,7 +78,7 @@ describe('FeedCard', () => {
     const loadStatusLongTextMock = vi.mocked(loadStatusLongText)
     loadStatusLongTextMock
       .mockRejectedValueOnce(new Error('network-error'))
-      .mockResolvedValueOnce('expanded post content')
+      .mockResolvedValueOnce({ longTextContent: 'expanded post content' })
 
     renderCard()
 
@@ -99,6 +99,57 @@ describe('FeedCard', () => {
     await waitFor(() => {
       expect(screen.getByText('expanded post content')).toBeInTheDocument()
     })
+  })
+
+  it('renders long text entities and images from the expanded payload', async () => {
+    vi.mocked(loadStatusLongText).mockResolvedValueOnce({
+      longTextContent: '#话题# 展开正文 http://t.cn/REAL http://t.cn/IMG',
+      longTextContent_raw: '#话题# 展开正文 http://t.cn/REAL http://t.cn/IMG',
+      topic_struct: [{ topic_title: '话题' }],
+      url_struct: [
+        {
+          short_url: 'http://t.cn/REAL',
+          url_title: '真实链接',
+          long_url: 'https://weibo.com/real-link',
+          url_type: 39,
+        },
+        {
+          short_url: 'http://t.cn/IMG',
+          url_title: '查看图片',
+          long_url: 'https://photo.weibo.com/example',
+          h5_target_url: 'https://photo.weibo.com/example?h5=1',
+          url_type: 39,
+          pic_ids: ['pic1'],
+          pic_infos: {
+            pic1: {
+              thumbnail: { url: 'https://wx3.sinaimg.cn/thumbnail/pic1.jpg' },
+              large: { url: 'https://wx3.sinaimg.cn/large/pic1.jpg' },
+              woriginal: { url: 'https://wx3.sinaimg.cn/woriginal/pic1.jpg' },
+            },
+          },
+        },
+      ],
+    })
+
+    renderCard()
+
+    fireEvent.click(screen.getByRole('button', { name: '全文' }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: '#话题#' })).toHaveAttribute(
+        'href',
+        'https://s.weibo.com/weibo?q=%23%E8%AF%9D%E9%A2%98%23',
+      )
+    })
+
+    expect(screen.getByRole('link', { name: '真实链接' })).toHaveAttribute(
+      'href',
+      'https://weibo.com/real-link',
+    )
+    expect(
+      document.querySelector('img[src="https://wx3.sinaimg.cn/large/pic1.jpg"]'),
+    ).not.toBeNull()
+    expect(screen.queryByText('http://t.cn/IMG')).not.toBeInTheDocument()
   })
 
   it('triggers detail callback when clicking card body', () => {

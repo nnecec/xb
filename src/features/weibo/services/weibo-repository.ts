@@ -1,10 +1,14 @@
 import type { SubmitComposeInput } from '@/features/weibo/models/compose'
 import type { WeiboEmoticonConfig } from '@/features/weibo/models/emoticon'
-import type { NotificationsPage } from '@/features/weibo/models/notification'
 import type { TimelinePage } from '@/features/weibo/models/feed'
+import type { NotificationsPage } from '@/features/weibo/models/notification'
 import type { UserProfile } from '@/features/weibo/models/profile'
 import type { StatusCommentsPage } from '@/features/weibo/models/status'
 import type { StatusDetail } from '@/features/weibo/models/status'
+import {
+  adaptCommentsResponse,
+  type WeiboCommentsPayload,
+} from '@/features/weibo/services/adapters/comments'
 import {
   adaptEmoticonConfigResponse,
   type WeiboEmoticonPayload,
@@ -14,18 +18,11 @@ import {
   HotSearchPayload,
   type HotSearchPage,
 } from '@/features/weibo/services/adapters/hotsearch'
+import { adaptLikes, type WeiboLikesPayload } from '@/features/weibo/services/adapters/likes'
 import {
   adaptMentionsResponse,
   type WeiboMentionsPayload,
 } from '@/features/weibo/services/adapters/mentions'
-import {
-  adaptCommentsResponse,
-  type WeiboCommentsPayload,
-} from '@/features/weibo/services/adapters/comments'
-import {
-  adaptLikes,
-  type WeiboLikesPayload,
-} from '@/features/weibo/services/adapters/likes'
 import {
   adaptProfileInfoResponse,
   mergeProfileDetail,
@@ -42,6 +39,7 @@ import { wbGet } from '@/features/weibo/services/client'
 import { wbPostForm } from '@/features/weibo/services/client'
 import type { WeiboEndpointPath } from '@/features/weibo/services/endpoints'
 import { WEIBO_ENDPOINTS } from '@/features/weibo/services/endpoints'
+import type { WeiboLongTextData } from '@/features/weibo/utils/transform'
 
 export type HomeTimelineTab = 'for-you' | 'following'
 type ProfileLookup = { uid: string } | { screenName: string }
@@ -115,15 +113,12 @@ export async function loadStatusDetail(statusId: string): Promise<StatusDetail> 
   return adaptStatusDetailResponse(payload)
 }
 
-export async function loadStatusLongText(mblogId: string): Promise<string> {
-  const payload = await wbGet<{ data?: { longTextContent?: string } }>(
-    WEIBO_ENDPOINTS.statusLongText,
-    {
-      id: mblogId,
-    },
-  )
+export async function loadStatusLongText(mblogId: string): Promise<WeiboLongTextData | null> {
+  const payload = await wbGet<{ data?: WeiboLongTextData }>(WEIBO_ENDPOINTS.statusLongText, {
+    id: mblogId,
+  })
 
-  return payload.data?.longTextContent ?? ''
+  return payload.data ?? null
 }
 
 export async function loadEmoticonConfig(): Promise<WeiboEmoticonConfig> {

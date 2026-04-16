@@ -3,8 +3,9 @@ import { useState } from 'react'
 
 import type { FeedItem } from '@/features/weibo/models/feed'
 import { loadStatusLongText } from '@/features/weibo/services/weibo-repository'
+import { mergeLongTextIntoFeedItem } from '@/features/weibo/utils/transform'
 
-export function useFeedLongText(item: Pick<FeedItem, 'isLongText' | 'mblogId' | 'text'>) {
+export function useFeedLongText(item: FeedItem) {
   const [longTextEnabled, setLongTextEnabled] = useState(false)
   const canLoadLongText = item.isLongText
   const {
@@ -19,12 +20,17 @@ export function useFeedLongText(item: Pick<FeedItem, 'isLongText' | 'mblogId' | 
     staleTime: 30 * 60 * 1000,
     retry: false,
   })
-  const resolvedText =
-    longTextEnabled && longText !== undefined && longText !== '' ? longText : item.text
+  const hasResolvedLongText = Boolean(
+    longText && (longText.longTextContent?.trim() || longText.longTextContent_raw?.trim()),
+  )
+  const resolvedItem =
+    longTextEnabled && longText && hasResolvedLongText
+      ? mergeLongTextIntoFeedItem(item, longText)
+      : item
   const hasLongTextError = longTextError instanceof Error
 
   return {
-    resolvedText,
+    resolvedItem,
     shouldShowLoadLongText: canLoadLongText && (!longTextEnabled || hasLongTextError),
     isLongTextLoading,
     hasLongTextError,

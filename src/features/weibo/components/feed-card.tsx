@@ -172,14 +172,12 @@ function RetweetedAuthorHeader({
 
 function FeedTextBlock({
   item,
-  text,
   canLoadLongText,
   isLongTextLoading,
   hasLongTextError,
   onLoadLongText,
 }: {
   item: FeedItem
-  text: string
   canLoadLongText: boolean
   isLongTextLoading: boolean
   hasLongTextError: boolean
@@ -195,7 +193,7 @@ function FeedTextBlock({
         fontFamilyClass,
       )}
     >
-      <StatusText item={item} text={text} />
+      <StatusText item={item} text={item.text} />
 
       {canLoadLongText ? (
         <Button
@@ -302,7 +300,7 @@ function RetweetedFeedBlock({
   likePendingForId: string | null
 }) {
   const {
-    resolvedText,
+    resolvedItem,
     shouldShowLoadLongText,
     isLongTextLoading,
     hasLongTextError,
@@ -317,7 +315,7 @@ function RetweetedFeedBlock({
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
       return
     }
-    onNavigate(item)
+    onNavigate(resolvedItem)
   }
 
   return (
@@ -325,24 +323,23 @@ function RetweetedFeedBlock({
       className="border-border/70 bg-muted/40 flex cursor-pointer flex-col gap-3 border p-3"
       onClick={handleRetweetedClick}
     >
-      <RetweetedAuthorHeader item={item} />
+      <RetweetedAuthorHeader item={resolvedItem} />
       <FeedTextBlock
-        item={item}
-        text={resolvedText}
+        item={resolvedItem}
         canLoadLongText={shouldShowLoadLongText}
         isLongTextLoading={isLongTextLoading}
         hasLongTextError={hasLongTextError}
         onLoadLongText={onLoadLongText}
       />
 
-      <FeedMediaBlock item={item} />
+      <FeedMediaBlock item={resolvedItem} />
 
-      <ImageCarousel images={item.images} />
+      <ImageCarousel images={resolvedItem.images} />
 
       <FeedActions
-        item={item}
+        item={resolvedItem}
         onLikeClick={onLikeClick}
-        likePending={likePendingForId === item.id}
+        likePending={likePendingForId === resolvedItem.id}
       />
     </div>
   )
@@ -369,7 +366,7 @@ export function FeedCard({
   const pointerDownPositionRef = useRef<{ x: number; y: number } | null>(null)
   const suppressNextClickRef = useRef(false)
   const {
-    resolvedText,
+    resolvedItem,
     shouldShowLoadLongText,
     isLongTextLoading,
     hasLongTextError,
@@ -377,7 +374,7 @@ export function FeedCard({
   } = useFeedLongText(item)
 
   const uid = getCurrentUserUid()
-  const showOwnerMenu = uid !== null && uid === item.author.id
+  const showOwnerMenu = uid !== null && uid === resolvedItem.author.id
 
   const likeMutation = useMutation({
     mutationFn: async (target: FeedItem) => {
@@ -411,11 +408,11 @@ export function FeedCard({
 
   const favoriteMutation = useMutation({
     mutationFn: async () => {
-      if (item.favorited) {
-        await destroyFavorite(item.id)
+      if (resolvedItem.favorited) {
+        await destroyFavorite(resolvedItem.id)
         toast.success('取消收藏成功')
       } else {
-        await createFavorite(item.id)
+        await createFavorite(resolvedItem.id)
         toast.success('收藏成功')
       }
     },
@@ -475,7 +472,7 @@ export function FeedCard({
       return
     }
 
-    onNavigate(item)
+    onNavigate(resolvedItem)
   }
 
   return (
@@ -483,19 +480,19 @@ export function FeedCard({
       <OwnContentMoreMenu
         type="status"
         isOwner={showOwnerMenu}
-        favorited={item.favorited}
+        favorited={resolvedItem.favorited}
         onFavorite={() => favoriteMutation.mutateAsync()}
         contentLabel="这条微博"
         isDeleting={deleteMutation.isPending}
         onDelete={() => deleteMutation.mutateAsync()}
         className="absolute top-4 right-4"
       />
-      {item.title ? (
+      {resolvedItem.title ? (
         <div className="px-4">
-          <Badge variant="secondary">{item.title.text}</Badge>
+          <Badge variant="secondary">{resolvedItem.title.text}</Badge>
         </div>
       ) : null}
-      <FeedAuthorHeader item={item} />
+      <FeedAuthorHeader item={resolvedItem} />
       <CardContent
         className="flex cursor-pointer flex-col gap-4"
         onClick={handleCardClick}
@@ -503,21 +500,20 @@ export function FeedCard({
         onMouseUp={handleCardMouseUp}
       >
         <FeedTextBlock
-          item={item}
-          text={resolvedText}
+          item={resolvedItem}
           canLoadLongText={shouldShowLoadLongText}
           isLongTextLoading={isLongTextLoading}
           hasLongTextError={hasLongTextError}
           onLoadLongText={onLoadLongText}
         />
 
-        <FeedMediaBlock item={item} />
+        <FeedMediaBlock item={resolvedItem} />
 
-        <ImageCarousel images={item.images} />
+        <ImageCarousel images={resolvedItem.images} />
 
-        {item.retweetedStatus ? (
+        {resolvedItem.retweetedStatus ? (
           <RetweetedFeedBlock
-            item={item.retweetedStatus}
+            item={resolvedItem.retweetedStatus}
             onNavigate={onNavigate}
             onLikeClick={(target) => likeMutation.mutate(target)}
             likePendingForId={likePendingId}
@@ -526,11 +522,11 @@ export function FeedCard({
       </CardContent>
       <CardFooter>
         <FeedActions
-          item={item}
+          item={resolvedItem}
           onCommentClick={onCommentClick}
           onRepostClick={onRepostClick}
           onLikeClick={(target) => likeMutation.mutate(target)}
-          likePending={likePendingId === item.id}
+          likePending={likePendingId === resolvedItem.id}
         />
       </CardFooter>
     </Card>

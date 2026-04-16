@@ -2,6 +2,7 @@ import type {
   FeedAuthor,
   FeedDashQuality,
   FeedEmoticon,
+  FeedImage,
   FeedItem,
 } from '@/features/weibo/models/feed'
 import type { CommentItem } from '@/features/weibo/models/status'
@@ -132,6 +133,14 @@ export interface WeiboStatus {
   }
 }
 
+export interface WeiboLongTextData extends Pick<
+  WeiboStatus,
+  'pic_ids' | 'pic_infos' | 'topic_struct' | 'url_struct'
+> {
+  longTextContent?: string
+  longTextContent_raw?: string
+}
+
 // ─── Transform helpers ────────────────────────────────────────────────────────
 
 function stripUrlQuery(url: string | null | undefined): string | null {
@@ -258,6 +267,18 @@ function extractEmoticonsFromHtml(html: string | undefined): Record<string, Feed
   return emoticons
 }
 
+function uniqueBy<T>(items: T[], keyFor: (item: T) => string) {
+  const seen = new Set<string>()
+  return items.filter((item) => {
+    const key = keyFor(item)
+    if (!key || seen.has(key)) {
+      return false
+    }
+    seen.add(key)
+    return true
+  })
+}
+
 function pickNonEmptyUrl(value?: string | null): string | undefined {
   const t = value?.trim()
   return t || undefined
@@ -354,7 +375,9 @@ function progressiveFallbackUrl(mediaInfo: WeiboMediaInfo): string | undefined {
   )
 }
 
-function playbackSourcesFromList(mediaInfo: WeiboMediaInfo): Array<{ id: string; label: string; url: string }> {
+function playbackSourcesFromList(
+  mediaInfo: WeiboMediaInfo,
+): Array<{ id: string; label: string; url: string }> {
   if (!Array.isArray(mediaInfo.playback_list)) {
     return []
   }
@@ -380,12 +403,14 @@ function playbackSourcesFromList(mediaInfo: WeiboMediaInfo): Array<{ id: string;
   }
 
   out.sort((a, b) => {
-    const qA = Number(mediaInfo.playback_list!.find(
-      (i) => (i.meta?.label ?? i.play_info?.label)?.trim() === a.id,
-    )?.meta?.quality_index ?? -1)
-    const qB = Number(mediaInfo.playback_list!.find(
-      (i) => (i.meta?.label ?? i.play_info?.label)?.trim() === b.id,
-    )?.meta?.quality_index ?? -1)
+    const qA = Number(
+      mediaInfo.playback_list!.find((i) => (i.meta?.label ?? i.play_info?.label)?.trim() === a.id)
+        ?.meta?.quality_index ?? -1,
+    )
+    const qB = Number(
+      mediaInfo.playback_list!.find((i) => (i.meta?.label ?? i.play_info?.label)?.trim() === b.id)
+        ?.meta?.quality_index ?? -1,
+    )
     return qB - qA
   })
 
@@ -642,6 +667,66 @@ export function toFeedItem(status: WeiboStatus, includeRetweeted = true): FeedIt
     ...(normalizedRetweetedStatus
       ? { retweetedStatus: toFeedItem(normalizedRetweetedStatus, false) }
       : {}),
+  }
+}
+
+export function mergeLongTextIntoFeedItem(item: FeedItem, longText: WeiboLongTextData): FeedItem {
+  const longTextStatus: WeiboStatus = {
+    text: longText.longTextContent ?? '',
+    text_raw: longText.longTextContent_raw ?? longText.longTextContent ?? '',
+    pic_ids: longText.pic_ids ?? [],
+    pic_infos: longText.pic_infos ?? {},
+    topic_struct: longText.topic_struct ?? [],
+    url_struct: longText.url_struct ?? [],
+  }
+
+  const imageUrlStructs = getImageUrlStructs(longTextStatus)
+  const imageTokens = uniqueBy(
+    imageUrlStructs.map((entity) => entity.short_url?.trim() ?? '').filter(Boolean),
+    (token) => token,
+  )
+  const longTextImages = uniqueBy<FeedImage>(
+    [
+      ...toImages(longTextStatus),
+      ...imageUrlStructs.flatMap((entity) => toImagesFromParts(entity.pic_ids, entity.pic_infos)),
+    ],
+    (image) => image.id,
+  )
+  const text = getStatusText(longTextStatus)
+  const normalizedText = imageTokens.length > 0 ? stripEntityTokens(text, imageTokens) : text
+  const mergedImages = uniqueBy([...item.images, ...longTextImages], (image) => image.id)
+  const mergedUrlEntities = uniqueBy(
+    [
+      ...toUrlEntities(longTextStatus, { excludeImageEntities: mergedImages.length > 0 }),
+      ...(item.urlEntities ?? []).filter(
+        (entity) =>
+          normalizedText.includes(entity.shortUrl) && !imageTokens.includes(entity.shortUrl),
+      ),
+    ],
+    (entity) => entity.shortUrl,
+  )
+  const mergedTopicEntities = uniqueBy(
+    [
+      ...toTopicEntities(longTextStatus),
+      ...(item.topicEntities ?? []).filter((entity) =>
+        normalizedText.includes(`#${entity.title}#`),
+      ),
+    ],
+    (entity) => entity.title,
+  )
+  const mergedEmoticons = {
+    ...item.emoticons,
+    ...extractEmoticonsFromHtml(longText.longTextContent),
+  }
+
+  return {
+    ...item,
+    isLongText: false,
+    text: normalizedText,
+    images: mergedImages,
+    emoticons: Object.keys(mergedEmoticons).length > 0 ? mergedEmoticons : undefined,
+    urlEntities: mergedUrlEntities.length > 0 ? mergedUrlEntities : undefined,
+    topicEntities: mergedTopicEntities.length > 0 ? mergedTopicEntities : undefined,
   }
 }
 
