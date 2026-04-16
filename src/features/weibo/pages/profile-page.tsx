@@ -46,7 +46,7 @@ function ProfilePostsTabs({
   const errorMessage = postsQuery.error instanceof Error ? postsQuery.error.message : null
   const hasNextPage = Boolean(postsQuery.hasNextPage)
   const isFetchingNextPage = postsQuery.isFetchingNextPage
-  const isLoading = postsQuery.isLoading
+  const fetchNextPage = postsQuery.fetchNextPage
 
   useEffect(() => {
     if (!loadMoreRef.current || !hasNextPage || isFetchingNextPage) {
@@ -55,14 +55,14 @@ function ProfilePostsTabs({
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
-          void postsQuery.fetchNextPage()
+          void fetchNextPage()
         }
       },
       { threshold: 0.2 },
     )
     observer.observe(loadMoreRef.current)
     return () => observer.disconnect()
-  }, [hasNextPage, isFetchingNextPage])
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage])
 
   if (postsQuery.isLoading) {
     return <PageLoadingState label="正在加载此用户微博..." />
@@ -93,7 +93,7 @@ function ProfilePostsTabs({
           </div>
         ) : null}
         {hasNextPage && !isFetchingNextPage ? (
-          <Button variant="outline" onClick={() => void postsQuery.fetchNextPage()}>
+          <Button variant="outline" onClick={() => void fetchNextPage()}>
             加载下一页
           </Button>
         ) : null}

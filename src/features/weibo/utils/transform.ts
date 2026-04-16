@@ -1,10 +1,8 @@
 import type {
   FeedAuthor,
   FeedDashQuality,
-  FeedDashSource,
   FeedEmoticon,
   FeedItem,
-  FeedPlaybackSource,
 } from '@/features/weibo/models/feed'
 import type { CommentItem } from '@/features/weibo/models/status'
 
@@ -271,15 +269,6 @@ function getMpdXml(mediaInfo: WeiboMediaInfo | undefined): string | undefined {
   return xml || undefined
 }
 
-function escapeXml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&apos;')
-}
-
 function isPlaybackAudioItem(item: NonNullable<WeiboMediaInfo['playback_list']>[number]): boolean {
   const t = item.meta?.type ?? item.play_info?.type
   return t === 2
@@ -352,78 +341,6 @@ function hasAudioAdaptationInMpd(xml: string): boolean {
   return (
     /<AdaptationSet\b[^>]*\bmimeType="audio\//i.test(xml) ||
     /<AdaptationSet\b[^>]*\bcontentType="audio"/i.test(xml)
-  )
-}
-
-function buildMpdFromPlaybackList(mediaInfo: WeiboMediaInfo): string | undefined {
-  if (!Array.isArray(mediaInfo.playback_list)) {
-    return undefined
-  }
-
-  const dashItems = mediaInfo.playback_list.filter(
-    (item) => isPlaybackDashItem(item) && pickNonEmptyUrl(item.play_info?.url),
-  )
-  const videoItems = dashItems.filter((item) => !isPlaybackAudioItem(item))
-  const audioItems = dashItems.filter((item) => isPlaybackAudioItem(item))
-  if (videoItems.length === 0 || audioItems.length === 0) {
-    return undefined
-  }
-
-  const durationSec = Number((mediaInfo as { duration?: number }).duration ?? 0)
-  const durationAttr = durationSec > 0 ? ` mediaPresentationDuration="PT${durationSec}S"` : ''
-
-  const toRepresentation = (
-    item: NonNullable<WeiboMediaInfo['playback_list']>[number],
-    mediaType: 'video' | 'audio',
-  ) => {
-    const play = item.play_info ?? {}
-    const id = (
-      item.meta?.label ??
-      play.label ??
-      `${mediaType}_${item.meta?.quality_index ?? '0'}`
-    ).trim()
-    const bitrate = Number(play.bandwidth ?? 0)
-    const attrs = [`id="${escapeXml(id)}"`]
-    if (bitrate > 0) attrs.push(`bandwidth="${bitrate}"`)
-    if (mediaType === 'video') {
-      if (Number(play.width ?? 0) > 0) attrs.push(`width="${Number(play.width)}"`)
-      if (Number(play.height ?? 0) > 0) attrs.push(`height="${Number(play.height)}"`)
-      if (Number(play.fps ?? 0) > 0) attrs.push(`frameRate="${Number(play.fps)}"`)
-      if (play.video_codecs) attrs.push(`codecs="${escapeXml(play.video_codecs)}"`)
-      if (play.sar) attrs.push(`sar="${escapeXml(play.sar)}"`)
-    } else {
-      if (Number(play.audio_sample_rate ?? 0) > 0) {
-        attrs.push(`audioSamplingRate="${Number(play.audio_sample_rate)}"`)
-      }
-      if (play.audio_codecs) attrs.push(`codecs="${escapeXml(play.audio_codecs)}"`)
-    }
-
-    const url = escapeXml(play.url ?? '')
-    const initRange = play.init_range?.trim()
-    const indexRange = play.index_range?.trim()
-    const segmentBase =
-      initRange && indexRange
-        ? `<SegmentBase indexRange="${escapeXml(indexRange)}" indexRangeExact="true"><Initialization range="${escapeXml(initRange)}" /></SegmentBase>`
-        : ''
-
-    return `<Representation ${attrs.join(' ')}><BaseURL>${url}</BaseURL>${segmentBase}</Representation>`
-  }
-
-  const videoReps = videoItems.map((item) => toRepresentation(item, 'video')).join('')
-  const audioReps = audioItems.map((item) => toRepresentation(item, 'audio')).join('')
-
-  return `<?xml version="1.0" encoding="UTF-8"?><MPD xmlns="urn:mpeg:dash:schema:mpd:2011" profiles="urn:mpeg:dash:profile:isoff-on-demand:2011" type="static" minBufferTime="PT2S"${durationAttr}><Period id="1" start="PT0S"><AdaptationSet mimeType="video/mp4" segmentAlignment="true" startWithSAP="1">${videoReps}</AdaptationSet><AdaptationSet mimeType="audio/mp4" segmentAlignment="true" startWithSAP="1">${audioReps}</AdaptationSet></Period></MPD>`
-}
-
-function hasDashAudioInPlaybackList(mediaInfo: WeiboMediaInfo): boolean {
-  if (!Array.isArray(mediaInfo.playback_list)) {
-    return false
-  }
-  return mediaInfo.playback_list.some(
-    (item) =>
-      isPlaybackDashItem(item) &&
-      isPlaybackAudioItem(item) &&
-      Boolean(pickNonEmptyUrl(item.play_info?.url)),
   )
 }
 
