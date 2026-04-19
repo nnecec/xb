@@ -700,7 +700,7 @@ export function mergeLongTextIntoFeedItem(item: FeedItem, longText: WeiboLongTex
     if (imgs.length === 0) continue
     longTextImageEntities[shortUrl] = imgs
   }
-  const mergedImageEntities = { ...(item.imageEntities ?? {}), ...longTextImageEntities }
+  const mergedImageEntities = { ...item.imageEntities, ...longTextImageEntities }
   const hasImageEntities = Object.keys(mergedImageEntities).length > 0
   const mergedImages = uniqueBy<FeedImage>(
     [...item.images, ...toImages(longTextStatus)],
@@ -711,8 +711,7 @@ export function mergeLongTextIntoFeedItem(item: FeedItem, longText: WeiboLongTex
     [
       ...toUrlEntities(longTextStatus, { excludeImageEntities: hasImageEntities }),
       ...(item.urlEntities ?? []).filter(
-        (entity) =>
-          text.includes(entity.shortUrl) && !(entity.shortUrl in mergedImageEntities),
+        (entity) => text.includes(entity.shortUrl) && !(entity.shortUrl in mergedImageEntities),
       ),
     ],
     (entity) => entity.shortUrl,
