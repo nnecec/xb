@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query'
 
 import { Button } from '@/components/ui/button'
+import { getCurrentUserUid } from '@/features/weibo/platform/current-user'
 import { followUser, unfollowUser } from '@/features/weibo/services/weibo-repository'
 
 interface FollowButtonProps {
@@ -20,6 +21,9 @@ export function FollowButton({
   size = 'sm',
   className,
 }: FollowButtonProps) {
+  const currentUid = getCurrentUserUid()
+  const isSelf = currentUid !== null && currentUid === uid
+
   const followMutation = useMutation({
     mutationFn: () => followUser(uid),
     onSuccess: (data) => {
@@ -45,6 +49,10 @@ export function FollowButton({
       ],
     },
   })
+
+  if (isSelf) {
+    return null
+  }
 
   const isLoading = followMutation.isPending || unfollowMutation.isPending
 

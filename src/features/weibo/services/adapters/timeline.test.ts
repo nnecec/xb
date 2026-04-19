@@ -212,6 +212,111 @@ describe('adaptTimelineResponse', () => {
     ])
   })
 
+  it('exposes url_struct images as imageEntities keyed by short_url without stripping text', () => {
+    const result = adaptTimelineResponse({
+      statuses: [
+        {
+          idstr: '900',
+          text_raw: '//@顾扯淡:好玩吗…………[摊手] http://t.cn/AXxLGfQf',
+          user: { idstr: '1', screen_name: 'Alice' },
+          url_struct: [
+            {
+              short_url: 'http://t.cn/AXxLGfQf',
+              url_title: '查看图片',
+              url_type: 39,
+              h5_target_url: 'https://photo.weibo.com/h5/comment/compic_id/1022:abc',
+              pic_ids: ['pic-inline'],
+              pic_infos: {
+                'pic-inline': {
+                  thumbnail: { url: 'https://img/inline-thumb.jpg' },
+                  large: { url: 'https://img/inline-large.jpg' },
+                  woriginal: { url: 'https://img/inline-original.jpg' },
+                },
+              },
+            },
+          ],
+        },
+      ],
+    })
+
+    expect(result.items[0]?.text).toBe(
+      '//@顾扯淡:好玩吗…………[摊手] http://t.cn/AXxLGfQf',
+    )
+    expect(result.items[0]?.urlEntities).toBeUndefined()
+    expect(result.items[0]?.images).toEqual([])
+    expect(result.items[0]?.imageEntities).toEqual({
+      'http://t.cn/AXxLGfQf': [
+        {
+          id: 'pic-inline',
+          thumbnailUrl: 'https://img/inline-large.jpg',
+          largeUrl: 'https://img/inline-original.jpg',
+        },
+      ],
+    })
+  })
+
+  it('keeps reposter url_struct images at the reposter level even when analysis_extra matches the retweeted root', () => {
+    const result = adaptTimelineResponse({
+      statuses: [
+        {
+          idstr: '901',
+          text_raw: '//@顾扯淡:好玩吗 http://t.cn/AXxLGfQf',
+          user: { idstr: '1', screen_name: 'Alice' },
+          analysis_extra: 'mblog_rt_mid:8888',
+          url_struct: [
+            {
+              short_url: 'http://t.cn/AXxLGfQf',
+              url_title: '查看图片',
+              url_type: 39,
+              pic_ids: ['repost-pic'],
+              pic_infos: {
+                'repost-pic': {
+                  thumbnail: { url: 'https://img/repost-thumb.jpg' },
+                  large: { url: 'https://img/repost-large.jpg' },
+                  woriginal: { url: 'https://img/repost-original.jpg' },
+                },
+              },
+            },
+          ],
+          retweeted_status: {
+            idstr: '8888',
+            text_raw: '原帖内容',
+            user: { idstr: '9', screen_name: 'Root' },
+            pic_ids: ['retweet-pic'],
+            pic_infos: {
+              'retweet-pic': {
+                thumbnail: { url: 'https://img/retweet-thumb.jpg' },
+                large: { url: 'https://img/retweet-large.jpg' },
+                woriginal: { url: 'https://img/retweet-original.jpg' },
+              },
+            },
+          },
+        },
+      ],
+    })
+
+    expect(result.items[0]?.text).toBe('//@顾扯淡:好玩吗 http://t.cn/AXxLGfQf')
+    expect(result.items[0]?.urlEntities).toBeUndefined()
+    expect(result.items[0]?.images).toEqual([])
+    expect(result.items[0]?.imageEntities).toEqual({
+      'http://t.cn/AXxLGfQf': [
+        {
+          id: 'repost-pic',
+          thumbnailUrl: 'https://img/repost-large.jpg',
+          largeUrl: 'https://img/repost-original.jpg',
+        },
+      ],
+    })
+    expect(result.items[0]?.retweetedStatus?.images).toEqual([
+      {
+        id: 'retweet-pic',
+        thumbnailUrl: 'https://img/retweet-large.jpg',
+        largeUrl: 'https://img/retweet-original.jpg',
+      },
+    ])
+    expect(result.items[0]?.retweetedStatus?.imageEntities).toBeUndefined()
+  })
+
   it('extracts inline emoticons from html text as a fallback map', () => {
     const result = adaptTimelineResponse({
       statuses: [

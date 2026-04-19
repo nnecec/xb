@@ -254,6 +254,65 @@ describe('StatusText', () => {
 
     expect(container).toHaveTextContent('普通文本 //@坏 格式 //@宋大力:第二段')
   })
+
+  it('renders an inline image carousel inside the reply-chain segment that owns the short_url', () => {
+    const { container } = renderWithProviders(
+      <StatusText
+        item={{
+          urlEntities: [],
+          topicEntities: [],
+          imageEntities: {
+            'http://t.cn/IMG': [
+              {
+                id: 'pic1',
+                thumbnailUrl: 'https://img/thumb.jpg',
+                largeUrl: 'https://img/large.jpg',
+              },
+            ],
+          },
+        }}
+        text="//@硬哥://@顾扯淡:好玩吗 http://t.cn/IMG"
+      />,
+    )
+
+    const view = within(container)
+    const replyChain = view.getByTestId('reply-chain')
+    const items = replyChain.querySelectorAll('[data-slot="item"]')
+
+    expect(items).toHaveLength(2)
+    expect(items[0]!.querySelector('img')).toBeNull()
+    const carouselImg = items[1]!.querySelector('img')
+    expect(carouselImg).not.toBeNull()
+    expect(carouselImg).toHaveAttribute('src', 'https://img/thumb.jpg')
+    expect(replyChain).not.toHaveTextContent('http://t.cn/IMG')
+  })
+
+  it('renders an inline image carousel after the text when the short_url lives outside any reply chain', () => {
+    const { container } = renderWithProviders(
+      <StatusText
+        item={{
+          urlEntities: [],
+          topicEntities: [],
+          imageEntities: {
+            'http://t.cn/PIC': [
+              {
+                id: 'pic2',
+                thumbnailUrl: 'https://img/p2-thumb.jpg',
+                largeUrl: 'https://img/p2-large.jpg',
+              },
+            ],
+          },
+        }}
+        text="这是正文 http://t.cn/PIC"
+      />,
+    )
+
+    const img = container.querySelector('img')
+    expect(img).not.toBeNull()
+    expect(img).toHaveAttribute('src', 'https://img/p2-thumb.jpg')
+    expect(container).not.toHaveTextContent('http://t.cn/PIC')
+    expect(container).toHaveTextContent('这是正文')
+  })
 })
 
 describe('MentionInlineText', () => {

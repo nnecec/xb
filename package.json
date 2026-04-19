@@ -23,8 +23,8 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@reactuses/core": "^6.3.1",
     "@tailwindcss/vite": "^4.2.2",
-    "@tanstack/react-query": "^5.99.0",
-    "@videojs/react": "^10.0.0-beta.17",
+    "@tanstack/react-query": "^5.99.2",
+    "@videojs/react": "^10.0.0-beta.22",
     "axios": "^1.15.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -39,7 +39,7 @@
     "react-hook-form": "^7.72.1",
     "react-photo-view": "^1.2.7",
     "react-router": "^7.14.1",
-    "shadcn": "^4.2.0",
+    "shadcn": "^4.3.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.2",
@@ -50,7 +50,7 @@
   "devDependencies": {
     "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/git": "^10.0.1",
-    "@semantic-release/github": "^12.0.0",
+    "@semantic-release/github": "^12.0.6",
     "@semantic-release/npm": "^13.1.5",
     "@semantic-release/release-notes-generator": "^14.1.0",
     "@testing-library/jest-dom": "^6.9.1",
@@ -58,13 +58,13 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@wxt-dev/module-react": "^1.2.2",
-    "conventional-changelog-conventionalcommits": "^9.1.0",
+    "conventional-changelog-conventionalcommits": "^9.3.1",
     "jsdom": "^29.0.2",
     "oxfmt": "^0.45.0",
     "oxlint": "^1.60.0",
-    "semantic-release": "^25.0.1",
-    "typescript": "^6.0.2",
+    "semantic-release": "^25.0.3",
+    "typescript": "^6.0.3",
     "vitest": "^4.1.4",
-    "wxt": "^0.20.21"
+    "wxt": "^0.20.25"
   }
 }

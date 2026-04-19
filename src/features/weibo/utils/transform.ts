@@ -638,7 +638,17 @@ export function toFeedItem(status: WeiboStatus, includeRetweeted = true): FeedIt
               : status.retweeted_status.topic_struct,
         }
       : null
-  const urlEntities = toUrlEntities(status)
+  const imageUrlStructs = getImageUrlStructs(status)
+  const imageEntities: Record<string, FeedImage[]> = {}
+  for (const entity of imageUrlStructs) {
+    const shortUrl = entity.short_url?.trim()
+    if (!shortUrl) continue
+    const imgs = toImagesFromParts(entity.pic_ids, entity.pic_infos)
+    if (imgs.length === 0) continue
+    imageEntities[shortUrl] = imgs
+  }
+  const hasImageEntities = Object.keys(imageEntities).length > 0
+  const urlEntities = toUrlEntities(status, { excludeImageEntities: hasImageEntities })
   const topicEntities = toTopicEntities(status)
   const emoticons = extractEmoticonsFromHtml(status.text)
 
@@ -657,6 +667,7 @@ export function toFeedItem(status: WeiboStatus, includeRetweeted = true): FeedIt
       reposts: Number(status.reposts_count ?? 0),
     },
     images: mediaBelongsToRetweeted ? [] : toImages(status),
+    ...(hasImageEntities ? { imageEntities } : {}),
     media: mediaBelongsToRetweeted ? null : toMedia(status),
     ...(Object.keys(emoticons).length > 0 ? { emoticons } : {}),
     ...(urlEntities.length > 0 ? { urlEntities } : {}),
@@ -681,26 +692,27 @@ export function mergeLongTextIntoFeedItem(item: FeedItem, longText: WeiboLongTex
   }
 
   const imageUrlStructs = getImageUrlStructs(longTextStatus)
-  const imageTokens = uniqueBy(
-    imageUrlStructs.map((entity) => entity.short_url?.trim() ?? '').filter(Boolean),
-    (token) => token,
-  )
-  const longTextImages = uniqueBy<FeedImage>(
-    [
-      ...toImages(longTextStatus),
-      ...imageUrlStructs.flatMap((entity) => toImagesFromParts(entity.pic_ids, entity.pic_infos)),
-    ],
+  const longTextImageEntities: Record<string, FeedImage[]> = {}
+  for (const entity of imageUrlStructs) {
+    const shortUrl = entity.short_url?.trim()
+    if (!shortUrl) continue
+    const imgs = toImagesFromParts(entity.pic_ids, entity.pic_infos)
+    if (imgs.length === 0) continue
+    longTextImageEntities[shortUrl] = imgs
+  }
+  const mergedImageEntities = { ...(item.imageEntities ?? {}), ...longTextImageEntities }
+  const hasImageEntities = Object.keys(mergedImageEntities).length > 0
+  const mergedImages = uniqueBy<FeedImage>(
+    [...item.images, ...toImages(longTextStatus)],
     (image) => image.id,
   )
   const text = getStatusText(longTextStatus)
-  const normalizedText = imageTokens.length > 0 ? stripEntityTokens(text, imageTokens) : text
-  const mergedImages = uniqueBy([...item.images, ...longTextImages], (image) => image.id)
   const mergedUrlEntities = uniqueBy(
     [
-      ...toUrlEntities(longTextStatus, { excludeImageEntities: mergedImages.length > 0 }),
+      ...toUrlEntities(longTextStatus, { excludeImageEntities: hasImageEntities }),
       ...(item.urlEntities ?? []).filter(
         (entity) =>
-          normalizedText.includes(entity.shortUrl) && !imageTokens.includes(entity.shortUrl),
+          text.includes(entity.shortUrl) && !(entity.shortUrl in mergedImageEntities),
       ),
     ],
     (entity) => entity.shortUrl,
@@ -708,9 +720,7 @@ export function mergeLongTextIntoFeedItem(item: FeedItem, longText: WeiboLongTex
   const mergedTopicEntities = uniqueBy(
     [
       ...toTopicEntities(longTextStatus),
-      ...(item.topicEntities ?? []).filter((entity) =>
-        normalizedText.includes(`#${entity.title}#`),
-      ),
+      ...(item.topicEntities ?? []).filter((entity) => text.includes(`#${entity.title}#`)),
     ],
     (entity) => entity.title,
   )
@@ -722,8 +732,9 @@ export function mergeLongTextIntoFeedItem(item: FeedItem, longText: WeiboLongTex
   return {
     ...item,
     isLongText: false,
-    text: normalizedText,
+    text,
     images: mergedImages,
+    imageEntities: hasImageEntities ? mergedImageEntities : undefined,
     emoticons: Object.keys(mergedEmoticons).length > 0 ? mergedEmoticons : undefined,
     urlEntities: mergedUrlEntities.length > 0 ? mergedUrlEntities : undefined,
     topicEntities: mergedTopicEntities.length > 0 ? mergedTopicEntities : undefined,

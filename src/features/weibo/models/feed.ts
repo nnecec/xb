@@ -73,6 +73,7 @@ export interface FeedItem {
   createdAtLabel: string
   stats: FeedStats
   images: FeedImage[]
+  imageEntities?: Record<string, FeedImage[]>
   media: FeedMedia | null
   emoticons?: Record<string, FeedEmoticon>
   urlEntities?: FeedUrlEntity[]

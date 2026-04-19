@@ -3,9 +3,15 @@ import { Link } from 'react-router'
 
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import { useEmoticonConfigQuery } from '@/features/weibo/app/emoticon-query'
+import { ImageCarousel } from '@/features/weibo/components/image-carousel'
 import { UserHoverCard } from '@/features/weibo/components/user-hover-card'
 import type { WeiboEmoticonItem } from '@/features/weibo/models/emoticon'
-import type { FeedItem, FeedTopicEntity, FeedUrlEntity } from '@/features/weibo/models/feed'
+import type {
+  FeedImage,
+  FeedItem,
+  FeedTopicEntity,
+  FeedUrlEntity,
+} from '@/features/weibo/models/feed'
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -35,6 +41,40 @@ type ParsedReplyChainText =
       leading: string
       replyChain: ReplyChainSegment[]
     }
+
+type ImageExtractor = (text: string) => { strippedText: string; images: FeedImage[] }
+
+function createImageExtractor(imageEntities: Record<string, FeedImage[]>): ImageExtractor {
+  const consumed = new Set<string>()
+
+  return (text: string) => {
+    let stripped = text
+    const matchedImages: FeedImage[] = []
+    const seenIds = new Set<string>()
+
+    for (const [shortUrl, images] of Object.entries(imageEntities)) {
+      if (consumed.has(shortUrl)) continue
+      if (!stripped.includes(shortUrl)) continue
+
+      consumed.add(shortUrl)
+      for (const image of images) {
+        if (!seenIds.has(image.id)) {
+          seenIds.add(image.id)
+          matchedImages.push(image)
+        }
+      }
+      stripped = stripped.split(shortUrl).join('')
+    }
+
+    stripped = stripped
+      .replace(/[ \t]{2,}/g, ' ')
+      .replace(/\s+\n/g, '\n')
+      .replace(/\n\s+/g, '\n')
+      .trim()
+
+    return { strippedText: stripped, images: matchedImages }
+  }
+}
 
 function renderMentionLink(screenName: string, key: string, className = LINK_TEXT_CLASS_NAME) {
   return (
@@ -256,57 +296,48 @@ function renderReplyChainText(
   urlEntities: FeedUrlEntity[],
   topicEntities: FeedTopicEntity[],
   phraseMap: Record<string, WeiboEmoticonItem>,
+  extractImages: ImageExtractor,
 ) {
+  const leading = parsed.leading ? extractImages(parsed.leading) : null
+
   return (
-    <span className="flex flex-col">
-      {parsed.leading ? (
-        <span>
-          {renderInlineText(parsed.leading, 'leading', urlEntities, topicEntities, phraseMap)}
+    <span className="flex flex-col gap-2">
+      {leading && leading.strippedText ? (
+        <span className="whitespace-pre-wrap">
+          {renderInlineText(leading.strippedText, 'leading', urlEntities, topicEntities, phraseMap)}
         </span>
       ) : null}
+      {leading && leading.images.length > 0 ? <ImageCarousel images={leading.images} /> : null}
       <ItemGroup data-testid="reply-chain">
-        {parsed.replyChain.map((segment, index) => (
-          <Item
-            key={`chain-${segment.screenName}-${index}`}
-            variant="muted"
-            size="sm"
-            className="bg-muted/40"
-          >
-            <ItemContent>
-              <ItemTitle>
-                {renderMentionLink(segment.screenName, `chain-label-${index}`, 'text-sm')}
-              </ItemTitle>
-              <ItemDescription className="text-sm">
-                {renderInlineText(
-                  segment.text,
-                  `chain-${index}`,
-                  urlEntities,
-                  topicEntities,
-                  phraseMap,
-                )}
-              </ItemDescription>
-            </ItemContent>
-          </Item>
-          // <span
-          //   key={`chain-${segment.screenName}-${index}`}
-          //   className={`${REPLY_CHAIN_SEGMENT_CLASS_NAME}${index < parsed.replyChain.length - 1 ? ' pb-2' : ''}`}
-          // >
-          //   {renderMentionLink(
-          //     segment.screenName,
-          //     `chain-label-${index}`,
-          //     `${LINK_TEXT_CLASS_NAME} ${REPLY_CHAIN_AUTHOR_CLASS_NAME}`,
-          //   )}
-          //   <span className="block text-foreground/80">
-          //     {renderInlineText(
-          //       segment.text,
-          //       `chain-${index}`,
-          //       urlEntities,
-          //       topicEntities,
-          //       phraseMap,
-          //     )}
-          //   </span>
-          // </span>
-        ))}
+        {parsed.replyChain.map((segment, index) => {
+          const { strippedText, images } = extractImages(segment.text)
+          return (
+            <Item
+              key={`chain-${segment.screenName}-${index}`}
+              variant="muted"
+              size="sm"
+              className="bg-muted/40 flex-col items-stretch"
+            >
+              <ItemContent>
+                <ItemTitle>
+                  {renderMentionLink(segment.screenName, `chain-label-${index}`, 'text-sm')}
+                </ItemTitle>
+                {strippedText ? (
+                  <ItemDescription className="text-sm">
+                    {renderInlineText(
+                      strippedText,
+                      `chain-${index}`,
+                      urlEntities,
+                      topicEntities,
+                      phraseMap,
+                    )}
+                  </ItemDescription>
+                ) : null}
+                {images.length > 0 ? <ImageCarousel images={images} /> : null}
+              </ItemContent>
+            </Item>
+          )
+        })}
       </ItemGroup>
     </span>
   )
@@ -332,7 +363,7 @@ export function StatusText({
   item,
   text,
 }: {
-  item: Pick<FeedItem, 'emoticons' | 'urlEntities' | 'topicEntities'>
+  item: Pick<FeedItem, 'emoticons' | 'urlEntities' | 'topicEntities' | 'imageEntities'>
   text: string
 }) {
   const emoticonQuery = useEmoticonConfigQuery()
@@ -347,6 +378,8 @@ export function StatusText({
 
   const hasUrlEntities = Boolean(item.urlEntities && item.urlEntities.length > 0)
   const hasTopicEntities = Boolean(item.topicEntities && item.topicEntities.length > 0)
+  const imageEntities = item.imageEntities ?? {}
+  const extractImages = createImageExtractor(imageEntities)
   const parsedReplyChain = parseReplyChainText(raw)
 
   if (parsedReplyChain.kind === 'reply-chain') {
@@ -357,28 +390,34 @@ export function StatusText({
           item.urlEntities ?? [],
           item.topicEntities ?? [],
           phraseMap,
+          extractImages,
         )}
       </span>
     )
   }
 
-  if (!hasUrlEntities && !hasTopicEntities) {
+  const { strippedText, images } = extractImages(raw)
+  const hasImages = images.length > 0
+
+  const textNode =
+    hasUrlEntities || hasTopicEntities
+      ? renderTextWithEntities(
+          strippedText,
+          'status',
+          item.urlEntities ?? [],
+          item.topicEntities ?? [],
+          phraseMap,
+        )
+      : renderTextWithMentionsAndEmoticons(strippedText, 'm', phraseMap)
+
+  if (hasImages) {
     return (
-      <span className="whitespace-pre-wrap">
-        {renderTextWithMentionsAndEmoticons(raw, 'm', phraseMap)}
+      <span className="flex flex-col gap-2">
+        {strippedText ? <span className="whitespace-pre-wrap">{textNode}</span> : null}
+        <ImageCarousel images={images} />
       </span>
     )
   }
 
-  return (
-    <span className="whitespace-pre-wrap">
-      {renderTextWithEntities(
-        raw,
-        'status',
-        item.urlEntities ?? [],
-        item.topicEntities ?? [],
-        phraseMap,
-      )}
-    </span>
-  )
+  return <span className="whitespace-pre-wrap">{textNode}</span>
 }
