@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -100,10 +101,8 @@ export function OwnContentMoreMenu({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>确认删除</DialogTitle>
+            <DialogDescription>确定要删除{contentLabel}吗？此操作无法撤销。</DialogDescription>
           </DialogHeader>
-          <p className="text-muted-foreground text-sm">
-            确定要删除{contentLabel}吗？此操作无法撤销。
-          </p>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setConfirmOpen(false)}>
               取消

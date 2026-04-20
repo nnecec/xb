@@ -1,6 +1,13 @@
 import React from 'react'
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  VisuallyHidden,
+} from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -51,6 +58,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>设置</DialogTitle>
+          <VisuallyHidden>
+            <DialogDescription>配置字体大小、字体样式和显示偏好</DialogDescription>
+          </VisuallyHidden>
         </DialogHeader>
 
         <div className="flex flex-col gap-6 py-4">
