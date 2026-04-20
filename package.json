@@ -26,7 +26,7 @@
     "@tailwindcss/vite": "^4.2.2",
     "@tanstack/react-query": "^5.99.2",
     "@videojs/react": "10.0.0-beta.22",
-    "axios": "^1.15.0",
+    "axios": "^1.15.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dashjs": "^5.1.1",

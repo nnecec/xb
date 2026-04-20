@@ -2,6 +2,7 @@ import { AlertCircle } from 'lucide-react'
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
 
 export function PageLoadingState({ label }: { label: string }) {
@@ -40,8 +41,8 @@ export function PageErrorState({
 
 export function PageEmptyState({ label }: { label: string }) {
   return (
-    <div className="border-border/70 bg-card/70 text-muted-foreground flex min-h-64 items-center justify-center border border-dashed px-6 py-10 text-sm">
+    <Card className="text-muted-foreground flex min-h-64 items-center justify-center text-sm">
       {label}
-    </div>
+    </Card>
   )
 }

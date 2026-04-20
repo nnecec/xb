@@ -423,7 +423,7 @@ export function toMedia(status: WeiboStatus) {
     return null
   }
 
-  const isAudio = status.page_info?.object_type === 'music'
+  const isAudio = status.page_info?.object_type !== 'video'
   const progressiveUrl = progressiveFallbackUrl(mediaInfo)
 
   if (isAudio) {

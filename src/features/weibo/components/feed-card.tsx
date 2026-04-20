@@ -38,6 +38,7 @@ import {
 import { formatWeiboCount } from '@/features/weibo/utils/format-weibo-count'
 import { cn } from '@/lib/utils'
 
+import { AudioPlayerComponent } from './audio-player'
 import { VideoPlayer } from './video-player'
 
 function hasTextSelectionWithin(container: HTMLElement) {
@@ -62,7 +63,7 @@ function FeedMediaBlock({ item }: { item: FeedItem }) {
         event.stopPropagation()
       }}
     >
-      <audio controls src={item.media.streamUrl} className="w-full" />
+      <AudioPlayerComponent src={item.media.streamUrl} />
     </div>
   ) : (
     <div
@@ -319,10 +320,7 @@ function RetweetedFeedBlock({
   }
 
   return (
-    <div
-      className="border-border/70 bg-muted/40 flex cursor-pointer flex-col gap-3 border p-3"
-      onClick={handleRetweetedClick}
-    >
+    <Card className="flex cursor-pointer flex-col gap-3" onClick={handleRetweetedClick}>
       <RetweetedAuthorHeader item={resolvedItem} />
       <FeedTextBlock
         item={resolvedItem}
@@ -341,7 +339,7 @@ function RetweetedFeedBlock({
         onLikeClick={onLikeClick}
         likePending={likePendingForId === resolvedItem.id}
       />
-    </div>
+    </Card>
   )
 }
 
