@@ -11,6 +11,7 @@ export interface AppSettings {
   fontSizeClass: FontSize
   fontFamilyClass: FontFamilyClass
   showHotSearchCard: boolean
+  collapseRepliesEnabled: boolean
 }
 
 export interface AppSettingsStorageArea {
@@ -26,6 +27,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   fontSizeClass: 'text-base',
   fontFamilyClass: 'font-sans',
   showHotSearchCard: true,
+  collapseRepliesEnabled: false,
 }
 
 function isAppTheme(value: unknown): value is AppTheme {
@@ -88,6 +90,10 @@ export function normalizeAppSettings(value: unknown): AppSettings {
       typeof candidate.showHotSearchCard === 'boolean'
         ? candidate.showHotSearchCard
         : DEFAULT_APP_SETTINGS.showHotSearchCard,
+    collapseRepliesEnabled:
+      typeof candidate.collapseRepliesEnabled === 'boolean'
+        ? candidate.collapseRepliesEnabled
+        : DEFAULT_APP_SETTINGS.collapseRepliesEnabled,
   }
 }
 

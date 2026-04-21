@@ -1,7 +1,16 @@
+import { ChevronDown } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 
-import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemTitle,
+} from '@/components/ui/item'
 import { useEmoticonConfigQuery } from '@/features/weibo/app/emoticon-query'
 import { ImageCarousel } from '@/features/weibo/components/image-carousel'
 import { UserHoverCard } from '@/features/weibo/components/user-hover-card'
@@ -12,6 +21,7 @@ import type {
   FeedTopicEntity,
   FeedUrlEntity,
 } from '@/features/weibo/models/feed'
+import { useAppSettings } from '@/lib/app-settings-store'
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -291,14 +301,118 @@ function renderInlineText(
   return renderTextWithEntities(text, keyPrefix, urlEntities, topicEntities, phraseMap)
 }
 
+function renderReplyChainItem(
+  segment: ReplyChainSegment,
+  index: number,
+  urlEntities: FeedUrlEntity[],
+  topicEntities: FeedTopicEntity[],
+  phraseMap: Record<string, WeiboEmoticonItem>,
+  extractImages: ImageExtractor,
+) {
+  const { strippedText, images } = extractImages(segment.text)
+  return (
+    <Item
+      key={`chain-${segment.screenName}-${index}`}
+      variant="muted"
+      size="sm"
+      className="bg-muted/40 flex-col items-stretch"
+    >
+      <ItemContent>
+        <ItemTitle>
+          {renderMentionLink(segment.screenName, `chain-label-${index}`, 'text-sm')}
+        </ItemTitle>
+        {strippedText ? (
+          <ItemDescription className="text-sm">
+            {renderInlineText(
+              strippedText,
+              `chain-${index}`,
+              urlEntities,
+              topicEntities,
+              phraseMap,
+            )}
+          </ItemDescription>
+        ) : null}
+        {images.length > 0 ? <ImageCarousel images={images} /> : null}
+      </ItemContent>
+    </Item>
+  )
+}
+
 function renderReplyChainText(
   parsed: Extract<ParsedReplyChainText, { kind: 'reply-chain' }>,
   urlEntities: FeedUrlEntity[],
   topicEntities: FeedTopicEntity[],
   phraseMap: Record<string, WeiboEmoticonItem>,
   extractImages: ImageExtractor,
+  collapseRepliesEnabled: boolean,
 ) {
   const leading = parsed.leading ? extractImages(parsed.leading) : null
+  const chain = parsed.replyChain
+
+  if (collapseRepliesEnabled && chain.length > 2) {
+    const firstItem = chain[0]
+    const secondItem = chain[1]
+    const middleItems = chain.slice(2, chain.length - 1)
+    const lastItem = chain[chain.length - 1]
+
+    return (
+      <span className="flex flex-col gap-2">
+        {leading && leading.strippedText ? (
+          <span className="whitespace-pre-wrap">
+            {renderInlineText(
+              leading.strippedText,
+              'leading',
+              urlEntities,
+              topicEntities,
+              phraseMap,
+            )}
+          </span>
+        ) : null}
+        {leading && leading.images.length > 0 ? <ImageCarousel images={leading.images} /> : null}
+        {renderReplyChainItem(firstItem, 0, urlEntities, topicEntities, phraseMap, extractImages)}
+        <Collapsible>
+          <CollapsibleTrigger asChild>
+            <div>
+              {renderReplyChainItem(
+                secondItem,
+                1,
+                urlEntities,
+                topicEntities,
+                phraseMap,
+                extractImages,
+              )}
+              <div className="flex items-center gap-1 px-4 py-1">
+                <ChevronDown className="text-muted-foreground size-3 transition-transform data-[state=open]:rotate-180" />
+                <span className="text-muted-foreground text-xs">{middleItems.length} 条回复</span>
+              </div>
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <ItemGroup data-testid="reply-chain">
+              {middleItems.map((segment, idx) =>
+                renderReplyChainItem(
+                  segment,
+                  idx + 2,
+                  urlEntities,
+                  topicEntities,
+                  phraseMap,
+                  extractImages,
+                ),
+              )}
+            </ItemGroup>
+          </CollapsibleContent>
+        </Collapsible>
+        {renderReplyChainItem(
+          lastItem,
+          chain.length - 1,
+          urlEntities,
+          topicEntities,
+          phraseMap,
+          extractImages,
+        )}
+      </span>
+    )
+  }
 
   return (
     <span className="flex flex-col gap-2">
@@ -309,35 +423,16 @@ function renderReplyChainText(
       ) : null}
       {leading && leading.images.length > 0 ? <ImageCarousel images={leading.images} /> : null}
       <ItemGroup data-testid="reply-chain">
-        {parsed.replyChain.map((segment, index) => {
-          const { strippedText, images } = extractImages(segment.text)
-          return (
-            <Item
-              key={`chain-${segment.screenName}-${index}`}
-              variant="muted"
-              size="sm"
-              className="bg-muted/40 flex-col items-stretch"
-            >
-              <ItemContent>
-                <ItemTitle>
-                  {renderMentionLink(segment.screenName, `chain-label-${index}`, 'text-sm')}
-                </ItemTitle>
-                {strippedText ? (
-                  <ItemDescription className="text-sm">
-                    {renderInlineText(
-                      strippedText,
-                      `chain-${index}`,
-                      urlEntities,
-                      topicEntities,
-                      phraseMap,
-                    )}
-                  </ItemDescription>
-                ) : null}
-                {images.length > 0 ? <ImageCarousel images={images} /> : null}
-              </ItemContent>
-            </Item>
-          )
-        })}
+        {chain.map((segment, index) =>
+          renderReplyChainItem(
+            segment,
+            index,
+            urlEntities,
+            topicEntities,
+            phraseMap,
+            extractImages,
+          ),
+        )}
       </ItemGroup>
     </span>
   )
@@ -367,6 +462,7 @@ export function StatusText({
   text: string
 }) {
   const emoticonQuery = useEmoticonConfigQuery()
+  const collapseRepliesEnabled = useAppSettings((s) => s.collapseRepliesEnabled)
   const phraseMap = {
     ...emoticonQuery.data?.phraseMap,
     ...item.emoticons,
@@ -391,6 +487,7 @@ export function StatusText({
           item.topicEntities ?? [],
           phraseMap,
           extractImages,
+          collapseRepliesEnabled,
         )}
       </span>
     )
