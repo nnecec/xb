@@ -158,7 +158,7 @@ function RetweetedAuthorHeader({
   item: Pick<FeedItem, 'author' | 'createdAtLabel' | 'source' | 'regionName'>
 }) {
   return (
-    <div className="mb-3 grid grid-cols-[36px_minmax(0,1fr)] gap-2">
+    <div className="grid grid-cols-[36px_minmax(0,1fr)] gap-2">
       <UserHoverCard uid={item.author.id}>
         <button
           type="button"
@@ -344,25 +344,29 @@ function RetweetedFeedBlock({
   }
 
   return (
-    <Card className="flex cursor-pointer flex-col gap-3" onClick={handleRetweetedClick}>
-      <RetweetedAuthorHeader item={resolvedItem} />
-      <FeedTextBlock
-        item={resolvedItem}
-        canLoadLongText={shouldShowLoadLongText}
-        isLongTextLoading={isLongTextLoading}
-        hasLongTextError={hasLongTextError}
-        onLoadLongText={onLoadLongText}
-      />
+    <Card className="cursor-pointer gap-3 py-4" onClick={handleRetweetedClick}>
+      <CardHeader>
+        <RetweetedAuthorHeader item={resolvedItem} />
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <FeedTextBlock
+          item={resolvedItem}
+          canLoadLongText={shouldShowLoadLongText}
+          isLongTextLoading={isLongTextLoading}
+          hasLongTextError={hasLongTextError}
+          onLoadLongText={onLoadLongText}
+        />
 
-      <FeedMediaBlock item={resolvedItem} />
+        <FeedMediaBlock item={resolvedItem} />
 
-      <ImageCarousel images={resolvedItem.images} />
+        <ImageCarousel images={resolvedItem.images} />
 
-      <FeedActions
-        item={resolvedItem}
-        onLikeClick={onLikeClick}
-        likePending={likePendingForId === resolvedItem.id}
-      />
+        <FeedActions
+          item={resolvedItem}
+          onLikeClick={onLikeClick}
+          likePending={likePendingForId === resolvedItem.id}
+        />
+      </CardContent>
     </Card>
   )
 }

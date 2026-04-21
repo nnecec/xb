@@ -49,8 +49,8 @@ export function CommentCard({
   })
 
   return (
-    <Card className="border-border/70 bg-card/95 gap-3 py-3 shadow-none">
-      <CardHeader className="flex flex-row gap-3 px-4">
+    <Card className="py-4">
+      <CardHeader className="flex flex-row gap-3">
         <UserHoverCard uid={item.author.id}>
           <Link
             to={`/n/${encodeURIComponent(item.author.name)}`}

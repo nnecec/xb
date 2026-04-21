@@ -12,12 +12,12 @@ export function RightRail() {
     <div className="flex w-full flex-col gap-4">
       {showHotSearchCard && <HotSearchCard className="gap-2 p-2" />}
 
-      <Card>
-        <CardHeader>
+      <Card className="py-4">
+        <CardHeader className="px-4">
           <CardTitle className="text-base">反馈</CardTitle>
           <CardDescription>正在 beta 测试阶段，反馈问题以帮助我们改进</CardDescription>
         </CardHeader>
-        <CardContent className="text-muted-foreground flex flex-col gap-3 text-sm">
+        <CardContent className="text-muted-foreground flex flex-col gap-3 px-4 text-sm">
           <a
             href="https://github.com/nnecec/xb/issues"
             target="_blank"
