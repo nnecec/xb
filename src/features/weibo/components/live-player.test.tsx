@@ -34,7 +34,7 @@ describe('LivePlayer', () => {
 
       const video = document.querySelector('video')
       expect(video).toBeInTheDocument()
-      expect(video?.src).toBe('')
+      expect(video?.src).toBe('https://example.com/live.m3u8')
     })
   })
 
