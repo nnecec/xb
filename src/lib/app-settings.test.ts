@@ -51,6 +51,7 @@ describe('app-settings', () => {
       fontSizeClass: 'text-sm',
       fontFamilyClass: 'font-serif',
       showHotSearchCard: false,
+      collapseRepliesEnabled: false,
     })
 
     await persistAppSettings(
@@ -60,6 +61,7 @@ describe('app-settings', () => {
         fontSizeClass: 'text-lg',
         fontFamilyClass: 'font-serif',
         showHotSearchCard: true,
+        collapseRepliesEnabled: false,
       },
       storage,
     )
@@ -70,6 +72,7 @@ describe('app-settings', () => {
       fontSizeClass: 'text-lg',
       fontFamilyClass: 'font-serif',
       showHotSearchCard: true,
+      collapseRepliesEnabled: false,
     })
   })
 

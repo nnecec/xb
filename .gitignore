@@ -36,6 +36,7 @@ docs
 skills*
 .superpowers/
 docs/
+.sisyphus
 
 # Environment
 .env*

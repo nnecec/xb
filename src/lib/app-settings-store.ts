@@ -20,6 +20,7 @@ export interface AppSettingsStoreState extends AppSettings {
   setFontSizeClass: (fontSizeClass: FontSize) => Promise<void>
   setFontFamilyClass: (fontFamilyClass: FontFamilyClass) => Promise<void>
   setShowHotSearchCard: (show: boolean) => Promise<void>
+  setCollapseRepliesEnabled: (enabled: boolean) => Promise<void>
 }
 
 export type AppSettingsStore = StoreApi<AppSettingsStoreState>
@@ -31,6 +32,7 @@ function toPersistedSettings(state: AppSettingsStoreState): AppSettings {
     fontSizeClass: state.fontSizeClass,
     fontFamilyClass: state.fontFamilyClass,
     showHotSearchCard: state.showHotSearchCard,
+    collapseRepliesEnabled: state.collapseRepliesEnabled,
   }
 }
 
@@ -73,6 +75,9 @@ export function createAppSettingsStore(
       },
       async setShowHotSearchCard(showHotSearchCard) {
         await updateAndPersist({ showHotSearchCard })
+      },
+      async setCollapseRepliesEnabled(collapseRepliesEnabled) {
+        await updateAndPersist({ collapseRepliesEnabled })
       },
     }
   })

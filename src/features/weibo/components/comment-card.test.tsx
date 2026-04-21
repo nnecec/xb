@@ -1,10 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { CommentCard } from '@/features/weibo/components/comment-card'
 import type { CommentItem } from '@/features/weibo/models/status'
+import { APP_SETTINGS_STORAGE_KEY } from '@/lib/app-settings'
+import { getAppSettingsStore, resetAppSettingsStoreForTest } from '@/lib/app-settings-store'
 
 vi.mock('@/features/weibo/hooks/use-font-settings', () => ({
   useFontSettings: () => ({
@@ -17,6 +19,48 @@ const thumb = 'https://example.com/t.jpg'
 const large = 'https://example.com/l.jpg'
 
 describe('CommentCard', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    Object.defineProperty(globalThis, 'browser', {
+      writable: true,
+      value: {
+        storage: {
+          local: {
+            get: vi.fn(async () => ({})),
+            set: vi.fn(async () => {}),
+          },
+        },
+      },
+    })
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: vi.fn().mockImplementation(() => ({
+        matches: false,
+        media: '',
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    })
+    resetAppSettingsStoreForTest()
+    const store = getAppSettingsStore({
+      get: async () => ({ [APP_SETTINGS_STORAGE_KEY]: undefined }),
+      set: async () => {},
+    })
+    store.setState({
+      ...store.getState(),
+      collapseRepliesEnabled: false,
+      isHydrated: true,
+    })
+  })
+
+  afterEach(() => {
+    resetAppSettingsStoreForTest()
+  })
+
   it('renders comment images once (no duplicate carousels)', () => {
     const queryClient = new QueryClient()
     const item: CommentItem = {

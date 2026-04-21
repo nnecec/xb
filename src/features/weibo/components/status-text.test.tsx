@@ -1,11 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { EMOTICON_CONFIG_QUERY_KEY } from '@/features/weibo/app/emoticon-query'
 import { MentionInlineText, StatusText } from '@/features/weibo/components/status-text'
 import type { WeiboEmoticonConfig } from '@/features/weibo/models/emoticon'
+import { APP_SETTINGS_STORAGE_KEY } from '@/lib/app-settings'
+import { getAppSettingsStore, resetAppSettingsStoreForTest } from '@/lib/app-settings-store'
 
 function renderWithProviders(ui: React.ReactNode, emoticonConfig?: WeiboEmoticonConfig) {
   const queryClient = new QueryClient({
@@ -28,6 +30,47 @@ function renderWithProviders(ui: React.ReactNode, emoticonConfig?: WeiboEmoticon
 }
 
 describe('StatusText', () => {
+  afterEach(() => {
+    resetAppSettingsStoreForTest()
+  })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    Object.defineProperty(globalThis, 'browser', {
+      writable: true,
+      value: {
+        storage: {
+          local: {
+            get: vi.fn(async () => ({})),
+            set: vi.fn(async () => {}),
+          },
+        },
+      },
+    })
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: vi.fn().mockImplementation(() => ({
+        matches: false,
+        media: '',
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    })
+    resetAppSettingsStoreForTest()
+    const store = getAppSettingsStore({
+      get: async () => ({ [APP_SETTINGS_STORAGE_KEY]: undefined }),
+      set: async () => {},
+    })
+    store.setState({
+      ...store.getState(),
+      collapseRepliesEnabled: false,
+      isHydrated: true,
+    })
+  })
   it('renders topic_struct topics as encoded search links', () => {
     const { container } = renderWithProviders(
       <StatusText
@@ -312,6 +355,67 @@ describe('StatusText', () => {
     expect(img).toHaveAttribute('src', 'https://img/p2-thumb.jpg')
     expect(container).not.toHaveTextContent('http://t.cn/PIC')
     expect(container).toHaveTextContent('这是正文')
+  })
+})
+
+describe('StatusText reply-chain collapsible', () => {
+  it('renders all items without collapsible when collapseRepliesEnabled is false', () => {
+    const { container } = renderWithProviders(
+      <StatusText
+        item={{ urlEntities: [], topicEntities: [] }}
+        text="主文本 //@A:第一条 //@B:第二条 //@C:第三条"
+      />,
+    )
+
+    const view = within(container)
+    const replyChain = view.getByTestId('reply-chain')
+    const items = replyChain.querySelectorAll('[data-slot="item"]')
+    expect(items).toHaveLength(3)
+    expect(container.querySelectorAll('[data-slot="collapsible"]')).toHaveLength(0)
+  })
+
+  it('renders all items without collapsible when chain has 2 or fewer items', () => {
+    getAppSettingsStore().setState({ collapseRepliesEnabled: true })
+    const { container } = renderWithProviders(
+      <StatusText
+        item={{ urlEntities: [], topicEntities: [] }}
+        text="主文本 //@A:第一条 //@B:第二条"
+      />,
+    )
+
+    const view = within(container)
+    const replyChain = view.getByTestId('reply-chain')
+    const items = replyChain.querySelectorAll('[data-slot="item"]')
+    expect(items).toHaveLength(2)
+    expect(container.querySelectorAll('[data-slot="collapsible"]')).toHaveLength(0)
+  })
+
+  it('collapses middle items when collapseRepliesEnabled is true and chain length > 2', () => {
+    getAppSettingsStore().setState({ collapseRepliesEnabled: true })
+    const { container } = renderWithProviders(
+      <StatusText
+        item={{ urlEntities: [], topicEntities: [] }}
+        text="主文本 //@A:第一条 //@B:第二条 //@C:第三条 //@D:第四条"
+      />,
+    )
+
+    const view = within(container)
+    expect(container.querySelectorAll('[data-slot="collapsible"]')).toHaveLength(1)
+    expect(container.querySelectorAll('[data-slot="collapsible-trigger"]')).toHaveLength(1)
+  })
+
+  it('places collapsible trigger after second item', () => {
+    getAppSettingsStore().setState({ collapseRepliesEnabled: true })
+    const { container } = renderWithProviders(
+      <StatusText
+        item={{ urlEntities: [], topicEntities: [] }}
+        text="主文本 //@A:第一条 //@B:第二条 //@C:第三条 //@D:第四条"
+      />,
+    )
+
+    const view = within(container)
+    const allItems = container.querySelectorAll('[data-slot="item"]')
+    expect(allItems).toHaveLength(3)
   })
 })
 

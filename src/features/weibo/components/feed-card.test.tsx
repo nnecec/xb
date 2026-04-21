@@ -6,6 +6,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { FeedCard } from '@/features/weibo/components/feed-card'
 import type { FeedItem } from '@/features/weibo/models/feed'
 import { loadStatusLongText } from '@/features/weibo/services/weibo-repository'
+import { APP_SETTINGS_STORAGE_KEY } from '@/lib/app-settings'
+import { getAppSettingsStore, resetAppSettingsStoreForTest } from '@/lib/app-settings-store'
 
 vi.mock('@/features/weibo/services/weibo-repository', async () => {
   const actual = await vi.importActual<typeof import('@/features/weibo/services/weibo-repository')>(
@@ -31,6 +33,40 @@ vi.mock('@/features/weibo/hooks/use-font-settings', () => ({
 describe('FeedCard', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    Object.defineProperty(globalThis, 'browser', {
+      writable: true,
+      value: {
+        storage: {
+          local: {
+            get: vi.fn(async () => ({})),
+            set: vi.fn(async () => {}),
+          },
+        },
+      },
+    })
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: vi.fn().mockImplementation(() => ({
+        matches: false,
+        media: '',
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    })
+    resetAppSettingsStoreForTest()
+    const store = getAppSettingsStore({
+      get: async () => ({ [APP_SETTINGS_STORAGE_KEY]: undefined }),
+      set: async () => {},
+    })
+    store.setState({
+      ...store.getState(),
+      collapseRepliesEnabled: false,
+      isHydrated: true,
+    })
   })
 
   afterEach(() => {

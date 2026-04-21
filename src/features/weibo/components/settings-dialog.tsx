@@ -1,6 +1,13 @@
 import React from 'react'
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  VisuallyHidden,
+} from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -42,15 +49,20 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const fontSizeClass = useAppSettings((s) => s.fontSizeClass)
   const fontFamilyClass = useAppSettings((s) => s.fontFamilyClass)
   const showHotSearchCard = useAppSettings((s) => s.showHotSearchCard)
+  const collapseRepliesEnabled = useAppSettings((s) => s.collapseRepliesEnabled)
   const setFontSizeClass = useAppSettings((s) => s.setFontSizeClass)
   const setFontFamilyClass = useAppSettings((s) => s.setFontFamilyClass)
   const setShowHotSearchCard = useAppSettings((s) => s.setShowHotSearchCard)
+  const setCollapseRepliesEnabled = useAppSettings((s) => s.setCollapseRepliesEnabled)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>设置</DialogTitle>
+          <VisuallyHidden>
+            <DialogDescription>配置字体大小、字体样式和显示偏好</DialogDescription>
+          </VisuallyHidden>
         </DialogHeader>
 
         <div className="flex flex-col gap-6 py-4">
@@ -90,6 +102,13 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             <Switch
               checked={showHotSearchCard}
               onCheckedChange={(checked) => setShowHotSearchCard(checked)}
+            />
+          </Field>
+
+          <Field label="折叠中间回复" description="回复链超过2条时折叠中间内容">
+            <Switch
+              checked={collapseRepliesEnabled}
+              onCheckedChange={(checked) => setCollapseRepliesEnabled(checked)}
             />
           </Field>
         </div>

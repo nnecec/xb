@@ -39,6 +39,7 @@ import { formatWeiboCount } from '@/features/weibo/utils/format-weibo-count'
 import { cn } from '@/lib/utils'
 
 import { AudioPlayerComponent } from './audio-player'
+import { LivePlayer } from './live-player'
 import { VideoPlayer } from './video-player'
 
 function hasTextSelectionWithin(container: HTMLElement) {
@@ -57,15 +58,38 @@ function FeedMediaBlock({ item }: { item: FeedItem }) {
     return null
   }
 
-  return item.media.type === 'audio' ? (
-    <div
-      onClick={(event) => {
-        event.stopPropagation()
-      }}
-    >
-      <AudioPlayerComponent src={item.media.streamUrl} />
-    </div>
-  ) : (
+  if (item.media.type === 'audio') {
+    return (
+      <div
+        onClick={(event) => {
+          event.stopPropagation()
+        }}
+      >
+        <AudioPlayerComponent src={item.media.streamUrl} />
+      </div>
+    )
+  }
+
+  if (item.media.type === 'live') {
+    return (
+      <div
+        onClick={(event) => {
+          event.stopPropagation()
+        }}
+      >
+        <AspectRatio ratio={16 / 9}>
+          <LivePlayer
+            streamUrl={item.media.streamUrl}
+            coverUrl={item.media.coverUrl ?? ''}
+            liveStatus={item.media.liveStatus ?? 0}
+            replayUrl={item.media.replayUrl}
+          />
+        </AspectRatio>
+      </div>
+    )
+  }
+
+  return (
     <div
       onClick={(event) => {
         event.stopPropagation()
