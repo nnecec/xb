@@ -62,12 +62,21 @@ export interface WeiboMediaInfo {
   name?: string
   stream_url?: string
   stream_url_hd?: string
+  live_ld?: string
+  live_status?: number
+  live_start_time?: number
+  replay_hd?: string
+  subscribe?: {
+    cover?: string
+    is_expired?: boolean
+  }
 }
 
 export interface WeiboPageInfo {
   author_mid?: string | number
   media_info?: WeiboMediaInfo
   object_type?: string
+  page_pic?: string
 }
 
 export interface WeiboUrlStruct {
@@ -421,6 +430,18 @@ export function toMedia(status: WeiboStatus) {
   const mediaInfo = status.page_info?.media_info
   if (!mediaInfo) {
     return null
+  }
+
+  if (status.page_info?.object_type === 'live') {
+    return {
+      type: 'live' as const,
+      streamUrl: mediaInfo.live_ld ?? mediaInfo.stream_url ?? '',
+      title: mediaInfo.video_title ?? '',
+      coverUrl: status.page_info?.page_pic ?? mediaInfo.subscribe?.cover ?? null,
+      liveStatus: mediaInfo.live_status,
+      liveStartTime: mediaInfo.live_start_time,
+      replayUrl: mediaInfo.replay_hd,
+    }
   }
 
   const isAudio = status.page_info?.object_type !== 'video'

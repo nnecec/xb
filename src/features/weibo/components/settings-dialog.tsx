@@ -49,9 +49,11 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const fontSizeClass = useAppSettings((s) => s.fontSizeClass)
   const fontFamilyClass = useAppSettings((s) => s.fontFamilyClass)
   const showHotSearchCard = useAppSettings((s) => s.showHotSearchCard)
+  const collapseRepliesEnabled = useAppSettings((s) => s.collapseRepliesEnabled)
   const setFontSizeClass = useAppSettings((s) => s.setFontSizeClass)
   const setFontFamilyClass = useAppSettings((s) => s.setFontFamilyClass)
   const setShowHotSearchCard = useAppSettings((s) => s.setShowHotSearchCard)
+  const setCollapseRepliesEnabled = useAppSettings((s) => s.setCollapseRepliesEnabled)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -100,6 +102,13 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             <Switch
               checked={showHotSearchCard}
               onCheckedChange={(checked) => setShowHotSearchCard(checked)}
+            />
+          </Field>
+
+          <Field label="折叠中间回复" description="回复链超过2条时折叠中间内容">
+            <Switch
+              checked={collapseRepliesEnabled}
+              onCheckedChange={(checked) => setCollapseRepliesEnabled(checked)}
             />
           </Field>
         </div>

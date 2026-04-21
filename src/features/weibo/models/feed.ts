@@ -39,11 +39,14 @@ export interface FeedPlaybackSource {
 export type FeedDashSource = FeedMpdSource | FeedPlaybackSource
 
 export interface FeedMedia {
-  type: 'video' | 'audio'
+  type: 'video' | 'audio' | 'podcast_audio' | 'live'
   streamUrl: string
   title: string
   coverUrl: string | null
   dash?: FeedDashSource
+  liveStatus?: number
+  liveStartTime?: number
+  replayUrl?: string
 }
 
 export interface FeedEmoticon {
