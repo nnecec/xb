@@ -399,7 +399,6 @@ describe('StatusText reply-chain collapsible', () => {
       />,
     )
 
-    const view = within(container)
     expect(container.querySelectorAll('[data-slot="collapsible"]')).toHaveLength(1)
     expect(container.querySelectorAll('[data-slot="collapsible-trigger"]')).toHaveLength(1)
   })
@@ -413,7 +412,6 @@ describe('StatusText reply-chain collapsible', () => {
       />,
     )
 
-    const view = within(container)
     const allItems = container.querySelectorAll('[data-slot="item"]')
     expect(allItems).toHaveLength(3)
   })

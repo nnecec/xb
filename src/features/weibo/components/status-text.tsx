@@ -3,14 +3,7 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemGroup,
-  ItemTitle,
-} from '@/components/ui/item'
+import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import { useEmoticonConfigQuery } from '@/features/weibo/app/emoticon-query'
 import { ImageCarousel } from '@/features/weibo/components/image-carousel'
 import { UserHoverCard } from '@/features/weibo/components/user-hover-card'
