@@ -27,11 +27,19 @@ export default defineConfig({
     version: extensionVersion,
     version_name: extensionVersion,
     permissions: ['storage'],
-    host_permissions: ['https://weibo.com/*', 'https://www.weibo.com/*'],
+    host_permissions: [
+      'https://weibo.com/*',
+      'https://www.weibo.com/*',
+      // 'https://s.weibo.com/*',
+    ],
     web_accessible_resources: [
       {
         resources: ['weibo-main-world.js'],
-        matches: ['https://weibo.com/*', 'https://www.weibo.com/*'],
+        matches: [
+          'https://weibo.com/*',
+          'https://www.weibo.com/*',
+          // 'https://s.weibo.com/*',
+        ],
       },
     ],
   },

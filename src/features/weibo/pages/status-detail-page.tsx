@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 
 import { Button } from '@/components/ui/button'
@@ -93,6 +93,10 @@ export function StatusDetailPage() {
   const navigate = useNavigate()
   const page = useWeiboPage()
   const rewriteEnabled = useAppSettings((s) => s.rewriteEnabled)
+
+  useEffect(() => {
+    ctx.resetMainScroll()
+  }, [ctx])
 
   const urlStatusId = page.kind === 'status' ? page.statusId : null
   const authorId = page.kind === 'status' ? page.authorId : null

@@ -47,6 +47,7 @@ export interface FeedMedia {
   liveStatus?: number
   liveStartTime?: number
   replayUrl?: string
+  videoOrientation?: 'vertical' | 'horizontal'
 }
 
 export interface FeedEmoticon {

@@ -315,7 +315,7 @@ function renderReplyChainItem(
           {renderMentionLink(segment.screenName, `chain-label-${index}`, 'text-sm')}
         </ItemTitle>
         {strippedText ? (
-          <ItemDescription className="text-sm">
+          <ItemDescription className="line-clamp-none text-sm">
             {renderInlineText(
               strippedText,
               `chain-${index}`,
@@ -374,10 +374,12 @@ function renderReplyChainText(
                 phraseMap,
                 extractImages,
               )}
-              <div className="flex items-center gap-1 px-4 py-1">
-                <ChevronDown className="text-muted-foreground size-3 transition-transform data-[state=open]:rotate-180" />
-                <span className="text-muted-foreground text-xs">{middleItems.length} 条回复</span>
-              </div>
+              {middleItems.length > 0 && (
+                <div className="flex items-center gap-1 px-4 py-1">
+                  <ChevronDown className="text-muted-foreground size-3 transition-transform data-[state=open]:rotate-180" />
+                  <span className="text-muted-foreground text-xs">{middleItems.length} 条引用</span>
+                </div>
+              )}
             </div>
           </CollapsibleTrigger>
           <CollapsibleContent>

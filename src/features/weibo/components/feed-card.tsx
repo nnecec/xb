@@ -15,8 +15,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { FeedCardMoreMenu } from '@/features/weibo/components/feed-card-more-menu'
 import { ImageCarousel } from '@/features/weibo/components/image-carousel'
-import { OwnContentMoreMenu } from '@/features/weibo/components/own-content-more-menu'
 import { StatusText } from '@/features/weibo/components/status-text'
 import { UserHoverCard } from '@/features/weibo/components/user-hover-card'
 import { CreatedAtBadge, UserAvatar } from '@/features/weibo/components/user-presenter'
@@ -95,7 +95,7 @@ function FeedMediaBlock({ item }: { item: FeedItem }) {
         event.stopPropagation()
       }}
     >
-      <AspectRatio ratio={16 / 9}>
+      <AspectRatio ratio={item.media.videoOrientation === 'vertical' ? 1 / 1 : 16 / 9}>
         <VideoPlayer
           progressiveSrc={item.media.streamUrl}
           poster={item.media.coverUrl ?? undefined}
@@ -257,9 +257,9 @@ function FeedActions({
     <div className="text-muted-foreground grid w-full grid-cols-3 gap-2 text-xs">
       <Button
         type="button"
-        variant="secondary"
+        variant="ghost"
         aria-label="回复微博"
-        className="group bg-muted h-auto rounded-full py-2 font-normal hover:bg-sky-50 hover:text-sky-500"
+        className="group h-auto rounded-full py-2 font-normal hover:bg-sky-50 hover:text-sky-500"
         onClick={(event) => {
           event.stopPropagation()
           onCommentClick?.(item)
@@ -272,9 +272,9 @@ function FeedActions({
       </Button>
       <Button
         type="button"
-        variant="secondary"
+        variant="ghost"
         aria-label="转发微博"
-        className="group bg-muted h-auto rounded-full py-2 font-normal hover:bg-emerald-50 hover:text-emerald-500"
+        className="group h-auto rounded-full py-2 font-normal hover:bg-emerald-50 hover:text-emerald-500"
         onClick={(event) => {
           event.stopPropagation()
           onRepostClick?.(item)
@@ -287,11 +287,11 @@ function FeedActions({
       </Button>
       <Button
         type="button"
-        variant="secondary"
+        variant="ghost"
         aria-label={liked ? '取消点赞' : '点赞微博'}
         aria-pressed={liked}
         disabled={likePending}
-        className="group bg-muted h-auto rounded-full py-2 font-normal hover:bg-rose-50 hover:text-rose-500"
+        className="group h-auto rounded-full py-2 font-normal hover:bg-rose-50 hover:text-rose-500"
         onClick={(event) => {
           event.stopPropagation()
           onLikeClick?.(item)
@@ -502,8 +502,12 @@ export function FeedCard({
   }
 
   return (
-    <Card className={cn('gap-4 py-4 relative', className)} data-testid="feed-card-body">
-      <OwnContentMoreMenu
+    <Card
+      className={cn('gap-4 py-4 relative cursor-pointer', className)}
+      data-testid="feed-card-body"
+      onClick={handleCardClick}
+    >
+      <FeedCardMoreMenu
         type="status"
         isOwner={showOwnerMenu}
         favorited={resolvedItem.favorited}
@@ -520,8 +524,7 @@ export function FeedCard({
       ) : null}
       <FeedAuthorHeader item={resolvedItem} />
       <CardContent
-        className="flex cursor-pointer flex-col gap-4"
-        onClick={handleCardClick}
+        className="flex flex-col gap-4"
         onMouseDown={handleCardMouseDown}
         onMouseUp={handleCardMouseUp}
       >

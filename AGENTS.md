@@ -2,7 +2,9 @@
 
 ## Project Overview
 
-xb is a browser extension that rewrites weibo.com into a cleaner X-like reading experience. Built with WXT, React 19, TypeScript, Tailwind CSS 4, shadcn/ui, Zustand, and TanStack Query.
+xb is a browser extension that rewrites weibo.com into a cleaner X-like reading
+experience. Built with WXT, React 19, TypeScript, Tailwind CSS 4, shadcn/ui,
+Zustand, and TanStack Query.
 
 ## Developer Commands
 
@@ -49,18 +51,73 @@ src/
 
 ## Architecture Notes
 
-- **Content Script UI**: Uses WXT's `createShadowRootUi` with `cssInjectionMode: 'ui'` to mount React into a shadow root, keeping styles isolated from Weibo's global CSS.
-- **weibo-main-world.ts**: Runs as an **unlisted script** directly in the page context (not a content script), installs a history bridge for router sync.
-- **Settings Store**: Zustand store (`src/lib/app-settings-store.ts`) that persists to `chrome.storage`. Must call `hydrate()` before use.
-- **API Layer**: Axios-based client with adapters in `features/weibo/services/adapters/` that transform Weibo's API responses into internal models.
+- **Content Script UI**: Uses WXT's `createShadowRootUi` with
+  `cssInjectionMode: 'ui'` to mount React into a shadow root, keeping styles
+  isolated from Weibo's global CSS.
+- **weibo-main-world.ts**: Runs as an **unlisted script** directly in the page
+  context (not a content script), installs a history bridge for router sync.
+- **Settings Store**: Zustand store (`src/lib/app-settings-store.ts`) that
+  persists to `chrome.storage`. Must call `hydrate()` before use.
+- **API Layer**: Axios-based client with adapters in
+  `features/weibo/services/adapters/` that transform Weibo's API responses into
+  internal models.
 
 ## Key Patterns
 
-- **Host selectors** in `features/weibo/content/host-selectors.ts` wait for Weibo DOM elements before mounting
-- **Shell state** (`features/weibo/content/shell-state.ts`) binds React app to Weibo's existing DOM structure
-- **Page takeover** (`features/weibo/content/page-takeover.ts`) marks pages as handled
-- **Router sync** (`features/weibo/route/router-sync.ts`) keeps extension in sync with Weibo's navigation
-- **URL parsing** (`features/weibo/route/parse-weibo-url.ts`) parses Weibo URLs into page descriptors
+- **Host selectors** in `features/weibo/content/host-selectors.ts` wait for
+  Weibo DOM elements before mounting
+- **Shell state** (`features/weibo/content/shell-state.ts`) binds React app to
+  Weibo's existing DOM structure
+- **Page takeover** (`features/weibo/content/page-takeover.ts`) marks pages as
+  handled
+- **Router sync** (`features/weibo/route/router-sync.ts`) keeps extension in
+  sync with Weibo's navigation
+- **URL parsing** (`features/weibo/route/parse-weibo-url.ts`) parses Weibo URLs
+  into page descriptors
+
+## Component Patterns
+
+### Settings Dialog
+
+设置面板使用 Zustand store + Select/Switch 控件，通过 `useAppSettings`
+选择性订阅状态：
+
+```typescript
+const fontSizeClass = useAppSettings((s) => s.fontSizeClass)
+const setFontSizeClass = useAppSettings((s) => s.setFontSizeClass)
+```
+
+### Mutations
+
+当使用 TanStack Query `useMutation`，通过 `invalidates` meta 刷新相关查询缓存：
+
+```typescript
+const followMutation = useMutation({
+  mutationFn: () => followUser(uid),
+  meta: {
+    invalidates: [
+      ['weibo', 'profile'],
+      ['weibo', 'profile-hover'],
+    ],
+  },
+})
+```
+
+### Profile Components
+
+Profile 页面共享组件在 `features/weibo/components/profile-shared.tsx`：
+
+- `ProfileBanner` - 横幅图片或备用背景
+- `ProfileMutualFollowers` - 共同关注者头像列表
+- `formatProfileCount` - 数字格式化（支持万为单位的中文格式，如 `1.2万`）
+
+### Chinese Number Formatting
+
+```typescript
+formatProfileCount('12345') // '1.2万'
+formatProfileCount('9999') // '9999'
+formatProfileCount(null) // '0'
+```
 
 ## Testing
 

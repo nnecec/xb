@@ -1,4 +1,5 @@
 import React from 'react'
+import { useEffect, useState } from 'react'
 
 import {
   Dialog,
@@ -46,6 +47,14 @@ interface SettingsDialogProps {
 }
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
+  const [version, setVersion] = useState<string>('')
+
+  useEffect(() => {
+    if (typeof browser !== 'undefined' && browser.runtime?.getManifest) {
+      setVersion(browser.runtime.getManifest().version)
+    }
+  }, [])
+
   const fontSizeClass = useAppSettings((s) => s.fontSizeClass)
   const fontFamilyClass = useAppSettings((s) => s.fontFamilyClass)
   const showHotSearchCard = useAppSettings((s) => s.showHotSearchCard)
@@ -105,12 +114,33 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             />
           </Field>
 
-          <Field label="折叠中间回复" description="回复链超过2条时折叠中间内容">
+          <Field label="折叠中间引用" description="引用超过2条时折叠中间的引用">
             <Switch
               checked={collapseRepliesEnabled}
               onCheckedChange={(checked) => setCollapseRepliesEnabled(checked)}
             />
           </Field>
+
+          {version && (
+            <div className="flex items-center justify-between border-t pt-4">
+              <a
+                href="https://xb-extension.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground text-xs transition-colors"
+              >
+                xb v{version}
+              </a>
+              <a
+                href="https://github.com/nnecec"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground text-xs transition-colors"
+              >
+                by nnecec
+              </a>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
