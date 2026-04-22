@@ -1,4 +1,4 @@
-import { Smile } from 'lucide-react'
+import { Smile, Trash } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -24,6 +24,7 @@ export function EmoticonPicker({ onSelect }: { onSelect: (entry: EmoticonEntry) 
   const hydrate = useRecentEmoticons((state) => state.hydrate)
   const recentItems = useRecentEmoticons((state) => state.items)
   const remember = useRecentEmoticons((state) => state.remember)
+  const clearRecent = useRecentEmoticons((state) => state.clear)
 
   useEffect(() => {
     if (!isHydrated) {
@@ -41,23 +42,38 @@ export function EmoticonPicker({ onSelect }: { onSelect: (entry: EmoticonEntry) 
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="p-3" align="start">
-        <div className="text-muted-foreground text-xs">最近使用</div>
-        <div className="grid max-h-56 grid-cols-10 gap-1 overflow-y-auto">
-          {recentItems.map((item) => (
-            <Button
-              variant="ghost"
-              key={`${item.phrase}`}
-              size="icon"
-              onClick={() => {
-                void remember(item)
-                onSelect(item)
-                setOpen(false)
-              }}
-            >
-              <img alt={item.phrase} className="size-5" src={item.url} />
-            </Button>
-          ))}
-        </div>
+        {recentItems.length > 0 && (
+          <>
+            <div className="flex items-center justify-between">
+              <div className="text-muted-foreground text-xs">最近使用</div>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                onClick={() => {
+                  void clearRecent()
+                }}
+              >
+                <Trash />
+              </Button>
+            </div>
+            <div className="grid max-h-56 grid-cols-10 gap-1 overflow-y-auto">
+              {recentItems.map((item) => (
+                <Button
+                  variant="ghost"
+                  key={`${item.phrase}`}
+                  size="icon"
+                  onClick={() => {
+                    void remember(item)
+                    onSelect(item)
+                    setOpen(false)
+                  }}
+                >
+                  <img alt={item.phrase} className="size-5" src={item.url} />
+                </Button>
+              ))}
+            </div>
+          </>
+        )}
         <Tabs defaultValue={defaultTab}>
           <TabsList className="my-1 flex w-full overflow-x-auto">
             {data?.groups.map((group) => (

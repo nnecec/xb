@@ -15,6 +15,7 @@ interface RecentEmoticonsState {
   items: RecentEmoticonEntry[]
   hydrate: () => Promise<void>
   remember: (entry: RecentEmoticonEntry) => Promise<void>
+  clear: () => Promise<void>
 }
 
 function normalizeRecentEntries(value: unknown): RecentEmoticonEntry[] {
@@ -57,6 +58,10 @@ export function createRecentEmoticonsStore(
       await storageArea.set({
         [RECENT_EMOTICONS_STORAGE_KEY]: nextItems,
       })
+    },
+    async clear() {
+      set({ items: [] })
+      await storageArea.set({ [RECENT_EMOTICONS_STORAGE_KEY]: [] })
     },
   }))
 }
