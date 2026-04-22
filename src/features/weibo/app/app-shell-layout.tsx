@@ -62,6 +62,7 @@ interface ShellFrameProps {
   onThemeChange: (theme: AppTheme) => void
   onRefresh?: () => void
   onSettingsOpen: () => void
+  mainRef: React.RefObject<HTMLDivElement | null>
   children: ReactNode
 }
 
@@ -78,10 +79,10 @@ export function ShellFrame({
   onThemeChange,
   onRefresh,
   onSettingsOpen,
+  mainRef,
   children,
 }: ShellFrameProps) {
   const location = useLocation()
-  const mainRef = useRef<HTMLDivElement>(null)
   const savedMainScrollByRouteRef = useRef<Partial<Record<string, number>>>({})
   const locationRef = useRef(location)
   locationRef.current = location
@@ -100,7 +101,7 @@ export function ShellFrame({
     }
     main.addEventListener('scroll', onScroll, { passive: true })
     return () => main.removeEventListener('scroll', onScroll)
-  }, [])
+  }, [mainRef])
 
   useLayoutEffect(() => {
     const main = mainRef.current
@@ -110,7 +111,7 @@ export function ShellFrame({
     }
     const y = savedMainScrollByRouteRef.current[key] ?? 0
     main.scrollTop = y
-  }, [location.pathname, location.search])
+  }, [location.pathname, location.search, mainRef])
 
   return (
     <div className="bg-background text-foreground flex h-screen flex-col overflow-hidden">

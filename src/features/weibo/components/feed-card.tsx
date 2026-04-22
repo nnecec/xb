@@ -502,7 +502,11 @@ export function FeedCard({
   }
 
   return (
-    <Card className={cn('gap-4 py-4 relative', className)} data-testid="feed-card-body">
+    <Card
+      className={cn('gap-4 py-4 relative cursor-pointer', className)}
+      data-testid="feed-card-body"
+      onClick={handleCardClick}
+    >
       <FeedCardMoreMenu
         type="status"
         isOwner={showOwnerMenu}
@@ -520,8 +524,7 @@ export function FeedCard({
       ) : null}
       <FeedAuthorHeader item={resolvedItem} />
       <CardContent
-        className="flex cursor-pointer flex-col gap-4"
-        onClick={handleCardClick}
+        className="flex flex-col gap-4"
         onMouseDown={handleCardMouseDown}
         onMouseUp={handleCardMouseUp}
       >

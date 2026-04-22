@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Outlet, useNavigate } from 'react-router'
 
 import { RewritePausedCard, ShellFrame } from '@/features/weibo/app/app-shell-layout'
@@ -17,6 +17,7 @@ function getHomeTimelinePath(tab: 'for-you' | 'following') {
 export interface AppShellContext {
   page: ReturnType<typeof useWeiboPage>
   navigateToStatusDetail: (item: StatusDetailNavigationItem) => void
+  resetMainScroll: () => void
   composeTarget: ComposeTarget | null
   setComposeTarget: (target: ComposeTarget | null) => void
   viewingProfileUserId: string | null
@@ -37,6 +38,13 @@ export function AppShell() {
   const [composeTarget, setComposeTarget] = useState<ComposeTarget | null>(null)
   const [viewingProfileUserId, setViewingProfileUserId] = useState<string | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const mainRef = useRef<HTMLDivElement | null>(null)
+
+  const resetMainScroll = () => {
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0
+    }
+  }
 
   const navigateToStatusDetail = (item: StatusDetailNavigationItem) => {
     const statusId = item.mblogId ?? item.id
@@ -53,6 +61,7 @@ export function AppShell() {
   const context: AppShellContext = {
     page,
     navigateToStatusDetail,
+    resetMainScroll,
     composeTarget,
     setComposeTarget,
     viewingProfileUserId,
@@ -97,6 +106,7 @@ export function AppShell() {
       onThemeChange={(nextTheme: typeof theme) => void setTheme(nextTheme)}
       onRefresh={refreshTimeline}
       onSettingsOpen={() => setSettingsOpen(true)}
+      mainRef={mainRef}
     >
       <Outlet context={context} />
       {composeModal}

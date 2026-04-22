@@ -9,6 +9,7 @@ vi.mock('@/features/weibo/app/app-shell-layout', () => ({
   useAppShellContext: () => ({
     page: { kind: 'status', authorId: '1', statusId: '501' },
     navigateToStatusDetail: vi.fn(),
+    resetMainScroll: vi.fn(),
     composeTarget: null,
     setComposeTarget,
     viewingProfileUserId: null,
