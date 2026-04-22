@@ -15,3 +15,13 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: vi.fn(),
   })),
 })
+
+Object.defineProperty(globalThis, 'browser', {
+  writable: true,
+  configurable: true,
+  value: {
+    runtime: {
+      getManifest: () => ({ version: '0.0.0-test' }),
+    },
+  },
+})

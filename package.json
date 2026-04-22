@@ -1,8 +1,24 @@
 {
   "name": "xb",
   "version": "0.4.0",
-  "private": true,
   "description": "xb enhances your X.com experience",
+  "keywords": [
+    "browser",
+    "chrome",
+    "extension",
+    "weibo",
+    "xb"
+  ],
+  "homepage": "https://xb-extension.vercel.app/",
+  "bugs": {
+    "url": "https://github.com/nnecec/xb/issues"
+  },
+  "license": "GPL-3.0",
+  "author": "nnecec <nnecec@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nnecec/xb.git"
+  },
   "type": "module",
   "scripts": {
     "build": "wxt build",

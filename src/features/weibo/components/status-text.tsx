@@ -315,7 +315,7 @@ function renderReplyChainItem(
           {renderMentionLink(segment.screenName, `chain-label-${index}`, 'text-sm')}
         </ItemTitle>
         {strippedText ? (
-          <ItemDescription className="text-sm">
+          <ItemDescription className="line-clamp-none text-sm">
             {renderInlineText(
               strippedText,
               `chain-${index}`,
