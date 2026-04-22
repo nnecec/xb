@@ -88,7 +88,12 @@ export function AppShell() {
       viewingProfileUserId={viewingProfileUserId}
       rewriteEnabled={rewriteEnabled}
       theme={theme}
-      onRewriteEnabledChange={(enabled: boolean) => void setRewriteEnabled(enabled)}
+      onRewriteEnabledChange={(enabled: boolean) => {
+        setRewriteEnabled(enabled)
+        if (!enabled) {
+          window.location.reload()
+        }
+      }}
       onThemeChange={(nextTheme: typeof theme) => void setTheme(nextTheme)}
       onRefresh={refreshTimeline}
       onSettingsOpen={() => setSettingsOpen(true)}

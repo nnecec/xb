@@ -15,8 +15,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { FeedCardMoreMenu } from '@/features/weibo/components/feed-card-more-menu'
 import { ImageCarousel } from '@/features/weibo/components/image-carousel'
-import { OwnContentMoreMenu } from '@/features/weibo/components/own-content-more-menu'
 import { StatusText } from '@/features/weibo/components/status-text'
 import { UserHoverCard } from '@/features/weibo/components/user-hover-card'
 import { CreatedAtBadge, UserAvatar } from '@/features/weibo/components/user-presenter'
@@ -503,7 +503,7 @@ export function FeedCard({
 
   return (
     <Card className={cn('gap-4 py-4 relative', className)} data-testid="feed-card-body">
-      <OwnContentMoreMenu
+      <FeedCardMoreMenu
         type="status"
         isOwner={showOwnerMenu}
         favorited={resolvedItem.favorited}

@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils'
 
 export type ContentType = 'status' | 'comment'
 
-export interface OwnContentMoreMenuProps {
+export interface FeedCardMoreMenuProps {
   type: ContentType
   isOwner: boolean
   favorited?: boolean
@@ -31,7 +31,7 @@ export interface OwnContentMoreMenuProps {
   className?: string
 }
 
-export function OwnContentMoreMenu({
+export function FeedCardMoreMenu({
   type,
   isOwner,
   favorited = false,
@@ -40,7 +40,7 @@ export function OwnContentMoreMenu({
   isDeleting,
   contentLabel = '这条内容',
   className,
-}: OwnContentMoreMenuProps) {
+}: FeedCardMoreMenuProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [favoriteLoading, setFavoriteLoading] = useState(false)

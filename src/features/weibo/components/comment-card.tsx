@@ -7,8 +7,8 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CommentsDialog } from '@/features/weibo/components/comments-dialog'
+import { FeedCardMoreMenu } from '@/features/weibo/components/feed-card-more-menu'
 import { ImageCarousel } from '@/features/weibo/components/image-carousel'
-import { OwnContentMoreMenu } from '@/features/weibo/components/own-content-more-menu'
 import { StatusText } from '@/features/weibo/components/status-text'
 import { UserHoverCard } from '@/features/weibo/components/user-hover-card'
 import { CreatedAtBadge, UserAvatar } from '@/features/weibo/components/user-presenter'
@@ -84,7 +84,7 @@ export function CommentCard({
               ) : null}
             </div>
             {showOwnerMenu ? (
-              <OwnContentMoreMenu
+              <FeedCardMoreMenu
                 type="comment"
                 isOwner={showOwnerMenu}
                 contentLabel="这条评论"
