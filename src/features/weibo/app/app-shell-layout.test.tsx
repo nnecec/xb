@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import { createRef } from 'react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -10,6 +11,7 @@ vi.mock('@/features/weibo/components/right-rail', () => ({
 
 describe('ShellFrame', () => {
   it('renders one navigation landmark and preserves page content', () => {
+    const mainRef = createRef<HTMLDivElement>()
     render(
       <MemoryRouter>
         <ShellFrame
@@ -20,6 +22,7 @@ describe('ShellFrame', () => {
           onRewriteEnabledChange={vi.fn()}
           onThemeChange={vi.fn()}
           onSettingsOpen={vi.fn()}
+          mainRef={mainRef}
         >
           <div>center content</div>
         </ShellFrame>
