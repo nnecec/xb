@@ -114,7 +114,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             />
           </Field>
 
-          <Field label="折叠中间回复" description="回复链超过2条时折叠中间内容">
+          <Field label="折叠中间引用" description="引用超过2条时折叠中间的引用">
             <Switch
               checked={collapseRepliesEnabled}
               onCheckedChange={(checked) => setCollapseRepliesEnabled(checked)}
