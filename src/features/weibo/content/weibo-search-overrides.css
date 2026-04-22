@@ -1,0 +1,308 @@
+/*
+  Search page (s.weibo.com) CSS overrides.
+  Rebrands SSR feed list items to match the React FeedCard style.
+
+  All variables come from global.css (CSS custom properties).
+  Selector root: #pl_feedlist_index
+
+  Actual HTML structure:
+  #pl_feedlist_index
+    .card-wrap[action-type="feed_list_item"]   ← feed item wrapper
+      .card-top                                  ← pinned label
+      .card
+        .card-feed
+          .avator                               ← avatar
+          .content
+            .info
+              .menu                             ← right-side menu
+              .name                             ← user name
+              .user_vip_icon_container          ← VIP badge
+            .from                               ← timestamp + source
+            .txt                               ← text content
+            .media                             ← images / video
+          .card-act                             ← action bar (转发/评论/赞)
+*/
+html.dark {
+  background: #000;
+}
+html.dark body {
+  background: #000;
+}
+#searchapps {
+  display: none;
+}
+
+.m-main .woo-box-flex {
+  justify-content: center;
+}
+.m-main .m-main-nav {
+  display: none;
+}
+#pl_feed_main > .main-side {
+  display: none;
+}
+
+/* ─── Feed list root ─────────────────────────────────────── */
+#pl_feedlist_index {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+}
+
+/* ─── Individual feed item ───────────────────────────────── */
+#pl_feedlist_index .card-wrap {
+  border-radius: var(--radius);
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  overflow: hidden;
+}
+
+/* Pinned item top bar */
+#pl_feedlist_index .card-top {
+  display: none;
+}
+
+/* ─── Card inner layout ──────────────────────────────────── */
+#pl_feedlist_index .card-feed {
+  display: flex;
+  flex-direction: row;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+/* ─── Avatar ─────────────────────────────────────────────── */
+#pl_feedlist_index .avator a img {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ─── Main content column ────────────────────────────────── */
+#pl_feedlist_index .content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ─── Info row (name + menu) ─────────────────────────────── */
+#pl_feedlist_index .content .info {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+/* Name */
+#pl_feedlist_index .content .name {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--foreground);
+  text-decoration: none;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#pl_feedlist_index .content .name:hover {
+  text-decoration: underline;
+}
+
+/* Right-side menu (c) button */
+#pl_feedlist_index .content .menu {
+  display: none;
+}
+
+/* VIP icon */
+#pl_feedlist_index .user_vip_icon_container img {
+  height: 0.875rem;
+  vertical-align: middle;
+  margin-left: 0.25rem;
+}
+
+/* ─── From / timestamp ───────────────────────────────────── */
+#pl_feedlist_index .content .from {
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#pl_feedlist_index .content .from a {
+  color: var(--muted-foreground);
+  text-decoration: none;
+}
+
+#pl_feedlist_index .content .from a:hover {
+  text-decoration: underline;
+}
+
+/* ─── Text content ───────────────────────────────────────── */
+#pl_feedlist_index .content .txt {
+  white-space: pre-wrap;
+  line-height: 1.6;
+  color: var(--foreground);
+  font-size: 1rem;
+  overflow-wrap: break-word;
+}
+
+#pl_feedlist_index .content .txt a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+#pl_feedlist_index .content .txt a:hover {
+  text-decoration: underline;
+}
+
+/* ─── Media block ─────────────────────────────────────────── */
+#pl_feedlist_index .content .media {
+  margin-top: 0.25rem;
+  border-radius: calc(var(--radius) * 0.8);
+  overflow: hidden;
+}
+
+#pl_feedlist_index .content .media img {
+  max-width: 100%;
+  border-radius: inherit;
+  display: block;
+}
+
+/* Video player in search page */
+#pl_feedlist_index .content .thumbnail {
+  position: relative;
+}
+
+#pl_feedlist_index .content .thumbnail video-player {
+  border-radius: calc(var(--radius) * 0.8);
+  overflow: hidden;
+}
+
+/* ─── Action bar ──────────────────────────────────────────── */
+#pl_feedlist_index .card-act {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  padding: 0.5rem 1rem 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+#pl_feedlist_index .card-act ul {
+  display: contents;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#pl_feedlist_index .card-act li {
+  display: flex;
+  justify-content: center;
+}
+
+#pl_feedlist_index .card-act a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+#pl_feedlist_index .card-act a:hover {
+  background: oklch(0.97 0.013 240);
+  color: oklch(0.546 0.245 252.424);
+}
+
+/* Repost hover */
+#pl_feedlist_index .card-act li:first-child a:hover {
+  background: oklch(0.952 0.042 155.965);
+  color: oklch(0.552 0.145 163.892);
+}
+
+/* Like hover */
+#pl_feedlist_index .card-act .woo-like-main:hover {
+  background: oklch(0.965 0.047 14.911);
+}
+
+#pl_feedlist_index .card-act .woo-like-main:hover .woo-like-count {
+  color: oklch(0.559 0.253 13.804);
+}
+
+/* Liked state */
+#pl_feedlist_index .card-act a.liked,
+#pl_feedlist_index .card-act .woo-like-icon.liked {
+  color: oklch(0.559 0.253 13.804);
+  fill: oklch(0.559 0.253 13.804);
+}
+
+/* Action bar icons */
+#pl_feedlist_index .toolbar_icon {
+  font-size: 1rem;
+}
+
+/* ─── Nested retweet card ────────────────────────────────── */
+#pl_feedlist_index .WB_feed_repeat,
+#pl_feedlist_index .card-feed .repeat {
+  margin: 0.5rem 0;
+  padding: 0.75rem;
+  border-radius: calc(var(--radius) * 0.8);
+  border: 1px solid var(--border);
+  background: var(--muted);
+}
+
+/* ─── Topic header (keep it visible) ─────────────────────── */
+#pl_feedlist_index #pl_topic_header {
+  display: block;
+}
+
+/* ─── Topic lead / sender (hide) ─────────────────────────── */
+#pl_feedlist_index .card-topic-lead,
+#pl_feedlist_index [node-type='sendweibo'] {
+  display: none;
+}
+
+/* ─── Dark mode ──────────────────────────────────────────── */
+.dark #pl_feedlist_index .card-wrap {
+  background: var(--card);
+  border-color: var(--border);
+}
+
+.dark #pl_feedlist_index .content .name {
+  color: var(--foreground);
+}
+
+.dark #pl_feedlist_index .content .txt {
+  color: var(--foreground);
+}
+
+.dark #pl_feedlist_index .content .from,
+.dark #pl_feedlist_index .content .from a {
+  color: var(--muted-foreground);
+}
+
+.dark #pl_feedlist_index .card-act {
+  border-color: var(--border);
+}
+
+.dark #pl_feedlist_index .card-act a:hover {
+  background: oklch(0.269 0 0);
+}
+
+.dark #pl_feedlist_index .WB_feed_repeat,
+.dark #pl_feedlist_index .card-feed .repeat {
+  background: oklch(0.269 0 0);
+  border-color: var(--border);
+}

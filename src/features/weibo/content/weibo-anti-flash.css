@@ -5,3 +5,8 @@
 html:not([data-xb-weibo-ready]) #app {
   visibility: hidden !important;
 }
+
+/* Search pages (s.weibo.com) — reveal the feed list root when ready */
+/* html:not([data-xb-weibo-ready]) .wbs-feed {
+  visibility: hidden !important;
+} */
