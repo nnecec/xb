@@ -21,6 +21,7 @@ export interface WeiboStatusUser {
 
 export interface WeiboMediaInfo {
   video_title?: string
+  video_orientation?: 'vertical' | 'horizontal'
   mp4_720p_mp4?: string
   h265_mp4_hd?: string
   mpdInfo?: {
@@ -470,6 +471,7 @@ export function toMedia(status: WeiboStatus) {
           streamUrl: progressiveUrl ?? '',
           title: mediaInfo.video_title ?? '',
           coverUrl: mediaInfo.big_pic_info?.pic_big?.url ?? null,
+          videoOrientation: mediaInfo.video_orientation,
           dash: {
             type: 'mpd' as const,
             manifestXml: rawMpdXml,
@@ -487,6 +489,7 @@ export function toMedia(status: WeiboStatus) {
       streamUrl: progressiveUrl,
       title: mediaInfo.video_title ?? '',
       coverUrl: mediaInfo.big_pic_info?.pic_big?.url ?? null,
+      videoOrientation: mediaInfo.video_orientation,
     }
   }
 
@@ -497,6 +500,7 @@ export function toMedia(status: WeiboStatus) {
       streamUrl: sources[0].url,
       title: mediaInfo.video_title ?? '',
       coverUrl: mediaInfo.big_pic_info?.pic_big?.url ?? null,
+      videoOrientation: mediaInfo.video_orientation,
       dash: {
         type: 'playback' as const,
         sources,
@@ -514,6 +518,7 @@ export function toMedia(status: WeiboStatus) {
     streamUrl: progressiveUrl,
     title: mediaInfo.video_title ?? '',
     coverUrl: mediaInfo.big_pic_info?.pic_big?.url ?? null,
+    videoOrientation: mediaInfo.video_orientation,
   }
 }
 

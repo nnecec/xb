@@ -95,7 +95,7 @@ function FeedMediaBlock({ item }: { item: FeedItem }) {
         event.stopPropagation()
       }}
     >
-      <AspectRatio ratio={16 / 9}>
+      <AspectRatio ratio={item.media.videoOrientation === 'vertical' ? 1 / 1 : 16 / 9}>
         <VideoPlayer
           progressiveSrc={item.media.streamUrl}
           poster={item.media.coverUrl ?? undefined}
