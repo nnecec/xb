@@ -30,6 +30,11 @@ import {
   type ProfileInfoPayload,
 } from '@/features/weibo/services/adapters/profile'
 import {
+  adaptSearchResponse,
+  SearchPayload,
+  type SearchResult,
+} from '@/features/weibo/services/adapters/search'
+import {
   adaptStatusCommentsResponse,
   adaptStatusDetailResponse,
 } from '@/features/weibo/services/adapters/status'
@@ -383,4 +388,11 @@ export async function loadHotSearch(): Promise<HotSearchPage> {
     last_tab: 'hot',
   })
   return adaptHotSearchResponse(payload)
+}
+
+export async function loadSearch(query: string): Promise<SearchResult> {
+  const payload = await wbGet<SearchPayload>(WEIBO_ENDPOINTS.searchSide, {
+    q: query,
+  })
+  return adaptSearchResponse(payload)
 }

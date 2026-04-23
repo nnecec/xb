@@ -9,6 +9,7 @@ import {
   loadHomeTimeline,
   loadMentions,
   loadProfilePosts,
+  loadSearch,
   type HomeTimelineTab,
 } from '@/features/weibo/services/weibo-repository'
 
@@ -82,4 +83,13 @@ export const hotSearchQueryOptions = {
   queryFn: () => loadHotSearch(),
   staleTime: 5 * 60 * 1000,
   refetchInterval: 10 * 60 * 1000,
+}
+
+export function searchQueryOptions(query: string) {
+  return {
+    queryKey: ['weibo', 'search', query] as const,
+    queryFn: () => loadSearch(query),
+    enabled: query.trim().length > 0,
+    staleTime: 0,
+  }
 }

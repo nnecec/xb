@@ -19,6 +19,7 @@ export const WEIBO_ENDPOINTS = {
   followCreate: '/ajax/friendships/create',
   followDestroy: '/ajax/friendships/destory',
   searchBand: '/ajax/side/searchBand',
+  searchSide: '/ajax/side/search',
   favoritesAll: '/ajax/favorites/all_fav',
   createFavorites: '/ajax/statuses/createFavorites',
   destroyFavorites: '/ajax/statuses/destoryFavorites',

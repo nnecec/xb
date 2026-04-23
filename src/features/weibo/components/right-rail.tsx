@@ -3,6 +3,7 @@ import { CircleDot } from 'lucide-react'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { HotSearchCard } from '@/features/weibo/components/hotsearch-list'
+import { SearchCard } from '@/features/weibo/components/search-card'
 import { useAppSettings } from '@/lib/app-settings-store'
 
 export function RightRail() {
@@ -10,6 +11,7 @@ export function RightRail() {
 
   return (
     <div className="flex w-full flex-col gap-4">
+      <SearchCard />
       {showHotSearchCard && <HotSearchCard className="gap-2 p-2" />}
 
       <Card className="py-4">
