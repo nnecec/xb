@@ -67,7 +67,7 @@ export function SearchCard({ className }: SearchCardProps) {
     setOpen(false)
   }
 
-  const topHotQueries = searchQuery.data?.hotQueries.slice(0, 5) ?? []
+  const topHotQueries = searchQuery.data?.hotQueries.slice(0, 10) ?? []
   const users = searchQuery.data?.users ?? []
   const hasResults = topHotQueries.length > 0 || users.length > 0
 
@@ -144,10 +144,13 @@ export function SearchCard({ className }: SearchCardProps) {
                         <AvatarFallback>{user.name[0]}</AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">
-                        <div className="truncate text-sm font-medium">{user.name}</div>
-                        <div className="text-muted-foreground truncate text-xs">
-                          {user.followers_count_str} 粉丝
+                        <div className="truncate text-sm font-medium">
+                          {user.name}
+                          <span className="text-muted-foreground ml-2 truncate text-xs">
+                            {user.followers_count_str} 粉丝
+                          </span>
                         </div>
+
                         <div className="text-muted-foreground truncate text-xs">
                           {user.description}
                         </div>
