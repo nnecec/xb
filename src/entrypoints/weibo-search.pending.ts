@@ -1,7 +1,7 @@
-// import '@/features/weibo/content/weibo-search-overrides.css'
-import { markWeiboPageReady } from '@/features/weibo/content/page-takeover'
 import { resolveIsDarkMode } from '@/lib/app-settings'
 import { getAppSettingsStore } from '@/lib/app-settings-store'
+// import '@/lib/weibo/content/weibo-search-overrides.css'
+import { markWeiboPageReady } from '@/lib/weibo/content/page-takeover'
 
 /**
  * Runs at document_idle on s.weibo.com pages (SSR — no React injection).

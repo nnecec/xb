@@ -1,10 +1,10 @@
 # xb
 
-🥷 xb - Make weibo X-liked and simpler.
+🥷 xb - Make Weibo more like X and simpler..
 
 [English](./README.md)
 
-![preview](./assets/weibo.com_1783497251_QArOv1yd0.jpeg)
+![preview](./assets/weibo.com_v0.6.0.jpeg)
 
 xb 帮你去除噪音，打造一个专注、无干扰的阅读体验——就像 X（Twitter）那样清爽。
 

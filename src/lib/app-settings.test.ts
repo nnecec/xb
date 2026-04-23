@@ -52,6 +52,7 @@ describe('app-settings', () => {
       fontFamilyClass: 'font-serif',
       showHotSearchCard: false,
       collapseRepliesEnabled: false,
+      darkModeImageDim: false,
     })
 
     await persistAppSettings(
@@ -62,6 +63,7 @@ describe('app-settings', () => {
         fontFamilyClass: 'font-serif',
         showHotSearchCard: true,
         collapseRepliesEnabled: false,
+        darkModeImageDim: false,
       },
       storage,
     )
@@ -73,6 +75,7 @@ describe('app-settings', () => {
       fontFamilyClass: 'font-serif',
       showHotSearchCard: true,
       collapseRepliesEnabled: false,
+      darkModeImageDim: false,
     })
   })
 
