@@ -59,10 +59,12 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const fontFamilyClass = useAppSettings((s) => s.fontFamilyClass)
   const showHotSearchCard = useAppSettings((s) => s.showHotSearchCard)
   const collapseRepliesEnabled = useAppSettings((s) => s.collapseRepliesEnabled)
+  const darkModeImageDim = useAppSettings((s) => s.darkModeImageDim)
   const setFontSizeClass = useAppSettings((s) => s.setFontSizeClass)
   const setFontFamilyClass = useAppSettings((s) => s.setFontFamilyClass)
   const setShowHotSearchCard = useAppSettings((s) => s.setShowHotSearchCard)
   const setCollapseRepliesEnabled = useAppSettings((s) => s.setCollapseRepliesEnabled)
+  const setDarkModeImageDim = useAppSettings((s) => s.setDarkModeImageDim)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -118,6 +120,13 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             <Switch
               checked={collapseRepliesEnabled}
               onCheckedChange={(checked) => setCollapseRepliesEnabled(checked)}
+            />
+          </Field>
+
+          <Field label="深色模式图片蒙版" description="深色模式下为小图添加变暗效果">
+            <Switch
+              checked={darkModeImageDim}
+              onCheckedChange={(checked) => setDarkModeImageDim(checked)}
             />
           </Field>
 

@@ -12,6 +12,7 @@ export interface AppSettings {
   fontFamilyClass: FontFamilyClass
   showHotSearchCard: boolean
   collapseRepliesEnabled: boolean
+  darkModeImageDim: boolean
 }
 
 export interface AppSettingsStorageArea {
@@ -28,6 +29,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   fontFamilyClass: 'font-sans',
   showHotSearchCard: true,
   collapseRepliesEnabled: false,
+  darkModeImageDim: false,
 }
 
 function isAppTheme(value: unknown): value is AppTheme {
@@ -94,6 +96,10 @@ export function normalizeAppSettings(value: unknown): AppSettings {
       typeof candidate.collapseRepliesEnabled === 'boolean'
         ? candidate.collapseRepliesEnabled
         : DEFAULT_APP_SETTINGS.collapseRepliesEnabled,
+    darkModeImageDim:
+      typeof candidate.darkModeImageDim === 'boolean'
+        ? candidate.darkModeImageDim
+        : DEFAULT_APP_SETTINGS.darkModeImageDim,
   }
 }
 
