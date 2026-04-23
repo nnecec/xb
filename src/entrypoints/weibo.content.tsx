@@ -2,11 +2,11 @@ import '../assets/global.css'
 import { createRoot, type Root } from 'react-dom/client'
 
 import { setUiPortalContainer } from '@/components/ui/portal'
-import { AppRoot } from '@/features/weibo/app/app-root'
-import { waitForWeiboHostRegions } from '@/features/weibo/content/host-selectors'
-import { markWeiboPageReady } from '@/features/weibo/content/page-takeover'
-import { bindShellState } from '@/features/weibo/content/shell-state'
 import { getAppSettingsStore } from '@/lib/app-settings-store'
+import { AppRoot } from '@/lib/weibo/app/app-root'
+import { waitForWeiboHostRegions } from '@/lib/weibo/content/host-selectors'
+import { markWeiboPageReady } from '@/lib/weibo/content/page-takeover'
+import { bindShellState } from '@/lib/weibo/content/shell-state'
 
 import sonnerStyles from 'sonner/dist/styles.css?raw'
 

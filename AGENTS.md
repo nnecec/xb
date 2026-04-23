@@ -34,19 +34,19 @@ src/
 │   ├── weibo-hide.content.ts  # Hides original Weibo UI
 │   └── options/          # Options page
 │       └── theme.ts      # Theme settings
-├── features/weibo/       # Core feature code
-│   ├── app/              # App shell, root, layout components
-│   ├── components/       # Feature-specific components
-│   ├── pages/            # Page-level components (home, profile, status)
-│   ├── services/         # API clients, adapters, repositories
-│   ├── models/           # Data models
-│   ├── route/            # Router sync, page descriptors, URL parsing
-│   ├── content/          # Host selectors, shell state, page takeover
-│   ├── inject/           # Script injection (history bridge)
-│   ├── platform/         # Platform-specific code (messages, current user)
-│   └── utils/            # Utility functions (transform, date, etc.)
-├── components/ui/        # shadcn/ui components
-└── lib/                  # Core: utils, settings store (Zustand)
+├── lib/             # Core: utils, settings store (Zustand)
+│   └── weibo/            # Core weibo feature code
+│        ├── app/              # App shell, root, layout components
+│        ├── components/       # Feature-specific components
+│        ├── pages/            # Page-level components (home, profile, status)
+│        ├── services/         # API clients, adapters, repositories
+│        ├── models/           # Data models
+│        ├── route/            # Router sync, page descriptors, URL parsing
+│        ├── content/          # Host selectors, shell state, page takeover
+│        ├── inject/           # Script injection (history bridge)
+│        ├── platform/         # Platform-specific code (messages, current user)
+│        └── utils/            # Utility functions (transform, date, etc.)
+└── components/ui/        # shadcn/ui components
 ```
 
 ## Architecture Notes
@@ -59,20 +59,27 @@ src/
 - **Settings Store**: Zustand store (`src/lib/app-settings-store.ts`) that
   persists to `chrome.storage`. Must call `hydrate()` before use.
 - **API Layer**: Axios-based client with adapters in
-  `features/weibo/services/adapters/` that transform Weibo's API responses into
+  `lib/weibo/services/adapters/` that transform Weibo's API responses into
+
+  `li/weibo/services/adapters/` that transform Weibo's API responses into
   internal models.
 
 ## Key Patterns
 
-- **Host selectors** in `features/weibo/content/host-selectors.ts` wait for
-  Weibo DOM elements before mounting
-- **Shell state** (`features/weibo/content/shell-state.ts`) binds React app to
+- **Host selectors** in `lib/weibo/content/host-selectors.ts` wait for
+- **Host selecs tors** in `li/weibo/content/host-selectors.ts` wait for Weibo
+  DOM elements before mounting
+- **Shell state** (`lib/weibo/content/shell-state.ts`) binds React app to
+- \**Shell state*r \* (`li/weibo/content/shell-state.ts`) binds React app to
   Weibo's existing DOM structure
-- **Page takeover** (`features/weibo/content/page-takeover.ts`) marks pages as
+- **Page takeover** (`lib/weibo/content/page-takeover.ts`) marks pages as
+- \*_Page takeover_( \* (`li/weibo/content/page-takeover.ts`) marks pages as
   handled
-- **Router sync** (`features/weibo/route/router-sync.ts`) keeps extension in
-  sync with Weibo's navigation
-- **URL parsing** (`features/weibo/route/parse-weibo-url.ts`) parses Weibo URLs
+- **Router sync** (`lib/weibo/route/router-sync.ts`) keeps extension in
+- \**Router sync*r \* (`li/weibo/route/router-sync.ts`) keeps extension in sync
+  with Weibo's navigation
+- **URL parsing** (`lib/weibo/route/parse-weibo-url.ts`) parses Weibo URLs
+- **URL parsing** \* (`li/weibo/route/parse-weibo-url.ts`) parses Weibo URLs
   into page descriptors
 
 ## Component Patterns
@@ -105,7 +112,9 @@ const followMutation = useMutation({
 
 ### Profile Components
 
-Profile 页面共享组件在 `features/weibo/components/profile-shared.tsx`：
+Profile 页面共享组件在
+`lib/weibo/components/profile-shared.tsx`：Profile 页面共享组n 件在
+`li/weibo/components/profile-shared.tsx`：
 
 - `ProfileBanner` - 横幅图片或备用背景
 - `ProfileMutualFollowers` - 共同关注者头像列表

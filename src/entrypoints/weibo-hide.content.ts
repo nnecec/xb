@@ -1,4 +1,4 @@
-import '@/features/weibo/content/weibo-anti-flash.css'
+import '@/lib/weibo/content/weibo-anti-flash.css'
 
 /**
  * Hides Weibo's native UI until the React app is ready.

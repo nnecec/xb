@@ -1,0 +1,116 @@
+import { useQueryClient } from '@tanstack/react-query'
+import { useRef, useState } from 'react'
+import { Outlet, useNavigate } from 'react-router'
+
+import { useAppSettings } from '@/lib/app-settings-store'
+import { RewritePausedCard, ShellFrame } from '@/lib/weibo/app/app-shell-layout'
+import { CommentModal } from '@/lib/weibo/components/comment-modal'
+import { SettingsDialog } from '@/lib/weibo/components/settings-dialog'
+import type { ComposeTarget } from '@/lib/weibo/models/compose'
+import type { StatusDetailNavigationItem } from '@/lib/weibo/models/feed'
+import { useWeiboPage } from '@/lib/weibo/route/use-weibo-page'
+
+function getHomeTimelinePath(tab: 'for-you' | 'following') {
+  return tab === 'following' ? '/mygroups' : '/'
+}
+
+export interface AppShellContext {
+  page: ReturnType<typeof useWeiboPage>
+  navigateToStatusDetail: (item: StatusDetailNavigationItem) => void
+  resetMainScroll: () => void
+  composeTarget: ComposeTarget | null
+  setComposeTarget: (target: ComposeTarget | null) => void
+  viewingProfileUserId: string | null
+  onProfileUserIdChange: (userId: string | null) => void
+  onHomeTabChange: (tab: 'for-you' | 'following') => void
+  refreshTimeline: () => void
+}
+
+export function AppShell() {
+  const navigate = useNavigate()
+  const page = useWeiboPage()
+  const queryClient = useQueryClient()
+
+  const theme = useAppSettings((state) => state.theme)
+  const rewriteEnabled = useAppSettings((state) => state.rewriteEnabled)
+  const setRewriteEnabled = useAppSettings((state) => state.setRewriteEnabled)
+  const setTheme = useAppSettings((state) => state.setTheme)
+  const [composeTarget, setComposeTarget] = useState<ComposeTarget | null>(null)
+  const [viewingProfileUserId, setViewingProfileUserId] = useState<string | null>(null)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const mainRef = useRef<HTMLDivElement | null>(null)
+
+  const resetMainScroll = () => {
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0
+    }
+  }
+
+  const navigateToStatusDetail = (item: StatusDetailNavigationItem) => {
+    const statusId = item.mblogId ?? item.id
+    if (!item.author.id || !statusId) {
+      return
+    }
+    navigate(`/${item.author.id}/${statusId}`)
+  }
+
+  const refreshTimeline = () => {
+    void queryClient.invalidateQueries({ queryKey: ['weibo', 'timeline'] })
+  }
+
+  const context: AppShellContext = {
+    page,
+    navigateToStatusDetail,
+    resetMainScroll,
+    composeTarget,
+    setComposeTarget,
+    viewingProfileUserId,
+    onProfileUserIdChange: setViewingProfileUserId,
+    onHomeTabChange: (tab) => navigate(getHomeTimelinePath(tab)),
+    refreshTimeline,
+  }
+
+  const composeModal = (
+    <CommentModal
+      open={composeTarget !== null}
+      target={composeTarget}
+      onOpenChange={(open) => {
+        if (!open) {
+          setComposeTarget(null)
+        }
+      }}
+    />
+  )
+
+  if (!rewriteEnabled) {
+    return (
+      <>
+        <RewritePausedCard onResume={() => void setRewriteEnabled(true)} />
+        {composeModal}
+      </>
+    )
+  }
+
+  return (
+    <ShellFrame
+      pageKind={page.kind}
+      viewingProfileUserId={viewingProfileUserId}
+      rewriteEnabled={rewriteEnabled}
+      theme={theme}
+      onRewriteEnabledChange={(enabled: boolean) => {
+        setRewriteEnabled(enabled)
+        if (!enabled) {
+          window.location.reload()
+        }
+      }}
+      onThemeChange={(nextTheme: typeof theme) => void setTheme(nextTheme)}
+      onRefresh={refreshTimeline}
+      onSettingsOpen={() => setSettingsOpen(true)}
+      mainRef={mainRef}
+    >
+      <Outlet context={context} />
+      {composeModal}
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+    </ShellFrame>
+  )
+}
