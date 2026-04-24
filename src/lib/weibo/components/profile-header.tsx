@@ -68,7 +68,7 @@ function ProfileMetadata({ profile }: { profile: UserProfile }) {
       <div className="mt-3 flex items-center gap-5 text-sm">
         {profile.friendsCount != null ? (
           <span className="text-muted-foreground">
-            <span className="text-foreground font-bold">
+            <span className="text-foreground font-bold tabular-nums">
               {formatProfileCount(profile.friendsCount)}
             </span>{' '}
             正在关注
@@ -76,7 +76,7 @@ function ProfileMetadata({ profile }: { profile: UserProfile }) {
         ) : null}
         {profile.followersCount != null ? (
           <span className="text-muted-foreground">
-            <span className="text-foreground font-bold">
+            <span className="text-foreground font-bold tabular-nums">
               {formatProfileCount(profile.followersCount)}
             </span>{' '}
             粉丝
