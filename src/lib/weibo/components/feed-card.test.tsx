@@ -107,6 +107,7 @@ describe('FeedCard', () => {
                 mblogId: 'm501',
                 isLongText: true,
                 text: 'preview content',
+                createdAt: '2024-01-01',
                 createdAtLabel: 'today',
                 author: { id: '1', name: 'Alice', avatarUrl: null },
                 stats: { likes: 1, comments: 2, reposts: 3 },

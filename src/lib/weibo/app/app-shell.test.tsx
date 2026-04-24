@@ -157,6 +157,7 @@ describe('AppShell', () => {
         mblogId: '501',
         isLongText: false,
         text: 'main post',
+        createdAt: '2024-01-01',
         createdAtLabel: 'today',
         author: { id: '1', name: 'Alice', avatarUrl: null },
         stats: { likes: 1, comments: 1, reposts: 0 },
