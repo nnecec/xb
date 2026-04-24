@@ -74,6 +74,7 @@ export interface FeedItem {
   favorited?: boolean
   author: FeedAuthor
   text: string
+  createdAt: string
   createdAtLabel: string
   stats: FeedStats
   images: FeedImage[]

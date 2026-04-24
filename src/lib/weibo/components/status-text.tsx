@@ -19,7 +19,7 @@ function escapeRegExp(value: string) {
 const MENTION_PATTERN = /@([A-Za-z0-9_\u4e00-\u9fff-]+)(?=[:\s]|$)/g
 const EMOTICON_PATTERN = /\[[^[\]]+\]/g
 const REPLY_CHAIN_MARKER_PATTERN = /\/\/@([A-Za-z0-9_\u4e00-\u9fff-]+):/g
-const LINK_TEXT_CLASS_NAME = 'text-primary underline underline-offset-2'
+const LINK_TEXT_CLASS_NAME = 'underline underline-offset-2'
 const INLINE_EMOTICON_CLASS_NAME = 'inline h-[1.2em] w-auto align-[-0.22em]'
 const EMPTY_COMMENT_LABEL = 'No content.'
 const EMPTY_STATUS_LABEL = 'No text content.'

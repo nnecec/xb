@@ -22,6 +22,10 @@ export interface AppSettingsStoreState extends AppSettings {
   setShowHotSearchCard: (show: boolean) => Promise<void>
   setCollapseRepliesEnabled: (enabled: boolean) => Promise<void>
   setDarkModeImageDim: (enabled: boolean) => Promise<void>
+  setImageGenEnabled: (enabled: boolean) => Promise<void>
+  setImageGenShowDataArea: (show: boolean) => Promise<void>
+  setImageGenShowFullImages: (show: boolean) => Promise<void>
+  setImageGenShowWeiboLink: (show: boolean) => Promise<void>
 }
 
 export type AppSettingsStore = StoreApi<AppSettingsStoreState>
@@ -35,6 +39,10 @@ function toPersistedSettings(state: AppSettingsStoreState): AppSettings {
     showHotSearchCard: state.showHotSearchCard,
     collapseRepliesEnabled: state.collapseRepliesEnabled,
     darkModeImageDim: state.darkModeImageDim,
+    imageGenEnabled: state.imageGenEnabled,
+    imageGenShowDataArea: state.imageGenShowDataArea,
+    imageGenShowFullImages: state.imageGenShowFullImages,
+    imageGenShowWeiboLink: state.imageGenShowWeiboLink,
   }
 }
 
@@ -83,6 +91,18 @@ export function createAppSettingsStore(
       },
       async setDarkModeImageDim(darkModeImageDim) {
         await updateAndPersist({ darkModeImageDim })
+      },
+      async setImageGenEnabled(imageGenEnabled) {
+        await updateAndPersist({ imageGenEnabled })
+      },
+      async setImageGenShowDataArea(imageGenShowDataArea) {
+        await updateAndPersist({ imageGenShowDataArea })
+      },
+      async setImageGenShowFullImages(imageGenShowFullImages) {
+        await updateAndPersist({ imageGenShowFullImages })
+      },
+      async setImageGenShowWeiboLink(imageGenShowWeiboLink) {
+        await updateAndPersist({ imageGenShowWeiboLink })
       },
     }
   })

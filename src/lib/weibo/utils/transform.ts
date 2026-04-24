@@ -685,6 +685,7 @@ export function toFeedItem(status: WeiboStatus, includeRetweeted = true): FeedIt
     liked: Boolean(status.attitudes_status),
     favorited: Boolean(status.favorited),
     text: getStatusText(status),
+    createdAt: status.created_at ?? '',
     createdAtLabel: formatCreatedAt(status.created_at ?? ''),
     author: getStatusAuthor(status.user),
     stats: {
