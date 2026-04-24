@@ -7,10 +7,10 @@
 ![preview](./assets/weibo.com_v0.6.0.jpeg)
 
 xb strips away the noise and gives you a focused, distraction-free reading
-experience — similar to X (Twitter).
+experience — similar to X.
 
-xb runs directly in your browser. Once installed, simply browse Weibo as usual
-and enjoy the beautifully redesigned interface.
+xb is a chrome extension. Once installed, simply browse Weibo as usual and enjoy
+the beautifully redesigned interface.
 
 Visit [Landing Page](https://xb-extension.vercel.app/) for more.
 
@@ -20,10 +20,12 @@ Visit [Landing Page](https://xb-extension.vercel.app/) for more.
 
 ## Features
 
-1. ✨ **X like Style** — Clean, reading-first
-2. 🔓 **Fully Open Source** — No privacy concerns
-3. 🎯 **Focus on Reading** — Distraction-free feed
-4. 🚫 **No Interruptions** — No stickers, ads, or supertopics
+1. ✨ **X like Style** — Clean, reading-first.
+2. 🔓 **Fully Open Source** — No privacy concerns, open-source totally.
+3. 🎯 **Focus on Reading** — Distraction-free, clearly feed.
+4. 🚫 **No Interruptions** — No stickers, ads, or supertopics.
+5. 🆓 **Everything is Free** - No paid features.
+6. 🌠 **Take a shot** - Export Weibo as an image.
 
 ## Supported Pages
 
@@ -34,10 +36,11 @@ xb currently enhances the following pages:
 - [x] Weibo Detail
 - [x] Notifications
 - [x] Favorites
-- [ ] Explore/Search
-- [ ] Hot Timeline
+- [x] Search
+- [ ] Explore(hot topic)
+- [ ] Articles
 
 ## Credits
 
 - Inspired by [BewlyBewly](https://github.com/BewlyBewly/BewlyBewly)
-- [Linux Do](https://linux.do/)
+- [Linux Do](https://linux.do/) a friendly community

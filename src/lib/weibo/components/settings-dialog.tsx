@@ -76,7 +76,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           </VisuallyHidden>
         </DialogHeader>
 
-        <div className="flex flex-col gap-6 py-4">
+        <div className="flex flex-col gap-6 py-2">
           <Field label="字体大小" description="微博正文和评论的字体大小">
             <Select
               value={fontSizeClass}
@@ -129,28 +129,28 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               onCheckedChange={(checked) => setDarkModeImageDim(checked)}
             />
           </Field>
-
-          {version && (
-            <div className="flex items-center justify-between border-t pt-4">
-              <a
-                href="https://xb-extension.vercel.app/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground text-xs transition-colors"
-              >
-                xb v{version}
-              </a>
-              <a
-                href="https://github.com/nnecec"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground text-xs transition-colors"
-              >
-                by nnecec
-              </a>
-            </div>
-          )}
         </div>
+
+        {version && (
+          <div className="flex items-center justify-between border-t pt-4">
+            <a
+              href="https://xb-extension.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground text-xs transition-colors"
+            >
+              xb v{version}
+            </a>
+            <a
+              href="https://github.com/nnecec"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground text-xs transition-colors"
+            >
+              by nnecec
+            </a>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )

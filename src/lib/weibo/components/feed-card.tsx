@@ -510,6 +510,7 @@ export function FeedCard({
       <FeedCardMoreMenu
         type="status"
         isOwner={showOwnerMenu}
+        item={resolvedItem}
         favorited={resolvedItem.favorited}
         onFavorite={() => favoriteMutation.mutateAsync()}
         contentLabel="这条微博"

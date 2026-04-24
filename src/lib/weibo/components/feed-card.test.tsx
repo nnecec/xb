@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { APP_SETTINGS_STORAGE_KEY } from '@/lib/app-settings'
 import { getAppSettingsStore, resetAppSettingsStoreForTest } from '@/lib/app-settings-store'
 import { FeedCard } from '@/lib/weibo/components/feed-card'
+import { GenImageDialogProvider } from '@/lib/weibo/components/gen-image-dialog-context'
 import type { FeedItem } from '@/lib/weibo/models/feed'
 import { loadStatusLongText } from '@/lib/weibo/services/weibo-repository'
 
@@ -29,6 +30,18 @@ vi.mock('@/lib/weibo/hooks/use-font-settings', () => ({
     fontFamily: '',
   }),
 }))
+
+vi.mock('@/lib/weibo/components/gen-image-dialog-context', async () => {
+  const actual = await vi.importActual('@/lib/weibo/components/gen-image-dialog-context')
+  return {
+    ...actual,
+    useGenImageDialog: () => ({
+      openGenImage: vi.fn(),
+      closeGenImage: vi.fn(),
+      genImageItem: null,
+    }),
+  }
+})
 
 describe('FeedCard', () => {
   beforeEach(() => {
@@ -87,24 +100,27 @@ describe('FeedCard', () => {
     render(
       <QueryClientProvider client={queryClient}>
         <MemoryRouter>
-          <FeedCard
-            item={{
-              id: '501',
-              mblogId: 'm501',
-              isLongText: true,
-              text: 'preview content',
-              createdAtLabel: 'today',
-              author: { id: '1', name: 'Alice', avatarUrl: null },
-              stats: { likes: 1, comments: 2, reposts: 3 },
-              images: [],
-              media: null,
-              regionName: '',
-              source: '',
-            }}
-            onNavigate={onNavigate}
-            onCommentClick={onCommentClick}
-            onRepostClick={onRepostClick}
-          />
+          <GenImageDialogProvider>
+            <FeedCard
+              item={{
+                id: '501',
+                mblogId: 'm501',
+                isLongText: true,
+                text: 'preview content',
+                createdAt: '2024-01-01',
+                createdAtLabel: 'today',
+                author: { id: '1', name: 'Alice', avatarUrl: null },
+                stats: { likes: 1, comments: 2, reposts: 3 },
+                images: [],
+                media: null,
+                regionName: '',
+                source: '',
+              }}
+              onNavigate={onNavigate}
+              onCommentClick={onCommentClick}
+              onRepostClick={onRepostClick}
+            />
+          </GenImageDialogProvider>
         </MemoryRouter>
       </QueryClientProvider>,
     )

@@ -1,4 +1,4 @@
-import { MoreHorizontal, Star } from 'lucide-react'
+import { Image, MoreHorizontal, Star } from 'lucide-react'
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -17,12 +17,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
+import { useGenImageDialog } from '@/lib/weibo/components/gen-image-dialog-context'
+import type { FeedItem } from '@/lib/weibo/models/feed'
 
 export type ContentType = 'status' | 'comment'
 
 export interface FeedCardMoreMenuProps {
   type: ContentType
   isOwner: boolean
+  item?: FeedItem
   favorited?: boolean
   onFavorite?: () => void | Promise<void>
   onDelete: () => void | Promise<void>
@@ -34,6 +37,7 @@ export interface FeedCardMoreMenuProps {
 export function FeedCardMoreMenu({
   type,
   isOwner,
+  item,
   favorited = false,
   onFavorite,
   onDelete,
@@ -44,8 +48,10 @@ export function FeedCardMoreMenu({
   const [menuOpen, setMenuOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [favoriteLoading, setFavoriteLoading] = useState(false)
+  const { openGenImage } = useGenImageDialog()
 
   const showFavorite = type === 'status' && onFavorite !== undefined
+  const showGenImage = item && type === 'status'
 
   return (
     <>
@@ -62,7 +68,22 @@ export function FeedCardMoreMenu({
             <MoreHorizontal className="size-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" onCloseAutoFocus={(event) => event.preventDefault()}>
+        <DropdownMenuContent
+          align="end"
+          onCloseAutoFocus={(event) => event.preventDefault()}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {showGenImage ? (
+            <DropdownMenuItem
+              onSelect={() => {
+                setMenuOpen(false)
+                openGenImage(item!)
+              }}
+            >
+              <Image className="mr-2 size-4" />
+              生图
+            </DropdownMenuItem>
+          ) : null}
           {showFavorite && (
             <DropdownMenuItem
               onSelect={() => {

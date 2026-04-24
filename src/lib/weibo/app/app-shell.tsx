@@ -5,6 +5,8 @@ import { Outlet, useNavigate } from 'react-router'
 import { useAppSettings } from '@/lib/app-settings-store'
 import { RewritePausedCard, ShellFrame } from '@/lib/weibo/app/app-shell-layout'
 import { CommentModal } from '@/lib/weibo/components/comment-modal'
+import { GenImageDialog } from '@/lib/weibo/components/gen-image-dialog'
+import { GenImageDialogProvider } from '@/lib/weibo/components/gen-image-dialog-context'
 import { SettingsDialog } from '@/lib/weibo/components/settings-dialog'
 import type { ComposeTarget } from '@/lib/weibo/models/compose'
 import type { StatusDetailNavigationItem } from '@/lib/weibo/models/feed'
@@ -92,25 +94,28 @@ export function AppShell() {
   }
 
   return (
-    <ShellFrame
-      pageKind={page.kind}
-      viewingProfileUserId={viewingProfileUserId}
-      rewriteEnabled={rewriteEnabled}
-      theme={theme}
-      onRewriteEnabledChange={(enabled: boolean) => {
-        setRewriteEnabled(enabled)
-        if (!enabled) {
-          window.location.reload()
-        }
-      }}
-      onThemeChange={(nextTheme: typeof theme) => void setTheme(nextTheme)}
-      onRefresh={refreshTimeline}
-      onSettingsOpen={() => setSettingsOpen(true)}
-      mainRef={mainRef}
-    >
-      <Outlet context={context} />
-      {composeModal}
-      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
-    </ShellFrame>
+    <GenImageDialogProvider>
+      <ShellFrame
+        pageKind={page.kind}
+        viewingProfileUserId={viewingProfileUserId}
+        rewriteEnabled={rewriteEnabled}
+        theme={theme}
+        onRewriteEnabledChange={(enabled: boolean) => {
+          setRewriteEnabled(enabled)
+          if (!enabled) {
+            window.location.reload()
+          }
+        }}
+        onThemeChange={(nextTheme: typeof theme) => void setTheme(nextTheme)}
+        onRefresh={refreshTimeline}
+        onSettingsOpen={() => setSettingsOpen(true)}
+        mainRef={mainRef}
+      >
+        <Outlet context={context} />
+        {composeModal}
+        <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+        <GenImageDialog />
+      </ShellFrame>
+    </GenImageDialogProvider>
   )
 }

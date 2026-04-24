@@ -13,6 +13,10 @@ export interface AppSettings {
   showHotSearchCard: boolean
   collapseRepliesEnabled: boolean
   darkModeImageDim: boolean
+  imageGenEnabled: boolean
+  imageGenShowDataArea: boolean
+  imageGenShowFullImages: boolean
+  imageGenShowWeiboLink: boolean
 }
 
 export interface AppSettingsStorageArea {
@@ -30,6 +34,10 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   showHotSearchCard: true,
   collapseRepliesEnabled: false,
   darkModeImageDim: false,
+  imageGenEnabled: true,
+  imageGenShowDataArea: true,
+  imageGenShowFullImages: false,
+  imageGenShowWeiboLink: false,
 }
 
 function isAppTheme(value: unknown): value is AppTheme {
@@ -100,6 +108,22 @@ export function normalizeAppSettings(value: unknown): AppSettings {
       typeof candidate.darkModeImageDim === 'boolean'
         ? candidate.darkModeImageDim
         : DEFAULT_APP_SETTINGS.darkModeImageDim,
+    imageGenEnabled:
+      typeof candidate.imageGenEnabled === 'boolean'
+        ? candidate.imageGenEnabled
+        : DEFAULT_APP_SETTINGS.imageGenEnabled,
+    imageGenShowDataArea:
+      typeof candidate.imageGenShowDataArea === 'boolean'
+        ? candidate.imageGenShowDataArea
+        : DEFAULT_APP_SETTINGS.imageGenShowDataArea,
+    imageGenShowFullImages:
+      typeof candidate.imageGenShowFullImages === 'boolean'
+        ? candidate.imageGenShowFullImages
+        : DEFAULT_APP_SETTINGS.imageGenShowFullImages,
+    imageGenShowWeiboLink:
+      typeof candidate.imageGenShowWeiboLink === 'boolean'
+        ? candidate.imageGenShowWeiboLink
+        : DEFAULT_APP_SETTINGS.imageGenShowWeiboLink,
   }
 }
 

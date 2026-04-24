@@ -30,7 +30,7 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
             <PhotoView key={index} src={image.largeUrl}>
               <div className="border-foreground/10 relative overflow-hidden rounded-xl border">
                 {darkModeImageDim && (
-                  <div className="absolute top-0 right-0 bottom-0 left-0 dark:bg-neutral-500/20" />
+                  <div className="absolute top-0 right-0 bottom-0 left-0 dark:bg-neutral-500/25" />
                 )}
                 <img
                   src={image.thumbnailUrl}

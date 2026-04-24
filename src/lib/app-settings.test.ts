@@ -53,6 +53,10 @@ describe('app-settings', () => {
       showHotSearchCard: false,
       collapseRepliesEnabled: false,
       darkModeImageDim: false,
+      imageGenEnabled: true,
+      imageGenShowDataArea: true,
+      imageGenShowFullImages: false,
+      imageGenShowWeiboLink: false,
     })
 
     await persistAppSettings(
@@ -64,6 +68,10 @@ describe('app-settings', () => {
         showHotSearchCard: true,
         collapseRepliesEnabled: false,
         darkModeImageDim: false,
+        imageGenEnabled: true,
+        imageGenShowDataArea: true,
+        imageGenShowFullImages: false,
+        imageGenShowWeiboLink: false,
       },
       storage,
     )
@@ -76,6 +84,10 @@ describe('app-settings', () => {
       showHotSearchCard: true,
       collapseRepliesEnabled: false,
       darkModeImageDim: false,
+      imageGenEnabled: true,
+      imageGenShowDataArea: true,
+      imageGenShowFullImages: false,
+      imageGenShowWeiboLink: false,
     })
   })
 
