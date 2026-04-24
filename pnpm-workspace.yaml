@@ -1,4 +1,0 @@
-allowBuilds:
-  esbuild: true
-  msw: true
-  spawn-sync: true
