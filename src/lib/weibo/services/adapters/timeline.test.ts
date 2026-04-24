@@ -41,6 +41,7 @@ describe('adaptTimelineResponse', () => {
           favorited: false,
           mblogId: null,
           text: 'hello world',
+          createdAt: 'Tue Apr 08 10:00:00 +0800 2026',
           createdAtLabel: '10:00',
           author: {
             id: '1969776354',
@@ -91,6 +92,7 @@ describe('adaptTimelineResponse', () => {
           favorited: false,
           mblogId: null,
           text: 'nested payload',
+          createdAt: '',
           createdAtLabel: '',
           author: {
             id: '42',
@@ -133,6 +135,7 @@ describe('adaptTimelineResponse', () => {
           favorited: false,
           mblogId: null,
           text: 'last page item',
+          createdAt: '',
           createdAtLabel: '',
           author: {
             id: '1',
