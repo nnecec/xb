@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { useAppSettings } from '@/lib/app-settings-store'
+import { cn } from '@/lib/utils'
 import { UserAvatar } from '@/lib/weibo/components/user-presenter'
 import type { FeedItem } from '@/lib/weibo/models/feed'
 import { formatWeiboCount } from '@/lib/weibo/utils/format-weibo-count'
@@ -18,6 +19,63 @@ import { formatWeiboCount } from '@/lib/weibo/utils/format-weibo-count'
 import { StatusText } from './status-text'
 
 export type GenImageCardTheme = 'light' | 'dark'
+
+function GenImageCardActions({
+  item,
+  className,
+}: {
+  item: Pick<FeedItem, 'stats'>
+  className?: string
+}) {
+  return (
+    <div className={cn('flex w-full gap-2 text-xs', className)}>
+      <div className="flex items-center gap-1.5 py-2">
+        <MessageCircle className="size-3.5" />
+        <span>{formatWeiboCount(item.stats.comments)}</span>
+      </div>
+      <div className="flex items-center gap-1.5 py-2">
+        <Repeat2 className="size-3.5" />
+        <span>{formatWeiboCount(item.stats.reposts)}</span>
+      </div>
+      <div className="flex items-center gap-1.5 py-2">
+        <Heart className="size-3.5" />
+        <span>{formatWeiboCount(item.stats.likes)}</span>
+      </div>
+    </div>
+  )
+}
+
+function RetweetedGenImageCard({ item }: { item: NonNullable<FeedItem['retweetedStatus']> }) {
+  return (
+    <Card className="gap-3 py-4">
+      <CardHeader className="grid grid-cols-[36px_minmax(0,1fr)] gap-2 px-4">
+        <UserAvatar
+          author={item.author}
+          sizeClassName="size-9"
+          fallbackClassName="text-xs font-semibold"
+        />
+        <div className="flex min-w-0 flex-col gap-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="truncate text-sm font-medium">{item.author.name}</span>
+            <span className="text-muted-foreground text-xs">
+              {format(item.createdAt, 'yyyy-MM-dd HH:mm')}
+            </span>
+          </div>
+          <p className="text-xs">
+            {item.source ? `${item.source}` : ''} {item.regionName ? `${item.regionName}` : ''}
+          </p>
+        </div>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4 px-4">
+        <div className="text-sm leading-6 whitespace-pre-wrap">
+          <StatusText item={item} text={item.text} />
+        </div>
+        <GenImageCardFullImages images={item.images} />
+        <GenImageCardActions item={item} />
+      </CardContent>
+    </Card>
+  )
+}
 
 interface GenImageCardProps {
   item: FeedItem
@@ -27,7 +85,6 @@ interface GenImageCardProps {
 
 export const GenImageCard = React.forwardRef<HTMLDivElement, GenImageCardProps>(
   function GenImageCard({ item, theme = 'light' }, ref) {
-    const imageGenShowFullImages = useAppSettings((s) => s.imageGenShowFullImages)
     const imageGenShowDataArea = useAppSettings((s) => s.imageGenShowDataArea)
     const imageGenShowWeiboLink = useAppSettings((s) => s.imageGenShowWeiboLink)
 
@@ -38,12 +95,16 @@ export const GenImageCard = React.forwardRef<HTMLDivElement, GenImageCardProps>(
             '--foreground': 'oklch(0.985 0 0)',
             '--card': 'oklch(0.145 0 0)',
             '--card-foreground': 'oklch(0.985 0 0)',
+            '--muted': 'oklch(0.269 0 0)',
+            '--muted-foreground': 'oklch(0.708 0 0)',
           } as React.CSSProperties)
         : ({
             '--background': 'oklch(1 0 0)',
             '--foreground': 'oklch(0.145 0 0)',
             '--card': 'oklch(1 0 0)',
             '--card-foreground': 'oklch(0.145 0 0)',
+            '--muted': 'oklch(0.97 0 0)',
+            '--muted-foreground': 'oklch(0.556 0 0)',
           } as React.CSSProperties)
 
     return (
@@ -69,7 +130,8 @@ export const GenImageCard = React.forwardRef<HTMLDivElement, GenImageCardProps>(
           </CardHeader>
           <CardContent className="flex flex-col gap-4 px-4">
             <StatusText item={item} text={item.text} />
-            <GenImageCardFullImages images={item.images} showFullImages={imageGenShowFullImages} />
+            <GenImageCardFullImages images={item.images} />
+            {item.retweetedStatus ? <RetweetedGenImageCard item={item.retweetedStatus} /> : null}
           </CardContent>
           {imageGenShowDataArea && (
             <CardFooter className="flex flex-col gap-1 px-4">
@@ -90,36 +152,18 @@ export const GenImageCard = React.forwardRef<HTMLDivElement, GenImageCardProps>(
   },
 )
 
-function GenImageCardActions({ item }: { item: Pick<FeedItem, 'stats'> }) {
-  return (
-    <div className="text-muted-foreground flex w-full gap-2 text-xs">
-      <div className="flex items-center gap-1.5 py-2">
-        <MessageCircle className="size-3.5" />
-        <span>{formatWeiboCount(item.stats.comments)}</span>
-      </div>
-      <div className="flex items-center gap-1.5 py-2">
-        <Repeat2 className="size-3.5" />
-        <span>{formatWeiboCount(item.stats.reposts)}</span>
-      </div>
-      <div className="flex items-center gap-1.5 py-2">
-        <Heart className="size-3.5" />
-        <span>{formatWeiboCount(item.stats.likes)}</span>
-      </div>
-    </div>
-  )
-}
-
 interface GenImageCardFullImagesProps {
   images: FeedItem['images']
-  showFullImages: boolean
 }
 
-function GenImageCardFullImages({ images, showFullImages }: GenImageCardFullImagesProps) {
+function GenImageCardFullImages({ images }: GenImageCardFullImagesProps) {
+  const imageGenShowFullImages = useAppSettings((s) => s.imageGenShowFullImages)
+
   if (images.length === 0) {
     return null
   }
 
-  return showFullImages ? (
+  return imageGenShowFullImages ? (
     <div className="flex flex-col gap-2">
       {images.map((image) => (
         <div
