@@ -259,14 +259,14 @@ function FeedActions({
         type="button"
         variant="ghost"
         aria-label="回复微博"
-        className="group h-auto rounded-full py-2 font-normal hover:bg-sky-50 hover:text-sky-500"
+        className="group h-auto rounded-full py-2 font-normal transition-transform hover:bg-sky-50 hover:text-sky-500 active:scale-[0.96]"
         onClick={(event) => {
           event.stopPropagation()
           onCommentClick?.(item)
         }}
       >
         <MessageCircle className="size-3.5 transition-colors group-hover:text-sky-500" />
-        <span className="transition-colors group-hover:text-sky-500">
+        <span className="tabular-nums transition-colors group-hover:text-sky-500">
           {formatWeiboCount(item.stats.comments)}
         </span>
       </Button>
@@ -274,14 +274,14 @@ function FeedActions({
         type="button"
         variant="ghost"
         aria-label="转发微博"
-        className="group h-auto rounded-full py-2 font-normal hover:bg-emerald-50 hover:text-emerald-500"
+        className="group h-auto rounded-full py-2 font-normal transition-transform hover:bg-emerald-50 hover:text-emerald-500 active:scale-[0.96]"
         onClick={(event) => {
           event.stopPropagation()
           onRepostClick?.(item)
         }}
       >
         <Repeat2 className="size-3.5 transition-colors group-hover:text-emerald-500" />
-        <span className="transition-colors group-hover:text-emerald-500">
+        <span className="tabular-nums transition-colors group-hover:text-emerald-500">
           {formatWeiboCount(item.stats.reposts)}
         </span>
       </Button>
@@ -291,7 +291,7 @@ function FeedActions({
         aria-label={liked ? '取消点赞' : '点赞微博'}
         aria-pressed={liked}
         disabled={likePending}
-        className="group h-auto rounded-full py-2 font-normal hover:bg-rose-50 hover:text-rose-500"
+        className="group h-auto rounded-full py-2 font-normal transition-transform hover:bg-rose-50 hover:text-rose-500 active:scale-[0.96]"
         onClick={(event) => {
           event.stopPropagation()
           onLikeClick?.(item)
@@ -304,7 +304,10 @@ function FeedActions({
           )}
         />
         <span
-          className={cn('transition-colors group-hover:text-rose-500', liked && 'text-rose-500')}
+          className={cn(
+            'tabular-nums transition-colors group-hover:text-rose-500',
+            liked && 'text-rose-500',
+          )}
         >
           {formatWeiboCount(item.stats.likes)}
         </span>
