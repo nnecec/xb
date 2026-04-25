@@ -25,7 +25,7 @@ Visit [Landing Page](https://xb-extension.vercel.app/) for more.
 3. 🎯 **Focus on Reading** — Distraction-free, clearly feed.
 4. 🚫 **No Interruptions** — No stickers, ads, or supertopics.
 5. 🆓 **Everything is Free** - No paid features.
-6. 🌠 **Take a shot** - Export Weibo as an image.
+6. 📷 **Take a shot** - Export Weibo as an image.
 
 ## Supported Pages
 

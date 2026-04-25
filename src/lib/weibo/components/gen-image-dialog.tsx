@@ -9,11 +9,18 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
+  VisuallyHidden,
 } from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemTitle,
+} from '@/components/ui/item'
 import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
 import { useAppSettings } from '@/lib/app-settings-store'
@@ -99,93 +106,109 @@ export function GenImageDialog() {
 
   return (
     <Dialog open={genImageItem !== null} onOpenChange={closeGenImage}>
-      <DialogContent className="max-w-[640px]">
-        <DialogHeader>
-          <DialogTitle>生成图片</DialogTitle>
-        </DialogHeader>
+      <DialogContent className="gap-0 p-0 sm:max-w-fit">
+        <VisuallyHidden>
+          <DialogHeader>
+            <DialogTitle>生成图片</DialogTitle>
+          </DialogHeader>
+        </VisuallyHidden>
 
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex flex-col gap-1">
-              <Label>显示数据区域</Label>
-              <p className="text-muted-foreground text-xs">
-                在图片卡片底部显示评论、转发、点赞数据
-              </p>
+        <div className="flex p-4">
+          {/* Left: Settings */}
+          <div className="flex w-[240px] flex-col justify-between gap-4">
+            <ItemGroup>
+              <Item size="sm">
+                <ItemContent>
+                  <ItemTitle>数据区域</ItemTitle>
+                  <ItemDescription>显示评论、转发、点赞数据</ItemDescription>
+                </ItemContent>
+                <ItemActions>
+                  <Switch
+                    checked={imageGenShowDataArea}
+                    onCheckedChange={(checked) => setImageGenShowDataArea(checked)}
+                  />
+                </ItemActions>
+              </Item>
+              <Item size="sm">
+                <ItemContent>
+                  <ItemTitle>完整图片</ItemTitle>
+                  <ItemDescription>可能使图片过长</ItemDescription>
+                </ItemContent>
+                <ItemActions>
+                  <Switch
+                    checked={imageGenShowFullImages}
+                    onCheckedChange={(checked) => setImageGenShowFullImages(checked)}
+                  />
+                </ItemActions>
+              </Item>
+              <Item size="sm">
+                <ItemContent>
+                  <ItemTitle>微博链接</ItemTitle>
+                  <ItemDescription>显示微博的原文链接</ItemDescription>
+                </ItemContent>
+                <ItemActions>
+                  <Switch
+                    checked={imageGenShowWeiboLink}
+                    onCheckedChange={(checked) => setImageGenShowWeiboLink(checked)}
+                  />
+                </ItemActions>
+              </Item>
+              <Item size="sm">
+                <ItemContent>
+                  <ItemTitle>深色模式</ItemTitle>
+                </ItemContent>
+                <ItemActions>
+                  <Switch
+                    checked={imageGenTheme === 'dark'}
+                    onCheckedChange={(checked) => setImageGenTheme(checked ? 'dark' : 'light')}
+                  />
+                </ItemActions>
+              </Item>
+            </ItemGroup>
+
+            {/* Action buttons on the left side */}
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={copyMutation.isPending}
+                onClick={() => copyMutation.mutate()}
+                className="w-full"
+              >
+                {copyMutation.isPending ? <Spinner /> : <Copy />}
+                复制图片
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={saveMutation.isPending}
+                onClick={() => saveMutation.mutate()}
+                className="w-full"
+              >
+                {saveMutation.isPending ? <Spinner /> : <Save />}
+                保存图片
+              </Button>
+              <DialogClose asChild>
+                <Button variant="outline" className="col-span-2 w-full">
+                  取消
+                </Button>
+              </DialogClose>
             </div>
-            <Switch
-              checked={imageGenShowDataArea}
-              onCheckedChange={(checked) => setImageGenShowDataArea(checked)}
-            />
           </div>
 
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex flex-col gap-1">
-              <Label>展示完整图片</Label>
-              <p className="text-muted-foreground text-xs">展示完整的图片，可能使图片过长</p>
-            </div>
-            <Switch
-              checked={imageGenShowFullImages}
-              onCheckedChange={(checked) => setImageGenShowFullImages(checked)}
-            />
-          </div>
-
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex flex-col gap-1">
-              <Label>显示微博链接</Label>
-              <p className="text-muted-foreground text-xs">在图片卡片底部显示微博的原文链接</p>
-            </div>
-            <Switch
-              checked={imageGenShowWeiboLink}
-              onCheckedChange={(checked) => setImageGenShowWeiboLink(checked)}
-            />
-          </div>
-
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex flex-col gap-1">
-              <Label>深色模式</Label>
-              <p className="text-muted-foreground text-xs">将图片卡片切换为深色主题</p>
-            </div>
-            <Switch
-              checked={imageGenTheme === 'dark'}
-              onCheckedChange={(checked) => setImageGenTheme(checked ? 'dark' : 'light')}
-            />
+          {/* Right: Preview */}
+          <div className="ml-4 flex-1 border-l pl-4">
+            {genImageItem ? (
+              <div className="no-scrollbar flex h-[60vh] w-[640px] flex-col overflow-y-auto">
+                <GenImageCard ref={cardRef} item={genImageItem} theme={imageGenTheme} />
+              </div>
+            ) : (
+              <div className="flex h-[60vh] w-[640px] items-center justify-center">
+                <p className="text-muted-foreground text-sm">暂无数据</p>
+              </div>
+            )}
           </div>
         </div>
-
-        {genImageItem ? (
-          <div className="no-scrollbar -mx-4 max-h-[50vh] overflow-y-auto px-4">
-            <GenImageCard ref={cardRef} item={genImageItem} theme={imageGenTheme} />
-          </div>
-        ) : (
-          <div className="flex h-full items-center justify-center">
-            <p className="text-muted-foreground text-sm">暂无数据</p>
-          </div>
-        )}
-        <DialogFooter>
-          <div className="flex justify-end gap-2">
-            <DialogClose asChild>
-              <Button variant="outline">取消</Button>
-            </DialogClose>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={copyMutation.isPending}
-              onClick={() => copyMutation.mutate()}
-            >
-              {copyMutation.isPending ? <Spinner /> : <Copy />}
-              复制图片
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={saveMutation.isPending}
-              onClick={() => saveMutation.mutate()}
-            >
-              {saveMutation.isPending ? <Spinner /> : <Save />}
-              保存图片
-            </Button>
-          </div>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

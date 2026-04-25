@@ -2,6 +2,7 @@ import { format } from 'date-fns'
 import { Heart, Link, MessageCircle, Repeat2 } from 'lucide-react'
 import * as React from 'react'
 
+import WeiboLogo from '@/assets/icons/weibo.svg'
 import {
   Card,
   CardContent,
@@ -28,7 +29,7 @@ function GenImageCardActions({
   className?: string
 }) {
   return (
-    <div className={cn('flex w-full gap-2 text-xs', className)}>
+    <div className={cn('flex w-full gap-4 text-xs', className)}>
       <div className="flex items-center gap-1.5 py-2">
         <MessageCircle className="size-3.5" />
         <span>{formatWeiboCount(item.stats.comments)}</span>
@@ -109,7 +110,7 @@ export const GenImageCard = React.forwardRef<HTMLDivElement, GenImageCardProps>(
 
     return (
       <div className="bg-linear-to-br from-blue-500 via-purple-500 to-pink-500 p-4" ref={ref}>
-        <Card className="gap-4 py-4" style={cardStyle}>
+        <Card className="gap-4 py-4 shadow-lg" style={cardStyle}>
           <CardHeader className="flex flex-row gap-3 px-4">
             <UserAvatar
               author={item.author}
@@ -134,16 +135,21 @@ export const GenImageCard = React.forwardRef<HTMLDivElement, GenImageCardProps>(
             {item.retweetedStatus ? <RetweetedGenImageCard item={item.retweetedStatus} /> : null}
           </CardContent>
           {imageGenShowDataArea && (
-            <CardFooter className="flex flex-col gap-1 px-4">
-              <GenImageCardActions item={item} />
-              {imageGenShowWeiboLink && item.mblogId && (
-                <div className="text-muted-foreground flex w-full items-center gap-1 text-xs">
-                  <Link className="size-3" />
-                  <span>
-                    https://weibo.com/{item.author.id}/{item.mblogId}
-                  </span>
-                </div>
-              )}
+            <CardFooter className="flex justify-between px-4">
+              <div className="flex flex-col gap-1">
+                <GenImageCardActions item={item} />
+                {imageGenShowWeiboLink && item.mblogId && (
+                  <div className="text-muted-foreground flex w-full items-center gap-1 text-xs">
+                    <Link className="size-3" />
+                    <span>
+                      https://weibo.com/{item.author.id}/{item.mblogId}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div>
+                <img src={WeiboLogo} alt="微博 Logo" className="size-9" />
+              </div>
             </CardFooter>
           )}
         </Card>
@@ -170,7 +176,7 @@ function GenImageCardFullImages({ images }: GenImageCardFullImagesProps) {
           key={image.thumbnailUrl}
           className="border-foreground/10 relative overflow-hidden rounded-xl border"
         >
-          <img src={image.largeUrl} className="w-full object-contain" alt="" />
+          <img src={image.largeUrl} className="w-full object-contain" alt="" width="100%" />
         </div>
       ))}
     </div>
