@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Heart, MessageCircle, Repeat2 } from 'lucide-react'
 import { type MouseEvent, type ReactNode, useRef } from 'react'
 import { Link } from 'react-router'
@@ -405,6 +405,8 @@ export function FeedCard({
   const uid = getCurrentUserUid()
   const showOwnerMenu = uid !== null && uid === resolvedItem.author.id
 
+  const queryClient = useQueryClient()
+
   const likeMutation = useMutation({
     mutationFn: async (target: FeedItem) => {
       if (target.liked) {
@@ -413,11 +415,83 @@ export function FeedCard({
         await setStatusLike(target.id)
       }
     },
-    meta: {
-      invalidates: [['weibo']],
+    onMutate: (target: FeedItem) => {
+      queryClient.cancelQueries({ queryKey: ['weibo'] })
+
+      const previousItems = queryClient.getQueriesData({ queryKey: ['weibo'] })
+
+      queryClient.setQueriesData({ queryKey: ['weibo'] }, (old) => {
+        if (!old || typeof old !== 'object' || !('pages' in old)) return old
+        const data = old as { pages: { items: FeedItem[] }[] }
+        return {
+          ...data,
+          pages: data.pages.map((page) => ({
+            ...page,
+            items: page.items.map((item) => {
+              if (item.id === target.id) {
+                return {
+                  ...item,
+                  liked: !item.liked,
+                  stats: {
+                    ...item.stats,
+                    likes: item.stats.likes + (item.liked ? -1 : 1),
+                  },
+                }
+              }
+              if (item.retweetedStatus?.id === target.id) {
+                return {
+                  ...item,
+                  retweetedStatus: {
+                    ...item.retweetedStatus,
+                    liked: !item.retweetedStatus.liked,
+                    stats: {
+                      ...item.retweetedStatus.stats,
+                      likes:
+                        item.retweetedStatus.stats.likes + (item.retweetedStatus.liked ? -1 : 1),
+                    },
+                  },
+                }
+              }
+              return item
+            }),
+          })),
+        }
+      })
+
+      for (const key of queryClient
+        .getQueryCache()
+        .getAll()
+        .map((q) => q.queryKey)) {
+        if (!Array.isArray(key)) continue
+        if (key[0] !== 'weibo' || key[1] !== 'status') continue
+        const cached = queryClient.getQueryData(key)
+        if (!cached || typeof cached !== 'object') continue
+        const detail = cached as { status?: FeedItem }
+        if (detail.status && detail.status.id === target.id) {
+          queryClient.setQueryData(key, {
+            ...detail,
+            status: {
+              ...detail.status,
+              liked: !detail.status.liked,
+              stats: {
+                ...detail.status.stats,
+                likes: detail.status.stats.likes + (detail.status.liked ? -1 : 1),
+              },
+            },
+          })
+        }
+      }
+
+      return { previousItems }
     },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : '操作失败')
+    onError: (_error, _target, context) => {
+      // Rollback on error
+      if (context?.previousItems) {
+        for (const [queryKey, data] of context.previousItems) {
+          queryClient.setQueryData(queryKey, data)
+        }
+      }
+      toast.error(_error instanceof Error ? _error.message : '操作失败')
     },
   })
 
