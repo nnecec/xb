@@ -57,6 +57,7 @@ describe('app-settings', () => {
       imageGenShowDataArea: true,
       imageGenShowFullImages: false,
       imageGenShowWeiboLink: false,
+      imageGenTheme: 'light',
     })
 
     await persistAppSettings(
@@ -72,6 +73,7 @@ describe('app-settings', () => {
         imageGenShowDataArea: true,
         imageGenShowFullImages: false,
         imageGenShowWeiboLink: false,
+        imageGenTheme: 'light',
       },
       storage,
     )
@@ -88,6 +90,7 @@ describe('app-settings', () => {
       imageGenShowDataArea: true,
       imageGenShowFullImages: false,
       imageGenShowWeiboLink: false,
+      imageGenTheme: 'light',
     })
   })
 

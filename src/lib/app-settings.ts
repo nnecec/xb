@@ -17,7 +17,10 @@ export interface AppSettings {
   imageGenShowDataArea: boolean
   imageGenShowFullImages: boolean
   imageGenShowWeiboLink: boolean
+  imageGenTheme: GenImageCardTheme
 }
+
+export type GenImageCardTheme = 'light' | 'dark'
 
 export interface AppSettingsStorageArea {
   get: (keys?: string | string[] | Record<string, unknown>) => Promise<Record<string, unknown>>
@@ -38,6 +41,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   imageGenShowDataArea: true,
   imageGenShowFullImages: false,
   imageGenShowWeiboLink: false,
+  imageGenTheme: 'light' as GenImageCardTheme,
 }
 
 function isAppTheme(value: unknown): value is AppTheme {
@@ -124,6 +128,10 @@ export function normalizeAppSettings(value: unknown): AppSettings {
       typeof candidate.imageGenShowWeiboLink === 'boolean'
         ? candidate.imageGenShowWeiboLink
         : DEFAULT_APP_SETTINGS.imageGenShowWeiboLink,
+    imageGenTheme:
+      candidate.imageGenTheme === 'light' || candidate.imageGenTheme === 'dark'
+        ? candidate.imageGenTheme
+        : DEFAULT_APP_SETTINGS.imageGenTheme,
   }
 }
 

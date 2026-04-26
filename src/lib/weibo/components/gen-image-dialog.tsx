@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query'
 import { toBlob } from 'html-to-image'
 import { Copy, Save } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -24,7 +24,7 @@ import {
 import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
 import { useAppSettings } from '@/lib/app-settings-store'
-import { GenImageCard, type GenImageCardTheme } from '@/lib/weibo/components/gen-image-card'
+import { GenImageCard } from '@/lib/weibo/components/gen-image-card'
 import { useGenImageDialog } from '@/lib/weibo/components/gen-image-dialog-context'
 
 async function captureCardAsBlob(
@@ -65,8 +65,9 @@ function downloadBlob(blob: Blob, title: string): void {
 export function GenImageDialog() {
   const { genImageItem, closeGenImage } = useGenImageDialog()
   const cardRef = useRef<HTMLDivElement>(null)
-  const [imageGenTheme, setImageGenTheme] = useState<GenImageCardTheme>('light')
 
+  const imageGenTheme = useAppSettings((s) => s.imageGenTheme)
+  const setImageGenTheme = useAppSettings((s) => s.setImageGenTheme)
   const imageGenShowDataArea = useAppSettings((s) => s.imageGenShowDataArea)
   const imageGenShowFullImages = useAppSettings((s) => s.imageGenShowFullImages)
   const imageGenShowWeiboLink = useAppSettings((s) => s.imageGenShowWeiboLink)

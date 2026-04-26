@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { type GenImageCardTheme } from '@/lib/app-settings'
 import { useAppSettings } from '@/lib/app-settings-store'
 import { cn } from '@/lib/utils'
 import { UserAvatar } from '@/lib/weibo/components/user-presenter'
@@ -18,8 +19,6 @@ import type { FeedItem } from '@/lib/weibo/models/feed'
 import { formatWeiboCount } from '@/lib/weibo/utils/format-weibo-count'
 
 import { StatusText } from './status-text'
-
-export type GenImageCardTheme = 'light' | 'dark'
 
 function GenImageCardActions({
   item,
