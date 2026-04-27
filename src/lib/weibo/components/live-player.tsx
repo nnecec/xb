@@ -23,8 +23,17 @@ import {
   Volume1,
   Volume2,
   VolumeX,
+  Expand,
+  Shrink,
 } from 'lucide-react'
-import { forwardRef, type ComponentPropsWithoutRef, useCallback, useRef, useState } from 'react'
+import {
+  forwardRef,
+  type ComponentPropsWithoutRef,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 
 import { cn } from '@/lib/utils'
 import type { FeedDashSource } from '@/lib/weibo/models/feed'
@@ -114,6 +123,7 @@ function LiveOverlay({ isPlaying, onPlay }: { isPlaying: boolean; onPlay: () => 
 export function LivePlayer({ streamUrl, coverUrl, liveStatus, replayUrl = '' }: LivePlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [shouldLoad, setShouldLoad] = useState(false)
+  const [inlineFullscreen, setInlineFullscreen] = useState(false)
 
   const isLive = liveStatus === 1
   const isReplay = liveStatus === 3
@@ -136,6 +146,43 @@ export function LivePlayer({ streamUrl, coverUrl, liveStatus, replayUrl = '' }: 
       videoRef.current.currentTime = 0
     }
   }, [])
+
+  useEffect(() => {
+    const container = videoRef.current?.closest('.media-default-skin--video')
+    if (!container) {
+      return
+    }
+
+    const el = container as HTMLElement
+    if (inlineFullscreen) {
+      el.style.position = 'fixed'
+      el.style.inset = '0'
+      el.style.zIndex = '9999'
+      el.style.width = '100vw'
+      el.style.height = '100vh'
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setInlineFullscreen(false)
+        }
+      }
+      window.addEventListener('keydown', handleKeyDown)
+      return () => {
+        el.style.position = ''
+        el.style.inset = ''
+        el.style.zIndex = ''
+        el.style.width = ''
+        el.style.height = ''
+        window.removeEventListener('keydown', handleKeyDown)
+      }
+    } else {
+      el.style.position = ''
+      el.style.inset = ''
+      el.style.zIndex = ''
+      el.style.width = ''
+      el.style.height = ''
+    }
+  }, [inlineFullscreen])
 
   if (!isLive && !isReplay) {
     return (
@@ -204,6 +251,17 @@ export function LivePlayer({ streamUrl, coverUrl, liveStatus, replayUrl = '' }: 
                   )}
                 />
 
+                <IconButton
+                  onClick={() => setInlineFullscreen(!inlineFullscreen)}
+                  aria-label={inlineFullscreen ? '退出网页内全屏' : '网页内全屏'}
+                >
+                  {inlineFullscreen ? (
+                    <Shrink className="media-icon size-[18px]" />
+                  ) : (
+                    <Expand className="media-icon size-[18px]" />
+                  )}
+                </IconButton>
+
                 <FullscreenButton
                   className="media-button--fullscreen"
                   render={(props, state) => (
@@ -267,6 +325,17 @@ export function LivePlayer({ streamUrl, coverUrl, liveStatus, replayUrl = '' }: 
                     </IconButton>
                   )}
                 />
+
+                <IconButton
+                  onClick={() => setInlineFullscreen(!inlineFullscreen)}
+                  aria-label={inlineFullscreen ? '退出网页内全屏' : '网页内全屏'}
+                >
+                  {inlineFullscreen ? (
+                    <Shrink className="media-icon size-[18px]" />
+                  ) : (
+                    <Expand className="media-icon size-[18px]" />
+                  )}
+                </IconButton>
 
                 <FullscreenButton
                   className="media-button--fullscreen"
