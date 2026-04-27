@@ -153,7 +153,7 @@ export function RewritePausedCard({ onResume }: { onResume: () => void }) {
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <Button onClick={onResume} className="justify-between">
-            <span>启动 xb !</span>
+            <span>Let's xb!</span>
             <Zap className="h-4 w-4" />
           </Button>
         </CardContent>

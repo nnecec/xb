@@ -574,6 +574,9 @@ function toUrlEntities(status: WeiboStatus, options?: { excludeImageEntities?: b
       if (!shortUrl || !title || !targetUrl || !hasUrlType) {
         return null
       }
+      if (rawUrlType === 1) {
+        return null
+      }
       if (options?.excludeImageEntities && isImageEntity) {
         return null
       }

@@ -130,7 +130,7 @@ export const GenImageCard = React.forwardRef<HTMLDivElement, GenImageCardProps>(
           </CardHeader>
           <CardContent className="flex flex-col gap-4 px-4">
             <StatusText item={item} text={item.text} />
-            <GenImageCardFullImages images={item.images} />
+            <GenImageCardFullImages images={item.images} videoCoverUrl={item.media?.coverUrl} />
             {item.retweetedStatus ? <RetweetedGenImageCard item={item.retweetedStatus} /> : null}
           </CardContent>
           {imageGenShowDataArea && (
@@ -159,18 +159,27 @@ export const GenImageCard = React.forwardRef<HTMLDivElement, GenImageCardProps>(
 
 interface GenImageCardFullImagesProps {
   images: FeedItem['images']
+  videoCoverUrl?: string | null
 }
 
-function GenImageCardFullImages({ images }: GenImageCardFullImagesProps) {
+function GenImageCardFullImages({ images, videoCoverUrl }: GenImageCardFullImagesProps) {
   const imageGenShowFullImages = useAppSettings((s) => s.imageGenShowFullImages)
 
-  if (images.length === 0) {
+  if (images.length === 0 && !videoCoverUrl) {
     return null
   }
 
+  // Use video cover when no images available
+  const displayImages =
+    images.length > 0
+      ? images
+      : videoCoverUrl
+        ? [{ thumbnailUrl: videoCoverUrl, largeUrl: videoCoverUrl, id: 'video-cover' }]
+        : []
+
   return imageGenShowFullImages ? (
     <div className="flex flex-col gap-2">
-      {images.map((image) => (
+      {displayImages.map((image) => (
         <div
           key={image.thumbnailUrl}
           className="border-foreground/10 relative overflow-hidden rounded-xl border"
@@ -182,16 +191,16 @@ function GenImageCardFullImages({ images }: GenImageCardFullImagesProps) {
   ) : (
     <div
       className={`grid gap-2 ${
-        images.length === 1
+        displayImages.length === 1
           ? 'grid-cols-1'
-          : images.length <= 4
+          : displayImages.length <= 4
             ? 'grid-cols-2'
-            : images.length <= 9
+            : displayImages.length <= 9
               ? 'grid-cols-3'
               : 'grid-cols-4'
       }`}
     >
-      {images.map((image) => (
+      {displayImages.map((image) => (
         <div
           key={image.thumbnailUrl}
           className="border-foreground/10 relative overflow-hidden rounded-xl border"
