@@ -152,30 +152,10 @@ function RetweetedShareCard({
 
 export function CardDefault({
   data,
-  theme = 'light',
   showStats = true,
   showLink = false,
   showFullImages = false,
 }: ShareCardProps) {
-  const cardStyle =
-    theme === 'dark'
-      ? ({
-          '--background': 'oklch(0.145 0 0)',
-          '--foreground': 'oklch(0.985 0 0)',
-          '--card': 'oklch(0.145 0 0)',
-          '--card-foreground': 'oklch(0.985 0 0)',
-          '--muted': 'oklch(0.269 0 0)',
-          '--muted-foreground': 'oklch(0.708 0 0)',
-        } as React.CSSProperties)
-      : ({
-          '--background': 'oklch(1 0 0)',
-          '--foreground': 'oklch(0.145 0 0)',
-          '--card': 'oklch(1 0 0)',
-          '--card-foreground': 'oklch(0.145 0 0)',
-          '--muted': 'oklch(0.97 0 0)',
-          '--muted-foreground': 'oklch(0.556 0 0)',
-        } as React.CSSProperties)
-
   return (
     <div className="p-4">
       <Card className="gap-4 py-4">
