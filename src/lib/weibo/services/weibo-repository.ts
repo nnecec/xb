@@ -265,6 +265,7 @@ export async function unfollowUser(uid: string): Promise<UserProfile> {
 interface WeiboMutationResponse {
   ok?: number
   msg?: string
+  message?: string
   result?: boolean
 }
 
@@ -367,7 +368,7 @@ export async function submitComposeAction(input: SubmitComposeInput): Promise<vo
       buildRepostPayload(input),
     )
     if (!isWeiboMutationSuccess(response)) {
-      throw new Error(response.msg || 'weibo-compose-submit-failed')
+      throw new Error(response.msg || response.message || '发送微博失败')
     }
 
     return
@@ -379,7 +380,7 @@ export async function submitComposeAction(input: SubmitComposeInput): Promise<vo
   const response = await wbPostForm<WeiboMutationResponse>(endpoint, buildCommentPayload(input))
 
   if (response.ok !== 1) {
-    throw new Error(response.msg || 'weibo-compose-submit-failed')
+    throw new Error(response.msg || response.message || '发送微博失败')
   }
 }
 

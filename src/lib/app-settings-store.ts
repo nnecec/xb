@@ -8,6 +8,7 @@ import {
   type AppSettings,
   type AppSettingsStorageArea,
   type AppTheme,
+  type CardStyle,
   type FontFamilyClass,
   type FontSize,
   type GenImageCardTheme,
@@ -28,6 +29,7 @@ export interface AppSettingsStoreState extends AppSettings {
   setImageGenShowFullImages: (show: boolean) => Promise<void>
   setImageGenShowWeiboLink: (show: boolean) => Promise<void>
   setImageGenTheme: (theme: GenImageCardTheme) => Promise<void>
+  setImageGenCardStyle: (style: CardStyle) => Promise<void>
 }
 
 export type AppSettingsStore = StoreApi<AppSettingsStoreState>
@@ -46,6 +48,7 @@ function toPersistedSettings(state: AppSettingsStoreState): AppSettings {
     imageGenShowFullImages: state.imageGenShowFullImages,
     imageGenShowWeiboLink: state.imageGenShowWeiboLink,
     imageGenTheme: state.imageGenTheme,
+    imageGenCardStyle: state.imageGenCardStyle,
   }
 }
 
@@ -109,6 +112,9 @@ export function createAppSettingsStore(
       },
       async setImageGenTheme(imageGenTheme) {
         await updateAndPersist({ imageGenTheme })
+      },
+      async setImageGenCardStyle(imageGenCardStyle) {
+        await updateAndPersist({ imageGenCardStyle })
       },
     }
   })
