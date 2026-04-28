@@ -92,7 +92,11 @@ export function CardBold({
         </div>
 
         {/* Images */}
-        <ShareCardImages images={displayImages} showFullImages={showFullImages} />
+        <ShareCardImages
+          images={displayImages}
+          videoCoverUrl={data.videoCoverUrl}
+          showFullImages={showFullImages}
+        />
 
         {/* Retweeted content */}
         {data.retweetedStatus && (
@@ -118,6 +122,7 @@ export function CardBold({
             <div className="mt-3">
               <ShareCardImages
                 images={data.retweetedStatus.images}
+                videoCoverUrl={data.retweetedStatus.videoCoverUrl}
                 showFullImages={showFullImages}
               />
             </div>

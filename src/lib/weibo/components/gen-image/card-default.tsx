@@ -64,12 +64,14 @@ function ShareCardActions({
 
 function ShareCardImages({
   images,
+  videoCoverUrl,
   showFullImages,
 }: {
   images: ShareCardProps['data']['images']
+  videoCoverUrl?: string | null
   showFullImages?: boolean
 }) {
-  const displayImages = getDisplayImages(images)
+  const displayImages = getDisplayImages(images, videoCoverUrl)
 
   if (displayImages.length === 0) {
     return null
@@ -141,7 +143,7 @@ function RetweetedShareCard({
         <div className="text-sm leading-6">
           <StatusText item={data} text={data.text} />
         </div>
-        <ShareCardImages images={data.images} />
+        <ShareCardImages images={data.images} videoCoverUrl={data.videoCoverUrl} />
         <ShareCardActions stats={data.stats} />
       </CardContent>
     </Card>
@@ -197,7 +199,11 @@ export function CardDefault({
           <div className="text-sm leading-6">
             <StatusText item={data} text={data.text} />
           </div>
-          <ShareCardImages images={data.images} showFullImages={showFullImages} />
+          <ShareCardImages
+            images={data.images}
+            videoCoverUrl={data.videoCoverUrl}
+            showFullImages={showFullImages}
+          />
           {data.retweetedStatus ? <RetweetedShareCard data={data.retweetedStatus} /> : null}
         </CardContent>
         {showStats && (

@@ -60,12 +60,14 @@ export function ShareCardActions({
 
 export function ShareCardImages({
   images,
+  videoCoverUrl,
   showFullImages,
 }: {
   images: ShareCardProps['data']['images']
+  videoCoverUrl?: string | null
   showFullImages?: boolean
 }) {
-  const displayImages = getDisplayImages(images)
+  const displayImages = getDisplayImages(images, videoCoverUrl)
 
   if (displayImages.length === 0) {
     return null

@@ -169,7 +169,11 @@ export function CardContrast({
           {/* Images */}
           {displayImages.length > 0 && (
             <div className="px-6 pb-4">
-              <ShareCardImages images={displayImages} showFullImages={showFullImages} />
+              <ShareCardImages
+                images={displayImages}
+                videoCoverUrl={data.videoCoverUrl}
+                showFullImages={showFullImages}
+              />
             </div>
           )}
 
@@ -195,6 +199,7 @@ export function CardContrast({
                 <div className="mt-2">
                   <ShareCardImages
                     images={data.retweetedStatus.images}
+                    videoCoverUrl={data.retweetedStatus.videoCoverUrl}
                     showFullImages={showFullImages}
                   />
                 </div>
