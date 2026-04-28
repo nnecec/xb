@@ -1,10 +1,4 @@
-import type {
-  FeedItem,
-  FeedImage,
-  FeedUrlEntity,
-  FeedTopicEntity,
-  FeedEmoticon,
-} from '../../models/feed'
+import type { FeedImage, FeedUrlEntity, FeedTopicEntity, FeedEmoticon } from '../../models/feed'
 
 export interface ShareCardData {
   author: {
