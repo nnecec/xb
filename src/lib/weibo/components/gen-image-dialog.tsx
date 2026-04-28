@@ -21,11 +21,63 @@ import {
   ItemGroup,
   ItemTitle,
 } from '@/components/ui/item'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
 import { useAppSettings } from '@/lib/app-settings-store'
-import { GenImageCard } from '@/lib/weibo/components/gen-image-card'
 import { useGenImageDialog } from '@/lib/weibo/components/gen-image-dialog-context'
+import {
+  CardBold,
+  CardComic,
+  CardContrast,
+  CardDefault,
+  CardGlass,
+  CardMinimal,
+  CardSoft,
+  CardSticker,
+  CardVogue,
+  type CardStyle,
+} from '@/lib/weibo/components/gen-image/card-index'
+import { transformFeedItem } from '@/lib/weibo/components/gen-image/utils'
+
+const CARD_STYLE_OPTIONS: { value: CardStyle; label: string }[] = [
+  { value: 'default', label: '默认' },
+  { value: 'minimal', label: '现代' },
+  { value: 'glass', label: '玻璃' },
+  { value: 'bold', label: '色彩' },
+  { value: 'contrast', label: '邮票' },
+  { value: 'vogue', label: '杂志' },
+  { value: 'soft', label: '柔和' },
+  { value: 'sticker', label: '贴纸' },
+  { value: 'comic', label: '漫画' },
+]
+
+const CARD_COMPONENTS: Record<
+  CardStyle,
+  React.ComponentType<{
+    data: ReturnType<typeof transformFeedItem>
+    theme?: 'light' | 'dark'
+    showStats?: boolean
+    showLink?: boolean
+    showFullImages?: boolean
+  }>
+> = {
+  default: CardDefault,
+  minimal: CardMinimal,
+  glass: CardGlass,
+  bold: CardBold,
+  contrast: CardContrast,
+  vogue: CardVogue,
+  soft: CardSoft,
+  sticker: CardSticker,
+  comic: CardComic,
+}
 
 async function captureCardAsBlob(
   cardRef: React.RefObject<HTMLDivElement | null>,
@@ -35,11 +87,8 @@ async function captureCardAsBlob(
   const blob = await toBlob(cardRef.current, {
     pixelRatio: 2,
     cacheBust: true,
-    // Skip embedding web fonts to avoid CORS errors from external stylesheets
     fontEmbedCSS: '',
-    // Filter out external stylesheets that can't be read due to CORS
     filter: (node) => {
-      // Exclude link elements that load external CSS
       if (node.nodeName === 'LINK' && node.getAttribute('rel') === 'stylesheet') {
         return false
       }
@@ -71,9 +120,11 @@ export function GenImageDialog() {
   const imageGenShowDataArea = useAppSettings((s) => s.imageGenShowDataArea)
   const imageGenShowFullImages = useAppSettings((s) => s.imageGenShowFullImages)
   const imageGenShowWeiboLink = useAppSettings((s) => s.imageGenShowWeiboLink)
+  const imageGenCardStyle = useAppSettings((s) => s.imageGenCardStyle)
   const setImageGenShowDataArea = useAppSettings((s) => s.setImageGenShowDataArea)
   const setImageGenShowFullImages = useAppSettings((s) => s.setImageGenShowFullImages)
   const setImageGenShowWeiboLink = useAppSettings((s) => s.setImageGenShowWeiboLink)
+  const setImageGenCardStyle = useAppSettings((s) => s.setImageGenCardStyle)
 
   const copyMutation = useMutation({
     mutationFn: async () => {
@@ -105,6 +156,28 @@ export function GenImageDialog() {
     },
   })
 
+  const cardData = genImageItem ? transformFeedItem(genImageItem) : null
+  const CardComponent = cardData ? CARD_COMPONENTS[imageGenCardStyle] : null
+
+  const sharedStyle =
+    imageGenTheme === 'dark'
+      ? ({
+          '--background': 'oklch(0.145 0 0)',
+          '--foreground': 'oklch(0.985 0 0)',
+          '--card': 'oklch(0.145 0 0)',
+          '--card-foreground': 'oklch(0.985 0 0)',
+          '--muted': 'oklch(0.269 0 0)',
+          '--muted-foreground': 'oklch(0.708 0 0)',
+        } as React.CSSProperties)
+      : ({
+          '--background': 'oklch(1 0 0)',
+          '--foreground': 'oklch(0.145 0 0)',
+          '--card': 'oklch(1 0 0)',
+          '--card-foreground': 'oklch(0.145 0 0)',
+          '--muted': 'oklch(0.97 0 0)',
+          '--muted-foreground': 'oklch(0.556 0 0)',
+        } as React.CSSProperties)
+
   return (
     <Dialog open={genImageItem !== null} onOpenChange={closeGenImage}>
       <DialogContent className="gap-0 p-0 sm:max-w-fit">
@@ -118,6 +191,28 @@ export function GenImageDialog() {
           {/* Left: Settings */}
           <div className="flex w-[240px] flex-col justify-between gap-4">
             <ItemGroup>
+              <Item size="sm">
+                <ItemContent>
+                  <ItemTitle>卡片风格</ItemTitle>
+                  <ItemDescription>
+                    <Select
+                      value={imageGenCardStyle}
+                      onValueChange={(value) => setImageGenCardStyle(value as CardStyle)}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CARD_STYLE_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </ItemDescription>
+                </ItemContent>
+              </Item>
               <Item size="sm">
                 <ItemContent>
                   <ItemTitle>数据区域</ItemTitle>
@@ -199,9 +294,17 @@ export function GenImageDialog() {
 
           {/* Right: Preview */}
           <div className="ml-4 flex-1 border-l pl-4">
-            {genImageItem ? (
+            {cardData && CardComponent ? (
               <div className="no-scrollbar flex h-[60vh] w-[640px] flex-col overflow-y-auto">
-                <GenImageCard ref={cardRef} item={genImageItem} theme={imageGenTheme} />
+                <div ref={cardRef} style={sharedStyle}>
+                  <CardComponent
+                    data={cardData}
+                    theme={imageGenTheme}
+                    showStats={imageGenShowDataArea}
+                    showLink={imageGenShowWeiboLink}
+                    showFullImages={imageGenShowFullImages}
+                  />
+                </div>
               </div>
             ) : (
               <div className="flex h-[60vh] w-[640px] items-center justify-center">
