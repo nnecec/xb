@@ -104,20 +104,16 @@ export function CardSoft({
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <img src={WeiboLogo} alt="微博 Logo" className="size-8" />
-              <span
-                className="rounded-full px-3 py-1 text-sm font-medium"
-                style={{
-                  backgroundColor: isDark
-                    ? 'oklch(0.30 0.08 80 / 0.4)'
-                    : 'oklch(0.92 0.08 80 / 0.6)',
-                  color: isDark ? 'oklch(0.80 0.10 80)' : 'oklch(0.45 0.08 80)',
-                }}
-              >
-                ✦
-              </span>
-            </div>
+
+            <span
+              className="rounded-full px-3 py-1 text-sm font-medium"
+              style={{
+                backgroundColor: isDark ? 'oklch(0.30 0.08 80 / 0.4)' : 'oklch(0.92 0.08 80 / 0.6)',
+                color: isDark ? 'oklch(0.80 0.10 80)' : 'oklch(0.45 0.08 80)',
+              }}
+            >
+              ✦
+            </span>
           </div>
 
           {/* Content */}
@@ -202,14 +198,19 @@ export function CardSoft({
             </div>
           )}
 
-          {showLink && data.mblogId && (
-            <div className="flex items-center gap-1">
-              <Link className="size-3" style={{ color: textTertiary }} />
-              <span className="text-xs" style={{ color: textTertiary }}>
-                weibo.com/{data.author.id}/{data.mblogId}
-              </span>
+          <div className="flex items-center justify-between">
+            <div>
+              {showLink && data.mblogId && (
+                <div className="flex items-center gap-1">
+                  <Link className="size-3" style={{ color: textTertiary }} />
+                  <span className="text-xs" style={{ color: textTertiary }}>
+                    weibo.com/{data.author.id}/{data.mblogId}
+                  </span>
+                </div>
+              )}
             </div>
-          )}
+            <img src={WeiboLogo} alt="微博 Logo" className="size-9" />
+          </div>
         </div>
 
         {/* Bottom sparkle */}

@@ -111,7 +111,7 @@ export function CardMinimal({
               )}
             </div>
           </div>
-          <img src={WeiboLogo} alt="微博 Logo" className="size-8" />
+          <img src={WeiboLogo} alt="微博 Logo" className="size-9" />
         </div>
 
         {/* Stats */}

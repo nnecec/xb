@@ -94,7 +94,7 @@ export function CardGlass({
               )}
             </div>
             <div className="ml-auto">
-              <img src={WeiboLogo} alt="微博 Logo" className="size-8" />
+              <img src={WeiboLogo} alt="微博 Logo" className="size-9" />
             </div>
           </div>
 

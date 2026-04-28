@@ -123,7 +123,7 @@ export function CardVogue({
           className="mb-4 flex items-center justify-between border-t pt-6"
           style={{ borderColor }}
         >
-          <img src={WeiboLogo} alt="微博 Logo" className="size-8" />
+          <img src={WeiboLogo} alt="微博 Logo" className="size-9" />
           {showLink && data.mblogId && (
             <div className="flex items-center gap-1">
               <Link className="size-3" style={{ color: textTertiary }} />

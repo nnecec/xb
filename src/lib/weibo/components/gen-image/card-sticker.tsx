@@ -119,7 +119,6 @@ export function CardSticker({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <img src={WeiboLogo} alt="微博 Logo" className="size-8" />
               <div
                 className="size-8 rounded-full shadow-md"
                 style={{
@@ -239,7 +238,7 @@ export function CardSticker({
 
           {showLink && data.mblogId && (
             <div className="flex items-center gap-1">
-              <img src={WeiboLogo} alt="微博 Logo" className="size-4" />
+              <img src={WeiboLogo} alt="微博 Logo" className="size-9" />
               <Link className="size-3" style={{ color: textTertiary }} />
               <span className="text-xs" style={{ color: textTertiary }}>
                 weibo.com/{data.author.id}/{data.mblogId}

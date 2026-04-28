@@ -68,7 +68,7 @@ export function CardComic({
                 borderColor: bubbleBorder,
               }}
             >
-              <img src={WeiboLogo} alt="微博 Logo" className="size-8" />
+              <img src={WeiboLogo} alt="微博 Logo" className="size-9" />
             </div>
           </div>
         </div>
@@ -93,15 +93,6 @@ export function CardComic({
               <StatusText item={data} text={data.text} />
             </p>
           </div>
-          {/* Bubble tail */}
-          <div
-            className="absolute -bottom-5 left-8 size-0"
-            style={{
-              borderLeft: '16px solid transparent',
-              borderRight: '16px solid transparent',
-              borderTop: `20px solid ${bubbleBg}`,
-            }}
-          />
         </div>
 
         {/* Images */}
