@@ -308,6 +308,27 @@ export async function cancelStatusLike(statusId: string): Promise<void> {
   }
 }
 
+export async function setCommentLike(commentId: string): Promise<void> {
+  const response = await wbPostForm<WeiboMutationResponse>(WEIBO_ENDPOINTS.setCommentLike, {
+    object_id: commentId,
+    object_type: 'comment',
+  })
+  if (!isWeiboMutationSuccess(response)) {
+    throw new Error(response.msg || 'weibo-comment-like-failed')
+  }
+}
+
+export async function cancelCommentLike(commentId: string): Promise<void> {
+  const response = await wbPostForm<WeiboMutationResponse>(WEIBO_ENDPOINTS.cancelCommentLike, {
+    object_id: commentId,
+    object_type: 'comment',
+  })
+  console.log('[cancelCommentLike] response:', JSON.stringify(response))
+  if (!isWeiboMutationSuccess(response)) {
+    throw new Error(response.msg || 'weibo-comment-unlike-failed')
+  }
+}
+
 export async function deleteWeiboStatus(statusId: string): Promise<void> {
   const response = await wbPostForm<WeiboMutationResponse>(WEIBO_ENDPOINTS.statusDestroy, {
     id: statusId,
