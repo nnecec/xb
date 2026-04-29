@@ -2,8 +2,11 @@ import type { TimelinePage } from '@/lib/weibo/models/feed'
 import type { NotificationsPage } from '@/lib/weibo/models/notification'
 import type { NotificationTab } from '@/lib/weibo/route/page-descriptor'
 import type { WeiboPageDescriptor } from '@/lib/weibo/route/page-descriptor'
+import type { ExploreGroup } from '@/lib/weibo/services/adapters/explore-groups'
 import {
   loadComments,
+  loadExploreGroups,
+  loadExploreHot,
   loadFavorites,
   loadHotSearch,
   loadHomeTimeline,
@@ -92,4 +95,21 @@ export function searchQueryOptions(query: string) {
     enabled: query.trim().length > 0,
     staleTime: 0,
   }
+}
+
+export function exploreTimelineInfiniteOptions(group: ExploreGroup) {
+  return {
+    queryKey: ['weibo', 'explore', group.gid] as const,
+    queryFn: ({ pageParam }: { pageParam: string | null }) =>
+      loadExploreHot({ cursor: pageParam, groupId: group.gid, containerid: group.containerid }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage: TimelinePage) => lastPage.nextCursor ?? undefined,
+    staleTime: 0,
+  }
+}
+
+export const exploreGroupsQueryOptions = {
+  queryKey: ['weibo', 'explore', 'groups'] as const,
+  queryFn: () => loadExploreGroups(),
+  staleTime: 5 * 60 * 1000,
 }

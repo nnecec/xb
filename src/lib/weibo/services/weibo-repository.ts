@@ -14,6 +14,15 @@ import {
   type WeiboEmoticonPayload,
 } from '@/lib/weibo/services/adapters/emoticon'
 import {
+  adaptExploreHotResponse,
+  type ExploreHotPayload,
+} from '@/lib/weibo/services/adapters/explore'
+import {
+  adaptExploreGroupsResponse,
+  type ExploreGroupsPayload,
+  type ExploreGroup,
+} from '@/lib/weibo/services/adapters/explore-groups'
+import {
   adaptHotSearchResponse,
   HotSearchPayload,
   type HotSearchPage,
@@ -410,6 +419,38 @@ export async function loadHotSearch(): Promise<HotSearchPage> {
     last_tab: 'hot',
   })
   return adaptHotSearchResponse(payload)
+}
+
+export type ExploreTab = 'hot' | 'local' | 'realtime' | 'rank'
+
+export interface LoadExploreHotOptions {
+  cursor?: string | null
+  groupId?: string
+  containerid?: string
+}
+
+export async function loadExploreHot(options: LoadExploreHotOptions = {}): Promise<TimelinePage> {
+  const isFirstPage = !options.cursor
+  const cursorNum = options.cursor ? Number(options.cursor) : 0
+  const nextCursor = isFirstPage ? 0 : cursorNum + 1
+
+  const payload = await wbGet<ExploreHotPayload>(WEIBO_ENDPOINTS.exploreHot, {
+    refresh: isFirstPage ? 0 : 2,
+    group_id: options.groupId ?? '102803',
+    containerid: options.containerid ?? '102803',
+    extparam: 'discover|new_feed',
+    max_id: isFirstPage ? 0 : nextCursor,
+    count: 10,
+  })
+  return adaptExploreHotResponse(payload)
+}
+
+export async function loadExploreGroups(): Promise<ExploreGroup[]> {
+  const payload = await wbGet<ExploreGroupsPayload>(WEIBO_ENDPOINTS.exploreGroups, {
+    is_new_segment: 1,
+    fetch_hot: 1,
+  })
+  return adaptExploreGroupsResponse(payload)
 }
 
 export async function loadSearch(query: string): Promise<SearchResult> {

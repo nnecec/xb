@@ -19,6 +19,7 @@ const PAGE_LABELS: Record<WeiboPageDescriptor['kind'], string> = {
   favorites: '收藏',
   status: '微博详情',
   notifications: '通知',
+  explore: '探索',
   unsupported: '不支持的页面',
 }
 
@@ -34,6 +35,8 @@ function describePage(page: WeiboPageDescriptor): string {
       return `微博 ${page.statusId} by ${page.authorId}`
     case 'notifications':
       return `通知 - ${page.tab}`
+    case 'explore':
+      return `探索 - ${page.groupId}`
     case 'unsupported':
       return `原因: ${page.reason}`
   }
@@ -46,7 +49,8 @@ function mainScrollRestorationKey(pathname: string, search: string): string | nu
     page.kind === 'home' ||
     page.kind === 'profile' ||
     page.kind === 'favorites' ||
-    page.kind === 'notifications'
+    page.kind === 'notifications' ||
+    page.kind === 'explore'
   ) {
     return `${pathname}${search}`
   }

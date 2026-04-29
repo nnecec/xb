@@ -1,7 +1,8 @@
-import { ChevronDown } from 'lucide-react'
+import { ChevronRightIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 
+import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import { useAppSettings } from '@/lib/app-settings-store'
@@ -360,7 +361,7 @@ function renderReplyChainText(
         {renderReplyChainItem(firstItem, 0, urlEntities, topicEntities, phraseMap, extractImages)}
         <Collapsible>
           <CollapsibleTrigger asChild>
-            <div>
+            <div className="group" onClick={(e) => e.stopPropagation()}>
               {renderReplyChainItem(
                 secondItem,
                 1,
@@ -370,10 +371,10 @@ function renderReplyChainText(
                 extractImages,
               )}
               {middleItems.length > 0 && (
-                <div className="flex items-center gap-1 px-4 py-1">
-                  <ChevronDown className="text-muted-foreground size-3 transition-transform data-[state=open]:rotate-180" />
-                  <span className="text-muted-foreground text-xs">{middleItems.length} 条引用</span>
-                </div>
+                <Button size="xs" variant="ghost" className="mt-2 flex items-center gap-1">
+                  <ChevronRightIcon className="size-3 transition-transform group-data-[state=open]:rotate-90" />
+                  <span className="text-xs">{middleItems.length} 条引用</span>
+                </Button>
               )}
             </div>
           </CollapsibleTrigger>

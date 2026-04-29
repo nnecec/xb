@@ -13,6 +13,7 @@ import { usePrewarmEmoticonConfig } from '@/lib/weibo/app/emoticon-query'
 import { AppErrorBoundary } from '@/lib/weibo/app/error-boundary'
 import { UnsupportedPageContent } from '@/lib/weibo/app/pages/unsupported-page-content'
 import { WeiboHistorySync } from '@/lib/weibo/app/weibo-history-sync'
+import { ExplorePage } from '@/lib/weibo/pages/explore-page'
 import { FavoritesPage } from '@/lib/weibo/pages/favorites-page'
 import { HomeTimelinePage } from '@/lib/weibo/pages/home-timeline-page'
 import { NotificationsPage } from '@/lib/weibo/pages/notifications-page'
@@ -51,6 +52,8 @@ function AppRootBootstrap() {
         <Route path="*" element={<AppShell />}>
           <Route index element={<HomeTimelinePage />} />
           <Route path="mygroups" element={<HomeTimelinePage />} />
+          <Route path="explore" element={<ExplorePage />} />
+          <Route path="hot/weibo/:groupId" element={<ExplorePage />} />
           <Route path=":authorId/:statusId" element={<StatusDetailPage />} />
           <Route path="u/:uid" element={<ProfilePage />} />
           <Route path="u/page/fav/:uid" element={<FavoritesPage />} />

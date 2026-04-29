@@ -104,10 +104,13 @@ export function NavigationRail({
           </Button>
 
           <Button
-            variant="ghost"
+            variant={pageKind === 'explore' ? 'default' : 'ghost'}
             className={isXl ? 'justify-start' : 'justify-center'}
             size={isXl ? 'lg' : 'icon'}
-            disabled
+            onClick={() => navigate('/hot/weibo/102803')}
+            title="探索"
+            aria-label="探索"
+            aria-current={pageKind === 'explore' ? 'page' : undefined}
           >
             <Compass aria-hidden="true" className="size-4 shrink-0" />
             <span className={cn('hidden xl:inline')}>探索</span>

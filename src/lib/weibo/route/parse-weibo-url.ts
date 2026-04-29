@@ -64,6 +64,20 @@ export function parseWeiboUrl(input: string): WeiboPageDescriptor {
     }
   }
 
+  if (parts[0] === 'explore') {
+    return {
+      kind: 'explore',
+      groupId: '102803',
+    }
+  }
+
+  if (parts[0] === 'hot' && parts[1] === 'weibo' && parts[2]) {
+    return {
+      kind: 'explore',
+      groupId: parts[2],
+    }
+  }
+
   if (parts.length >= 2 && /^\d+$/.test(parts[0])) {
     return {
       kind: 'status',
