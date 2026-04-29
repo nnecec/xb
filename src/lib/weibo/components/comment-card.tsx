@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Heart, MessageCircleIcon } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router'
@@ -17,7 +17,11 @@ import { useFontSettings } from '@/lib/weibo/hooks/use-font-settings'
 import { type ComposeTarget, composeTargetFromComment } from '@/lib/weibo/models/compose'
 import type { CommentItem } from '@/lib/weibo/models/status'
 import { getCurrentUserUid } from '@/lib/weibo/platform/current-user'
-import { deleteWeiboComment } from '@/lib/weibo/services/weibo-repository'
+import {
+  cancelCommentLike,
+  deleteWeiboComment,
+  setCommentLike,
+} from '@/lib/weibo/services/weibo-repository'
 
 export function CommentCard({
   item,
@@ -34,6 +38,65 @@ export function CommentCard({
   const uid = getCurrentUserUid()
   const showOwnerMenu = uid !== null && uid === item.author.id
   const { fontSizeClass, fontFamilyClass } = useFontSettings()
+  const queryClient = useQueryClient()
+
+  const likeMutation = useMutation({
+    mutationFn: async (target: CommentItem) => {
+      if (target.liked) {
+        await cancelCommentLike(target.id)
+      } else {
+        await setCommentLike(target.id)
+      }
+    },
+    onMutate: (target: CommentItem) => {
+      queryClient.cancelQueries({ queryKey: ['weibo'] })
+
+      const previousItems = queryClient.getQueriesData({ queryKey: ['weibo'] })
+
+      queryClient.setQueriesData({ queryKey: ['weibo'] }, (old) => {
+        if (!old || typeof old !== 'object') return old
+
+        const updateCommentInTree = (comment: CommentItem): CommentItem => {
+          if (comment.id === target.id) {
+            return {
+              ...comment,
+              liked: !comment.liked,
+              likeCount: comment.likeCount + (comment.liked ? -1 : 1),
+            }
+          }
+          if (comment.comments.length > 0) {
+            return {
+              ...comment,
+              comments: comment.comments.map(updateCommentInTree),
+            }
+          }
+          return comment
+        }
+
+        if ('pages' in old) {
+          const data = old as { pages: { items: CommentItem[] }[] }
+          return {
+            ...data,
+            pages: data.pages.map((page) => ({
+              ...page,
+              items: page.items.map(updateCommentInTree),
+            })),
+          }
+        }
+        return old
+      })
+
+      return { previousItems }
+    },
+    onError: (_error, _target, context) => {
+      if (context?.previousItems) {
+        for (const [queryKey, data] of context.previousItems) {
+          queryClient.setQueryData(queryKey, data)
+        }
+      }
+      toast.error(_error instanceof Error ? _error.message : '操作失败')
+    },
+  })
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteWeiboComment(item.id),
@@ -47,6 +110,8 @@ export function CommentCard({
       toast.error(error instanceof Error ? error.message : '删除失败')
     },
   })
+
+  const liked = item.liked === true
 
   return (
     <Card className="py-4">
@@ -149,9 +214,23 @@ export function CommentCard({
           >
             <MessageCircleIcon className="size-3" />
           </Button>
-          <Button variant="ghost" className="gap-1 text-xs" size="sm">
-            <Heart className="size-3" />
-            {item.likeCount}
+          <Button
+            type="button"
+            variant="ghost"
+            className="gap-1 text-xs"
+            size="sm"
+            aria-label={liked ? '取消点赞' : '点赞评论'}
+            aria-pressed={liked}
+            disabled={likeMutation.isPending}
+            onClick={() => likeMutation.mutate(item)}
+          >
+            <Heart
+              className={cn(
+                'size-3 transition-colors hover:text-rose-500',
+                liked && 'fill-rose-500 text-rose-500',
+              )}
+            />
+            <span className={cn(liked && 'text-rose-500')}>{item.likeCount}</span>
           </Button>
         </div>
       </CardContent>

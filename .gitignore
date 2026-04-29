@@ -38,6 +38,15 @@ skills*
 docs/
 .sisyphus
 
+# craft
+statuses
+labels
+config.json
+events.jsonl
+views.json
+plugin.json
+session.jsonl
+
 # Environment
 .env*
 !.env.example

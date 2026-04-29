@@ -22,6 +22,7 @@ export interface CommentItem {
   createdAtLabel: string
   author: FeedAuthor
   likeCount: number
+  liked?: boolean
   source?: string
   emoticons?: Record<string, FeedEmoticon>
   urlEntities?: FeedUrlEntity[]

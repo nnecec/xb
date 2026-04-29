@@ -108,7 +108,7 @@ export function CardSticker({
                 <p className="text-base font-bold" style={{ color: textPrimary }}>
                   @{data.author.name}
                 </p>
-                <p className="text-sm" style={{ color: textSecondary }}>
+                <p className="text-xs" style={{ color: textSecondary }}>
                   {formatDate(data.createdAt)}
                 </p>
                 {(data.source || data.regionName) && (
@@ -119,20 +119,7 @@ export function CardSticker({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div
-                className="size-8 rounded-full shadow-md"
-                style={{
-                  backgroundColor: isDark ? 'oklch(0.50 0.15 0)' : 'oklch(0.85 0.10 0)',
-                  transform: 'rotate(12deg)',
-                }}
-              >
-                <span
-                  className="flex size-full items-center justify-center text-sm"
-                  style={{ color: isDark ? 'oklch(0.95 0.01 0)' : 'oklch(0.20 0.01 0)' }}
-                >
-                  📌
-                </span>
-              </div>
+              <img src={WeiboLogo} alt="微博 Logo" className="size-9" />
             </div>
           </div>
 
@@ -238,7 +225,6 @@ export function CardSticker({
 
           {showLink && data.mblogId && (
             <div className="flex items-center gap-1">
-              <img src={WeiboLogo} alt="微博 Logo" className="size-9" />
               <Link className="size-3" style={{ color: textTertiary }} />
               <span className="text-xs" style={{ color: textTertiary }}>
                 weibo.com/{data.author.id}/{data.mblogId}
@@ -248,13 +234,10 @@ export function CardSticker({
         </div>
 
         {/* Corner decorations */}
-        <div
-          className="absolute -right-3 -bottom-3 text-2xl"
-          style={{ transform: 'rotate(-10deg)' }}
-        >
+        <div className="absolute right-3 bottom-3 text-2xl" style={{ transform: 'rotate(-10deg)' }}>
           ✧
         </div>
-        <div className="absolute -bottom-4 left-16 text-xl" style={{ transform: 'rotate(8deg)' }}>
+        <div className="absolute bottom-4 left-16 text-xl" style={{ transform: 'rotate(8deg)' }}>
           ✦
         </div>
       </div>

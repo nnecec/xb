@@ -800,6 +800,7 @@ export function toCommentItem(comment: WeiboStatus): CommentItem {
     createdAtLabel: formatCreatedAt(comment.created_at ?? ''),
     author: getStatusAuthor(comment.user),
     likeCount: Number(comment.like_counts ?? 0),
+    liked: Boolean(comment.attitudes_status ?? (comment as { liked?: boolean }).liked),
     source: stripHtmlTags(comment.source ?? ''),
     ...(Object.keys(emoticons).length > 0 ? { emoticons } : {}),
     ...(urlEntities.length > 0 ? { urlEntities } : {}),

@@ -8,6 +8,8 @@ export const WEIBO_ENDPOINTS = {
   statusConfig: '/ajax/statuses/config',
   setLike: '/ajax/statuses/setLike',
   cancelLike: '/ajax/statuses/cancelLike',
+  setCommentLike: '/ajax/statuses/updateLike',
+  cancelCommentLike: '/ajax/statuses/destroyLike',
   normalRepost: '/ajax/statuses/normal_repost',
   statusDestroy: '/ajax/statuses/destroy',
   destroyComment: '/ajax/statuses/destroyComment',

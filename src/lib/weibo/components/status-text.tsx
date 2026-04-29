@@ -412,7 +412,7 @@ function renderReplyChainText(
         </span>
       ) : null}
       {leading && leading.images.length > 0 ? <ImageCarousel images={leading.images} /> : null}
-      <ItemGroup data-testid="reply-chain">
+      <ItemGroup data-testid="reply-chain" className="flex flex-col gap-2">
         {chain.map((segment, index) =>
           renderReplyChainItem(
             segment,
