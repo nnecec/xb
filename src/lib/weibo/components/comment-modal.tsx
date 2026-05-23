@@ -38,10 +38,12 @@ function getModalCopy(target: ComposeTarget) {
 export function CommentModal({
   open,
   target,
+  zIndex,
   onOpenChange,
 }: {
   open: boolean
   target: ComposeTarget | null
+  zIndex?: number
   onOpenChange: (open: boolean) => void
 }) {
   if (!target) {
@@ -52,16 +54,18 @@ export function CommentModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <CommentModalForm key={formKey} target={target} onOpenChange={onOpenChange} />
+      <CommentModalForm key={formKey} target={target} zIndex={zIndex} onOpenChange={onOpenChange} />
     </Dialog>
   )
 }
 
 function CommentModalForm({
   target,
+  zIndex,
   onOpenChange,
 }: {
   target: ComposeTarget
+  zIndex?: number
   onOpenChange: (open: boolean) => void
 }) {
   const [text, setText] = useState('')
@@ -154,7 +158,7 @@ function CommentModalForm({
     mutation.isPending || (target.mode === 'comment' && text.trim().length === 0)
 
   return (
-    <DialogContent className="sm:max-w-xl">
+    <DialogContent className="sm:max-w-xl" style={{ zIndex }}>
       <DialogHeader>
         <DialogTitle>{copy.title}</DialogTitle>
         <DialogDescription>

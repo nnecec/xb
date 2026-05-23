@@ -27,10 +27,12 @@ import { loadStatusComments, loadStatusDetail } from '@/lib/weibo/services/weibo
 export function StatusCommentsSection({
   statusId,
   authorId,
+  zIndex,
   onCommentReply,
 }: {
   statusId: string
   authorId: string
+  zIndex?: number
   onCommentReply: ReturnType<typeof useAppShellContext>['setComposeTarget']
 }) {
   const [filter, setFilter] = useState<string | undefined>(undefined)
@@ -87,6 +89,7 @@ export function StatusCommentsSection({
           emptyLabel="此微博暂无评论"
           rootStatusId={statusId}
           authorUid={authorId}
+          zIndex={zIndex}
           onCommentReply={onCommentReply}
         />
       ) : null}

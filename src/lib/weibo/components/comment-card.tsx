@@ -26,11 +26,13 @@ export const CommentCard = memo(function CommentCard({
   item,
   rootStatusId,
   authorUid,
+  zIndex,
   onCommentReply,
 }: {
   item: CommentItem
   rootStatusId: string
   authorUid?: string
+  zIndex?: number
   onCommentReply?: (target: ComposeTarget) => void
 }) {
   const [showNestedCommentsDialog, setShowNestedCommentsDialog] = useState(false)
@@ -236,6 +238,7 @@ export const CommentCard = memo(function CommentCard({
           open={showNestedCommentsDialog}
           statusId={item.id}
           authorUid={authorUid ?? ''}
+          zIndex={zIndex}
           onOpenChange={setShowNestedCommentsDialog}
           onCommentReply={onCommentReply}
         />

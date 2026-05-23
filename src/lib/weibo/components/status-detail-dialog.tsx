@@ -50,6 +50,7 @@ export function StatusDetailDialog({
   })
 
   const detail = detailQuery.data
+  const commentsZIndex = zIndex != null ? zIndex + 1 : undefined
 
   return (
     <DialogContainer
@@ -80,6 +81,7 @@ export function StatusDetailDialog({
             <StatusCommentsSection
               statusId={detail.status.id}
               authorId={authorId}
+              zIndex={commentsZIndex}
               onCommentReply={setComposeTarget}
             />
           </div>

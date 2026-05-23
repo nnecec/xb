@@ -75,13 +75,28 @@ export function AppShell() {
   const [statusDetailZIndex, setStatusDetailZIndex] = useState(40)
   const [profileZIndex, setProfileZIndex] = useState(40)
   const [topicZIndex, setTopicZIndex] = useState(40)
+  const [commentModalZIndex, setCommentModalZIndex] = useState(40)
   const mainRef = useRef<HTMLDivElement | null>(null)
 
   const getNextZIndex = useCallback(() => {
     const next =
-      Math.max(settingsZIndex, composeZIndex, statusDetailZIndex, profileZIndex, topicZIndex) + 1
+      Math.max(
+        settingsZIndex,
+        composeZIndex,
+        statusDetailZIndex,
+        profileZIndex,
+        topicZIndex,
+        commentModalZIndex,
+      ) + 1
     return next
-  }, [settingsZIndex, composeZIndex, statusDetailZIndex, profileZIndex, topicZIndex])
+  }, [
+    settingsZIndex,
+    composeZIndex,
+    statusDetailZIndex,
+    profileZIndex,
+    topicZIndex,
+    commentModalZIndex,
+  ])
 
   useEffect(() => onUnauthorized(() => setAuthDialogOpen(true)), [])
 
@@ -156,6 +171,16 @@ export function AppShell() {
     [getNextZIndex],
   )
 
+  const handleSetComposeTarget = useCallback(
+    (target: ComposeTarget | null) => {
+      if (target) {
+        setCommentModalZIndex(getNextZIndex())
+      }
+      setComposeTarget(target)
+    },
+    [getNextZIndex],
+  )
+
   const refreshTimeline = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: ['weibo', 'timeline'] })
   }, [queryClient])
@@ -187,7 +212,7 @@ export function AppShell() {
       resetMainScroll,
       scrollMainToTop,
       composeTarget,
-      setComposeTarget,
+      setComposeTarget: handleSetComposeTarget,
       viewingProfileUserId,
       onProfileUserIdChange: setViewingProfileUserId,
       onHomeTabChange,
@@ -204,6 +229,7 @@ export function AppShell() {
       resetMainScroll,
       scrollMainToTop,
       composeTarget,
+      handleSetComposeTarget,
       viewingProfileUserId,
       onHomeTabChange,
       refreshTimeline,
@@ -215,9 +241,10 @@ export function AppShell() {
     <CommentModal
       open={composeTarget !== null}
       target={composeTarget}
+      zIndex={commentModalZIndex}
       onOpenChange={(open) => {
         if (!open) {
-          setComposeTarget(null)
+          handleSetComposeTarget(null)
         }
       }}
     />
@@ -236,7 +263,7 @@ export function AppShell() {
           width={statusDetailPopupWidth}
           zIndex={statusDetailZIndex}
           onOpenChange={setStatusDetailDialogOpen}
-          setComposeTarget={setComposeTarget}
+          setComposeTarget={handleSetComposeTarget}
           onNavigate={navigateToStatusDetail}
           onNavigateProfile={openProfileDialog}
           onNavigateTopic={openTopicDialog}
@@ -248,7 +275,7 @@ export function AppShell() {
           width={statusDetailPopupWidth}
           zIndex={profileZIndex}
           onOpenChange={setProfileDialogOpen}
-          setComposeTarget={setComposeTarget}
+          setComposeTarget={handleSetComposeTarget}
           onNavigateStatusDetail={navigateToStatusDetail}
         />
         <TopicDialog
@@ -258,7 +285,7 @@ export function AppShell() {
           width={statusDetailPopupWidth}
           zIndex={topicZIndex}
           onOpenChange={setTopicDialogOpen}
-          setComposeTarget={setComposeTarget}
+          setComposeTarget={handleSetComposeTarget}
           onNavigate={navigateToStatusDetail}
           onNavigateProfile={openProfileDialog}
         />
@@ -324,7 +351,7 @@ export function AppShell() {
           width={statusDetailPopupWidth}
           zIndex={statusDetailZIndex}
           onOpenChange={setStatusDetailDialogOpen}
-          setComposeTarget={setComposeTarget}
+          setComposeTarget={handleSetComposeTarget}
           onNavigate={navigateToStatusDetail}
           onNavigateProfile={openProfileDialog}
           onNavigateTopic={openTopicDialog}
@@ -336,7 +363,7 @@ export function AppShell() {
           width={statusDetailPopupWidth}
           zIndex={profileZIndex}
           onOpenChange={setProfileDialogOpen}
-          setComposeTarget={setComposeTarget}
+          setComposeTarget={handleSetComposeTarget}
           onNavigateStatusDetail={navigateToStatusDetail}
         />
         <TopicDialog
@@ -346,7 +373,7 @@ export function AppShell() {
           width={statusDetailPopupWidth}
           zIndex={topicZIndex}
           onOpenChange={setTopicDialogOpen}
-          setComposeTarget={setComposeTarget}
+          setComposeTarget={handleSetComposeTarget}
           onNavigate={navigateToStatusDetail}
           onNavigateProfile={openProfileDialog}
         />
