@@ -5,6 +5,7 @@ import { Link } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { useAppSettings } from '@/lib/app-settings-store'
+import { useAppShellContext } from '@/lib/weibo/app/app-shell-layout'
 import { useEmoticonConfigQuery } from '@/lib/weibo/app/emoticon-query'
 import { ImageCarousel } from '@/lib/weibo/components/image-carousel'
 import { UserHoverCard } from '@/lib/weibo/components/user-hover-card'
@@ -151,8 +152,20 @@ function renderEntityLink(entity: FeedUrlEntity, key: string) {
   )
 }
 
-function TopicLink({ entity, topicKey }: { entity: FeedTopicEntity; topicKey: string }) {
+function TopicLink({
+  entity,
+  topicKey,
+  onNavigateTopic,
+}: {
+  entity: FeedTopicEntity
+  topicKey: string
+  onNavigateTopic?: (topic: string) => void
+}) {
   const xbTopicPage = useAppSettings((s) => s.xbTopicPage)
+  const statusDetailPopupEnabled = useAppSettings((s) => s.statusDetailPopupEnabled)
+  const ctx = useAppShellContext()
+
+  const handleTopicClick = onNavigateTopic ?? ctx?.openTopicDialog ?? null
 
   if (!xbTopicPage) {
     return (
@@ -168,6 +181,19 @@ function TopicLink({ entity, topicKey }: { entity: FeedTopicEntity; topicKey: st
     )
   }
 
+  if (statusDetailPopupEnabled && handleTopicClick) {
+    return (
+      <button
+        key={topicKey}
+        type="button"
+        onClick={() => handleTopicClick(entity.title)}
+        className={LINK_TEXT_CLASS_NAME}
+      >
+        #{entity.title}#
+      </button>
+    )
+  }
+
   return (
     <Link key={topicKey} to={entity.url} className={LINK_TEXT_CLASS_NAME}>
       #{entity.title}#
@@ -175,8 +201,12 @@ function TopicLink({ entity, topicKey }: { entity: FeedTopicEntity; topicKey: st
   )
 }
 
-function renderTopicLink(entity: FeedTopicEntity, key: string) {
-  return <TopicLink entity={entity} topicKey={key} />
+function renderTopicLink(
+  entity: FeedTopicEntity,
+  key: string,
+  onNavigateTopic?: (topic: string) => void,
+) {
+  return <TopicLink entity={entity} topicKey={key} onNavigateTopic={onNavigateTopic} />
 }
 
 function renderTextWithEntities(
@@ -185,6 +215,7 @@ function renderTextWithEntities(
   urlEntities: FeedUrlEntity[],
   topicEntities: FeedTopicEntity[] = [],
   phraseMap: Record<string, WeiboEmoticonItem>,
+  onNavigateTopic?: (topic: string) => void,
 ) {
   const urlEntityMap = new Map(urlEntities.map((entity) => [entity.shortUrl, entity]))
   const topicEntityMap = new Map(topicEntities.map((entity) => [`#${entity.title}#`, entity]))
@@ -212,7 +243,7 @@ function renderTextWithEntities(
 
     const topicEntity = topicEntityMap.get(chunk)
     if (topicEntity) {
-      return renderTopicLink(topicEntity, `${keyPrefix}-topic-${index}`)
+      return renderTopicLink(topicEntity, `${keyPrefix}-topic-${index}`, onNavigateTopic)
     }
 
     return (
@@ -446,9 +477,11 @@ export function MentionInlineText({ text }: { text: string }) {
 export function StatusText({
   item,
   text,
+  onNavigateTopic,
 }: {
   item: Pick<FeedItem, 'emoticons' | 'urlEntities' | 'topicEntities' | 'imageEntities'>
   text: string
+  onNavigateTopic?: (topic: string) => void
 }) {
   const emoticonQuery = useEmoticonConfigQuery()
   const collapseRepliesEnabled = useAppSettings((s) => s.collapseRepliesEnabled)
@@ -496,6 +529,7 @@ export function StatusText({
           item.urlEntities ?? [],
           item.topicEntities ?? [],
           phraseMap,
+          onNavigateTopic,
         )
       : renderTextWithMentionsAndEmoticons(strippedText, 'm', phraseMap)
 

@@ -21,6 +21,7 @@ interface StatusDetailDialogProps {
   setComposeTarget: (target: ComposeTarget | null) => void
   onNavigate?: (item: FeedItem) => void
   onNavigateProfile?: (lookup: ProfileLookup) => void
+  onNavigateTopic?: (topic: string) => void
 }
 
 export function StatusDetailDialog({
@@ -33,6 +34,7 @@ export function StatusDetailDialog({
   setComposeTarget,
   onNavigate,
   onNavigateProfile,
+  onNavigateTopic,
 }: StatusDetailDialogProps) {
   if (!open || !item) {
     return null
@@ -68,6 +70,7 @@ export function StatusDetailDialog({
             surface="detail"
             onNavigate={onNavigate}
             onNavigateProfile={onNavigateProfile}
+            onNavigateTopic={onNavigateTopic}
             onCommentClick={(item) => setComposeTarget(composeTargetFromFeedItem(item, 'comment'))}
             onRepostClick={(item) => setComposeTarget(composeTargetFromFeedItem(item, 'repost'))}
             onStatusDeleted={() => onOpenChange(false)}

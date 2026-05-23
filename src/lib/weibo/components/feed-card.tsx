@@ -233,12 +233,14 @@ function FeedTextBlock({
   isLongTextLoading,
   hasLongTextError,
   onLoadLongText,
+  onNavigateTopic,
 }: {
   item: FeedItem
   canLoadLongText: boolean
   isLongTextLoading: boolean
   hasLongTextError: boolean
   onLoadLongText: () => void
+  onNavigateTopic?: (topic: string) => void
 }) {
   const { fontSizeClass, fontWeightClass, letterSpacingClass, lineHeightClass, fontFamilyClass } =
     useFontSettings()
@@ -254,7 +256,7 @@ function FeedTextBlock({
         fontFamilyClass,
       )}
     >
-      <StatusText item={item} text={item.text} />
+      <StatusText item={item} text={item.text} onNavigateTopic={onNavigateTopic} />
 
       {canLoadLongText ? (
         <Button
@@ -433,6 +435,7 @@ function RetweetedFeedBlock({
   item,
   onNavigate,
   onNavigateProfile,
+  onNavigateTopic,
   onLikeClick,
   likePendingForId,
   xLayoutEnabled,
@@ -442,6 +445,7 @@ function RetweetedFeedBlock({
   item: NonNullable<FeedItem['retweetedStatus']>
   onNavigate?: (item: FeedItem) => void
   onNavigateProfile?: (lookup: ProfileLookup) => void
+  onNavigateTopic?: (topic: string) => void
   onLikeClick?: (item: FeedItem) => void
   likePendingForId: string | null
   xLayoutEnabled: boolean
@@ -488,6 +492,7 @@ function RetweetedFeedBlock({
           isLongTextLoading={isLongTextLoading}
           hasLongTextError={hasLongTextError}
           onLoadLongText={onLoadLongText}
+          onNavigateTopic={onNavigateTopic}
         />
 
         <FeedMediaBlock item={resolvedItem} />
@@ -521,6 +526,7 @@ export const FeedCard = memo(function FeedCard({
   onCommentClick,
   onRepostClick,
   onNavigateProfile,
+  onNavigateTopic,
   onStatusDeleted,
   className,
   uniformHeight,
@@ -531,6 +537,7 @@ export const FeedCard = memo(function FeedCard({
   onCommentClick?: (item: FeedItem) => void
   onRepostClick?: (item: FeedItem) => void
   onNavigateProfile?: (lookup: ProfileLookup) => void
+  onNavigateTopic?: (topic: string) => void
   /** After deleting this status (owner only), e.g. navigate back from detail. */
   onStatusDeleted?: () => void
   className?: string
@@ -789,6 +796,7 @@ export const FeedCard = memo(function FeedCard({
         isLongTextLoading={isLongTextLoading}
         hasLongTextError={hasLongTextError}
         onLoadLongText={onLoadLongText}
+        onNavigateTopic={onNavigateTopic}
       />
 
       <FeedMediaBlock item={resolvedItem} />
@@ -800,6 +808,7 @@ export const FeedCard = memo(function FeedCard({
           item={resolvedItem.retweetedStatus}
           onNavigate={onNavigate}
           onNavigateProfile={onNavigateProfile}
+          onNavigateTopic={onNavigateTopic}
           onLikeClick={(target) => likeMutation.mutate(target)}
           likePendingForId={likePendingId}
           xLayoutEnabled={xLayoutEnabled}

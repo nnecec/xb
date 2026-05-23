@@ -52,6 +52,7 @@ describe('ShellFrame', () => {
       openStatusDetailDialog: vi.fn(),
       navigateToProfile: vi.fn(),
       openProfileDialog: vi.fn(),
+      openTopicDialog: vi.fn(),
       resetMainScroll: vi.fn(),
       scrollMainToTop: vi.fn(),
       composeTarget: null,

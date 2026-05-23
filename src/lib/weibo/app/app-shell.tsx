@@ -11,6 +11,7 @@ import { GenImageDialogProvider } from '@/lib/weibo/components/gen-image-dialog-
 import { ProfileDialog } from '@/lib/weibo/components/profile-dialog'
 import { SettingsDialog } from '@/lib/weibo/components/settings-dialog'
 import { StatusDetailDialog } from '@/lib/weibo/components/status-detail-dialog'
+import { TopicDialog } from '@/lib/weibo/components/topic-dialog'
 import type { ComposeTarget } from '@/lib/weibo/models/compose'
 import type { StatusDetailNavigationItem } from '@/lib/weibo/models/feed'
 import { useWeiboPage } from '@/lib/weibo/route/use-weibo-page'
@@ -32,6 +33,7 @@ export interface AppShellContext {
   openStatusDetailDialog: (item: StatusDetailNavigationItem) => void
   navigateToProfile: (lookup: ProfileLookup) => void
   openProfileDialog: (lookup: ProfileLookup) => void
+  openTopicDialog: (topic: string) => void
   resetMainScroll: () => void
   scrollMainToTop: () => void
   composeTarget: ComposeTarget | null
@@ -66,16 +68,20 @@ export function AppShell() {
   const [statusDetailItem, setStatusDetailItem] = useState<StatusDetailNavigationItem | null>(null)
   const [profileDialogOpen, setProfileDialogOpen] = useState(false)
   const [profileLookup, setProfileLookup] = useState<ProfileLookup | null>(null)
+  const [topicDialogOpen, setTopicDialogOpen] = useState(false)
+  const [topicDialogTopic, setTopicDialogTopic] = useState<string | null>(null)
   const [settingsZIndex, setSettingsZIndex] = useState(40)
   const [composeZIndex, setComposeZIndex] = useState(40)
   const [statusDetailZIndex, setStatusDetailZIndex] = useState(40)
   const [profileZIndex, setProfileZIndex] = useState(40)
+  const [topicZIndex, setTopicZIndex] = useState(40)
   const mainRef = useRef<HTMLDivElement | null>(null)
 
   const getNextZIndex = useCallback(() => {
-    const next = Math.max(settingsZIndex, composeZIndex, statusDetailZIndex, profileZIndex) + 1
+    const next =
+      Math.max(settingsZIndex, composeZIndex, statusDetailZIndex, profileZIndex, topicZIndex) + 1
     return next
-  }, [settingsZIndex, composeZIndex, statusDetailZIndex, profileZIndex])
+  }, [settingsZIndex, composeZIndex, statusDetailZIndex, profileZIndex, topicZIndex])
 
   useEffect(() => onUnauthorized(() => setAuthDialogOpen(true)), [])
 
@@ -141,6 +147,15 @@ export function AppShell() {
     [getNextZIndex],
   )
 
+  const openTopicDialog = useCallback(
+    (topic: string) => {
+      setTopicDialogTopic(topic)
+      setTopicZIndex(getNextZIndex())
+      setTopicDialogOpen(true)
+    },
+    [getNextZIndex],
+  )
+
   const refreshTimeline = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: ['weibo', 'timeline'] })
   }, [queryClient])
@@ -168,6 +183,7 @@ export function AppShell() {
       openStatusDetailDialog,
       navigateToProfile,
       openProfileDialog,
+      openTopicDialog,
       resetMainScroll,
       scrollMainToTop,
       composeTarget,
@@ -184,6 +200,7 @@ export function AppShell() {
       openStatusDetailDialog,
       navigateToProfile,
       openProfileDialog,
+      openTopicDialog,
       resetMainScroll,
       scrollMainToTop,
       composeTarget,
@@ -222,6 +239,7 @@ export function AppShell() {
           setComposeTarget={setComposeTarget}
           onNavigate={navigateToStatusDetail}
           onNavigateProfile={openProfileDialog}
+          onNavigateTopic={openTopicDialog}
         />
         <ProfileDialog
           open={profileDialogOpen}
@@ -232,6 +250,17 @@ export function AppShell() {
           onOpenChange={setProfileDialogOpen}
           setComposeTarget={setComposeTarget}
           onNavigateStatusDetail={navigateToStatusDetail}
+        />
+        <TopicDialog
+          open={topicDialogOpen}
+          topic={topicDialogTopic}
+          position={statusDetailPopupPosition}
+          width={statusDetailPopupWidth}
+          zIndex={topicZIndex}
+          onOpenChange={setTopicDialogOpen}
+          setComposeTarget={setComposeTarget}
+          onNavigate={navigateToStatusDetail}
+          onNavigateProfile={openProfileDialog}
         />
       </>
     )
@@ -298,6 +327,7 @@ export function AppShell() {
           setComposeTarget={setComposeTarget}
           onNavigate={navigateToStatusDetail}
           onNavigateProfile={openProfileDialog}
+          onNavigateTopic={openTopicDialog}
         />
         <ProfileDialog
           open={profileDialogOpen}
@@ -308,6 +338,17 @@ export function AppShell() {
           onOpenChange={setProfileDialogOpen}
           setComposeTarget={setComposeTarget}
           onNavigateStatusDetail={navigateToStatusDetail}
+        />
+        <TopicDialog
+          open={topicDialogOpen}
+          topic={topicDialogTopic}
+          position={statusDetailPopupPosition}
+          width={statusDetailPopupWidth}
+          zIndex={topicZIndex}
+          onOpenChange={setTopicDialogOpen}
+          setComposeTarget={setComposeTarget}
+          onNavigate={navigateToStatusDetail}
+          onNavigateProfile={openProfileDialog}
         />
       </ShellFrame>
     </GenImageDialogProvider>
