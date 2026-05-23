@@ -14,11 +14,12 @@ import {
   type FontSizeClass,
   type FontWeightClass,
   type LetterSpacingClass,
+  type LightBgColorPreset,
   type LineHeightClass,
   type GenImageCardTheme,
   type ContentWidth,
   type HotSearchType,
-  type LightBgColorPreset,
+  type StatusDetailPopupPosition,
 } from '@/lib/app-settings'
 
 export interface AppSettingsStoreState extends AppSettings {
@@ -44,7 +45,16 @@ export interface AppSettingsStoreState extends AppSettings {
   setImageGenTheme: (theme: GenImageCardTheme) => Promise<void>
   setImageGenCardStyle: (style: CardStyle) => Promise<void>
   setHotSearchType: (type: HotSearchType) => Promise<void>
+  setStatusDetailPopupEnabled: (enabled: boolean) => Promise<void>
+  setStatusDetailPopupPosition: (position: StatusDetailPopupPosition) => Promise<void>
+  setStatusDetailPopupWidth: (width: number) => Promise<void>
+  setBackgroundEnabled: (enabled: boolean) => Promise<void>
+  setBackgroundColor: (color: string) => Promise<void>
+  setGlassOpacity: (opacity: number) => Promise<void>
+  setGlassBlur: (blur: number) => Promise<void>
+  setBackgroundImageUrl: (url: string) => Promise<void>
   setXLayoutEnabled: (enabled: boolean) => Promise<void>
+  setWaterfallColumnCount: (count: number) => Promise<void>
   setBrowsingHistoryEnabled: (enabled: boolean) => Promise<void>
   setFollowGroupsEnabled: (enabled: boolean) => Promise<void>
   setNativeTopicPage: (enabled: boolean) => Promise<void>
@@ -76,7 +86,16 @@ function toPersistedSettings(state: AppSettingsStoreState): AppSettings {
     imageGenTheme: state.imageGenTheme,
     imageGenCardStyle: state.imageGenCardStyle,
     hotSearchType: state.hotSearchType,
+    statusDetailPopupEnabled: state.statusDetailPopupEnabled,
+    statusDetailPopupPosition: state.statusDetailPopupPosition,
+    statusDetailPopupWidth: state.statusDetailPopupWidth,
+    backgroundEnabled: state.backgroundEnabled,
+    backgroundColor: state.backgroundColor,
+    backgroundImageUrl: state.backgroundImageUrl,
+    glassOpacity: state.glassOpacity,
+    glassBlur: state.glassBlur,
     xLayoutEnabled: state.xLayoutEnabled,
+    waterfallColumnCount: state.waterfallColumnCount,
     browsingHistoryEnabled: state.browsingHistoryEnabled,
     followGroupsEnabled: state.followGroupsEnabled,
     xbTopicPage: state.xbTopicPage,
@@ -168,8 +187,35 @@ export function createAppSettingsStore(
       async setHotSearchType(hotSearchType) {
         await updateAndPersist({ hotSearchType })
       },
+      async setStatusDetailPopupEnabled(statusDetailPopupEnabled) {
+        await updateAndPersist({ statusDetailPopupEnabled })
+      },
+      async setStatusDetailPopupPosition(statusDetailPopupPosition) {
+        await updateAndPersist({ statusDetailPopupPosition })
+      },
+      async setStatusDetailPopupWidth(statusDetailPopupWidth) {
+        await updateAndPersist({ statusDetailPopupWidth })
+      },
+      async setBackgroundEnabled(backgroundEnabled) {
+        await updateAndPersist({ backgroundEnabled })
+      },
+      async setBackgroundColor(backgroundColor) {
+        await updateAndPersist({ backgroundColor })
+      },
+      async setGlassOpacity(glassOpacity) {
+        await updateAndPersist({ glassOpacity })
+      },
+      async setGlassBlur(glassBlur) {
+        await updateAndPersist({ glassBlur })
+      },
+      async setBackgroundImageUrl(backgroundImageUrl) {
+        await updateAndPersist({ backgroundImageUrl })
+      },
       async setXLayoutEnabled(xLayoutEnabled) {
         await updateAndPersist({ xLayoutEnabled })
+      },
+      async setWaterfallColumnCount(waterfallColumnCount) {
+        await updateAndPersist({ waterfallColumnCount })
       },
       async setBrowsingHistoryEnabled(browsingHistoryEnabled) {
         await updateAndPersist({ browsingHistoryEnabled })

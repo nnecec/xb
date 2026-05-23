@@ -19,11 +19,14 @@ import { useAppSettings } from '@/lib/app-settings-store'
 import { cn } from '@/lib/utils'
 import { searchQueryOptions } from '@/lib/weibo/queries/weibo-queries'
 
+type ProfileLookup = { uid: string } | { screenName: string }
+
 interface SearchCardProps {
   className?: string
+  onNavigateProfile?: (lookup: ProfileLookup) => void
 }
 
-export function SearchCard({ className }: SearchCardProps) {
+export function SearchCard({ className, onNavigateProfile }: SearchCardProps) {
   const [query, setQuery] = useState('')
   const [activeQuery, setActiveQuery] = useState('')
   const [open, setOpen] = useState(false)
@@ -55,8 +58,12 @@ export function SearchCard({ className }: SearchCardProps) {
     inputRef.current?.focus()
   }
 
-  const handleUserClick = (screenName: string) => {
-    navigate(`/n/${encodeURIComponent(screenName)}`)
+  const handleUserClick = (uid: string, screenName: string) => {
+    if (onNavigateProfile) {
+      onNavigateProfile({ uid })
+    } else {
+      navigate(`/n/${encodeURIComponent(screenName)}`)
+    }
     setOpen(false)
   }
 
@@ -142,7 +149,7 @@ export function SearchCard({ className }: SearchCardProps) {
                   {users.map((user) => (
                     <DropdownMenuItem
                       key={user.uid}
-                      onSelect={() => handleUserClick(user.screen_name)}
+                      onSelect={() => handleUserClick(user.uid, user.screen_name)}
                       className="flex items-center gap-3 py-2"
                     >
                       <Avatar className="h-8 w-8">

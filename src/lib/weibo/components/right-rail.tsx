@@ -5,12 +5,18 @@ import { useAppSettings } from '@/lib/app-settings-store'
 import { HotSearchCard } from '@/lib/weibo/components/hotsearch-list'
 import { SearchCard } from '@/lib/weibo/components/search-card'
 
-export function RightRail() {
+type ProfileLookup = { uid: string } | { screenName: string }
+
+interface RightRailProps {
+  onNavigateProfile: (lookup: ProfileLookup) => void
+}
+
+export function RightRail({ onNavigateProfile }: RightRailProps) {
   const showHotSearchCard = useAppSettings((state) => state.showHotSearchCard)
 
   return (
     <div className="flex w-full flex-col gap-4">
-      <SearchCard />
+      <SearchCard onNavigateProfile={onNavigateProfile} />
       {showHotSearchCard && <HotSearchCard className="gap-2 p-2" />}
 
       <Card className="py-4">

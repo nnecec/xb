@@ -102,6 +102,9 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --xb-glass-opacity: 0.8;
+  --xb-glass-blur: 12px;
+  --xb-custom-bg: #1e40af;
 }
 
 .dark {
@@ -156,6 +159,28 @@
   }
 }
 
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -164,4 +189,56 @@
 
 .animate-spin {
   animation: spin 1s linear infinite;
+}
+
+.xb-glass {
+  backdrop-filter: blur(var(--xb-glass-blur));
+}
+
+.xb-glass-card {
+  background-color: color-mix(
+    in srgb,
+    var(--card) calc(var(--xb-glass-opacity) * 100%),
+    transparent
+  );
+  backdrop-filter: blur(var(--xb-glass-blur));
+  border-color: color-mix(in srgb, var(--border) calc(var(--xb-glass-opacity) * 100%), transparent);
+}
+
+.xb-glass-popover {
+  background-color: color-mix(
+    in srgb,
+    var(--popover) calc(var(--xb-glass-opacity) * 100%),
+    transparent
+  );
+  backdrop-filter: blur(var(--xb-glass-blur));
+  border-color: color-mix(in srgb, var(--border) calc(var(--xb-glass-opacity) * 100%), transparent);
+}
+
+[data-glass] [data-slot='card'] {
+  background-color: color-mix(
+    in srgb,
+    var(--card) calc(var(--xb-glass-opacity) * 100%),
+    transparent
+  );
+  backdrop-filter: blur(var(--xb-glass-blur));
+  border-color: color-mix(in srgb, var(--border) calc(var(--xb-glass-opacity) * 100%), transparent);
+}
+
+[data-glass] [data-slot='dialog-content'] {
+  background-color: color-mix(
+    in srgb,
+    var(--background) calc(var(--xb-glass-opacity) * 100%),
+    transparent
+  );
+  backdrop-filter: blur(var(--xb-glass-blur));
+  border-color: color-mix(in srgb, var(--border) calc(var(--xb-glass-opacity) * 100%), transparent);
+}
+
+[data-glass] [data-slot='dialog-overlay'] {
+  background-color: color-mix(
+    in srgb,
+    black calc((1 - var(--xb-glass-opacity)) * 60% + var(--xb-glass-opacity) * 30%),
+    transparent
+  );
 }

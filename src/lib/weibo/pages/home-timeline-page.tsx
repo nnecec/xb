@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query'
+import { AnimatePresence, motion } from 'framer-motion'
 import { RefreshCw } from 'lucide-react'
-import { AnimatePresence, motion } from 'motion/react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { Spinner } from '@/components/ui/spinner'
@@ -200,7 +200,7 @@ export function HomeTimelinePage() {
         onValueChange={(value) => ctx.onHomeTabChange(value as 'for-you' | 'following')}
       >
         <TabsList
-          className="bg-background/80 border-border/40 sticky top-0 z-10 grid w-full grid-cols-2 backdrop-blur-lg"
+          className="bg-background/80 border-border/40 relative sticky top-0 z-10 grid w-full grid-cols-2 border-b backdrop-blur-lg"
           variant="line"
         >
           <RefreshTabTrigger
@@ -251,6 +251,7 @@ export function HomeTimelinePage() {
               items={items}
               emptyLabel="此时间线暂无内容"
               onNavigate={ctx.navigateToStatusDetail}
+              onNavigateProfile={ctx.navigateToProfile}
               onCommentClick={(item) =>
                 ctx.setComposeTarget(composeTargetFromFeedItem(item, 'comment'))
               }

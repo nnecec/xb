@@ -24,22 +24,16 @@ export const ImageCarousel = memo(function ImageCarousel({
   const container = React.useMemo(() => getUiPortalContainer(), [])
   const darkModeImageDim = useAppSettings((s) => s.darkModeImageDim)
 
-  // Build the flat list of items to render in the grid + lightbox
   const gridItems = React.useMemo(() => {
     const items: Array<{
       id: string
-      /** Used as PhotoView src (null for video renders) */
       src: string | null
-      /** Thumbnail shown in grid */
       thumbnailNode: React.ReactElement
-      /** Full render for PhotoView overlay */
       render: (props: PhotoRenderParams) => React.ReactNode
-      /** Dimensions for render prop */
       width?: number
       height?: number
     }> = []
 
-    // Add images first
     for (const img of images) {
       items.push({
         id: img.id,
@@ -71,7 +65,6 @@ export const ImageCarousel = memo(function ImageCarousel({
       })
     }
 
-    // Then add mix_media_info items
     if (mixMediaItems) {
       for (const item of mixMediaItems) {
         if (item.type === 'pic' && item.image) {
@@ -106,7 +99,6 @@ export const ImageCarousel = memo(function ImageCarousel({
             ),
           })
         } else if (item.type === 'video') {
-          // Video: use render prop with custom overlay
           items.push({
             id: item.id,
             src: null,

@@ -1,11 +1,13 @@
 import { Sparkles, Zap } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useOutletContext } from 'react-router'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { getUiPortalContainer } from '@/components/ui/portal'
 import type { AppTheme, ContentWidth } from '@/lib/app-settings'
+import { useAppSettings } from '@/lib/app-settings-store'
 import { cn } from '@/lib/utils'
 import type { AppShellContext } from '@/lib/weibo/app/app-shell'
 import { BackToTop } from '@/lib/weibo/components/back-to-top'
@@ -38,6 +40,7 @@ interface ShellFrameProps {
   onSettingsOpen: () => void
   onComposeOpen: () => void
   mainRef: React.RefObject<HTMLDivElement | null>
+  appShellContext: AppShellContext
   children: ReactNode
 }
 
@@ -57,6 +60,7 @@ export function ShellFrame({
   onSettingsOpen,
   onComposeOpen,
   mainRef,
+  appShellContext,
   children,
 }: ShellFrameProps) {
   const location = useLocation()
@@ -73,6 +77,37 @@ export function ShellFrame({
     [mainRef],
   )
 
+  const backgroundEnabled = useAppSettings((s) => s.backgroundEnabled)
+  const backgroundColor = useAppSettings((s) => s.backgroundColor)
+  const backgroundImageUrl = useAppSettings((s) => s.backgroundImageUrl)
+  const glassOpacity = useAppSettings((s) => s.glassOpacity)
+  const glassBlur = useAppSettings((s) => s.glassBlur)
+  const waterfallColumnCount = useAppSettings((s) => s.waterfallColumnCount)
+
+  const glassStyle = useMemo<React.CSSProperties>(
+    () =>
+      ({
+        '--xb-glass-opacity': glassOpacity / 100,
+        '--xb-glass-blur': `${glassBlur}px`,
+        '--xb-custom-bg': backgroundColor,
+      }) as React.CSSProperties,
+    [glassOpacity, glassBlur, backgroundColor],
+  )
+
+  const isGlassActive = glassBlur > 0 || glassOpacity < 100
+
+  useEffect(() => {
+    const portal = getUiPortalContainer()
+    if (!portal) return
+    if (isGlassActive) {
+      portal.setAttribute('data-glass', '')
+    } else {
+      portal.removeAttribute('data-glass')
+    }
+    portal.style.setProperty('--xb-glass-opacity', `${glassOpacity / 100}`)
+    portal.style.setProperty('--xb-glass-blur', `${glassBlur}px`)
+    portal.style.setProperty('--xb-custom-bg', backgroundColor)
+  }, [isGlassActive, glassOpacity, glassBlur, backgroundColor])
   useEffect(() => {
     const main = mainRef.current
     if (!main) {
@@ -107,16 +142,31 @@ export function ShellFrame({
 
   return (
     <div
-      className="bg-background text-foreground flex h-screen flex-col overflow-y-auto"
+      className="bg-background text-foreground flex h-screen flex-col overflow-hidden"
+      style={{
+        ...glassStyle,
+        ...(backgroundEnabled
+          ? backgroundImageUrl
+            ? {
+                backgroundImage: `url(${backgroundImageUrl})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                backgroundAttachment: 'fixed',
+              }
+            : { backgroundColor }
+          : {}),
+      }}
+      data-glass={glassBlur > 0 || glassOpacity < 100 ? '' : undefined}
       ref={assignShellRef}
     >
       <div
         className={cn(
-          'relative mx-auto flex w-full gap-3 px-3 md:gap-4 md:px-4',
-          contentWidthClass[contentWidth],
+          'relative mx-auto flex h-full w-full gap-3 px-3 md:gap-4 md:px-4',
+          waterfallColumnCount > 1 ? '' : contentWidthClass[contentWidth],
         )}
       >
-        <div className="sticky top-0 h-screen shrink-0">
+        <div className="sticky top-0 h-screen shrink-0 flex-col">
           <NavigationRail
             pageKind={pageKind}
             viewingProfileUserId={viewingProfileUserId}
@@ -129,9 +179,15 @@ export function ShellFrame({
             onComposeOpen={onComposeOpen}
           />
         </div>
-        <main className="min-w-0 flex-1 pb-8">{children}</main>
-        <div className={cn('sticky top-0 hidden shrink-0 self-start pt-4 md:flex')}>
-          <RightRail />
+        <main className="no-scrollbar min-w-0 flex-1 overflow-y-auto pb-8" ref={mainRef}>
+          {children}
+        </main>
+        <div
+          className={cn(
+            'sticky top-0 hidden shrink-0 self-start pt-4 md:flex md:w-[240px] xl:w-[300px]',
+          )}
+        >
+          <RightRail onNavigateProfile={appShellContext.navigateToProfile} />
         </div>
         <BackToTop scrollRoot={mainScrollRoot} />
       </div>

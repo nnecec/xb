@@ -198,6 +198,7 @@ export function ExplorePage() {
             items={items}
             emptyLabel="暂无内容"
             onNavigate={ctx.navigateToStatusDetail}
+            onNavigateProfile={ctx.navigateToProfile}
             onCommentClick={(item) =>
               ctx.setComposeTarget(composeTargetFromFeedItem(item, 'comment'))
             }

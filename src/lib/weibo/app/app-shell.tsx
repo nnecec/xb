@@ -8,11 +8,15 @@ import { AuthRequiredDialog } from '@/lib/weibo/components/auth-required-dialog'
 import { CommentModal } from '@/lib/weibo/components/comment-modal'
 import { ComposeDialog } from '@/lib/weibo/components/compose-dialog'
 import { GenImageDialogProvider } from '@/lib/weibo/components/gen-image-dialog-context'
+import { ProfileDialog } from '@/lib/weibo/components/profile-dialog'
 import { SettingsDialog } from '@/lib/weibo/components/settings-dialog'
+import { StatusDetailDialog } from '@/lib/weibo/components/status-detail-dialog'
 import type { ComposeTarget } from '@/lib/weibo/models/compose'
 import type { StatusDetailNavigationItem } from '@/lib/weibo/models/feed'
 import { useWeiboPage } from '@/lib/weibo/route/use-weibo-page'
 import { onUnauthorized } from '@/lib/weibo/services/auth-events'
+
+type ProfileLookup = { uid: string } | { screenName: string }
 
 const GenImageDialog = lazy(() =>
   import('@/lib/weibo/components/gen-image-dialog').then((m) => ({ default: m.GenImageDialog })),
@@ -25,6 +29,9 @@ function getHomeTimelinePath(tab: 'for-you' | 'following') {
 export interface AppShellContext {
   page: ReturnType<typeof useWeiboPage>
   navigateToStatusDetail: (item: StatusDetailNavigationItem) => void
+  openStatusDetailDialog: (item: StatusDetailNavigationItem) => void
+  navigateToProfile: (lookup: ProfileLookup) => void
+  openProfileDialog: (lookup: ProfileLookup) => void
   resetMainScroll: () => void
   scrollMainToTop: () => void
   composeTarget: ComposeTarget | null
@@ -43,6 +50,9 @@ export function AppShell() {
 
   const theme = useAppSettings((state) => state.theme)
   const rewriteEnabled = useAppSettings((state) => state.rewriteEnabled)
+  const statusDetailPopupEnabled = useAppSettings((state) => state.statusDetailPopupEnabled)
+  const statusDetailPopupPosition = useAppSettings((state) => state.statusDetailPopupPosition)
+  const statusDetailPopupWidth = useAppSettings((state) => state.statusDetailPopupWidth)
   const browsingHistoryEnabled = useAppSettings((state) => state.browsingHistoryEnabled)
   const contentWidth = useAppSettings((state) => state.contentWidth)
   const setRewriteEnabled = useAppSettings((state) => state.setRewriteEnabled)
@@ -52,6 +62,10 @@ export function AppShell() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [authDialogOpen, setAuthDialogOpen] = useState(false)
   const [composeOpen, setComposeOpen] = useState(false)
+  const [statusDetailDialogOpen, setStatusDetailDialogOpen] = useState(false)
+  const [statusDetailItem, setStatusDetailItem] = useState<StatusDetailNavigationItem | null>(null)
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false)
+  const [profileLookup, setProfileLookup] = useState<ProfileLookup | null>(null)
   const mainRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => onUnauthorized(() => setAuthDialogOpen(true)), [])
@@ -72,10 +86,41 @@ export function AppShell() {
       if (!item.author.id || !statusId) {
         return
       }
-      navigate(`/${item.author.id}/${statusId}`)
+      if (statusDetailPopupEnabled) {
+        setStatusDetailItem(item)
+        setStatusDetailDialogOpen(true)
+      } else {
+        navigate(`/${item.author.id}/${statusId}`)
+      }
     },
-    [navigate],
+    [navigate, statusDetailPopupEnabled],
   )
+
+  const openStatusDetailDialog = useCallback((item: StatusDetailNavigationItem) => {
+    setStatusDetailItem(item)
+    setStatusDetailDialogOpen(true)
+  }, [])
+
+  const navigateToProfile = useCallback(
+    (lookup: ProfileLookup) => {
+      if (statusDetailPopupEnabled) {
+        setProfileLookup(lookup)
+        setProfileDialogOpen(true)
+      } else {
+        if ('uid' in lookup && lookup.uid) {
+          navigate(`/u/${lookup.uid}`)
+        } else if ('screenName' in lookup && lookup.screenName) {
+          navigate(`/n/${encodeURIComponent(lookup.screenName)}`)
+        }
+      }
+    },
+    [navigate, statusDetailPopupEnabled],
+  )
+
+  const openProfileDialog = useCallback((lookup: ProfileLookup) => {
+    setProfileLookup(lookup)
+    setProfileDialogOpen(true)
+  }, [])
 
   const refreshTimeline = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: ['weibo', 'timeline'] })
@@ -101,6 +146,9 @@ export function AppShell() {
     () => ({
       page,
       navigateToStatusDetail,
+      openStatusDetailDialog,
+      navigateToProfile,
+      openProfileDialog,
       resetMainScroll,
       scrollMainToTop,
       composeTarget,
@@ -114,6 +162,9 @@ export function AppShell() {
     [
       page,
       navigateToStatusDetail,
+      openStatusDetailDialog,
+      navigateToProfile,
+      openProfileDialog,
       resetMainScroll,
       scrollMainToTop,
       composeTarget,
@@ -142,6 +193,24 @@ export function AppShell() {
         <RewritePausedCard onResume={() => void setRewriteEnabled(true)} />
         {composeModal}
         <ComposeDialog open={composeOpen} onOpenChange={setComposeOpen} />
+        <StatusDetailDialog
+          open={statusDetailDialogOpen}
+          item={statusDetailItem}
+          position={statusDetailPopupPosition}
+          width={statusDetailPopupWidth}
+          onOpenChange={setStatusDetailDialogOpen}
+          setComposeTarget={setComposeTarget}
+          onNavigate={navigateToStatusDetail}
+        />
+        <ProfileDialog
+          open={profileDialogOpen}
+          lookup={profileLookup}
+          position={statusDetailPopupPosition}
+          width={statusDetailPopupWidth}
+          onOpenChange={setProfileDialogOpen}
+          setComposeTarget={setComposeTarget}
+          onNavigateStatusDetail={navigateToStatusDetail}
+        />
       </>
     )
   }
@@ -171,6 +240,7 @@ export function AppShell() {
         onSettingsOpen={() => setSettingsOpen(true)}
         onComposeOpen={() => setComposeOpen(true)}
         mainRef={mainRef}
+        appShellContext={context}
       >
         <Outlet context={context} />
         {composeModal}
@@ -185,6 +255,24 @@ export function AppShell() {
             await setRewriteEnabled(false)
             window.location.href = 'https://weibo.com/newlogin'
           }}
+        />
+        <StatusDetailDialog
+          open={statusDetailDialogOpen}
+          item={statusDetailItem}
+          position={statusDetailPopupPosition}
+          width={statusDetailPopupWidth}
+          onOpenChange={setStatusDetailDialogOpen}
+          setComposeTarget={setComposeTarget}
+          onNavigate={navigateToStatusDetail}
+        />
+        <ProfileDialog
+          open={profileDialogOpen}
+          lookup={profileLookup}
+          position={statusDetailPopupPosition}
+          width={statusDetailPopupWidth}
+          onOpenChange={setProfileDialogOpen}
+          setComposeTarget={setComposeTarget}
+          onNavigateStatusDetail={navigateToStatusDetail}
         />
       </ShellFrame>
     </GenImageDialogProvider>

@@ -66,6 +66,7 @@ export function FavoritesPage() {
           items={items}
           emptyLabel="暂无收藏内容"
           onNavigate={ctx.navigateToStatusDetail}
+          onNavigateProfile={ctx.navigateToProfile}
           onCommentClick={(item) =>
             ctx.setComposeTarget(composeTargetFromFeedItem(item, 'comment'))
           }

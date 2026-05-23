@@ -64,10 +64,10 @@ export const CommentCard = memo(function CommentCard({
               likeCount: comment.likeCount + (comment.liked ? -1 : 1),
             }
           }
-          if (Array.isArray(comment.comments) && comment.comments.length > 0) {
+          if ((comment.comments?.length ?? 0) > 0) {
             return {
               ...comment,
-              comments: comment.comments.map(updateCommentInTree),
+              comments: comment.comments!.map(updateCommentInTree),
             }
           }
           return comment

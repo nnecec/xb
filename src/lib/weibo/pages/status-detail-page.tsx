@@ -24,7 +24,7 @@ import { flattenInfiniteItems } from '@/lib/weibo/queries/weibo-queries'
 import { useWeiboPage } from '@/lib/weibo/route/use-weibo-page'
 import { loadStatusComments, loadStatusDetail } from '@/lib/weibo/services/weibo-repository'
 
-function StatusCommentsSection({
+export function StatusCommentsSection({
   statusId,
   authorId,
   onCommentReply,
@@ -119,9 +119,9 @@ export function StatusDetailPage() {
   const rewriteEnabled = useAppSettings((s) => s.rewriteEnabled)
 
   useEffect(() => {
-    ctx.resetMainScroll()
+    ctx?.resetMainScroll()
     // oxlint-disable-next-line eslint-plugin-react-hooks/exhaustive-deps
-  }, [ctx.resetMainScroll])
+  }, [ctx?.resetMainScroll])
 
   const urlStatusId = page.kind === 'status' ? page.statusId : null
   const authorId = page.kind === 'status' ? page.authorId : null
@@ -152,7 +152,7 @@ export function StatusDetailPage() {
       {detailQuery.error instanceof Error ? (
         <PageErrorState description={detailQuery.error.message} />
       ) : null}
-      {detail ? (
+      {detail && ctx ? (
         <div className="flex flex-col gap-4">
           <FeedCard
             item={detail.status}

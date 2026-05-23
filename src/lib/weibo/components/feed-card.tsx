@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Bookmark, Heart, MessageCircle, Repeat2, Share } from 'lucide-react'
 import { memo, useCallback, type MouseEvent, type ReactNode, useRef } from 'react'
-import { Link } from 'react-router'
 import { toast } from 'sonner'
 
 import { AspectRatio } from '@/components/ui/aspect-ratio'
@@ -121,39 +120,49 @@ function FeedMediaBlock({ item }: { item: FeedItem }) {
   )
 }
 
+type ProfileLookup = { uid: string } | { screenName: string }
+
 function FeedAuthorHeader({
   item,
+  onNavigateProfile,
 }: {
   item: Pick<FeedItem, 'author' | 'createdAtLabel' | 'source' | 'regionName'>
   trailing?: ReactNode
+  onNavigateProfile?: (lookup: ProfileLookup) => void
 }) {
+  const handleAuthorClick = (event: React.MouseEvent) => {
+    event.preventDefault()
+    event.stopPropagation()
+    if (onNavigateProfile) {
+      onNavigateProfile({ uid: item.author.id })
+    }
+  }
+
   return (
     <CardHeader className="flex flex-row gap-3 px-4">
       <UserHoverCard uid={item.author.id}>
-        <Link
-          to={`/n/${encodeURIComponent(item.author.name)}`}
-          onClick={(event) => event.stopPropagation()}
-        >
+        <button type="button" onClick={handleAuthorClick} className="cursor-pointer">
           <UserAvatar
             author={item.author}
             sizeClassName="size-12"
             fallbackClassName="text-sm font-semibold"
           />
-        </Link>
+        </button>
       </UserHoverCard>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <div className="flex flex-wrap items-center gap-2">
               <UserHoverCard uid={item.author.id}>
-                <Link
-                  to={`/n/${encodeURIComponent(item.author.name)}`}
-                  onClick={(event) => event.stopPropagation()}
+                <button
+                  type="button"
+                  onClick={handleAuthorClick}
+                  className="cursor-pointer text-left"
                 >
                   <CardTitle className="truncate text-base hover:underline">
                     {item.author.name}
                   </CardTitle>
-                </Link>
+                </button>
               </UserHoverCard>
               <CreatedAtBadge label={item.createdAtLabel} />
             </div>
@@ -507,17 +516,21 @@ export const FeedCard = memo(function FeedCard({
   onNavigate,
   onCommentClick,
   onRepostClick,
+  onNavigateProfile,
   onStatusDeleted,
   className,
+  uniformHeight,
 }: {
   item: FeedItem
   surface?: StatusFeedSurface
   onNavigate?: (item: FeedItem) => void
   onCommentClick?: (item: FeedItem) => void
   onRepostClick?: (item: FeedItem) => void
+  onNavigateProfile?: (lookup: ProfileLookup) => void
   /** After deleting this status (owner only), e.g. navigate back from detail. */
   onStatusDeleted?: () => void
   className?: string
+  uniformHeight?: boolean
 }) {
   const xLayoutEnabled = useAppSettings((s) => s.xLayoutEnabled)
   const pointerDownPositionRef = useRef<{ x: number; y: number } | null>(null)
@@ -529,10 +542,6 @@ export const FeedCard = memo(function FeedCard({
     hasLongTextError,
     onLoadLongText,
   } = useFeedLongText(item)
-
-  const addEntry = useCallback(() => {
-    browsingHistoryStore.getState().addEntry(resolvedItem)
-  }, [resolvedItem])
 
   const uid = getCurrentUserUid()
   const showOwnerMenu = uid !== null && uid === resolvedItem.author.id
@@ -764,9 +773,46 @@ export const FeedCard = memo(function FeedCard({
     onNavigate(resolvedItem)
   }
 
+  const cardContentElement = (
+    <CardContent
+      className="flex flex-col gap-4"
+      onMouseDown={handleCardMouseDown}
+      onMouseUp={handleCardMouseUp}
+    >
+      <FeedTextBlock
+        item={resolvedItem}
+        canLoadLongText={shouldShowLoadLongText}
+        isLongTextLoading={isLongTextLoading}
+        hasLongTextError={hasLongTextError}
+        onLoadLongText={onLoadLongText}
+      />
+
+      <FeedMediaBlock item={resolvedItem} />
+
+      <ImageCarousel images={resolvedItem.images} mixMediaItems={resolvedItem.mixMediaInfo} />
+
+      {resolvedItem.retweetedStatus ? (
+        <RetweetedFeedBlock
+          item={resolvedItem.retweetedStatus}
+          onNavigate={onNavigate}
+          onLikeClick={(target) => likeMutation.mutate(target)}
+          likePendingForId={likePendingId}
+          xLayoutEnabled={xLayoutEnabled}
+          onFavorite={(target) => favoriteMutation.mutate(target)}
+          favoritePendingForId={favoriteMutation.isPending ? resolvedItem.retweetedStatus.id : null}
+        />
+      ) : null}
+    </CardContent>
+  )
+
   return (
     <Card
-      className={cn('gap-4 py-4 relative', canNavigate && 'cursor-pointer', className)}
+      className={cn(
+        'py-4 relative',
+        uniformHeight ? 'gap-0 flex-1' : 'gap-4',
+        canNavigate && 'cursor-pointer',
+        className,
+      )}
       data-testid="feed-card-body"
       onClick={handleCardClick}
     >
@@ -783,47 +829,23 @@ export const FeedCard = memo(function FeedCard({
         xLayoutEnabled={xLayoutEnabled}
       />
       {resolvedItem.title ? (
-        <div className="px-4">
+        <div className={cn('px-4', uniformHeight && 'mb-4')}>
           <Badge variant="secondary">{resolvedItem.title.text}</Badge>
         </div>
       ) : null}
-      <FeedAuthorHeader item={resolvedItem} />
-      <CardContent
-        className="flex flex-col gap-4"
-        onMouseDown={handleCardMouseDown}
-        onMouseUp={handleCardMouseUp}
-      >
-        <FeedTextBlock
-          item={resolvedItem}
-          canLoadLongText={shouldShowLoadLongText}
-          isLongTextLoading={isLongTextLoading}
-          hasLongTextError={hasLongTextError}
-          onLoadLongText={onLoadLongText}
-        />
-
-        <FeedMediaBlock item={resolvedItem} />
-
-        <ImageCarousel
-          images={resolvedItem.images}
-          mixMediaItems={resolvedItem.mixMediaInfo}
-          onOpen={addEntry}
-        />
-
-        {resolvedItem.retweetedStatus ? (
-          <RetweetedFeedBlock
-            item={resolvedItem.retweetedStatus}
-            onNavigate={onNavigate}
-            onLikeClick={(target) => likeMutation.mutate(target)}
-            likePendingForId={likePendingId}
-            xLayoutEnabled={xLayoutEnabled}
-            onFavorite={(target) => favoriteMutation.mutate(target)}
-            favoritePendingForId={
-              favoriteMutation.isPending ? resolvedItem.retweetedStatus.id : null
-            }
-          />
-        ) : null}
-      </CardContent>
-      <CardFooter>
+      {uniformHeight ? (
+        <div className="flex min-h-0 flex-1 flex-col gap-4 px-0">
+          <FeedAuthorHeader item={resolvedItem} onNavigateProfile={onNavigateProfile} />
+          {cardContentElement}
+          <div className="flex-1" />
+        </div>
+      ) : (
+        <>
+          <FeedAuthorHeader item={resolvedItem} onNavigateProfile={onNavigateProfile} />
+          {cardContentElement}
+        </>
+      )}
+      <CardFooter className={cn(uniformHeight && 'mt-4 shrink-0')}>
         <FeedActions
           item={resolvedItem}
           onCommentClick={onCommentClick}

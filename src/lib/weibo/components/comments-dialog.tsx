@@ -41,7 +41,7 @@ export function CommentsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="z-[60] sm:max-w-xl" overlayClassName="z-[60]">
         <DialogHeader>
           <DialogTitle>评论详情</DialogTitle>
           <DialogDescription>共 {data?.items.length ?? 0} 条回复</DialogDescription>

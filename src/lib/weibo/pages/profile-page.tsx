@@ -18,16 +18,20 @@ import {
 import { useWeiboPage } from '@/lib/weibo/route/use-weibo-page'
 import { loadProfileHoverCard } from '@/lib/weibo/services/weibo-repository'
 
-function ProfilePostsTabs({
+type ProfileLookup = { uid: string } | { screenName: string }
+
+export function ProfilePostsTabs({
   profileId,
   onNavigate,
   onCommentClick,
   onRepostClick,
+  onNavigateProfile,
 }: {
   profileId: string
   onNavigate: ReturnType<typeof useAppShellContext>['navigateToStatusDetail']
   onCommentClick: (item: Parameters<typeof composeTargetFromFeedItem>[0]) => void
   onRepostClick: (item: Parameters<typeof composeTargetFromFeedItem>[0]) => void
+  onNavigateProfile?: (lookup: ProfileLookup) => void
 }) {
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
 
@@ -86,6 +90,7 @@ function ProfilePostsTabs({
           onNavigate={onNavigate}
           onCommentClick={onCommentClick}
           onRepostClick={onRepostClick}
+          onNavigateProfile={onNavigateProfile}
         />
         {hasNextPage ? (
           <div ref={loadMoreRef} className="flex justify-center py-3">
@@ -144,6 +149,7 @@ export function ProfilePage() {
           <ProfilePostsTabs
             profileId={profileQuery.data.id}
             onNavigate={ctx.navigateToStatusDetail}
+            onNavigateProfile={ctx.navigateToProfile}
             onCommentClick={(item) =>
               ctx.setComposeTarget(composeTargetFromFeedItem(item, 'comment'))
             }

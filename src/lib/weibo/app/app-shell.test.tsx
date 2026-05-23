@@ -131,7 +131,10 @@ describe('AppShell', () => {
     fireEvent.mouseDown(screen.getByRole('tab', { name: '我关注的' }))
 
     await waitFor(() => {
-      expect(vi.mocked(loadHomeTimeline)).toHaveBeenLastCalledWith('following', { cursor: null })
+      expect(vi.mocked(loadHomeTimeline)).toHaveBeenLastCalledWith('following', {
+        cursor: null,
+        existingCount: 0,
+      })
     })
   })
 
