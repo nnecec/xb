@@ -61,6 +61,7 @@ type GroupId = (typeof SIDEBAR_GROUPS)[number]['id']
 
 interface SettingsDialogProps {
   open: boolean
+  zIndex?: number
   onOpenChange: (open: boolean) => void
 }
 
@@ -118,7 +119,7 @@ function IllustrationPlaceholder({ children }: { children: React.ReactNode }) {
   )
 }
 
-export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
+export function SettingsDialog({ open, zIndex, onOpenChange }: SettingsDialogProps) {
   const [version, setVersion] = useState<string>('')
   const [activeGroup, setActiveGroup] = useState<GroupId>('appearance')
 
@@ -226,7 +227,10 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[520px] flex-col gap-0 overflow-hidden p-0 sm:max-w-[640px]">
+      <DialogContent
+        className="flex h-[520px] flex-col gap-0 overflow-hidden p-0 sm:max-w-[640px]"
+        style={{ zIndex }}
+      >
         <DialogHeader>
           <DialogTitle className="px-6 pt-5 text-base tracking-tight">设置</DialogTitle>
           <VisuallyHidden>

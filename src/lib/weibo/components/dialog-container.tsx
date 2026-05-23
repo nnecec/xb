@@ -10,6 +10,7 @@ interface DialogContainerProps {
   open: boolean
   position: StatusDetailPopupPosition
   width?: number
+  zIndex?: number
   onOpenChange: (open: boolean) => void
   children: React.ReactNode
 }
@@ -18,6 +19,7 @@ export function DialogContainer({
   open,
   position,
   width,
+  zIndex,
   onOpenChange,
   children,
 }: DialogContainerProps) {
@@ -67,7 +69,7 @@ export function DialogContainer({
   )
 
   return (
-    <div className="fixed inset-0 z-[40] flex">
+    <div className="fixed inset-0 flex" style={{ zIndex: zIndex ?? 40 }}>
       <div
         className="absolute inset-0 bg-black/50"
         style={glassOverlayStyle}

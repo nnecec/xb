@@ -16,6 +16,7 @@ interface ProfileDialogProps {
   lookup: ProfileLookup | null
   position: string
   width?: number
+  zIndex?: number
   onOpenChange: (open: boolean) => void
   setComposeTarget: (target: ComposeTarget | null) => void
   onNavigateStatusDetail: (item: StatusDetailNavigationItem) => void
@@ -26,6 +27,7 @@ export function ProfileDialog({
   lookup,
   position,
   width,
+  zIndex,
   onOpenChange,
   setComposeTarget,
   onNavigateStatusDetail,
@@ -53,6 +55,7 @@ export function ProfileDialog({
       open={open}
       position={position as any}
       width={width}
+      zIndex={zIndex}
       onOpenChange={onOpenChange}
     >
       {profileQuery.isLoading ? <PageLoadingState label="正在加载此用户主页..." /> : null}

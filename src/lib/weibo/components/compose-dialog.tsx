@@ -18,13 +18,16 @@ import { publishWeiboStatus } from '@/lib/weibo/services/weibo-repository'
 
 interface ComposeDialogProps {
   open: boolean
+  zIndex?: number
   onOpenChange: (open: boolean) => void
 }
 
-export function ComposeDialog({ open, onOpenChange }: ComposeDialogProps) {
+export function ComposeDialog({ open, zIndex, onOpenChange }: ComposeDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <ComposeForm key={open ? 'open' : 'closed'} onClose={() => onOpenChange(false)} />
+      <DialogContent className="sm:max-w-[425px]" style={{ zIndex }}>
+        <ComposeForm onClose={() => onOpenChange(false)} />
+      </DialogContent>
     </Dialog>
   )
 }

@@ -178,10 +178,20 @@ function FeedAuthorHeader({
 
 function RetweetedAuthorHeader({
   item,
+  onNavigateProfile,
 }: {
   item: Pick<FeedItem, 'author' | 'createdAtLabel' | 'source' | 'regionName'>
+  onNavigateProfile?: (lookup: ProfileLookup) => void
 }) {
   const isDeletedAuthor = !item.author.id
+
+  const handleAuthorClick = (event: React.MouseEvent) => {
+    event.preventDefault()
+    event.stopPropagation()
+    if (onNavigateProfile) {
+      onNavigateProfile({ uid: item.author.id })
+    }
+  }
 
   if (isDeletedAuthor) {
     return <div className="text-muted-foreground text-sm">未知用户</div>
@@ -190,11 +200,7 @@ function RetweetedAuthorHeader({
   return (
     <div className="grid grid-cols-[36px_minmax(0,1fr)] gap-2">
       <UserHoverCard uid={item.author.id}>
-        <button
-          type="button"
-          className="cursor-pointer"
-          onClick={(event) => event.stopPropagation()}
-        >
+        <button type="button" className="cursor-pointer" onClick={handleAuthorClick}>
           <UserAvatar
             author={item.author}
             sizeClassName="size-9"
@@ -205,11 +211,7 @@ function RetweetedAuthorHeader({
       <div className="flex min-w-0 flex-col gap-1">
         <div className="flex flex-wrap items-center gap-2">
           <UserHoverCard uid={item.author.id}>
-            <button
-              type="button"
-              className="cursor-pointer text-left"
-              onClick={(event) => event.stopPropagation()}
-            >
+            <button type="button" className="cursor-pointer text-left" onClick={handleAuthorClick}>
               <p className="text-foreground truncate text-sm font-medium hover:underline">
                 {item.author.name}
               </p>
@@ -430,6 +432,7 @@ function FeedActions({
 function RetweetedFeedBlock({
   item,
   onNavigate,
+  onNavigateProfile,
   onLikeClick,
   likePendingForId,
   xLayoutEnabled,
@@ -438,6 +441,7 @@ function RetweetedFeedBlock({
 }: {
   item: NonNullable<FeedItem['retweetedStatus']>
   onNavigate?: (item: FeedItem) => void
+  onNavigateProfile?: (lookup: ProfileLookup) => void
   onLikeClick?: (item: FeedItem) => void
   likePendingForId: string | null
   xLayoutEnabled: boolean
@@ -475,7 +479,7 @@ function RetweetedFeedBlock({
       onClick={handleRetweetedClick}
     >
       <CardHeader>
-        <RetweetedAuthorHeader item={resolvedItem} />
+        <RetweetedAuthorHeader item={resolvedItem} onNavigateProfile={onNavigateProfile} />
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <FeedTextBlock
@@ -795,6 +799,7 @@ export const FeedCard = memo(function FeedCard({
         <RetweetedFeedBlock
           item={resolvedItem.retweetedStatus}
           onNavigate={onNavigate}
+          onNavigateProfile={onNavigateProfile}
           onLikeClick={(target) => likeMutation.mutate(target)}
           likePendingForId={likePendingId}
           xLayoutEnabled={xLayoutEnabled}
