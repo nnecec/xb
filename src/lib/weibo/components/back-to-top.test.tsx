@@ -1,12 +1,11 @@
-import { useScroll } from '@reactuses/core'
-import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen, cleanup } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { BackToTop } from '@/lib/weibo/components/back-to-top'
 
-vi.mock('@reactuses/core', () => ({
-  useScroll: vi.fn(),
-}))
+afterEach(() => {
+  cleanup()
+})
 
 describe('BackToTop', () => {
   it('scrolls the provided container back to the top', () => {
@@ -16,19 +15,41 @@ describe('BackToTop', () => {
       value: scrollTo,
       writable: true,
     })
-
-    vi.mocked(useScroll).mockReturnValue([
-      0,
-      320,
-      false,
-      { bottom: false, left: false, right: false, top: false },
-      { x: 'none', y: 'none' },
-    ] as unknown as ReturnType<typeof useScroll>)
+    Object.defineProperty(container, 'scrollTop', {
+      value: 320,
+      writable: true,
+    })
 
     render(<BackToTop scrollRoot={container} threshold={200} />)
 
     fireEvent.click(screen.getByRole('button', { name: '返回顶部' }))
 
     expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' })
+  })
+
+  it('shows button when scrolled past threshold', () => {
+    const container = document.createElement('div')
+    Object.defineProperty(container, 'scrollTop', {
+      value: 320,
+      writable: true,
+    })
+
+    render(<BackToTop scrollRoot={container} threshold={200} />)
+
+    const button = screen.getByRole('button', { name: '返回顶部' })
+    expect(button).toHaveClass('pointer-events-auto', 'opacity-100')
+  })
+
+  it('hides button when scrolled before threshold', () => {
+    const container = document.createElement('div')
+    Object.defineProperty(container, 'scrollTop', {
+      value: 100,
+      writable: true,
+    })
+
+    render(<BackToTop scrollRoot={container} threshold={200} />)
+
+    const button = screen.getByRole('button', { name: '返回顶部' })
+    expect(button).toHaveClass('pointer-events-none', 'opacity-0')
   })
 })

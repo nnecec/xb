@@ -1,5 +1,5 @@
-import { useScroll } from '@reactuses/core'
 import { ArrowUp } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -15,18 +15,37 @@ interface BackToTopProps {
 }
 
 export function BackToTop({ scrollRoot, threshold = 200 }: BackToTopProps) {
-  const target =
-    scrollRoot instanceof HTMLElement || scrollRoot instanceof Window ? scrollRoot : window
-  const [, scrollTop] = useScroll(target)
+  const [scrollTop, setScrollTop] = useState(0)
+
+  useEffect(() => {
+    const target =
+      scrollRoot instanceof HTMLElement || scrollRoot instanceof Window ? scrollRoot : window
+
+    function handleScroll() {
+      if (target instanceof Window) {
+        setScrollTop(target.scrollY)
+      } else {
+        setScrollTop(target.scrollTop)
+      }
+    }
+
+    handleScroll()
+
+    const element = target instanceof Window ? window : target
+    element.addEventListener('scroll', handleScroll, { passive: true })
+    return () => element.removeEventListener('scroll', handleScroll)
+  }, [scrollRoot])
+
   const isVisible = scrollTop > threshold
 
   function scrollToTop() {
+    const target =
+      scrollRoot instanceof HTMLElement || scrollRoot instanceof Window ? scrollRoot : window
     if (target instanceof Window) {
       target.scrollTo({ top: 0, behavior: 'smooth' })
-      return
+    } else {
+      target.scrollTo({ top: 0, behavior: 'smooth' })
     }
-
-    target.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   return (

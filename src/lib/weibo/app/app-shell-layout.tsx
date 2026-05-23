@@ -72,7 +72,7 @@ export function ShellFrame({
   const assignShellRef = useCallback(
     (node: HTMLDivElement | null) => {
       mainRef.current = node
-      setMainScrollRoot((prev) => (prev === node ? prev : node))
+      setMainScrollRoot(node)
     },
     [mainRef],
   )
@@ -158,7 +158,6 @@ export function ShellFrame({
           : {}),
       }}
       data-glass={glassBlur > 0 || glassOpacity < 100 ? '' : undefined}
-      ref={assignShellRef}
     >
       <div
         className={cn(
@@ -179,7 +178,7 @@ export function ShellFrame({
             onComposeOpen={onComposeOpen}
           />
         </div>
-        <main className="no-scrollbar min-w-0 flex-1 overflow-y-auto pb-8" ref={mainRef}>
+        <main className="no-scrollbar min-w-0 flex-1 overflow-y-auto pb-8" ref={assignShellRef}>
           {children}
         </main>
         <div
