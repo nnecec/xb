@@ -57,6 +57,7 @@ describe('ShellFrame', () => {
       scrollMainToTop: vi.fn(),
       composeTarget: null,
       setComposeTarget: vi.fn(),
+      getNextZIndex: vi.fn(() => 41),
       viewingProfileUserId: null,
       onProfileUserIdChange: vi.fn(),
       onHomeTabChange: vi.fn(),

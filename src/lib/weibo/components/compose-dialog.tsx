@@ -25,7 +25,7 @@ interface ComposeDialogProps {
 export function ComposeDialog({ open, zIndex, onOpenChange }: ComposeDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]" style={{ zIndex }}>
+      <DialogContent className="sm:max-w-[425px]" style={{ zIndex }} overlayStyle={{ zIndex }}>
         <ComposeForm onClose={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>

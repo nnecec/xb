@@ -38,6 +38,7 @@ export interface AppShellContext {
   scrollMainToTop: () => void
   composeTarget: ComposeTarget | null
   setComposeTarget: (target: ComposeTarget | null) => void
+  getNextZIndex: () => number
   viewingProfileUserId: string | null
   onProfileUserIdChange: (userId: string | null) => void
   onHomeTabChange: (tab: 'for-you' | 'following') => void
@@ -76,27 +77,13 @@ export function AppShell() {
   const [profileZIndex, setProfileZIndex] = useState(40)
   const [topicZIndex, setTopicZIndex] = useState(40)
   const [commentModalZIndex, setCommentModalZIndex] = useState(40)
+  const zIndexCounterRef = useRef(40)
   const mainRef = useRef<HTMLDivElement | null>(null)
 
   const getNextZIndex = useCallback(() => {
-    const next =
-      Math.max(
-        settingsZIndex,
-        composeZIndex,
-        statusDetailZIndex,
-        profileZIndex,
-        topicZIndex,
-        commentModalZIndex,
-      ) + 1
-    return next
-  }, [
-    settingsZIndex,
-    composeZIndex,
-    statusDetailZIndex,
-    profileZIndex,
-    topicZIndex,
-    commentModalZIndex,
-  ])
+    zIndexCounterRef.current += 1
+    return zIndexCounterRef.current
+  }, [])
 
   useEffect(() => onUnauthorized(() => setAuthDialogOpen(true)), [])
 
@@ -213,6 +200,7 @@ export function AppShell() {
       scrollMainToTop,
       composeTarget,
       setComposeTarget: handleSetComposeTarget,
+      getNextZIndex,
       viewingProfileUserId,
       onProfileUserIdChange: setViewingProfileUserId,
       onHomeTabChange,
@@ -230,6 +218,7 @@ export function AppShell() {
       scrollMainToTop,
       composeTarget,
       handleSetComposeTarget,
+      getNextZIndex,
       viewingProfileUserId,
       onHomeTabChange,
       refreshTimeline,

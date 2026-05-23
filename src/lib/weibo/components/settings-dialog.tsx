@@ -230,6 +230,7 @@ export function SettingsDialog({ open, zIndex, onOpenChange }: SettingsDialogPro
       <DialogContent
         className="flex h-[520px] flex-col gap-0 overflow-hidden p-0 sm:max-w-[640px]"
         style={{ zIndex }}
+        overlayStyle={{ zIndex }}
       >
         <DialogHeader>
           <DialogTitle className="px-6 pt-5 text-base tracking-tight">设置</DialogTitle>

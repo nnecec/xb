@@ -1,11 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Heart, MessageCircleIcon } from 'lucide-react'
-import { memo, useState } from 'react'
+import { memo, useCallback, useState } from 'react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { useAppShellContext } from '@/lib/weibo/app/app-shell-layout'
 import { CommentsDialog } from '@/lib/weibo/components/comments-dialog'
 import { FeedCardMoreMenu } from '@/lib/weibo/components/feed-card-more-menu'
 import { ImageCarousel } from '@/lib/weibo/components/image-carousel'
@@ -36,6 +37,16 @@ export const CommentCard = memo(function CommentCard({
   onCommentReply?: (target: ComposeTarget) => void
 }) {
   const [showNestedCommentsDialog, setShowNestedCommentsDialog] = useState(false)
+  const [commentsDialogZIndex, setCommentsDialogZIndex] = useState<number>()
+  const appCtx = useAppShellContext()
+  const handleOpenNestedComments = useCallback(() => {
+    if (appCtx) {
+      setCommentsDialogZIndex(appCtx.getNextZIndex())
+    } else {
+      setCommentsDialogZIndex(zIndex)
+    }
+    setShowNestedCommentsDialog(true)
+  }, [appCtx, zIndex])
   const uid = getCurrentUserUid()
   const showOwnerMenu = uid !== null && uid === item.author.id
   const { fontSizeClass, fontWeightClass, letterSpacingClass, lineHeightClass, fontFamilyClass } =
@@ -226,7 +237,7 @@ export const CommentCard = memo(function CommentCard({
                 variant="link"
                 size="xs"
                 className="text-muted-foreground hover:text-foreground"
-                onClick={() => setShowNestedCommentsDialog(true)}
+                onClick={handleOpenNestedComments}
               >
                 {item.moreInfoText}
               </Button>
@@ -238,8 +249,13 @@ export const CommentCard = memo(function CommentCard({
           open={showNestedCommentsDialog}
           statusId={item.id}
           authorUid={authorUid ?? ''}
-          zIndex={zIndex}
-          onOpenChange={setShowNestedCommentsDialog}
+          zIndex={commentsDialogZIndex}
+          onOpenChange={(open) => {
+            setShowNestedCommentsDialog(open)
+            if (!open) {
+              setCommentsDialogZIndex(undefined)
+            }
+          }}
           onCommentReply={onCommentReply}
         />
       </div>

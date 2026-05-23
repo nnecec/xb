@@ -158,7 +158,7 @@ function CommentModalForm({
     mutation.isPending || (target.mode === 'comment' && text.trim().length === 0)
 
   return (
-    <DialogContent className="sm:max-w-xl" style={{ zIndex }}>
+    <DialogContent className="sm:max-w-xl" style={{ zIndex }} overlayStyle={{ zIndex }}>
       <DialogHeader>
         <DialogTitle>{copy.title}</DialogTitle>
         <DialogDescription>
