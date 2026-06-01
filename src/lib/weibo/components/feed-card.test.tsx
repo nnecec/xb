@@ -353,6 +353,8 @@ describe('FeedCard', () => {
   })
 
   it('triggers detail callback when clicking card body', () => {
+    const store = getAppSettingsStore()
+    store.setState({ ...store.getState(), xLayoutEnabled: true })
     const onNavigate = vi.fn()
     renderCard({ onNavigate })
 

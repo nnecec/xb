@@ -151,7 +151,6 @@ export interface AppSettings {
   xLayoutEnabled: boolean
   browsingHistoryLimit: BrowsingHistoryLimit
   followGroupsEnabled: boolean
-  clickToDetailEnabled: boolean
   xbTopicPage: boolean
   forceRedirectToFollowing?: boolean
   firstLoadRedirect: HomeTab
@@ -218,7 +217,6 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   xLayoutEnabled: true,
   browsingHistoryLimit: 200,
   followGroupsEnabled: false,
-  clickToDetailEnabled: true,
   xbTopicPage: true,
   forceRedirectToFollowing: false,
   firstLoadRedirect: 'for-you',
@@ -477,10 +475,6 @@ export function normalizeAppSettings(value: unknown): AppSettings {
       typeof candidate.followGroupsEnabled === 'boolean'
         ? candidate.followGroupsEnabled
         : DEFAULT_APP_SETTINGS.followGroupsEnabled,
-    clickToDetailEnabled:
-      typeof candidate.clickToDetailEnabled === 'boolean'
-        ? candidate.clickToDetailEnabled
-        : DEFAULT_APP_SETTINGS.clickToDetailEnabled,
     xbTopicPage:
       typeof candidate.xbTopicPage === 'boolean'
         ? candidate.xbTopicPage

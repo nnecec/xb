@@ -589,7 +589,6 @@ export const FeedCard = memo(function FeedCard({
   className?: string
 }) {
   const xLayoutEnabled = useAppSettings((s) => s.xLayoutEnabled)
-  const clickToDetailEnabled = useAppSettings((s) => s.clickToDetailEnabled)
   const [commentsExpanded, setCommentsExpanded] = useState(false)
   const pointerDownPositionRef = useRef<{ x: number; y: number } | null>(null)
   const suppressNextClickRef = useRef(false)
@@ -697,8 +696,7 @@ export const FeedCard = memo(function FeedCard({
     pointerDownPositionRef.current = null
   }
 
-  const canNavigate =
-    clickToDetailEnabled && onNavigate && statusAllowsCardNavigate(surfaceProp, 'root')
+  const canNavigate = xLayoutEnabled && onNavigate && statusAllowsCardNavigate(surfaceProp, 'root')
 
   const handleCardClick = (event: MouseEvent<HTMLElement>) => {
     event.stopPropagation()
