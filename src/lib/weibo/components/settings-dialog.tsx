@@ -191,6 +191,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     showProfile,
     showCompose,
     showRightRail,
+    clickToDetailEnabled,
     collapseRepliesEnabled,
     renderReplyChainEnabled,
     darkModeImageDim,
@@ -227,6 +228,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       showProfile: s.showProfile,
       showCompose: s.showCompose,
       showRightRail: s.showRightRail,
+      clickToDetailEnabled: s.clickToDetailEnabled,
       collapseRepliesEnabled: s.collapseRepliesEnabled,
       renderReplyChainEnabled: s.renderReplyChainEnabled,
       darkModeImageDim: s.darkModeImageDim,
@@ -680,6 +682,16 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         <SelectItem value="friend-circle">朋友圈</SelectItem>
                       </SelectContent>
                     </Select>
+                  </Field>
+                </div>
+                <div>
+                  <Field label="点击微博跳转详情" description="关闭后点击微博卡片不再跳转到详情页">
+                    <Switch
+                      checked={clickToDetailEnabled}
+                      onCheckedChange={(checked) =>
+                        void updateSettings({ clickToDetailEnabled: checked })
+                      }
+                    />
                   </Field>
                 </div>
                 <div>
