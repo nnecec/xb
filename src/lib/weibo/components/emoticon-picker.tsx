@@ -49,7 +49,8 @@ export function EmoticonPicker({ onSelect }: { onSelect: (entry: EmoticonEntry) 
               <div className="text-muted-foreground text-xs">最近使用</div>
               <Button
                 variant="ghost"
-                size="icon-xs"
+                size="icon-sm"
+                className="relative after:absolute after:top-1/2 after:left-1/2 after:size-10 after:-translate-x-1/2 after:-translate-y-1/2"
                 onClick={() => {
                   void clearRecent()
                 }}

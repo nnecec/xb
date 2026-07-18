@@ -272,7 +272,9 @@ export function RewritePausedCard({ onResume }: { onResume: () => void }) {
             data-testid={collapsed ? 'xb-corner-expand' : 'xb-corner-collapse'}
             className={cn(
               'text-muted-foreground hover:text-foreground hover:bg-muted',
-              'inline-flex size-7 items-center justify-center rounded-full',
+              'relative inline-flex size-8 items-center justify-center rounded-full',
+              'after:absolute after:top-1/2 after:left-1/2 after:size-10 after:-translate-x-1/2 after:-translate-y-1/2',
+              'transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.96]',
             )}
           >
             {collapsed ? (

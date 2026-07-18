@@ -132,9 +132,9 @@ export const CommentCard = memo(function CommentCard({
           <Button
             type="button"
             variant="ghost"
-            size="icon-xs"
+            size="icon-sm"
             aria-label="回复评论"
-            className="text-muted-foreground hover:bg-sky-500/10 hover:text-sky-500"
+            className="text-muted-foreground relative after:absolute after:top-1/2 after:left-1/2 after:size-10 after:-translate-x-1/2 after:-translate-y-1/2 hover:bg-sky-500/10 hover:text-sky-500"
             onClick={() => onCommentReply?.(composeTargetFromComment(rootStatusId, item))}
           >
             <MessageCircleIcon className="size-3" />
@@ -142,11 +142,11 @@ export const CommentCard = memo(function CommentCard({
           <Button
             type="button"
             variant="ghost"
-            size="xs"
+            size="sm"
             aria-label={liked ? '取消点赞' : '点赞评论'}
             aria-pressed={liked}
             disabled={likeMutation.isPending}
-            className="text-muted-foreground gap-1 hover:bg-rose-500/10 hover:text-rose-500"
+            className="text-muted-foreground relative min-h-10 gap-1 hover:bg-rose-500/10 hover:text-rose-500"
             onClick={() => likeMutation.mutate(item)}
           >
             <Heart

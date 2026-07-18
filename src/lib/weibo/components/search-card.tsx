@@ -104,9 +104,9 @@ export function SearchCard({ className }: SearchCardProps) {
             {query.length > 0 && (
               <Button
                 variant="ghost"
-                size="icon-xs"
+                size="icon-sm"
                 onClick={handleClear}
-                className="absolute top-1/2 right-1 -translate-y-1/2"
+                className="absolute top-1/2 right-1 -translate-y-1/2 after:absolute after:top-1/2 after:left-1/2 after:size-10 after:-translate-x-1/2 after:-translate-y-1/2"
               >
                 <X />
                 <span className="sr-only">Clear</span>
