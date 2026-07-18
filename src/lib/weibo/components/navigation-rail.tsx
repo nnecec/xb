@@ -28,6 +28,10 @@ import {
 import { getCurrentUserUid } from '@/lib/weibo/platform/current-user'
 import type { WeiboPageDescriptor } from '@/lib/weibo/route/page-descriptor'
 
+function navButtonClassName(showLabel: boolean) {
+  return cn('flex w-full items-center gap-2', showLabel ? 'justify-start' : 'justify-center')
+}
+
 function NavButton({
   children,
   label,
@@ -59,6 +63,7 @@ function NavButton({
     ) : (
       icon
     )
+  const sharedClassName = navButtonClassName(showLabel)
   const button = href ? (
     <a
       href={href}
@@ -68,10 +73,7 @@ function NavButton({
       aria-current={isActive ? 'page' : undefined}
     >
       <Button
-        className={cn(
-          'w-full flex items-center gap-2',
-          showLabel ? 'justify-start' : 'justify-center',
-        )}
+        className={sharedClassName}
         variant={buttonVariant}
         onClick={onClick}
         size={showLabel ? 'default' : 'icon'}
@@ -85,7 +87,7 @@ function NavButton({
       variant={buttonVariant}
       aria-label={showLabel ? undefined : String(label)}
       aria-current={isActive ? 'page' : undefined}
-      className={cn('w-full items-center gap-2', showLabel ? 'justify-start' : 'justify-center')}
+      className={sharedClassName}
       onClick={onClick}
       size={showLabel ? 'default' : 'icon'}
     >
@@ -100,6 +102,36 @@ function NavButton({
     <Tooltip>
       <TooltipTrigger asChild>{button}</TooltipTrigger>
       <TooltipContent side="right">{label}</TooltipContent>
+    </Tooltip>
+  )
+}
+
+function RailControl({
+  label,
+  isCollapsed,
+  tooltip,
+  children,
+}: {
+  label: string
+  isCollapsed: boolean
+  tooltip?: string
+  children: React.ReactNode
+}) {
+  if (!isCollapsed) {
+    return (
+      <div className="flex items-center justify-between">
+        <p className="text-muted-foreground text-xs font-medium">{label}</p>
+        {children}
+      </div>
+    )
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="flex items-center justify-center">{children}</div>
+      </TooltipTrigger>
+      <TooltipContent side="right">{tooltip ?? label}</TooltipContent>
     </Tooltip>
   )
 }
@@ -299,114 +331,50 @@ export function NavigationRail({
               !isCollapsed && 'w-[180px] space-y-3.5 pt-4',
             )}
           >
-            <div
-              className={cn('flex items-center justify-center ', !isCollapsed && 'justify-between')}
-            >
-              <p
-                className={cn('text-muted-foreground text-xs font-medium', isCollapsed && 'hidden')}
-              >
-                设置
-              </p>
-              {!isCollapsed ? (
-                <Button type="button" size="icon" variant="secondary" onClick={onSettingsOpen}>
-                  <CogIcon className="size-4" aria-hidden="true" />
-                </Button>
-              ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button type="button" size="icon" variant="secondary" onClick={onSettingsOpen}>
-                      <CogIcon className="size-4" aria-hidden="true" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">设置</TooltipContent>
-                </Tooltip>
-              )}
-            </div>
+            <RailControl label="设置" isCollapsed={isCollapsed}>
+              <Button type="button" size="icon" variant="secondary" onClick={onSettingsOpen}>
+                <CogIcon className="size-4" aria-hidden="true" />
+              </Button>
+            </RailControl>
 
-            <div
-              className={cn('flex items-center justify-center', !isCollapsed && 'justify-between')}
-            >
-              <p
-                className={cn('text-muted-foreground text-xs font-medium', isCollapsed && 'hidden')}
+            <RailControl label="返回原模式" isCollapsed={isCollapsed}>
+              <Button
+                type="button"
+                size="icon"
+                variant="secondary"
+                onClick={() => onRewriteEnabledChange(!rewriteEnabled)}
+                aria-pressed={rewriteEnabled}
+                aria-label="切换 xb 重写"
               >
-                返回原模式
-              </p>
-              {!isCollapsed ? (
+                <ZapOffIcon className="size-4" aria-hidden="true" />
+              </Button>
+            </RailControl>
+
+            <RailControl label="深色模式" isCollapsed={isCollapsed}>
+              <ThemeModeToggle value={theme} onChange={onThemeChange} />
+            </RailControl>
+
+            {isXl ? (
+              <RailControl
+                label="收起"
+                isCollapsed={isCollapsed}
+                tooltip={sidebarCollapsed ? '展开边栏' : '收起边栏'}
+              >
                 <Button
                   type="button"
                   size="icon"
                   variant="secondary"
-                  onClick={() => onRewriteEnabledChange(!rewriteEnabled)}
-                  aria-pressed={rewriteEnabled}
-                  aria-label="切换 xb 重写"
+                  onClick={() => onSidebarCollapsedChange(!sidebarCollapsed)}
+                  aria-label={sidebarCollapsed ? '展开边栏' : '收起边栏'}
                 >
-                  <ZapOffIcon className="size-4" aria-hidden="true" />
+                  {sidebarCollapsed ? (
+                    <ChevronsRightIcon className="size-4" aria-hidden="true" />
+                  ) : (
+                    <ChevronsLeftIcon className="size-4" aria-hidden="true" />
+                  )}
                 </Button>
-              ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="secondary"
-                      onClick={() => onRewriteEnabledChange(!rewriteEnabled)}
-                      aria-pressed={rewriteEnabled}
-                      aria-label="切换 xb 重写"
-                    >
-                      <ZapOffIcon className="size-4" aria-hidden="true" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">返回原模式</TooltipContent>
-                </Tooltip>
-              )}
-            </div>
-
-            <div
-              className={cn('flex items-center justify-center', !isCollapsed && 'justify-between')}
-            >
-              <p
-                className={cn('text-muted-foreground text-xs font-medium', isCollapsed && 'hidden')}
-              >
-                深色模式
-              </p>
-              {!isCollapsed ? (
-                <ThemeModeToggle value={theme} onChange={onThemeChange} />
-              ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <ThemeModeToggle value={theme} onChange={onThemeChange} />
-                  </TooltipTrigger>
-                  <TooltipContent side="right">深色模式</TooltipContent>
-                </Tooltip>
-              )}
-            </div>
-
-            <div
-              className={cn('flex items-center justify-center', !isCollapsed && 'justify-between')}
-            >
-              <p
-                className={cn('text-muted-foreground text-xs font-medium', isCollapsed && 'hidden')}
-              >
-                收起
-              </p>
-              {isXl && (
-                <div className="flex items-center justify-center">
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="secondary"
-                    onClick={() => onSidebarCollapsedChange(!sidebarCollapsed)}
-                    aria-label={sidebarCollapsed ? '展开边栏' : '收起边栏'}
-                  >
-                    {sidebarCollapsed ? (
-                      <ChevronsRightIcon className="size-4" aria-hidden="true" />
-                    ) : (
-                      <ChevronsLeftIcon className="size-4" aria-hidden="true" />
-                    )}
-                  </Button>
-                </div>
-              )}
-            </div>
+              </RailControl>
+            ) : null}
           </div>
         </nav>
       </aside>
