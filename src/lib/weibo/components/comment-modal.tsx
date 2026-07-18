@@ -118,11 +118,11 @@ function CommentModalForm({
         </DialogDescription>
       </DialogHeader>
 
-      <div className={`border-foreground/20 flex flex-col gap-2 rounded-2xl border p-2`}>
+      <div className="border-foreground/20 flex flex-col gap-2 rounded-xl border p-2">
         <Textarea
           ref={textareaRef}
           aria-label={target.mode === 'repost' ? '转发内容' : '评论内容'}
-          className="h-32 resize-none border-none! bg-transparent! ring-transparent!"
+          className="h-32 resize-none rounded-lg border-none! bg-transparent! ring-transparent!"
           value={text}
           onChange={(event) => setText(event.target.value)}
           placeholder={target.mode === 'repost' ? '补充转发内容' : '写下你的评论'}

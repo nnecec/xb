@@ -276,7 +276,7 @@ function QualityControl({
                 key={option.id}
                 type="button"
                 className={cn(
-                  'rounded-xl px-3 py-1.5 text-left text-xs transition-colors',
+                  'rounded-lg px-3 py-1.5 text-left text-xs transition-colors',
                   active ? 'bg-white/18 text-white' : 'hover:bg-white/10',
                 )}
                 onClick={() => {
@@ -325,7 +325,7 @@ function PlaybackRateControl() {
                 key={rate}
                 type="button"
                 className={cn(
-                  'rounded-xl px-3 py-1.5 text-left text-xs transition-colors',
+                  'rounded-lg px-3 py-1.5 text-left text-xs transition-colors',
                   active ? 'bg-white/18 text-white' : 'hover:bg-white/10',
                 )}
                 onClick={() => {

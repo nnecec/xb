@@ -78,13 +78,13 @@ export function CommentBox({
   }
 
   return (
-    <div className={`border-foreground/20 flex flex-col gap-2 rounded-2xl border p-2`}>
+    <div className="border-foreground/20 flex flex-col gap-2 rounded-xl border p-2">
       <Textarea
         ref={textareaRef}
         aria-label={isRepost ? '转发内容' : '评论内容'}
         placeholder={placeholder || (isRepost ? '补充转发内容' : '写下你的评论')}
         className={cn(
-          'bg-transparent! ring-transparent! border-none! resize-none',
+          'rounded-lg bg-transparent! ring-transparent! border-none! resize-none',
           compact ? 'h-12' : 'h-16',
         )}
         value={text}

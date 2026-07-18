@@ -66,11 +66,11 @@ function ComposeForm({ onClose }: { onClose: () => void }) {
         <DialogDescription>输入正文后发布到微博。</DialogDescription>
       </DialogHeader>
 
-      <div className={`border-foreground/20 flex flex-col gap-2 rounded-2xl border p-2`}>
+      <div className="border-foreground/20 flex flex-col gap-2 rounded-xl border p-2">
         <Textarea
           ref={textareaRef}
           aria-label="微博内容"
-          className="h-32 resize-none border-none! bg-transparent! ring-transparent!"
+          className="h-32 resize-none rounded-lg border-none! bg-transparent! ring-transparent!"
           value={text}
           onChange={(event) => setText(event.target.value)}
           placeholder="写下你想发布的内容"

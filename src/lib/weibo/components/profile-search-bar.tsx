@@ -139,7 +139,7 @@ export function ProfileSearchBar({
   return (
     <form
       className={cn(
-        'border-border/70 bg-card flex flex-col gap-2 rounded-lg border p-2',
+        'border-border/70 bg-card flex flex-col gap-2 rounded-xl border p-2',
         state.active && 'bg-muted/35 border-foreground/15',
       )}
       onSubmit={(event) => {
@@ -148,7 +148,7 @@ export function ProfileSearchBar({
       }}
     >
       <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_auto]">
-        <div className="bg-background border-border/60 focus-within:border-ring/60 focus-within:ring-ring/20 relative min-w-0 rounded-md border transition-[border-color,box-shadow] focus-within:ring-[3px]">
+        <div className="bg-background border-border/60 focus-within:border-ring/60 focus-within:ring-ring/20 relative min-w-0 rounded-lg border transition-[border-color,box-shadow] focus-within:ring-[3px]">
           <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
           <Input
             value={query}
