@@ -62,15 +62,21 @@
   --font-fangsong: FangSong, STFangSong, 仿宋, serif;
   --font-simhei: SimHei, STHeiti, 黑体, sans-serif;
   --font-kaiti: KaiTi, KaiTi SC, STKaiti, 楷体, serif;
-  --font-lxgw-wenkai: 'LXGW WenKai', sans-serif;
-  --font-smiley-sans: 'Smiley Sans', sans-serif;
-  --font-zhuque: 'ZhuQue Fangsong', serif;
-  --font-source-han-serif: 'Source Han Serif SC', serif;
-  --font-source-han-sans: 'Source Han Sans SC', sans-serif;
-  --font-fz-kai: 'FZ Kai-Z-03', 方正楷体, serif;
-  --font-canger-jinkai: 'CangErJinKai05', 仓耳今楷, serif;
-  --font-lxgw-marker-gothic: 'LXGW Marker Gothic', sans-serif;
-  --font-lxgw-neo-zhisong: 'LXGW Neo ZhiSong', serif;
+  /* family 名必须与 font-loader 注入的 @font-face 一致 */
+  --font-misans: 'MiSans', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  --font-harmonyos-sans: 'HarmonyOS Sans SC', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  --font-lxgw-neo-xihei: 'LXGW Neo XiHei', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  --font-source-han-sans: 'Noto Sans SC', 'Source Han Sans SC', 'PingFang SC', sans-serif;
+  --font-lxgw-marker-gothic: 'LXGW Marker Gothic', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  --font-dingtalk-jinbu: 'DingTalk JinBuTi', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  --font-smiley-sans: 'Smiley Sans', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  --font-lxgw-wenkai-screen: 'LXGW WenKai Screen', 'LXGW WenKai', 'PingFang SC', sans-serif;
+  --font-lxgw-wenkai: 'LXGW WenKai', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  --font-lxgw-neo-zhisong: 'LXGW Neo ZhiSong', 'Songti SC', serif;
+  --font-source-han-serif: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', serif;
+  --font-jixiang-song: 'Fontquan-XinYiJiXiangSong', 'Songti SC', serif;
+  --font-zhuque: 'ZhuQue Fangsong', FangSong, STFangSong, serif;
+  --font-fz-kai: 'FZKai-Z03', 'FZ Kai-Z-03', KaiTi, STKaiti, serif;
 }
 
 :root {
@@ -175,6 +181,11 @@
     content-visibility: auto;
     contain-intrinsic-size: auto 720px;
     box-shadow: none;
+  }
+
+  /* 正文自定义字体：允许字重合成（远程多为单字重），禁止假斜体 */
+  .xb-status-text {
+    font-synthesis: weight;
   }
 
   .xb-feed-card--compact {

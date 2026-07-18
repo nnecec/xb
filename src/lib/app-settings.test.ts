@@ -49,6 +49,33 @@ describe('app-settings', () => {
     expect(normalizeAppSettings({ xLayoutEnabled: false }).feedInteractionMode).toBe('weibo')
   })
 
+  it('migrates legacy font options to reading-scale defaults', () => {
+    expect(normalizeAppSettings({ fontSizeClass: 'text-xs' as never }).fontSizeClass).toBe(
+      'text-sm',
+    )
+    expect(normalizeAppSettings({ fontSizeClass: 'text-4xl' as never }).fontSizeClass).toBe(
+      'text-2xl',
+    )
+    expect(normalizeAppSettings({ fontWeightClass: 'font-thin' as never }).fontWeightClass).toBe(
+      'font-normal',
+    )
+    expect(normalizeAppSettings({ fontWeightClass: 'font-black' as never }).fontWeightClass).toBe(
+      'font-bold',
+    )
+    expect(
+      normalizeAppSettings({ letterSpacingClass: 'tracking-widest' as never }).letterSpacingClass,
+    ).toBe('tracking-wide')
+    expect(normalizeAppSettings({ lineHeightClass: 'leading-none' as never }).lineHeightClass).toBe(
+      'leading-snug',
+    )
+    expect(
+      normalizeAppSettings({ fontFamilyClass: 'font-canger-jinkai' as never }).fontFamilyClass,
+    ).toBe('font-sans')
+    expect(
+      normalizeAppSettings({ fontFamilyClass: 'font-lxgw-neo-xihei' as never }).fontFamilyClass,
+    ).toBe('font-lxgw-neo-xihei')
+  })
+
   it('normalizes feed toolbar settings', () => {
     expect(
       normalizeAppSettings({

@@ -32,6 +32,9 @@ vi.mock('@/lib/weibo/hooks/use-font-settings', () => ({
     letterSpacingClass: 'tracking-normal',
     lineHeightClass: 'leading-relaxed',
     fontFamilyClass: 'font-sans',
+    textClassName: 'xb-status-text text-sm font-normal tracking-normal leading-relaxed font-sans',
+    loadStatus: 'idle' as const,
+    isRemote: false,
   }),
 }))
 

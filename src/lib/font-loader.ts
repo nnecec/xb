@@ -1,140 +1,5 @@
 import type { FontFamilyClass } from './app-settings'
 
-const REMOTE_FONTS: Record<RemoteFontFamily, { url: string; family: string }> = {
-  'font-lxgw-wenkai': {
-    url: 'https://cdn.jsdelivr.net/npm/lxgwwenkai@1.0.1/woff2/LXGWWenKai-Regular.woff2',
-    family: 'LXGW WenKai',
-  },
-  'font-smiley-sans': {
-    url: 'https://cdn.jsdelivr.net/npm/font-smiley-sans@1.0.0/SmileySans-Oblique.ttf.woff2',
-    family: 'Smiley Sans',
-  },
-  'font-zhuque': {
-    url: 'https://cdn.jsdelivr.net/npm/@fontpkg/zhuque-fangsong-technical-preview@0.212.0/ZhuqueFangsong-Regular.ttf',
-    family: 'ZhuQue Fangsong',
-  },
-  'font-source-han-serif': {
-    url: 'https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5.2.9/files/noto-serif-sc-chinese-simplified-400-normal.woff2',
-    family: 'Noto Serif SC',
-  },
-  'font-source-han-sans': {
-    url: 'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-sc@5.1.0/files/noto-sans-sc-chinese-simplified-400-normal.woff2',
-    family: 'Noto Sans SC',
-  },
-  'font-fz-kai': {
-    url: 'https://cdn.jsdelivr.net/npm/cn-fontsource-fz-kai-z-03-regular@1.0.1/L1_68a8_192.woff2',
-    family: 'FZ Kai-Z-03',
-  },
-  'font-canger-jinkai': {
-    url: 'https://cdn.hycqwq.top/font/CangErJinKai-05-W04.ttf',
-    family: 'CangErJinKai05',
-  },
-  'font-lxgw-marker-gothic': {
-    url: 'https://cdn.jsdelivr.net/fontsource/fonts/lxgw-marker-gothic@latest/latin-400-normal.woff2',
-    family: 'LXGW Marker Gothic',
-  },
-  'font-lxgw-neo-zhisong': {
-    url: 'https://cdn.jsdelivr.net/npm/lxgw-neo-zhisong-webfont@1.0.0/fonts/LXGWNeoZhiSong.woff2',
-    family: 'LXGW Neo ZhiSong',
-  },
-}
-
-const LOADED_FONTS_KEY = 'xb:loaded-fonts'
-const fontStyleMap = new Map<RemoteFontFamily, HTMLStyleElement>()
-
-export function isRemoteFont(font: FontFamilyClass): font is RemoteFontFamily {
-  return remoteFonts.includes(font as RemoteFontFamily)
-}
-
-function injectFontFaceStyle(font: RemoteFontFamily): void {
-  if (fontStyleMap.has(font)) return
-
-  const config = REMOTE_FONTS[font]
-  if (!config) return
-
-  // 构造 @font-face CSS 并注入到 document.head
-  const style = document.createElement('style')
-  style.id = `xb-font-${font}`
-  style.textContent = `
-    @font-face {
-      font-family: "${config.family}";
-      font-style: normal;
-      font-weight: 400;
-      font-display: swap;
-      src: url("${config.url}") format("woff2");
-    }
-  `
-  document.head.appendChild(style)
-  fontStyleMap.set(font, style)
-}
-
-export async function loadFont(font: RemoteFontFamily): Promise<boolean> {
-  const config = REMOTE_FONTS[font]
-  if (!config) return false
-
-  // 检查是否已注入过 style（说明已加载过）
-  if (fontStyleMap.has(font) || document.getElementById(`xb-font-${font}`)) {
-    return true
-  }
-
-  // 检查 localStorage
-  try {
-    const stored = localStorage.getItem(LOADED_FONTS_KEY)
-    const loaded: RemoteFontFamily[] = stored ? JSON.parse(stored) : []
-    if (loaded.includes(font)) {
-      injectFontFaceStyle(font)
-      return true
-    }
-  } catch {}
-
-  // 注入 @font-face style
-  injectFontFaceStyle(font)
-
-  // 等待字体加载完成
-  try {
-    await document.fonts.ready
-
-    // 验证字体是否真的加载成功
-    const isAvailable = await document.fonts.check(`12px "${config.family}"`)
-    if (isAvailable) {
-      try {
-        const stored = localStorage.getItem(LOADED_FONTS_KEY)
-        const loaded: RemoteFontFamily[] = stored ? JSON.parse(stored) : []
-        if (!loaded.includes(font)) {
-          localStorage.setItem(LOADED_FONTS_KEY, JSON.stringify([...loaded, font]))
-        }
-      } catch {}
-      return true
-    }
-
-    // 如果 check 失败，尝试用 FontFace 再加载一次
-    const fontFace = new FontFace(config.family, `url("${config.url}")`, {
-      display: 'swap',
-    })
-    await fontFace.load()
-    document.fonts.add(fontFace)
-    await document.fonts.ready
-
-    try {
-      const stored = localStorage.getItem(LOADED_FONTS_KEY)
-      const loaded: RemoteFontFamily[] = stored ? JSON.parse(stored) : []
-      if (!loaded.includes(font)) {
-        localStorage.setItem(LOADED_FONTS_KEY, JSON.stringify([...loaded, font]))
-      }
-    } catch {}
-
-    return true
-  } catch (err) {
-    console.error(`[font-loader] Failed to load ${font}:`, err)
-    // 移除失败的 style
-    const style = fontStyleMap.get(font)
-    if (style) {
-      style.remove()
-      fontStyleMap.delete(font)
-    }
-    return false
-  }
-}
 export type SystemFontFamily =
   | 'font-sans'
   | 'font-serif'
@@ -144,18 +9,299 @@ export type SystemFontFamily =
   | 'font-kaiti'
 
 const remoteFonts = [
-  'font-lxgw-wenkai',
-  'font-smiley-sans',
-  'font-zhuque',
-  'font-source-han-serif',
+  // 无衬线 · 屏幕阅读
+  'font-misans',
+  'font-harmonyos-sans',
+  'font-lxgw-neo-xihei',
   'font-source-han-sans',
-  'font-fz-kai',
-  'font-canger-jinkai',
   'font-lxgw-marker-gothic',
+  'font-dingtalk-jinbu',
+  'font-smiley-sans',
+  // 衬线 / 楷体 · 长文阅读
+  'font-lxgw-wenkai-screen',
+  'font-lxgw-wenkai',
   'font-lxgw-neo-zhisong',
+  'font-source-han-serif',
+  'font-jixiang-song',
+  'font-zhuque',
+  'font-fz-kai',
 ] as const
-// 可下载开源字体
+
+/** 可下载开源字体 */
 export type RemoteFontFamily = (typeof remoteFonts)[number]
+
+type FontFormat = 'woff2' | 'truetype'
+
+type SingleSourceFont = {
+  kind: 'single'
+  family: string
+  url: string
+  format: FontFormat
+}
+
+type StylesheetFont = {
+  kind: 'stylesheet'
+  family: string
+  /** 含 unicode-range 分片的完整 CSS */
+  stylesheetUrl: string
+}
+
+type RemoteFontConfig = SingleSourceFont | StylesheetFont
+
+/**
+ * 远程字体源。
+ * - single：单文件，用 FontFace 加载
+ * - stylesheet：unicode-range 分片 CSS（按需拉取字形）
+ * family 必须与 global.css 中 --font-* token 一致
+ *
+ * 远程文件多为 Regular(400)；设置页仍允许调节粗细，由浏览器合成字重。
+ */
+const REMOTE_FONTS: Record<RemoteFontFamily, RemoteFontConfig> = {
+  'font-misans': {
+    kind: 'stylesheet',
+    family: 'MiSans',
+    stylesheetUrl:
+      'https://cdn.jsdelivr.net/npm/misans-webfont@4.3.1/misans/misans-regular/result.css',
+  },
+  'font-harmonyos-sans': {
+    kind: 'stylesheet',
+    family: 'HarmonyOS Sans SC',
+    stylesheetUrl:
+      'https://cdn.jsdelivr.net/npm/harmonyos-sans-sc-webfont-splitted@1.1.0/dist/Regular.css',
+  },
+  'font-lxgw-neo-xihei': {
+    kind: 'stylesheet',
+    family: 'LXGW Neo XiHei',
+    stylesheetUrl:
+      'https://cdn.jsdelivr.net/npm/cn-fontsource-lxgw-neo-xi-hei-regular@1.0.1/font.css',
+  },
+  'font-source-han-sans': {
+    kind: 'single',
+    family: 'Noto Sans SC',
+    url: 'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-sc@5.1.0/files/noto-sans-sc-chinese-simplified-400-normal.woff2',
+    format: 'woff2',
+  },
+  'font-lxgw-marker-gothic': {
+    kind: 'stylesheet',
+    family: 'LXGW Marker Gothic',
+    stylesheetUrl:
+      'https://cdn.jsdelivr.net/npm/@free-fonts/lxgw-marker-gothic@1.0.0/lxgw-marker-gothic.css',
+  },
+  'font-dingtalk-jinbu': {
+    kind: 'stylesheet',
+    family: 'DingTalk JinBuTi',
+    stylesheetUrl:
+      'https://cdn.jsdelivr.net/npm/cn-fontsource-ding-talk-jin-bu-ti-regular@1.0.3/font.css',
+  },
+  'font-smiley-sans': {
+    kind: 'single',
+    family: 'Smiley Sans',
+    url: 'https://cdn.jsdelivr.net/npm/font-smiley-sans@1.0.0/SmileySans-Oblique.otf.woff2',
+    format: 'woff2',
+  },
+  'font-lxgw-wenkai-screen': {
+    kind: 'stylesheet',
+    // 屏幕阅读版：Regular 更饱满，长文更易读
+    family: 'LXGW WenKai Screen',
+    stylesheetUrl: 'https://cdn.jsdelivr.net/npm/cn-fontsource-lxgw-wen-kai-screen@1.0.6/font.css',
+  },
+  'font-lxgw-wenkai': {
+    kind: 'single',
+    family: 'LXGW WenKai',
+    url: 'https://cdn.jsdelivr.net/npm/lxgwwenkai@1.0.1/woff2/LXGWWenKai-Regular.woff2',
+    format: 'woff2',
+  },
+  'font-lxgw-neo-zhisong': {
+    kind: 'single',
+    family: 'LXGW Neo ZhiSong',
+    url: 'https://cdn.jsdelivr.net/npm/lxgw-neo-zhisong-webfont@1.0.0/fonts/LXGWNeoZhiSong.woff2',
+    format: 'woff2',
+  },
+  'font-source-han-serif': {
+    kind: 'single',
+    family: 'Noto Serif SC',
+    url: 'https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5.2.9/files/noto-serif-sc-chinese-simplified-400-normal.woff2',
+    format: 'woff2',
+  },
+  'font-jixiang-song': {
+    kind: 'stylesheet',
+    family: 'Fontquan-XinYiJiXiangSong',
+    stylesheetUrl:
+      'https://cdn.jsdelivr.net/npm/cn-fontsource-fontquan-xin-yi-ji-xiang-song-regular@1.0.7/font.css',
+  },
+  'font-zhuque': {
+    kind: 'single',
+    family: 'ZhuQue Fangsong',
+    // 上游仅提供 TTF；声明 truetype，避免 woff2 伪 format
+    url: 'https://cdn.jsdelivr.net/npm/@fontpkg/zhuque-fangsong-technical-preview@0.212.0/ZhuqueFangsong-Regular.ttf',
+    format: 'truetype',
+  },
+  'font-fz-kai': {
+    kind: 'stylesheet',
+    family: 'FZKai-Z03',
+    stylesheetUrl: 'https://cdn.jsdelivr.net/npm/cn-fontsource-fz-kai-z-03-regular@1.0.1/font.css',
+  },
+}
+
+const fontElementMap = new Map<RemoteFontFamily, HTMLStyleElement | HTMLLinkElement>()
+const loadPromises = new Map<RemoteFontFamily, Promise<boolean>>()
+
+export function isRemoteFont(font: FontFamilyClass): font is RemoteFontFamily {
+  return (remoteFonts as readonly string[]).includes(font)
+}
+
+export function getRemoteFontConfig(font: RemoteFontFamily): RemoteFontConfig {
+  return REMOTE_FONTS[font]
+}
+
+export function getRemoteFontFamilyName(font: RemoteFontFamily): string {
+  return REMOTE_FONTS[font].family
+}
+
+/** 远程字体文件本身为 Regular；字重范围声明便于匹配用户选择的 font-weight */
+export const REMOTE_FONT_WEIGHT = 400
+
+function formatHint(format: FontFormat): string {
+  return format === 'woff2' ? 'woff2' : 'truetype'
+}
+
+function injectSingleFontFace(font: RemoteFontFamily, config: SingleSourceFont): void {
+  if (fontElementMap.has(font) || document.getElementById(`xb-font-${font}`)) return
+
+  const style = document.createElement('style')
+  style.id = `xb-font-${font}`
+  // weight 范围让 400–700 的设置都能命中该 face，粗体由浏览器合成
+  style.textContent = `
+    @font-face {
+      font-family: "${config.family}";
+      font-style: normal;
+      font-weight: 100 900;
+      font-display: swap;
+      src: url("${config.url}") format("${formatHint(config.format)}");
+    }
+  `
+  document.head.appendChild(style)
+  fontElementMap.set(font, style)
+}
+
+function injectStylesheetLink(font: RemoteFontFamily, config: StylesheetFont): Promise<void> {
+  const existing = document.getElementById(`xb-font-${font}`)
+  if (existing instanceof HTMLLinkElement) {
+    fontElementMap.set(font, existing)
+    if (existing.dataset.xbLoaded === '1') return Promise.resolve()
+    return new Promise((resolve, reject) => {
+      existing.addEventListener('load', () => resolve(), { once: true })
+      existing.addEventListener('error', () => reject(new Error(`Failed to load ${font}`)), {
+        once: true,
+      })
+    })
+  }
+
+  return new Promise((resolve, reject) => {
+    const link = document.createElement('link')
+    link.id = `xb-font-${font}`
+    link.rel = 'stylesheet'
+    link.href = config.stylesheetUrl
+    link.dataset.xbFont = font
+    link.addEventListener(
+      'load',
+      () => {
+        link.dataset.xbLoaded = '1'
+        resolve()
+      },
+      { once: true },
+    )
+    link.addEventListener(
+      'error',
+      () => reject(new Error(`Failed to load stylesheet for ${font}`)),
+      { once: true },
+    )
+    document.head.appendChild(link)
+    fontElementMap.set(font, link)
+  })
+}
+
+async function ensureFontReady(family: string): Promise<boolean> {
+  // 用中英字符触发 CJK 分片加载
+  await document.fonts.load(`${REMOTE_FONT_WEIGHT} 16px "${family}"`, '字Aa')
+  await document.fonts.ready
+  return document.fonts.check(`${REMOTE_FONT_WEIGHT} 16px "${family}"`, '字')
+}
+
+function removeFontElement(font: RemoteFontFamily): void {
+  const el = fontElementMap.get(font) ?? document.getElementById(`xb-font-${font}`)
+  if (el) el.remove()
+  fontElementMap.delete(font)
+}
+
+/**
+ * 加载远程字体。同一字体并发调用会复用 Promise。
+ * 成功返回 true；失败清理注入并返回 false。
+ */
+export async function loadFont(font: RemoteFontFamily): Promise<boolean> {
+  const config = REMOTE_FONTS[font]
+  if (!config) return false
+
+  const inflight = loadPromises.get(font)
+  if (inflight) return inflight
+
+  const promise = (async (): Promise<boolean> => {
+    try {
+      if (config.kind === 'stylesheet') {
+        await injectStylesheetLink(font, config)
+        const ok = await ensureFontReady(config.family)
+        if (!ok) {
+          // 分片字体 check 可能因尚未用到的 range 不完整；stylesheet load 成功即视为可用
+          return true
+        }
+        return true
+      }
+
+      // single：优先 FontFace API，失败再回退 @font-face 注入
+      const already = [...document.fonts].some(
+        (f) => f.family.replace(/['"]/g, '') === config.family && f.status === 'loaded',
+      )
+      if (already) return true
+
+      try {
+        const fontFace = new FontFace(config.family, `url("${config.url}")`, {
+          style: 'normal',
+          weight: '100 900',
+          display: 'swap',
+        })
+        const loaded = await fontFace.load()
+        document.fonts.add(loaded)
+      } catch {
+        // FontFace 失败时回退到 CSS @font-face（部分环境对跨域 FontFace 更严）
+      }
+
+      injectSingleFontFace(font, config)
+      const ok = await ensureFontReady(config.family)
+      if (!ok) {
+        removeFontElement(font)
+        return false
+      }
+      return true
+    } catch (err) {
+      console.error(`[font-loader] Failed to load ${font}:`, err)
+      removeFontElement(font)
+      return false
+    } finally {
+      loadPromises.delete(font)
+    }
+  })()
+
+  loadPromises.set(font, promise)
+  return promise
+}
+
+/** 测试 / 清理用：重置模块内加载状态 */
+export function resetFontLoaderStateForTests(): void {
+  for (const font of remoteFonts) {
+    removeFontElement(font)
+  }
+  loadPromises.clear()
+}
 
 export const FONT_FAMILY_CLASSES: FontFamilyClass[] = [
   'font-sans',
@@ -165,4 +311,27 @@ export const FONT_FAMILY_CLASSES: FontFamilyClass[] = [
   'font-simhei',
   'font-kaiti',
   ...remoteFonts,
+]
+
+export const REMOTE_FONT_OPTIONS: {
+  value: RemoteFontFamily
+  label: string
+  group: 'sans' | 'serif'
+}[] = [
+  // 无衬线 · 屏幕阅读
+  { value: 'font-misans', label: 'MiSans 小米兰亭', group: 'sans' },
+  { value: 'font-harmonyos-sans', label: '鸿蒙黑体', group: 'sans' },
+  { value: 'font-lxgw-neo-xihei', label: '霞鹜新晰黑', group: 'sans' },
+  { value: 'font-source-han-sans', label: '思源黑体', group: 'sans' },
+  { value: 'font-lxgw-marker-gothic', label: '霞鹜漫黑', group: 'sans' },
+  { value: 'font-dingtalk-jinbu', label: '钉钉进步体', group: 'sans' },
+  { value: 'font-smiley-sans', label: '得意黑', group: 'sans' },
+  // 衬线 / 楷体 · 长文阅读
+  { value: 'font-lxgw-wenkai-screen', label: '霞鹜文楷 屏幕版', group: 'serif' },
+  { value: 'font-lxgw-wenkai', label: '霞鹜文楷', group: 'serif' },
+  { value: 'font-lxgw-neo-zhisong', label: '霞鹜新致宋', group: 'serif' },
+  { value: 'font-source-han-serif', label: '思源宋体', group: 'serif' },
+  { value: 'font-jixiang-song', label: '欣意吉祥宋', group: 'serif' },
+  { value: 'font-zhuque', label: '朱雀仿宋', group: 'serif' },
+  { value: 'font-fz-kai', label: '方正楷体', group: 'serif' },
 ]

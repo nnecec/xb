@@ -40,8 +40,7 @@ export const CommentCard = memo(function CommentCard({
   const [showNestedCommentsDialog, setShowNestedCommentsDialog] = useState(false)
   const uid = getCurrentUserUid()
   const showOwnerMenu = uid !== null && uid === item.author.id
-  const { fontSizeClass, fontWeightClass, letterSpacingClass, lineHeightClass, fontFamilyClass } =
-    useFontSettings()
+  const { textClassName } = useFontSettings()
   const queryClient = useQueryClient()
 
   const likeMutation = useMutation({
@@ -121,16 +120,7 @@ export const CommentCard = memo(function CommentCard({
           <p className="text-muted-foreground truncate text-xs">{item.source}</p>
         ) : null}
 
-        <div
-          className={cn(
-            'whitespace-pre-wrap text-foreground',
-            fontSizeClass,
-            fontWeightClass,
-            letterSpacingClass,
-            lineHeightClass,
-            fontFamilyClass,
-          )}
-        >
+        <div className={cn('whitespace-pre-wrap text-foreground', textClassName)}>
           <StatusText item={item} text={item.text || ''} />
         </div>
 

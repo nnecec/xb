@@ -290,23 +290,13 @@ function FeedTextBlock({
   hasLongTextError: boolean
   onLoadLongText: () => void
 }) {
-  const { fontSizeClass, fontWeightClass, letterSpacingClass, lineHeightClass, fontFamilyClass } =
-    useFontSettings()
+  const { textClassName } = useFontSettings()
   const [textMode, setTextMode] = useState<'markdown' | 'plain'>('markdown')
   const canRenderMarkdown = item.isMarkdown && item.markdownText
   const resolvedTextMode = canRenderMarkdown ? textMode : 'plain'
 
   return (
-    <div
-      className={cn(
-        'text-foreground',
-        fontSizeClass,
-        fontWeightClass,
-        letterSpacingClass,
-        lineHeightClass,
-        fontFamilyClass,
-      )}
-    >
+    <div className={cn('text-foreground', textClassName)}>
       {canRenderMarkdown ? (
         <Tabs
           value={resolvedTextMode}

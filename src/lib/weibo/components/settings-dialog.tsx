@@ -28,6 +28,7 @@ import { Reorder } from 'motion/react'
 import { Dialog as DialogPrimitive } from 'radix-ui'
 import React from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { toast } from 'sonner'
 
 import darkModeImageDimJpeg from '@/assets/images/dark-mode-image-dim.jpeg'
 import collapseReplyChain from '@/assets/images/quotechains-collapsible.jpeg'
@@ -77,6 +78,12 @@ import type {
 } from '@/lib/app-settings'
 import { useAppSettings, useShallow } from '@/lib/app-settings-store'
 import { CUSTOM_THEME_PRESETS } from '@/lib/custom-theme'
+import {
+  isRemoteFont,
+  loadFont,
+  REMOTE_FONT_OPTIONS,
+  type RemoteFontFamily,
+} from '@/lib/font-loader'
 import { cn } from '@/lib/utils'
 import { browsingHistoryStore } from '@/lib/weibo/hooks/use-browsing-history'
 
@@ -484,6 +491,8 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
     }
   }, [])
 
+  const [fontFamilyLoading, setFontFamilyLoading] = useState(false)
+
   function resetFontSettings() {
     void updateSettings({
       fontSizeClass: DEFAULT_APP_SETTINGS.fontSizeClass,
@@ -492,6 +501,26 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
       lineHeightClass: DEFAULT_APP_SETTINGS.lineHeightClass,
       fontFamilyClass: DEFAULT_APP_SETTINGS.fontFamilyClass,
     })
+  }
+
+  async function handleFontFamilyChange(value: string) {
+    const next = value as FontFamilyClass
+    if (!isRemoteFont(next)) {
+      void updateSettings({ fontFamilyClass: next })
+      return
+    }
+
+    setFontFamilyLoading(true)
+    try {
+      const ok = await loadFont(next as RemoteFontFamily)
+      if (!ok) {
+        toast.error('字体加载失败，请检查网络后重试')
+        return
+      }
+      void updateSettings({ fontFamilyClass: next })
+    } finally {
+      setFontFamilyLoading(false)
+    }
   }
 
   function handleSelectPresetTheme(presetKey: string) {
@@ -859,14 +888,11 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="text-xs">12px</SelectItem>
                         <SelectItem value="text-sm">14px</SelectItem>
                         <SelectItem value="text-base">16px</SelectItem>
                         <SelectItem value="text-lg">18px</SelectItem>
                         <SelectItem value="text-xl">20px</SelectItem>
                         <SelectItem value="text-2xl">24px</SelectItem>
-                        <SelectItem value="text-3xl">30px</SelectItem>
-                        <SelectItem value="text-4xl">36px</SelectItem>
                       </SelectContent>
                     </Select>
                   </Field>
@@ -881,19 +907,14 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="font-thin">100 极细</SelectItem>
-                        <SelectItem value="font-extralight">200 较细</SelectItem>
-                        <SelectItem value="font-light">300 细</SelectItem>
                         <SelectItem value="font-normal">400 标准</SelectItem>
                         <SelectItem value="font-medium">500 中等</SelectItem>
                         <SelectItem value="font-semibold">600 较粗</SelectItem>
                         <SelectItem value="font-bold">700 粗</SelectItem>
-                        <SelectItem value="font-extrabold">800 特粗</SelectItem>
-                        <SelectItem value="font-black">900 超粗</SelectItem>
                       </SelectContent>
                     </Select>
                   </Field>
-                  <Field label="字间距" description="字符之间的间距">
+                  <Field label="字间距" description="字符之间的间距（中文正文建议标准）">
                     <Select
                       value={letterSpacingClass}
                       onValueChange={(v) =>
@@ -904,12 +925,9 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="tracking-tighter">更紧凑</SelectItem>
                         <SelectItem value="tracking-tight">紧凑</SelectItem>
                         <SelectItem value="tracking-normal">标准</SelectItem>
                         <SelectItem value="tracking-wide">宽松</SelectItem>
-                        <SelectItem value="tracking-wider">更宽松</SelectItem>
-                        <SelectItem value="tracking-widest">最宽松</SelectItem>
                       </SelectContent>
                     </Select>
                   </Field>
@@ -924,8 +942,6 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="leading-none">无</SelectItem>
-                        <SelectItem value="leading-tight">紧凑</SelectItem>
                         <SelectItem value="leading-snug">适中偏紧</SelectItem>
                         <SelectItem value="leading-normal">标准</SelectItem>
                         <SelectItem value="leading-relaxed">宽松</SelectItem>
@@ -934,14 +950,22 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
                     </Select>
                   </Field>
 
-                  <Field label="字体样式" description="微博正文和评论的字体">
+                  <Field
+                    label="字体样式"
+                    description={
+                      fontFamilyLoading
+                        ? '正在下载远程字体…'
+                        : '微博正文和评论的字体（远程字体首次使用需下载）'
+                    }
+                  >
                     <Select
                       value={fontFamilyClass}
-                      onValueChange={(v) =>
-                        void updateSettings({ fontFamilyClass: v as FontFamilyClass })
-                      }
+                      disabled={fontFamilyLoading}
+                      onValueChange={(v) => {
+                        void handleFontFamilyChange(v)
+                      }}
                     >
-                      <SelectTrigger className="w-[140px]">
+                      <SelectTrigger className="w-[180px]">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -955,16 +979,20 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
                           <SelectItem value="font-fangsong">仿宋</SelectItem>
                         </SelectGroup>
                         <SelectGroup>
-                          <SelectLabel>远程字体</SelectLabel>
-                          <SelectItem value="font-lxgw-marker-gothic">霞鹜新晰黑</SelectItem>
-                          <SelectItem value="font-lxgw-neo-zhisong">霞鹜新致宋</SelectItem>
-                          <SelectItem value="font-lxgw-wenkai">霞鹜文楷</SelectItem>
-                          <SelectItem value="font-smiley-sans">得意黑</SelectItem>
-                          <SelectItem value="font-zhuque">朱雀仿宋</SelectItem>
-                          <SelectItem value="font-source-han-serif">思源宋体</SelectItem>
-                          <SelectItem value="font-source-han-sans">思源黑体</SelectItem>
-                          <SelectItem value="font-fz-kai">方正楷体</SelectItem>
-                          <SelectItem value="font-canger-jinkai">仓耳今楷</SelectItem>
+                          <SelectLabel>远程 · 无衬线</SelectLabel>
+                          {REMOTE_FONT_OPTIONS.filter((o) => o.group === 'sans').map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                        <SelectGroup>
+                          <SelectLabel>远程 · 衬线 / 楷体</SelectLabel>
+                          {REMOTE_FONT_OPTIONS.filter((o) => o.group === 'serif').map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
                         </SelectGroup>
                       </SelectContent>
                     </Select>
