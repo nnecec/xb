@@ -144,7 +144,7 @@ function ProfileHeaderMutualFollowers({ profile }: { profile: UserProfile }) {
 export function ProfileHeader({ profile }: { profile: UserProfile }) {
   const ratingEnabled = useAppSettings((s) => s.ratingEnabled)
   return (
-    <Card className="overflow-hidden py-0 shadow-none">
+    <Card className="overflow-hidden py-0">
       <CardContent className="p-0">
         <ProfileBanner
           bannerUrl={profile.bannerUrl}

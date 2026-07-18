@@ -68,10 +68,7 @@ export function RatingSummaryBadge({
 
   return (
     <div
-      className={cn(
-        'inline-flex h-7 items-center gap-1.5 rounded-md px-2 leading-none transition-[transform,box-shadow] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] hover:scale-105 hover:shadow-[0_2px_8px_oklch(0_0_0/0.1)]',
-        className,
-      )}
+      className={cn('inline-flex h-7 items-center gap-1.5 rounded-md px-2 leading-none', className)}
       aria-label={`评分 ${averageDisplayScore} 分`}
     >
       <TooltipProvider>
