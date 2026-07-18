@@ -33,7 +33,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   type FeedInteractionMode,
   type FeedPrimaryActionId,
@@ -298,32 +297,11 @@ function FeedTextBlock({
 }) {
   const { textClassName } = useFontSettings()
   const [textMode, setTextMode] = useState<'markdown' | 'plain'>('markdown')
-  const canRenderMarkdown = item.isMarkdown && item.markdownText
+  const canRenderMarkdown = Boolean(item.isMarkdown && item.markdownText)
   const resolvedTextMode = canRenderMarkdown ? textMode : 'plain'
 
   return (
     <div className={cn('text-foreground', textClassName)}>
-      {canRenderMarkdown ? (
-        <Tabs
-          value={resolvedTextMode}
-          onValueChange={(value) => setTextMode(value as 'markdown' | 'plain')}
-          onClick={(event) => event.stopPropagation()}
-        >
-          <TabsList>
-            <TabsTrigger
-              value="markdown"
-              className="text-xs"
-              onClick={() => setTextMode('markdown')}
-            >
-              Markdown
-            </TabsTrigger>
-            <TabsTrigger value="plain" className="text-xs" onClick={() => setTextMode('plain')}>
-              原文
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-      ) : null}
-
       <StatusText item={item} text={item.text} mode={resolvedTextMode} />
 
       {canLoadLongText ? (
@@ -335,6 +313,21 @@ function FeedTextBlock({
           isLoading={isLongTextLoading}
           hasError={hasLongTextError}
         />
+      ) : null}
+
+      {canRenderMarkdown ? (
+        <Button
+          type="button"
+          variant="link"
+          size="xs"
+          className="text-muted-foreground h-auto px-0 py-1 text-xs"
+          onClick={(event) => {
+            event.stopPropagation()
+            setTextMode((mode) => (mode === 'markdown' ? 'plain' : 'markdown'))
+          }}
+        >
+          {textMode === 'markdown' ? '查看原文' : '查看渲染'}
+        </Button>
       ) : null}
     </div>
   )
