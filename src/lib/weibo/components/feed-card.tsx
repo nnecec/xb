@@ -140,7 +140,10 @@ function FeedMediaBlock({ item }: { item: FeedItem }) {
           event.stopPropagation()
         }}
       >
-        <AspectRatio ratio={16 / 9}>
+        <AspectRatio
+          ratio={16 / 9}
+          className="overflow-hidden rounded-xl outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+        >
           <LivePlayer
             streamUrl={item.media.streamUrl}
             coverUrl={item.media.coverUrl ?? ''}
@@ -159,7 +162,10 @@ function FeedMediaBlock({ item }: { item: FeedItem }) {
       }}
       className="max-w-[650px]"
     >
-      <AspectRatio ratio={item.media.videoOrientation === 'vertical' ? 4 / 3 : 16 / 9}>
+      <AspectRatio
+        ratio={item.media.videoOrientation === 'vertical' ? 4 / 3 : 16 / 9}
+        className="overflow-hidden rounded-xl outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+      >
         <VideoPlayer
           progressiveSrc={item.media.streamUrl}
           poster={item.media.coverUrl ?? undefined}

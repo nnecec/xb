@@ -121,7 +121,7 @@ function LiveOverlay({ isPlaying, onPlay }: { isPlaying: boolean; onPlay: () => 
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center">
       <button type="button" className="group flex items-center justify-center" onClick={onPlay}>
-        <div className="flex size-14 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm transition-transform hover:scale-105 active:scale-95">
+        <div className="flex size-14 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm transition-transform duration-150 ease-out hover:scale-[1.02] active:scale-[0.96]">
           <Play className="ml-1 size-7 fill-current text-black" />
         </div>
       </button>

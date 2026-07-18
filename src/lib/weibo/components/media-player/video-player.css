@@ -32,12 +32,12 @@
 }
 
 .video-center-play__button:hover {
-  scale: 1.05;
+  scale: 1.02;
   opacity: 1;
 }
 
 .video-center-play__button:active {
-  scale: 0.95;
+  scale: 0.96;
 }
 
 /* Hide center play button when video is playing (started and not paused) */
