@@ -74,7 +74,6 @@ export function SpecialFollowButton({
             title={label}
             disabled={mutation.isPending}
             className={cn(
-              'transition-transform duration-200 active:scale-[0.96]',
               isSpecial &&
                 'text-amber-700 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200',
               className,

@@ -88,7 +88,6 @@ function StatusCommentsSection({
             variant="ghost"
             size="icon"
             aria-label="刷新评论"
-            className="active:scale-[0.96]"
             onClick={async () => {
               await commentsQuery.refetch()
               toast.success('评论刷新成功')
@@ -132,7 +131,8 @@ function StatusCommentsSection({
         {commentsQuery.hasNextPage ? (
           <Button
             variant="outline"
-            className="w-full active:scale-[0.99]"
+            className="w-full"
+            static
             onClick={() => void commentsQuery.fetchNextPage()}
             disabled={commentsQuery.isFetchingNextPage}
           >
@@ -175,7 +175,7 @@ function StatusDetailTopBar({
             variant="ghost"
             size="icon"
             aria-label="返回"
-            className="shrink-0 active:scale-[0.96]"
+            className="shrink-0"
             onClick={handleGoBack}
           >
             <ArrowLeft className="size-4" />

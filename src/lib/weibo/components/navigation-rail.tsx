@@ -85,10 +85,7 @@ function NavButton({
       variant={buttonVariant}
       aria-label={showLabel ? undefined : String(label)}
       aria-current={isActive ? 'page' : undefined}
-      className={cn(
-        'w-full items-center gap-2 transition-transform duration-200 active:scale-[0.96]',
-        showLabel ? 'justify-start' : 'justify-center',
-      )}
+      className={cn('w-full items-center gap-2', showLabel ? 'justify-start' : 'justify-center')}
       onClick={onClick}
       size={showLabel ? 'default' : 'icon'}
     >
@@ -185,7 +182,7 @@ export function NavigationRail({
 
   return (
     <TooltipProvider>
-      <aside className="flex h-full min-h-0 flex-col px-1 py-3 transition md:px-2 md:py-4 xl:px-3 xl:py-5">
+      <aside className="flex h-full min-h-0 flex-col px-1 py-3 md:px-2 md:py-4 xl:px-3 xl:py-5">
         <div className="mb-4 flex justify-start">
           <img
             src={WeiboLogo}
