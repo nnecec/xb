@@ -51,6 +51,9 @@ export const DARK_BG_PRESETS: BgColorPresetDef[] = [
 
 export type FontFamilyClass = SystemFontFamily | RemoteFontFamily
 
+/** 字体应用范围：正文仅 Feed/评论；应用额外共享字族到 UI chrome */
+export type FontApplyScope = 'content' | 'app'
+
 export type HotSearchType = 'hot' | 'mine' | 'entertainment' | 'life' | 'social'
 
 /** 正文阅读尺度：最小 14px，最大 24px */
@@ -129,6 +132,7 @@ export interface AppSettings {
   letterSpacingClass: LetterSpacingClass
   lineHeightClass: LineHeightClass
   fontFamilyClass: FontFamilyClass
+  fontApplyScope: FontApplyScope
   showExplore: boolean
   showFavorites: boolean
   showHistory: boolean
@@ -202,6 +206,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   letterSpacingClass: 'tracking-normal',
   lineHeightClass: 'leading-relaxed',
   fontFamilyClass: 'font-sans',
+  fontApplyScope: 'content',
   showExplore: true,
   showFavorites: true,
   showHistory: true,
@@ -252,6 +257,14 @@ function isAppTheme(value: unknown): value is AppTheme {
 
 function isFontFamilyClass(value: unknown): value is FontFamilyClass {
   return FONT_FAMILY_CLASSES.includes(value as FontFamilyClass)
+}
+
+function isFontApplyScope(value: unknown): value is FontApplyScope {
+  return value === 'content' || value === 'app'
+}
+
+function normalizeFontApplyScope(value: unknown): FontApplyScope {
+  return isFontApplyScope(value) ? value : DEFAULT_APP_SETTINGS.fontApplyScope
 }
 
 function normalizeFontFamilyClass(value: unknown): FontFamilyClass {
@@ -474,6 +487,7 @@ export function normalizeAppSettings(value: unknown): AppSettings {
     letterSpacingClass: normalizeLetterSpacingClass(candidate.letterSpacingClass),
     lineHeightClass: normalizeLineHeightClass(candidate.lineHeightClass),
     fontFamilyClass: normalizeFontFamilyClass(candidate.fontFamilyClass),
+    fontApplyScope: normalizeFontApplyScope(candidate.fontApplyScope),
     showExplore:
       typeof candidate.showExplore === 'boolean'
         ? candidate.showExplore

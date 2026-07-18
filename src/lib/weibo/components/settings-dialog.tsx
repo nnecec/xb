@@ -69,6 +69,7 @@ import type {
   FeedInteractionMode,
   FeedPrimaryActionId,
   FeedToolbarButtonId,
+  FontApplyScope,
   FontFamilyClass,
   FontSizeClass,
   FontWeightClass,
@@ -328,6 +329,7 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
     letterSpacingClass,
     lineHeightClass,
     fontFamilyClass,
+    fontApplyScope,
     showHotSearchCard,
     showFollowedSuperTopicsCard,
     showExplore,
@@ -367,6 +369,7 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
       letterSpacingClass: s.letterSpacingClass,
       lineHeightClass: s.lineHeightClass,
       fontFamilyClass: s.fontFamilyClass,
+      fontApplyScope: s.fontApplyScope,
       showHotSearchCard: s.showHotSearchCard,
       showFollowedSuperTopicsCard: s.showFollowedSuperTopicsCard,
       showExplore: s.showExplore,
@@ -500,6 +503,7 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
       letterSpacingClass: DEFAULT_APP_SETTINGS.letterSpacingClass,
       lineHeightClass: DEFAULT_APP_SETTINGS.lineHeightClass,
       fontFamilyClass: DEFAULT_APP_SETTINGS.fontFamilyClass,
+      fontApplyScope: DEFAULT_APP_SETTINGS.fontApplyScope,
     })
   }
 
@@ -955,7 +959,7 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
                     description={
                       fontFamilyLoading
                         ? '正在下载远程字体…'
-                        : '微博正文和评论的字体（远程字体首次使用需下载）'
+                        : '选择字体族（远程字体首次使用需下载）'
                     }
                   >
                     <Select
@@ -994,6 +998,25 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
                             </SelectItem>
                           ))}
                         </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field
+                    label="应用到"
+                    description="正文：仅微博与评论。应用：界面 chrome 共用字族（字号/行高仍只作用于正文）"
+                  >
+                    <Select
+                      value={fontApplyScope}
+                      onValueChange={(v) =>
+                        void updateSettings({ fontApplyScope: v as FontApplyScope })
+                      }
+                    >
+                      <SelectTrigger className="w-[120px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="content">正文</SelectItem>
+                        <SelectItem value="app">应用</SelectItem>
                       </SelectContent>
                     </Select>
                   </Field>

@@ -7,6 +7,7 @@ import {
   loadFont,
   REMOTE_FONT_OPTIONS,
   resetFontLoaderStateForTests,
+  resolveFontFamilyStack,
 } from './font-loader'
 
 describe('font-loader', () => {
@@ -25,6 +26,13 @@ describe('font-loader', () => {
     expect(isRemoteFont('font-lxgw-wenkai')).toBe(true)
     expect(isRemoteFont('font-sans')).toBe(false)
     expect(isRemoteFont('font-simsun')).toBe(false)
+  })
+
+  it('resolves font-family stacks aligned with tokens', () => {
+    expect(resolveFontFamilyStack('font-simsun')).toContain('SimSun')
+    expect(resolveFontFamilyStack('font-source-han-sans')).toContain('Noto Sans SC')
+    expect(resolveFontFamilyStack('font-lxgw-wenkai')).toContain('LXGW WenKai')
+    expect(resolveFontFamilyStack('font-sans')).toContain('system-ui')
   })
 
   it('keeps family names aligned with known tokens', () => {

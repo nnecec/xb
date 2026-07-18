@@ -158,6 +158,39 @@ export function getRemoteFontFamilyName(font: RemoteFontFamily): string {
   return REMOTE_FONTS[font].family
 }
 
+/**
+ * 解析 `font-*` class 对应的 CSS font-family 栈。
+ * 与 global.css 中 --font-* token 保持一致；用于 shell 层注入。
+ */
+const FONT_FAMILY_STACKS: Record<FontFamilyClass, string> = {
+  'font-sans':
+    'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif',
+  'font-serif':
+    'ui-serif, Georgia, Cambria, "Times New Roman", Times, "Songti SC", "Noto Serif SC", serif',
+  'font-simsun': 'SimSun, STSong, 宋体, serif',
+  'font-fangsong': 'FangSong, STFangSong, 仿宋, serif',
+  'font-simhei': 'SimHei, STHeiti, 黑体, sans-serif',
+  'font-kaiti': 'KaiTi, "KaiTi SC", STKaiti, 楷体, serif',
+  'font-misans': "'MiSans', 'PingFang SC', 'Hiragino Sans GB', sans-serif",
+  'font-harmonyos-sans': "'HarmonyOS Sans SC', 'PingFang SC', 'Hiragino Sans GB', sans-serif",
+  'font-lxgw-neo-xihei': "'LXGW Neo XiHei', 'PingFang SC', 'Hiragino Sans GB', sans-serif",
+  'font-source-han-sans': "'Noto Sans SC', 'Source Han Sans SC', 'PingFang SC', sans-serif",
+  'font-lxgw-marker-gothic': "'LXGW Marker Gothic', 'PingFang SC', 'Hiragino Sans GB', sans-serif",
+  'font-dingtalk-jinbu': "'DingTalk JinBuTi', 'PingFang SC', 'Hiragino Sans GB', sans-serif",
+  'font-smiley-sans': "'Smiley Sans', 'PingFang SC', 'Hiragino Sans GB', sans-serif",
+  'font-lxgw-wenkai-screen': "'LXGW WenKai Screen', 'LXGW WenKai', 'PingFang SC', sans-serif",
+  'font-lxgw-wenkai': "'LXGW WenKai', 'PingFang SC', 'Hiragino Sans GB', sans-serif",
+  'font-lxgw-neo-zhisong': "'LXGW Neo ZhiSong', 'Songti SC', serif",
+  'font-source-han-serif': "'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', serif",
+  'font-jixiang-song': "'Fontquan-XinYiJiXiangSong', 'Songti SC', serif",
+  'font-zhuque': "'ZhuQue Fangsong', FangSong, STFangSong, serif",
+  'font-fz-kai': "'FZKai-Z03', 'FZ Kai-Z-03', KaiTi, STKaiti, serif",
+}
+
+export function resolveFontFamilyStack(font: FontFamilyClass): string {
+  return FONT_FAMILY_STACKS[font]
+}
+
 /** 远程字体文件本身为 Regular；字重范围声明便于匹配用户选择的 font-weight */
 export const REMOTE_FONT_WEIGHT = 400
 

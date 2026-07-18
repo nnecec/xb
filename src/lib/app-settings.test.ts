@@ -74,6 +74,11 @@ describe('app-settings', () => {
     expect(
       normalizeAppSettings({ fontFamilyClass: 'font-lxgw-neo-xihei' as never }).fontFamilyClass,
     ).toBe('font-lxgw-neo-xihei')
+    expect(normalizeAppSettings({}).fontApplyScope).toBe('content')
+    expect(normalizeAppSettings({ fontApplyScope: 'app' }).fontApplyScope).toBe('app')
+    expect(normalizeAppSettings({ fontApplyScope: 'unknown' as never }).fontApplyScope).toBe(
+      'content',
+    )
   })
 
   it('normalizes feed toolbar settings', () => {
@@ -114,6 +119,7 @@ describe('app-settings', () => {
       letterSpacingClass: 'tracking-normal',
       lineHeightClass: 'leading-relaxed',
       fontFamilyClass: 'font-serif',
+      fontApplyScope: 'content',
       showHotSearchCard: false,
       showFollowedSuperTopicsCard: false,
       showExplore: true,
@@ -168,6 +174,7 @@ describe('app-settings', () => {
         letterSpacingClass: 'tracking-wide',
         lineHeightClass: 'leading-loose',
         fontFamilyClass: 'font-serif',
+        fontApplyScope: 'app',
         showHotSearchCard: true,
         showFollowedSuperTopicsCard: false,
         showExplore: true,
@@ -223,6 +230,7 @@ describe('app-settings', () => {
       letterSpacingClass: 'tracking-wide',
       lineHeightClass: 'leading-loose',
       fontFamilyClass: 'font-serif',
+      fontApplyScope: 'app',
       showHotSearchCard: true,
       showFollowedSuperTopicsCard: false,
       showExplore: true,
