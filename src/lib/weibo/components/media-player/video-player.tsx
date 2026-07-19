@@ -1,6 +1,5 @@
 'use client'
 import { useIntersectionObserver, useInterval } from '@reactuses/core'
-import { selectPlaybackRate, selectPlayback } from '@videojs/core/dom'
 import {
   AlertDialog,
   BufferingIndicator,
@@ -10,15 +9,11 @@ import {
   FullscreenButton,
   Gesture,
   Hotkey,
-  MuteButton,
   PiPButton,
   PlayButton,
-  Popover,
   Time,
   TimeSlider,
   Tooltip,
-  usePlayer,
-  VolumeSlider,
 } from '@videojs/react'
 import { Video, videoFeatures } from '@videojs/react/video'
 import { MediaPlayer } from 'dashjs'
@@ -30,35 +25,37 @@ import {
   PictureInPicture,
   PictureInPicture2,
   Play,
-  Volume1,
-  Volume2,
-  VolumeX,
   Expand,
   Shrink,
   Loader2,
   RotateCcw,
   Download,
 } from 'lucide-react'
-import {
-  forwardRef,
-  type ComponentPropsWithoutRef,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  RefObject,
-} from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
 import { useAppSettings, useShallow } from '@/lib/app-settings-store'
-import { cn } from '@/lib/utils'
-import type { FeedDashSource, FeedPlaybackSource } from '@/lib/weibo/models/feed'
+import type { FeedDashSource } from '@/lib/weibo/models/feed'
 import { sanitizeFilename } from '@/lib/weibo/utils/filename'
 
 import { useInlineFullscreen } from './inline-fullscreen'
 import { getPlaybackPositionStore } from './video-playback-position-store'
 import { registerPlayingVideo, unregisterPlayingVideo } from './video-playback-registry'
+import {
+  CenterPlayButton,
+  IconButton,
+  PlaybackRateControl,
+  QualityControl,
+  VolumeControl,
+} from './video-player-controls'
+import {
+  AUTO_QUALITY_ID,
+  applyVideoQuality,
+  destroyDashPlayer,
+  getPlaybackSrc,
+  type PlaybackResumeState,
+  type QualityOption,
+} from './video-player-dash'
 import {
   applyStoredVideoVolume,
   registerVideoVolumeElement,
@@ -72,8 +69,6 @@ const { Provider: PlayerProvider, Container: PlayerContainer } = createPlayer({
   features: [...videoFeatures],
 })
 
-const AUTO_QUALITY_ID = 'auto'
-
 interface VideoPlayerProps {
   progressiveSrc: string
   poster?: string
@@ -84,287 +79,6 @@ interface VideoPlayerProps {
   /** Used to generate the downloaded filename: "作者名+前15个字.mp4" */
   downloadFilename?: string
   onPlay?: () => void
-}
-
-interface QualityOption {
-  id: string
-  label: string
-}
-
-interface PlaybackResumeState {
-  currentTime: number
-  playbackRate: number
-  shouldResume: boolean
-}
-
-function formatPlaybackRate(rate: number) {
-  return `${rate}x`
-}
-
-function applyVideoQuality(player: MediaPlayerClass, mode: string) {
-  if (mode === AUTO_QUALITY_ID) {
-    player.updateSettings({
-      streaming: {
-        abr: { autoSwitchBitrate: { video: true, audio: true } },
-      },
-    })
-    return
-  }
-
-  const hasTarget = player
-    .getRepresentationsByType('video')
-    .some((item) => String((item as { id?: string }).id ?? '') === mode)
-
-  if (!hasTarget) {
-    player.updateSettings({
-      streaming: {
-        abr: { autoSwitchBitrate: { video: true, audio: true } },
-      },
-    })
-    return
-  }
-
-  try {
-    player.updateSettings({
-      streaming: {
-        abr: { autoSwitchBitrate: { video: false, audio: true } },
-      },
-    })
-    player.setRepresentationForTypeById('video', mode, true)
-  } catch {
-    player.updateSettings({
-      streaming: {
-        abr: { autoSwitchBitrate: { video: true, audio: true } },
-      },
-    })
-  }
-}
-
-function destroyDashPlayer(
-  playerRef: RefObject<MediaPlayerClass | null>,
-  blobUrlRef: RefObject<string | null>,
-) {
-  if (playerRef.current) {
-    try {
-      playerRef.current.reset()
-      playerRef.current.destroy()
-    } catch {
-      // ignore destroy failures from dash internals
-    }
-    playerRef.current = null
-  }
-
-  if (blobUrlRef.current) {
-    URL.revokeObjectURL(blobUrlRef.current)
-    blobUrlRef.current = null
-  }
-}
-
-const PlayerButton = forwardRef<
-  HTMLButtonElement,
-  ComponentPropsWithoutRef<'button'> & { className?: string }
->(function PlayerButton({ className, ...props }, ref) {
-  return (
-    <button
-      ref={ref}
-      type="button"
-      className={cn('media-button media-button--subtle relative', className)}
-      {...props}
-    />
-  )
-})
-
-const IconButton = forwardRef<
-  HTMLButtonElement,
-  ComponentPropsWithoutRef<'button'> & { className?: string }
->(function IconButton({ className, ...props }, ref) {
-  return <PlayerButton ref={ref} className={cn('media-button--icon', className)} {...props} />
-})
-
-function VolumeControl() {
-  const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported')
-  const muteButton = (
-    <MuteButton
-      className="media-button--mute"
-      render={(props, state) => (
-        <IconButton {...props}>
-          {state.volumeLevel === 'off' ? (
-            <VolumeX className="media-icon size-[18px]" />
-          ) : state.volumeLevel === 'low' ? (
-            <Volume1 className="media-icon size-[18px]" />
-          ) : (
-            <Volume2 className="media-icon size-[18px]" />
-          )}
-        </IconButton>
-      )}
-    />
-  )
-
-  if (volumeUnsupported) return muteButton
-
-  return (
-    <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
-      <Popover.Trigger render={muteButton} />
-      <Popover.Popup className="media-surface media-popover media-popover--volume">
-        <VolumeSlider.Root className="media-slider" orientation="vertical" thumbAlignment="edge">
-          <VolumeSlider.Track className="media-slider__track">
-            <VolumeSlider.Fill className="media-slider__fill" />
-          </VolumeSlider.Track>
-          <VolumeSlider.Thumb className="media-slider__thumb media-slider__thumb--persistent" />
-        </VolumeSlider.Root>
-      </Popover.Popup>
-    </Popover.Root>
-  )
-}
-
-interface QualityControlProps {
-  value: string
-  qualities: QualityOption[]
-  disabled?: boolean
-  onValueChange: (value: string) => void
-}
-
-function CenterPlayButton() {
-  const playback = usePlayer(selectPlayback)
-
-  return (
-    <div className="video-center-play">
-      <button
-        type="button"
-        className="video-center-play__button"
-        onClick={() => playback?.togglePaused()}
-        aria-label="播放"
-      >
-        <Play className="ml-0.5 size-7 fill-current" />
-      </button>
-    </div>
-  )
-}
-
-function QualityControl({
-  value,
-  qualities,
-  disabled = false,
-  onValueChange,
-}: QualityControlProps) {
-  const [open, setOpen] = useState(false)
-  const options = useMemo(() => [{ id: AUTO_QUALITY_ID, label: '自动' }, ...qualities], [qualities])
-
-  const currentLabel = options.find((option) => option.id === value)?.label ?? '自动'
-
-  return (
-    <Popover.Root open={open} onOpenChange={setOpen} side="top" align="start">
-      <Popover.Trigger
-        disabled={disabled}
-        render={(props) => (
-          <PlayerButton
-            {...props}
-            className="font-medium tracking-[0.01em]"
-            aria-label="选择清晰度"
-          >
-            {currentLabel}
-          </PlayerButton>
-        )}
-      />
-      <Popover.Popup className="media-surface media-popover rounded-2xl p-1.5">
-        <div className="flex min-w-24 flex-col gap-1">
-          {options.map((option) => {
-            const active = option.id === value
-
-            return (
-              <button
-                key={option.id}
-                type="button"
-                className={cn(
-                  'rounded-lg px-3 py-1.5 text-left text-xs transition-colors',
-                  active ? 'bg-white/18 text-white' : 'hover:bg-white/10',
-                )}
-                onClick={() => {
-                  onValueChange(option.id)
-                  setOpen(false)
-                }}
-              >
-                {option.label}
-              </button>
-            )
-          })}
-        </div>
-      </Popover.Popup>
-    </Popover.Root>
-  )
-}
-
-function PlaybackRateControl() {
-  const playbackRateState = usePlayer(selectPlaybackRate)
-
-  if (!playbackRateState) {
-    return null
-  }
-
-  const { playbackRate, playbackRates, setPlaybackRate } = playbackRateState
-  const currentLabel = formatPlaybackRate(playbackRate)
-  const disabled = playbackRates.length === 0
-
-  return (
-    <Popover.Root side="top" align="end">
-      <Popover.Trigger
-        disabled={disabled}
-        render={(props) => (
-          <IconButton {...props} aria-label="选择播放速率">
-            {currentLabel}
-          </IconButton>
-        )}
-      />
-      <Popover.Popup className="media-surface media-popover rounded-2xl p-1.5">
-        <div className="flex min-w-24 flex-col gap-1">
-          {playbackRates.map((rate) => {
-            const active = rate === playbackRate
-
-            return (
-              <button
-                key={rate}
-                type="button"
-                className={cn(
-                  'rounded-lg px-3 py-1.5 text-left text-xs transition-colors',
-                  active ? 'bg-white/18 text-white' : 'hover:bg-white/10',
-                )}
-                onClick={() => {
-                  setPlaybackRate(rate)
-                }}
-              >
-                {formatPlaybackRate(rate)}
-              </button>
-            )
-          })}
-        </div>
-      </Popover.Popup>
-    </Popover.Root>
-  )
-}
-
-function getPlaybackSrc({
-  progressiveSrc,
-  qualityId,
-  selectedIndex,
-  sources,
-}: {
-  progressiveSrc: string
-  qualityId: string
-  selectedIndex: number
-  sources: FeedPlaybackSource['sources']
-}) {
-  if (sources.length === 0) {
-    return progressiveSrc
-  }
-
-  if (qualityId !== AUTO_QUALITY_ID) {
-    const source = sources.find((item) => item.id === qualityId)
-    if (source?.url) {
-      return source.url
-    }
-  }
-
-  return sources[selectedIndex]?.url ?? sources[0]?.url ?? progressiveSrc
 }
 
 export function VideoPlayer({

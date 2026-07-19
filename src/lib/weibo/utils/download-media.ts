@@ -341,20 +341,29 @@ export function extractMediaUrls(item: FeedItem): MediaUrl[] {
   return urls
 }
 
+const MEDIA_DOWNLOAD_CONCURRENCY = 5
+
 /**
- * 预估总大小（HEAD 请求）
+ * 预估总大小（HEAD 请求，限制并发）
  */
 export async function estimateTotalSize(urls: MediaUrl[]): Promise<number> {
-  const sizes = await Promise.all(
-    urls.map(async (mediaUrl) => {
-      try {
-        return await estimateMediaSize(mediaUrl.url)
-      } catch {
-        return 0
-      }
-    }),
-  )
-  return sizes.reduce((sum, size) => sum + size, 0)
+  let total = 0
+
+  for (let i = 0; i < urls.length; i += MEDIA_DOWNLOAD_CONCURRENCY) {
+    const batch = urls.slice(i, i + MEDIA_DOWNLOAD_CONCURRENCY)
+    const sizes = await Promise.all(
+      batch.map(async (mediaUrl) => {
+        try {
+          return await estimateMediaSize(mediaUrl.url)
+        } catch {
+          return 0
+        }
+      }),
+    )
+    total += sizes.reduce((sum, size) => sum + size, 0)
+  }
+
+  return total
 }
 
 /**
@@ -394,8 +403,7 @@ export async function downloadAsZip(
 
   const zip = new JSZip()
 
-  // 并发下载（最多 5 个并发）
-  const results = await downloadWithConcurrency(urls, 5)
+  const results = await downloadWithConcurrency(urls, MEDIA_DOWNLOAD_CONCURRENCY)
 
   let successCount = 0
   let failCount = 0

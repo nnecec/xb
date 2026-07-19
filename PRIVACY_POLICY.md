@@ -15,6 +15,7 @@ This Privacy Policy applies to the xb browser extension and its current core fea
 - making supporting requests to Weibo-owned endpoints such as `m.weibo.cn` for specific features
 - loading and downloading media from permitted Weibo media CDN hosts
 - optionally using xb rating when the user enables it
+- optionally loading user-selected open-source fonts from a public font CDN (`cdn.jsdelivr.net`) when the user enables a downloadable font in settings
 - saving extension preferences locally in the browser
 
 ## Information xb Processes
@@ -48,6 +49,8 @@ Core extension features are designed to process page content locally in the user
 xb runs on Weibo pages and uses network access only for extension features.
 
 Most page content processing happens locally in your browser. The extension may request Weibo, `m.weibo.cn`, and permitted Weibo media CDN endpoints to provide reading, topic/search, notification, and media download features.
+
+Some appearance settings let users load open-source fonts hosted on `cdn.jsdelivr.net`. Those requests happen only when the user selects a downloadable font; system fonts do not contact that CDN.
 
 xb rating is optional. When rating is enabled, xb may contact the configured xb-server to fetch or submit rating data. Users can disable rating in the extension settings.
 

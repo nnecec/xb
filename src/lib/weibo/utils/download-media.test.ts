@@ -391,6 +391,63 @@ describe('download media proxy', () => {
     })
   })
 
+  it('limits concurrent media-head requests when estimating total size', async () => {
+    let inFlight = 0
+    let maxInFlight = 0
+    const pending: Array<(value: { ok: true; size: number }) => void> = []
+
+    const sendMessage = vi.fn(() => {
+      inFlight++
+      maxInFlight = Math.max(maxInFlight, inFlight)
+      return new Promise<{ ok: true; size: number }>((resolve) => {
+        pending.push((value) => {
+          inFlight--
+          resolve(value)
+        })
+      })
+    })
+
+    Object.defineProperty(globalThis, 'browser', {
+      writable: true,
+      configurable: true,
+      value: {
+        runtime: {
+          sendMessage,
+        },
+      },
+    })
+
+    const urls = Array.from({ length: 8 }, (_, i) => ({
+      url: `https://wx1.sinaimg.cn/large/${i}.jpg`,
+      filename: `${i}.jpg`,
+      type: 'image' as const,
+    }))
+
+    const done = estimateTotalSize(urls)
+
+    await vi.waitFor(() => {
+      expect(sendMessage).toHaveBeenCalledTimes(5)
+    })
+    expect(maxInFlight).toBeLessThanOrEqual(5)
+
+    const firstBatch = pending.splice(0, pending.length)
+    for (const resolve of firstBatch) {
+      resolve({ ok: true, size: 100 })
+    }
+
+    await vi.waitFor(() => {
+      expect(sendMessage).toHaveBeenCalledTimes(8)
+    })
+
+    const secondBatch = pending.splice(0, pending.length)
+    for (const resolve of secondBatch) {
+      resolve({ ok: true, size: 100 })
+    }
+
+    await expect(done).resolves.toBe(800)
+    expect(maxInFlight).toBeLessThanOrEqual(5)
+  })
+
   it('应该通过 background 代理下载媒体并生成 zip', async () => {
     const sendMessage = vi.fn().mockResolvedValue({
       ok: true,

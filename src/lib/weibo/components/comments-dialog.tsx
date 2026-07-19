@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -39,25 +39,33 @@ export function CommentsDialog({
       ...nestedCommentsInfiniteOptions(statusId, authorUid, open),
     })
 
-  const scrollRef = useRef<HTMLDivElement>(null)
+  // Callback ref so the scroll effect rebinds after Dialog portal mounts content.
+  const [scrollEl, setScrollEl] = useState<HTMLDivElement | null>(null)
+  const scrollRef = useCallback((node: HTMLDivElement | null) => {
+    setScrollEl(node)
+  }, [])
+  const fetchNextPageRef = useRef(fetchNextPage)
+  const isFetchingNextPageRef = useRef(isFetchingNextPage)
+  fetchNextPageRef.current = fetchNextPage
+  isFetchingNextPageRef.current = isFetchingNextPage
 
   const comments = flattenInfiniteItems(data?.pages)
   const total = data?.pages[0]?.total ?? comments.length
 
   useEffect(() => {
-    const scrollEl = scrollRef.current
-    if (!scrollEl || !hasNextPage || isFetchingNextPage) return
+    if (!scrollEl || !hasNextPage) return
 
     const handleScroll = () => {
+      if (isFetchingNextPageRef.current) return
       const { scrollTop, scrollHeight, clientHeight } = scrollEl
       if (scrollHeight - scrollTop - clientHeight < 100) {
-        fetchNextPage()
+        void fetchNextPageRef.current()
       }
     }
 
     scrollEl.addEventListener('scroll', handleScroll)
     return () => scrollEl.removeEventListener('scroll', handleScroll)
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
+  }, [hasNextPage, scrollEl])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -67,7 +75,11 @@ export function CommentsDialog({
           <DialogDescription>共 {total} 条回复</DialogDescription>
         </DialogHeader>
 
-        <div ref={scrollRef} className="max-h-[60vh] overflow-y-auto">
+        <div
+          ref={scrollRef}
+          data-testid="comments-dialog-scroll"
+          className="max-h-[60vh] overflow-y-auto"
+        >
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />

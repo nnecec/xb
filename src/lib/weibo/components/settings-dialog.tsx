@@ -22,39 +22,21 @@ import {
   User,
   Bell,
   PanelLeft,
-  XIcon,
 } from 'lucide-react'
 import { Reorder } from 'motion/react'
-import { Dialog as DialogPrimitive } from 'radix-ui'
 import React from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
-import darkModeImageDimJpeg from '@/assets/images/dark-mode-image-dim.jpeg'
-import collapseReplyChain from '@/assets/images/quotechains-collapsible.jpeg'
-import quoteChainsJpeg from '@/assets/images/quotechains.jpeg'
 import { TreeView, type TreeDataItem } from '@/components/tree-view'
-import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   VisuallyHidden,
 } from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
-import { getUiPortalContainer } from '@/components/ui/portal'
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import {
   BROWSING_HISTORY_LIMIT_OPTIONS,
@@ -66,29 +48,25 @@ import type {
   AppTheme,
   BrowsingHistoryLimit,
   ContentWidth,
-  FeedInteractionMode,
   FeedPrimaryActionId,
   FeedToolbarButtonId,
-  FontApplyScope,
   FontFamilyClass,
-  FontSizeClass,
-  FontWeightClass,
-  LetterSpacingClass,
-  LineHeightClass,
   UserTheme,
 } from '@/lib/app-settings'
 import { useAppSettings, useShallow } from '@/lib/app-settings-store'
 import { CUSTOM_THEME_PRESETS } from '@/lib/custom-theme'
-import {
-  isRemoteFont,
-  loadFont,
-  REMOTE_FONT_OPTIONS,
-  type RemoteFontFamily,
-} from '@/lib/font-loader'
-import { cn } from '@/lib/utils'
+import { isRemoteFont, loadFont, type RemoteFontFamily } from '@/lib/font-loader'
 import { browsingHistoryStore } from '@/lib/weibo/hooks/use-browsing-history'
 
-import { FontPreviewCard } from './settings-font-preview'
+import {
+  DialogContentMaybeForced,
+  Field,
+  OptionPills,
+  SidebarItem,
+  StackedField,
+} from './settings-dialog-ui'
+import { SettingsFontSection } from './settings-font-section'
+import { SettingsPersonalizeSection } from './settings-personalize-section'
 import { SettingsThemePicker } from './settings-theme-picker'
 
 const SIDEBAR_GROUPS = [
@@ -142,181 +120,6 @@ interface SettingsDialogProps {
   /** Force mount the dialog content even when closed (used for tests / animation). */
   forceMount?: boolean
 }
-
-const DIALOG_CONTENT_CLASSES = 'flex h-[560px] flex-col gap-0 overflow-hidden p-0 sm:max-w-[680px]'
-
-function DialogContentMaybeForced({
-  forceMount,
-  children,
-}: {
-  forceMount?: boolean
-  children: React.ReactNode
-}) {
-  if (forceMount) {
-    return <ForcedDialogContent>{children}</ForcedDialogContent>
-  }
-  return <DialogContent className={DIALOG_CONTENT_CLASSES}>{children}</DialogContent>
-}
-
-function ForcedDialogContent({ children }: { children: React.ReactNode }) {
-  const container = React.useMemo(() => getUiPortalContainer(), [])
-  return (
-    <DialogPrimitive.Portal data-slot="dialog-portal" container={container} forceMount>
-      <DialogPrimitive.Overlay
-        data-slot="dialog-overlay"
-        className="data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50"
-        forceMount
-      />
-      <DialogPrimitive.Content
-        data-slot="dialog-content"
-        forceMount
-        className={DIALOG_CONTENT_CLASSES}
-      >
-        {children}
-        <DialogPrimitive.Close
-          data-slot="dialog-close"
-          className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
-        >
-          <XIcon />
-          <span className="sr-only">关闭</span>
-        </DialogPrimitive.Close>
-      </DialogPrimitive.Content>
-    </DialogPrimitive.Portal>
-  )
-}
-
-function SidebarItem({
-  icon: Icon,
-  label,
-  active,
-  onClick,
-}: {
-  icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>
-  label: string
-  active: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="hover:bg-accent/50 data-[active=true]:bg-primary data-[active=true]:text-primary-foreground flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors data-[active=true]:font-medium"
-      data-active={active || undefined}
-    >
-      <Icon size={16} strokeWidth={1.5} />
-      {label}
-    </button>
-  )
-}
-
-function Field({
-  label,
-  description,
-  children,
-}: {
-  label: string
-  description?: string
-  children?: React.ReactNode
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4 py-[11px] first:pt-0 last:pb-0">
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <Label className="text-sm leading-snug font-medium">{label}</Label>
-        {description && (
-          <span className="text-muted-foreground text-xs leading-relaxed">{description}</span>
-        )}
-      </div>
-      {children}
-    </div>
-  )
-}
-
-function IllustrationPlaceholder({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="bg-muted/30 border-muted-foreground/20 text-muted-foreground flex items-center justify-center rounded-lg border p-4 text-xs">
-      {children}
-    </div>
-  )
-}
-
-function StackedField({
-  label,
-  description,
-  children,
-}: {
-  label: string
-  description?: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="flex flex-col gap-2 py-[11px] first:pt-0 last:pb-0">
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <Label className="text-sm leading-snug font-medium">{label}</Label>
-        {description && (
-          <span className="text-muted-foreground text-xs leading-relaxed">{description}</span>
-        )}
-      </div>
-      {children}
-    </div>
-  )
-}
-
-function OptionPills<T extends string>({
-  value,
-  options,
-  onChange,
-  className,
-}: {
-  value: T
-  options: Array<{ value: T; label: string }>
-  onChange: (value: T) => void
-  className?: string
-}) {
-  return (
-    <div
-      role="radiogroup"
-      className={cn(
-        'bg-muted inline-flex max-w-full shrink-0 flex-wrap rounded-lg p-0.5',
-        className,
-      )}
-    >
-      {options.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          role="radio"
-          aria-checked={value === option.value}
-          onClick={() => onChange(option.value)}
-          className={cn(
-            'rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors',
-            value === option.value
-              ? 'bg-background text-foreground shadow-xs'
-              : 'text-muted-foreground hover:text-foreground',
-          )}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
-  )
-}
-
-const FEED_INTERACTION_OPTIONS: Array<{
-  value: FeedInteractionMode
-  label: string
-  description: string
-}> = [
-  {
-    value: 'x',
-    label: 'X 风格',
-    description: '点击卡片进入详情，评论按钮弹出评论框',
-  },
-  {
-    value: 'weibo',
-    label: '微博风格',
-    description: '评论按钮展开精选评论，点击查看更多进入详情',
-  },
-]
 
 export function SettingsDialog({ open, onOpenChange, forceMount = false }: SettingsDialogProps) {
   const [version, setVersion] = useState<string>('')
@@ -753,281 +556,30 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
             )}
 
             {activeGroup === 'personalize' && (
-              <div className="space-y-3 px-6 py-4">
-                <StackedField
-                  label="微博卡片行为"
-                  description="选择点击微博卡片和评论按钮后的打开方式"
-                >
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" role="radiogroup">
-                    {FEED_INTERACTION_OPTIONS.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        role="radio"
-                        aria-checked={feedInteractionMode === option.value}
-                        onClick={() => void updateSettings({ feedInteractionMode: option.value })}
-                        className={cn(
-                          'border-border bg-background hover:bg-accent/30 rounded-lg border p-3 text-left transition-[box-shadow,border-color]',
-                          feedInteractionMode === option.value &&
-                            'border-primary ring-primary/30 ring-2',
-                        )}
-                      >
-                        <p className="text-sm font-medium">{option.label}</p>
-                        <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
-                          {option.description}
-                        </p>
-                      </button>
-                    ))}
-                  </div>
-                </StackedField>
-                <div>
-                  <Field
-                    label="暗色模式降低图片亮度"
-                    description="降低小图亮度，减少深色模式下的刺眼感"
-                  >
-                    <Switch
-                      checked={darkModeImageDim}
-                      onCheckedChange={(checked) =>
-                        void updateSettings({ darkModeImageDim: checked })
-                      }
-                    />
-                  </Field>
-                  <IllustrationPlaceholder>
-                    <img
-                      src={darkModeImageDimJpeg}
-                      alt="暗色模式降低图片亮度效果"
-                      className="h-auto w-full"
-                    />
-                  </IllustrationPlaceholder>
-                </div>
-                <div>
-                  <Field
-                    label="视频倍速记忆"
-                    description="开启后，最近一次手动设置的倍速作为视频的默认倍速"
-                  >
-                    <Switch
-                      checked={rememberPlaybackRate}
-                      onCheckedChange={(checked) =>
-                        void updateSettings({
-                          rememberPlaybackRate: checked,
-                          // 关闭时同步重置缓存为 1，确保下次开启从干净状态开始
-                          ...(checked ? {} : { playbackRate: 1 }),
-                        })
-                      }
-                    />
-                  </Field>
-                </div>
-                <div>
-                  <Field label="首页默认时间线" description="进入微博首页时，自动打开指定时间线">
-                    <Select
-                      value={firstLoadRedirect}
-                      onValueChange={(value) =>
-                        void updateSettings({
-                          firstLoadRedirect: value as typeof firstLoadRedirect,
-                        })
-                      }
-                    >
-                      <SelectTrigger className="w-[120px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="for-you">推荐</SelectItem>
-                        <SelectItem value="following">我关注的</SelectItem>
-                        <SelectItem value="special-follow">特别关注</SelectItem>
-                        <SelectItem value="friend-circle">朋友圈</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                </div>
-                <div>
-                  <Field label="转发链样式" description='将 "//@用户名:" 格式显示为引用卡片'>
-                    <Switch
-                      checked={renderReplyChainEnabled}
-                      onCheckedChange={(checked) =>
-                        void updateSettings({ renderReplyChainEnabled: checked })
-                      }
-                    />
-                  </Field>
-                  <IllustrationPlaceholder>
-                    <img src={quoteChainsJpeg} alt="转发链样式效果" className="h-auto w-full" />
-                  </IllustrationPlaceholder>
-                </div>
-                {renderReplyChainEnabled && (
-                  <div>
-                    <Field label="折叠转发链" description="转发链超过 2 条时，折叠中间内容">
-                      <Switch
-                        checked={collapseRepliesEnabled}
-                        onCheckedChange={(checked) =>
-                          void updateSettings({ collapseRepliesEnabled: checked })
-                        }
-                      />
-                    </Field>
-                    <IllustrationPlaceholder>
-                      <img
-                        src={collapseReplyChain}
-                        alt="折叠转发链效果"
-                        className="h-auto w-full"
-                      />
-                    </IllustrationPlaceholder>
-                  </div>
-                )}
-              </div>
+              <SettingsPersonalizeSection
+                feedInteractionMode={feedInteractionMode}
+                darkModeImageDim={darkModeImageDim}
+                rememberPlaybackRate={rememberPlaybackRate}
+                firstLoadRedirect={firstLoadRedirect}
+                renderReplyChainEnabled={renderReplyChainEnabled}
+                collapseRepliesEnabled={collapseRepliesEnabled}
+                updateSettings={updateSettings}
+              />
             )}
 
             {activeGroup === 'font' && (
-              <div className="flex flex-col">
-                <div className="bg-background sticky top-0 z-10 border-b px-6 py-4">
-                  <FontPreviewCard />
-                </div>
-
-                <div className="divide-border/40 divide-y px-6 py-4">
-                  <Field label="字体大小" description="微博正文和评论的字体大小">
-                    <Select
-                      value={fontSizeClass}
-                      onValueChange={(v) =>
-                        void updateSettings({ fontSizeClass: v as FontSizeClass })
-                      }
-                    >
-                      <SelectTrigger className="w-[100px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="text-sm">14px</SelectItem>
-                        <SelectItem value="text-base">16px</SelectItem>
-                        <SelectItem value="text-lg">18px</SelectItem>
-                        <SelectItem value="text-xl">20px</SelectItem>
-                        <SelectItem value="text-2xl">24px</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                  <Field label="字体粗细" description="微博正文和评论的字体粗细">
-                    <Select
-                      value={fontWeightClass}
-                      onValueChange={(v) =>
-                        void updateSettings({ fontWeightClass: v as FontWeightClass })
-                      }
-                    >
-                      <SelectTrigger className="w-[120px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="font-normal">400 标准</SelectItem>
-                        <SelectItem value="font-medium">500 中等</SelectItem>
-                        <SelectItem value="font-semibold">600 较粗</SelectItem>
-                        <SelectItem value="font-bold">700 粗</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                  <Field label="字间距" description="字符之间的间距（中文正文建议标准）">
-                    <Select
-                      value={letterSpacingClass}
-                      onValueChange={(v) =>
-                        void updateSettings({ letterSpacingClass: v as LetterSpacingClass })
-                      }
-                    >
-                      <SelectTrigger className="w-[100px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="tracking-tight">紧凑</SelectItem>
-                        <SelectItem value="tracking-normal">标准</SelectItem>
-                        <SelectItem value="tracking-wide">宽松</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                  <Field label="行高" description="文本行之间的间距">
-                    <Select
-                      value={lineHeightClass}
-                      onValueChange={(v) =>
-                        void updateSettings({ lineHeightClass: v as LineHeightClass })
-                      }
-                    >
-                      <SelectTrigger className="w-[100px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="leading-snug">适中偏紧</SelectItem>
-                        <SelectItem value="leading-normal">标准</SelectItem>
-                        <SelectItem value="leading-relaxed">宽松</SelectItem>
-                        <SelectItem value="leading-loose">更宽松</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </Field>
-
-                  <Field
-                    label="字体样式"
-                    description={
-                      fontFamilyLoading
-                        ? '正在下载远程字体…'
-                        : '选择字体族（远程字体首次使用需下载）'
-                    }
-                  >
-                    <Select
-                      value={fontFamilyClass}
-                      disabled={fontFamilyLoading}
-                      onValueChange={(v) => {
-                        void handleFontFamilyChange(v)
-                      }}
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>本地字体</SelectLabel>
-                          <SelectItem value="font-sans">默认无衬线</SelectItem>
-                          <SelectItem value="font-serif">默认衬线</SelectItem>
-                          <SelectItem value="font-simhei">黑体</SelectItem>
-                          <SelectItem value="font-simsun">宋体</SelectItem>
-                          <SelectItem value="font-kaiti">楷体</SelectItem>
-                          <SelectItem value="font-fangsong">仿宋</SelectItem>
-                        </SelectGroup>
-                        <SelectGroup>
-                          <SelectLabel>远程 · 无衬线</SelectLabel>
-                          {REMOTE_FONT_OPTIONS.filter((o) => o.group === 'sans').map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                        <SelectGroup>
-                          <SelectLabel>远程 · 衬线 / 楷体</SelectLabel>
-                          {REMOTE_FONT_OPTIONS.filter((o) => o.group === 'serif').map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                  <Field
-                    label="应用到"
-                    description="正文：仅微博与评论。应用：界面 chrome 共用字族（字号/行高仍只作用于正文）"
-                  >
-                    <Select
-                      value={fontApplyScope}
-                      onValueChange={(v) =>
-                        void updateSettings({ fontApplyScope: v as FontApplyScope })
-                      }
-                    >
-                      <SelectTrigger className="w-[120px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="content">正文</SelectItem>
-                        <SelectItem value="app">应用</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </Field>
-
-                  <div className="mt-3 flex justify-end">
-                    <Button variant="outline" size="sm" onClick={resetFontSettings}>
-                      恢复默认
-                    </Button>
-                  </div>
-                </div>
-              </div>
+              <SettingsFontSection
+                fontSizeClass={fontSizeClass}
+                fontWeightClass={fontWeightClass}
+                letterSpacingClass={letterSpacingClass}
+                lineHeightClass={lineHeightClass}
+                fontFamilyClass={fontFamilyClass}
+                fontApplyScope={fontApplyScope}
+                fontFamilyLoading={fontFamilyLoading}
+                handleFontFamilyChange={handleFontFamilyChange}
+                resetFontSettings={resetFontSettings}
+                updateSettings={updateSettings}
+              />
             )}
 
             {activeGroup === 'advanced' && (
