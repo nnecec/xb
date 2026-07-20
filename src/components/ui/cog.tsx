@@ -1,82 +1,27 @@
-'use client'
-
-import { motion, useAnimation } from 'motion/react'
 import type { HTMLAttributes } from 'react'
-import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react'
+import { forwardRef } from 'react'
 
 import { cn } from '@/lib/utils'
-
-export interface CogIconHandle {
-  startAnimation: () => void
-  stopAnimation: () => void
-}
 
 interface CogIconProps extends HTMLAttributes<HTMLDivElement> {
   size?: number
 }
 
-const CogIcon = forwardRef<CogIconHandle, CogIconProps>(
-  ({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-    const controls = useAnimation()
-    const isControlledRef = useRef(false)
-
-    useImperativeHandle(ref, () => {
-      isControlledRef.current = true
-
-      return {
-        startAnimation: () => controls.start('animate'),
-        stopAnimation: () => controls.start('normal'),
-      }
-    })
-
-    const handleMouseEnter = useCallback(
-      (e: React.MouseEvent<HTMLDivElement>) => {
-        if (isControlledRef.current) {
-          onMouseEnter?.(e)
-        } else {
-          controls.start('animate')
-        }
-      },
-      [controls, onMouseEnter],
-    )
-
-    const handleMouseLeave = useCallback(
-      (e: React.MouseEvent<HTMLDivElement>) => {
-        if (isControlledRef.current) {
-          onMouseLeave?.(e)
-        } else {
-          controls.start('normal')
-        }
-      },
-      [controls, onMouseLeave],
-    )
+const CogIcon = forwardRef<HTMLDivElement, CogIconProps>(
+  ({ className, size = 28, ...props }, ref) => {
     return (
-      <div
-        className={cn(className)}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        {...props}
-      >
-        <motion.svg
-          animate={controls}
+      <div ref={ref} className={cn(className)} {...props}>
+        <svg
           fill="none"
           height={size}
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth="2"
-          transition={{ type: 'spring', stiffness: 50, damping: 10 }}
-          variants={{
-            normal: {
-              rotate: 0,
-            },
-            animate: {
-              rotate: 180,
-            },
-          }}
           viewBox="0 0 24 24"
           width={size}
           xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
         >
           <path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" />
           <path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />
@@ -92,7 +37,7 @@ const CogIcon = forwardRef<CogIconHandle, CogIconProps>(
           <path d="m3.34 17 1.73-1" />
           <path d="m17 3.34-1 1.73" />
           <path d="m11 13.73-4 6.93" />
-        </motion.svg>
+        </svg>
       </div>
     )
   },
