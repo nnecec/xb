@@ -11,13 +11,13 @@
  */
 
 import type { HotSearchType } from '@/lib/app-settings'
+import type { ExploreGroup } from '@/lib/weibo/models/explore'
 import type { FeedAuthor, TimelinePage, TopicChannel } from '@/lib/weibo/models/feed'
 import type { StatusCommentsPage } from '@/lib/weibo/models/status'
 import type { RelationPage } from '@/lib/weibo/models/user-relation'
 import type { WeiboPageDescriptor } from '@/lib/weibo/route/page-descriptor'
 import type { ProfileSearchParams } from '@/lib/weibo/route/profile-search-params'
 import { PROFILE_SEARCH_FILTER_KEYS } from '@/lib/weibo/route/profile-search-params'
-import type { ExploreGroup } from '@/lib/weibo/services/adapters/explore-groups'
 import type { UnreadCounts } from '@/lib/weibo/services/weibo-repository'
 import {
   checkUnreadNotifications,

@@ -1,23 +1,9 @@
-export interface ExploreGroup {
-  gid: string
-  title: string
-  containerid: string
-}
-
-export interface FollowGroup {
-  gid: string
-  title: string
-}
-
-export interface DefaultFollowGroups {
-  specialFollow: FollowGroup | null
-  friendCircle: FollowGroup | null
-}
-
-export interface FollowGroups {
-  groups: FollowGroup[]
-  defaultGroups: DefaultFollowGroups
-}
+import type {
+  DefaultFollowGroups,
+  ExploreGroup,
+  FollowGroup,
+  FollowGroups,
+} from '@/lib/weibo/models/explore'
 
 interface ExploreGroupRaw {
   gid?: string
@@ -33,8 +19,6 @@ interface ExploreGroupsPayloadCategory {
 export interface ExploreGroupsPayload {
   groups?: ExploreGroupsPayloadCategory[]
 }
-
-export type DefaultFollowHomeTab = 'special-follow' | 'friend-circle'
 
 export function adaptExploreGroupsResponse(payload: ExploreGroupsPayload): ExploreGroup[] {
   const list = payload.groups ?? []
@@ -84,14 +68,4 @@ export function adaptFollowGroupsDataResponse(payload: ExploreGroupsPayload): Fo
     groups: adaptFollowGroupsResponse(payload),
     defaultGroups: adaptDefaultFollowGroupsResponse(payload),
   }
-}
-
-export function getHomeTabForDefaultFollowGroupId(
-  defaultGroups: DefaultFollowGroups | null | undefined,
-  gid: string | null | undefined,
-): DefaultFollowHomeTab | null {
-  if (!defaultGroups || !gid) return null
-  if (defaultGroups.specialFollow?.gid === gid) return 'special-follow'
-  if (defaultGroups.friendCircle?.gid === gid) return 'friend-circle'
-  return null
 }

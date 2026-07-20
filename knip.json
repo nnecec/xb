@@ -19,9 +19,5 @@
     "conventional-changelog-conventionalcommits"
   ],
   "ignoreExportsUsedInFile": true,
-  "ignore": [
-    "src/components/ui/*",
-    "src/hooks/use-mobile.ts",
-    "src/lib/weibo/content/weibo-search-overrides.css"
-  ]
+  "ignore": ["src/components/ui/*"]
 }

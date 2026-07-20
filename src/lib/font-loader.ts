@@ -192,7 +192,7 @@ export function resolveFontFamilyStack(font: FontFamilyClass): string {
 }
 
 /** 远程字体文件本身为 Regular；字重范围声明便于匹配用户选择的 font-weight */
-export const REMOTE_FONT_WEIGHT = 400
+const REMOTE_FONT_WEIGHT = 400
 
 function formatHint(format: FontFormat): string {
   return format === 'woff2' ? 'woff2' : 'truetype'

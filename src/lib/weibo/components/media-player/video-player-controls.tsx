@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 
 import { AUTO_QUALITY_ID, formatPlaybackRate, type QualityOption } from './video-player-dash'
 
-export const PlayerButton = forwardRef<
+const PlayerButton = forwardRef<
   HTMLButtonElement,
   ComponentPropsWithoutRef<'button'> & { className?: string }
 >(function PlayerButton({ className, ...props }, ref) {

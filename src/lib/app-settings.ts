@@ -119,9 +119,9 @@ export const BROWSING_HISTORY_LIMIT_OPTIONS = [200, 300, 500] as const
 
 export type BrowsingHistoryLimit = (typeof BROWSING_HISTORY_LIMIT_OPTIONS)[number]
 
-export const PLAYBACK_RATE_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] as const
+const PLAYBACK_RATE_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] as const
 
-export type PlaybackRate = (typeof PLAYBACK_RATE_OPTIONS)[number]
+type PlaybackRate = (typeof PLAYBACK_RATE_OPTIONS)[number]
 
 export interface AppSettings {
   contentWidth: ContentWidth

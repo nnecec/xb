@@ -1,22 +1,5 @@
+import type { SuperTopicPage } from '@/lib/weibo/models/super-topic'
 import { normalizeSafeExternalUrl } from '@/lib/weibo/utils/safe-url'
-
-export interface SuperTopicItem {
-  title: string
-  intro: string
-  fansText: string
-  link: string
-  pic: string
-  oid: string
-  topicName: string
-  statusCount: number
-  followCount: number
-}
-
-export interface SuperTopicPage {
-  name: string
-  items: SuperTopicItem[]
-  totalNumber: number
-}
 
 interface SuperTopicPayloadItem {
   title?: unknown

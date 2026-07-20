@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
+import { getHomeTabForDefaultFollowGroupId } from '@/lib/weibo/models/explore-utils'
 import {
   adaptDefaultFollowGroupsResponse,
   adaptFollowGroupsDataResponse,
-  getHomeTabForDefaultFollowGroupId,
 } from '@/lib/weibo/services/adapters/explore-groups'
 
 describe('explore group adapters', () => {

@@ -1,12 +1,10 @@
 import { resolveIsDarkMode } from '@/lib/app-settings'
 import { getAppSettingsStore } from '@/lib/app-settings-store'
-// import '@/lib/weibo/content/weibo-search-overrides.css'
 import { markWeiboPageReady } from '@/lib/weibo/content/page-takeover'
 
 /**
  * Runs at document_idle on s.weibo.com pages (SSR — no React injection).
- * Applies CSS overrides to rebrand the feed list to match the FeedCard style,
- * and reacts to theme / rewriteEnabled settings stored in chrome.storage.
+ * Reacts to theme / rewriteEnabled settings stored in chrome.storage.
  */
 export default defineContentScript({
   // matches: ['https://s.weibo.com/weibo?q=*'],
