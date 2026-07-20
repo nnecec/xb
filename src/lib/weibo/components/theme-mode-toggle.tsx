@@ -1,5 +1,5 @@
 import { CheckIcon, MoonStar, Sun, SunMoon } from 'lucide-react'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -16,13 +16,6 @@ const THEME_META: Record<AppTheme, { label: string; Icon: typeof SunMoon }> = {
   dark: { label: '深色', Icon: MoonStar },
 }
 
-const iconMotion = {
-  initial: { opacity: 0, scale: 0.25, filter: 'blur(4px)' },
-  animate: { opacity: 1, scale: 1, filter: 'blur(0px)' },
-  exit: { opacity: 0, scale: 0.25, filter: 'blur(4px)' },
-  transition: { type: 'spring' as const, duration: 0.3, bounce: 0 },
-}
-
 export function ThemeModeToggle({
   value,
   onChange,
@@ -30,7 +23,22 @@ export function ThemeModeToggle({
   value: AppTheme
   onChange: (theme: AppTheme) => void
 }) {
+  const shouldReduceMotion = useReducedMotion()
   const current = THEME_META[value]
+
+  const iconMotion = shouldReduceMotion
+    ? {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        exit: { opacity: 0 },
+        transition: { duration: 0.12 },
+      }
+    : {
+        initial: { opacity: 0, scale: 0.92 },
+        animate: { opacity: 1, scale: 1 },
+        exit: { opacity: 0, scale: 0.92 },
+        transition: { type: 'spring' as const, duration: 0.3, bounce: 0 },
+      }
 
   return (
     <DropdownMenu>
