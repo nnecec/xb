@@ -168,7 +168,8 @@ function RatingItem({
         className={cn(
           '[&_svg]:pointer-events-none',
           isPartialPoint && 'pointer-events-none absolute top-0 left-0 overflow-hidden',
-          isInteractive && 'cursor-pointer hover:scale-105',
+          isInteractive &&
+            'cursor-pointer [@media(hover:hover)_and_(pointer:fine)]:hover:scale-105',
           disabled && 'cursor-not-allowed opacity-50',
           className,
         )}
@@ -337,7 +338,8 @@ function Rating({
           data-slot="rating-star"
           className={cn(
             'relative',
-            isInteractive && 'transition-transform hover:scale-110',
+            isInteractive &&
+              'transition-transform [@media(hover:hover)_and_(pointer:fine)]:hover:scale-110',
             disabled && 'cursor-not-allowed',
           )}
           aria-disabled={disabled}

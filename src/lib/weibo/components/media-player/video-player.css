@@ -32,8 +32,13 @@
 }
 
 .video-center-play__button:hover {
-  scale: 1.02;
   opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .video-center-play__button:hover {
+    scale: 1.02;
+  }
 }
 
 .video-center-play__button:active {
@@ -75,22 +80,27 @@
    Progress Bar Hover Expand
    ============================================ */
 
-/* Default horizontal track height: 3px */
+/* Default horizontal track height: 3px; hover expands via scaleY (GPU) */
 .media-default-skin--video .media-slider .media-slider__track[data-orientation='horizontal'] {
   height: 3px;
-  transition: height 150ms ease-out;
+  transform-origin: center;
+  transition: transform 150ms ease-out;
 }
 
-/* Hover: expand to 5px */
-.media-default-skin--video .media-slider:hover .media-slider__track[data-orientation='horizontal'] {
-  height: 5px;
+@media (hover: hover) and (pointer: fine) {
+  /* Hover: expand 3px → 5px feel */
+  .media-default-skin--video
+    .media-slider:hover
+    .media-slider__track[data-orientation='horizontal'] {
+    transform: scaleY(1.6667);
+  }
 }
 
-/* Dragging: expand to 6px */
+/* Dragging: expand to 6px feel */
 .media-default-skin--video
   .media-slider[data-dragging]
   .media-slider__track[data-orientation='horizontal'] {
-  height: 6px;
+  transform: scaleY(2);
 }
 
 /* ============================================
