@@ -1,5 +1,5 @@
 import { Maximize2, Minimize2, Sparkles, Zap } from 'lucide-react'
-import { motion, useReducedMotion } from 'motion/react'
+import { useReducedMotion } from 'motion/react'
 import type { KeyboardEvent, MouseEvent } from 'react'
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
@@ -213,10 +213,9 @@ export function RewritePausedCard({ onResume }: { onResume: () => void }) {
   const collapsed = useAppSettings((state) => state.xbEntryCollapsed)
   const updateSettings = useAppSettings((state) => state.updateSettings)
   const shouldReduceMotion = useReducedMotion()
-  const transition = {
-    duration: shouldReduceMotion ? 0.12 : 0.28,
-    ease: [0.4, 0, 0.2, 1] as const,
-  }
+  const bodyTransition = shouldReduceMotion
+    ? undefined
+    : 'grid-template-rows 280ms cubic-bezier(0.23, 1, 0.32, 1)'
 
   const toggleCollapsed = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation()
@@ -232,29 +231,19 @@ export function RewritePausedCard({ onResume }: { onResume: () => void }) {
 
   return (
     <div className="fixed bottom-4 left-4 z-2147483647">
-      <motion.div
+      <div
         data-testid="xb-entry"
         data-state={collapsed ? 'collapsed' : 'expanded'}
-        initial={false}
-        animate={{
-          width: collapsed ? 110 : 240,
-          borderRadius: collapsed ? 18 : 8,
-          paddingLeft: 12,
-          paddingRight: collapsed ? 4 : 12,
-          paddingTop: collapsed ? 0 : 12,
-          paddingBottom: collapsed ? 0 : 12,
-        }}
-        transition={transition}
         onClick={collapsed ? onResume : undefined}
         onKeyDown={collapsed ? handleKeyDown : undefined}
         role={collapsed ? 'button' : undefined}
         tabIndex={collapsed ? 0 : undefined}
         aria-label={collapsed ? '进入 xb 模式' : undefined}
         title={collapsed ? '进入 xb 模式' : undefined}
-        style={{ overflow: 'hidden' }}
         className={cn(
-          'bg-card/95 border-border/70 shadow-lg shadow-black/5 backdrop-blur',
-          'flex flex-col',
+          'bg-card/95 border-border/70 overflow-hidden shadow-lg shadow-black/5 backdrop-blur',
+          'flex flex-col pl-3',
+          collapsed ? 'w-[110px] rounded-[18px] py-0 pr-1' : 'w-[240px] rounded-lg py-3 pr-3',
           collapsed &&
             'cursor-pointer hover:bg-card focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none',
         )}
@@ -286,17 +275,18 @@ export function RewritePausedCard({ onResume }: { onResume: () => void }) {
         </div>
         <div
           className={cn('grid', collapsed ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]')}
-          style={{
-            transition: 'grid-template-rows 280ms cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
+          style={{ transition: bodyTransition }}
         >
           <div className="overflow-hidden">
-            <motion.div
-              initial={false}
-              animate={{ opacity: collapsed ? 0 : 1 }}
-              transition={transition}
+            <div
               data-testid="xb-entry-body"
-              className="flex flex-col gap-2"
+              className={cn(
+                'flex flex-col gap-2',
+                shouldReduceMotion
+                  ? undefined
+                  : 'transition-opacity duration-[280ms] ease-[cubic-bezier(0.23,1,0.32,1)]',
+              )}
+              style={{ opacity: collapsed ? 0 : 1 }}
             >
               <p className="text-muted-foreground text-xs leading-snug">
                 一键切换「更清爽、更 X 的」超级体验
@@ -308,15 +298,16 @@ export function RewritePausedCard({ onResume }: { onResume: () => void }) {
                 className={cn(
                   'bg-primary text-primary-foreground hover:bg-primary/90',
                   'inline-flex items-center justify-between rounded-md px-3 py-1.5 text-sm font-medium',
+                  'transition-transform duration-150 ease-out active:scale-[0.96]',
                 )}
               >
                 <span>Let&apos;s xb!</span>
                 <Zap className="h-4 w-4" />
               </button>
-            </motion.div>
+            </div>
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   )
 }
