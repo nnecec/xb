@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { ArrowLeft } from 'lucide-react'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
@@ -166,6 +166,12 @@ function StatusDetailTopBar({
   source?: string
   regionName?: string
 }) {
+  const shouldReduceMotion = useReducedMotion()
+  const titleTransition = {
+    duration: shouldReduceMotion ? 0.12 : 0.15,
+    ease: [0.23, 1, 0.32, 1] as const,
+  }
+
   return (
     <div className="bg-background/85 border-border/45 sticky top-0 z-50 border-b backdrop-blur-lg">
       <div className="relative flex min-h-16 items-center justify-between gap-3">
@@ -185,10 +191,10 @@ function StatusDetailTopBar({
               {showStatusSummary ? (
                 <motion.div
                   key="status-summary"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={titleTransition}
                   className="min-w-0"
                 >
                   <h1 className="text-foreground truncate text-lg leading-6 font-semibold">
@@ -205,10 +211,10 @@ function StatusDetailTopBar({
               ) : (
                 <motion.div
                   key="default-title"
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 8 }}
-                  transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={titleTransition}
                   className="min-w-0"
                 >
                   <h1 className="text-foreground truncate text-lg leading-6 font-semibold">
