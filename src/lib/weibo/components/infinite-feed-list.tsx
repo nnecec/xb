@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
 
+import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { FeedList } from '@/lib/weibo/components/feed-list'
 import { PageErrorState, PageLoadingState } from '@/lib/weibo/components/page-state'
@@ -12,6 +13,7 @@ interface InfiniteFeedListProps {
   emptyLabel: string
   loadingLabel: string
   errorMessage: string | null
+  loadMoreErrorMessage?: string | null
   isLoading: boolean
   hasNextPage: boolean
   isFetchingNextPage: boolean
@@ -28,6 +30,7 @@ export function InfiniteFeedList({
   emptyLabel,
   loadingLabel,
   errorMessage,
+  loadMoreErrorMessage = null,
   isLoading,
   hasNextPage,
   isFetchingNextPage,
@@ -45,6 +48,9 @@ export function InfiniteFeedList({
   isFetchingNextPageRef.current = isFetchingNextPage
 
   const items = useMemo(() => flattenInfiniteItems<FeedItem>(pages), [pages])
+  const hasItems = items.length > 0
+  const showInitialError = Boolean(errorMessage) && !hasItems
+  const showFeed = !showInitialError
 
   useFeedRatingBatchSync(pages)
 
@@ -65,13 +71,17 @@ export function InfiniteFeedList({
     return () => observer.disconnect()
   }, [hasNextPage])
 
+  const handleLoadMoreRetry = () => {
+    void fetchNextPage()
+  }
+
   return (
     <div className={className}>
       {isLoading ? <PageLoadingState label={loadingLabel} /> : null}
-      {!isLoading && errorMessage ? (
-        <PageErrorState description={errorMessage} onRetry={onRetry} />
+      {!isLoading && showInitialError ? (
+        <PageErrorState description={errorMessage!} onRetry={onRetry} />
       ) : null}
-      {!isLoading && !errorMessage ? (
+      {!isLoading && showFeed ? (
         <FeedList
           items={items}
           emptyLabel={emptyLabel}
@@ -79,6 +89,14 @@ export function InfiniteFeedList({
           onCommentClick={onCommentClick}
           onRepostClick={onRepostClick}
         />
+      ) : null}
+      {!isLoading && loadMoreErrorMessage ? (
+        <div className="flex flex-col items-center gap-2 py-3">
+          <p className="text-destructive text-sm">{loadMoreErrorMessage}</p>
+          <Button size="sm" variant="outline" onClick={handleLoadMoreRetry}>
+            加载失败，点击重试
+          </Button>
+        </div>
       ) : null}
       {hasNextPage ? (
         <div ref={loadMoreRef} className="flex justify-center py-3">

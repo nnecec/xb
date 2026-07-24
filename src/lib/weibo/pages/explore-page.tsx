@@ -45,7 +45,14 @@ export function ExplorePage() {
     enabled: isEnabled && Boolean(activeGroup),
   })
 
-  const errorMessage = timelineQuery.error instanceof Error ? timelineQuery.error.message : null
+  const errorMessage =
+    timelineQuery.error instanceof Error && !timelineQuery.isFetchNextPageError
+      ? timelineQuery.error.message
+      : null
+  const loadMoreErrorMessage =
+    timelineQuery.error instanceof Error && timelineQuery.isFetchNextPageError
+      ? timelineQuery.error.message
+      : null
   const hasNextPage = Boolean(timelineQuery.hasNextPage)
   const isFetchingNextPage = timelineQuery.isFetchingNextPage
   const isLoading = timelineQuery.isLoading
@@ -103,6 +110,7 @@ export function ExplorePage() {
           emptyLabel="暂无内容"
           loadingLabel="正在加载探索内容..."
           errorMessage={errorMessage}
+          loadMoreErrorMessage={loadMoreErrorMessage}
           isLoading={isLoading}
           hasNextPage={hasNextPage}
           isFetchingNextPage={isFetchingNextPage}

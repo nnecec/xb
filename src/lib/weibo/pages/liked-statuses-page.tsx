@@ -30,7 +30,13 @@ export function LikedStatusesPage() {
   })
 
   const errorMessage =
-    likedStatusesQuery.error instanceof Error ? likedStatusesQuery.error.message : null
+    likedStatusesQuery.error instanceof Error && !likedStatusesQuery.isFetchNextPageError
+      ? likedStatusesQuery.error.message
+      : null
+  const loadMoreErrorMessage =
+    likedStatusesQuery.error instanceof Error && likedStatusesQuery.isFetchNextPageError
+      ? likedStatusesQuery.error.message
+      : null
   const hasNextPage = Boolean(likedStatusesQuery.hasNextPage)
   const isFetchingNextPage = likedStatusesQuery.isFetchingNextPage
   const isLoading = likedStatusesQuery.isLoading
@@ -57,6 +63,7 @@ export function LikedStatusesPage() {
         emptyLabel="暂无点赞内容"
         loadingLabel="正在加载我的赞..."
         errorMessage={errorMessage}
+        loadMoreErrorMessage={loadMoreErrorMessage}
         isLoading={isLoading}
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}

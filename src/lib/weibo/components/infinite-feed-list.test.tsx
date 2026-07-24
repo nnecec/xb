@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { InfiniteFeedList } from '@/lib/weibo/components/infinite-feed-list'
@@ -158,5 +159,69 @@ describe('InfiniteFeedList', () => {
     )
 
     expect(fetchNextPage).not.toHaveBeenCalled()
+  })
+
+  it('shows full error when errorMessage is set and there are no items', () => {
+    render(
+      <InfiniteFeedList
+        pages={undefined}
+        emptyLabel="暂无内容"
+        loadingLabel="加载中"
+        errorMessage="initial boom"
+        isLoading={false}
+        hasNextPage={false}
+        isFetchingNextPage={false}
+        fetchNextPage={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('initial boom')).toBeInTheDocument()
+    expect(screen.getByText('页面加载失败')).toBeInTheDocument()
+    expect(screen.queryByText('暂无内容')).not.toBeInTheDocument()
+  })
+
+  it('keeps feed visible when loadMoreErrorMessage is set with items', () => {
+    render(
+      <InfiniteFeedList
+        pages={[{ items: [createFeedItem('1', '已加载内容')] }]}
+        emptyLabel="暂无内容"
+        loadingLabel="加载中"
+        errorMessage={null}
+        loadMoreErrorMessage="load more boom"
+        isLoading={false}
+        hasNextPage={false}
+        isFetchingNextPage={false}
+        fetchNextPage={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('已加载内容')).toBeInTheDocument()
+    expect(screen.getByText('load more boom')).toBeInTheDocument()
+    expect(screen.getByText('加载失败，点击重试')).toBeInTheDocument()
+    expect(screen.queryByText('页面加载失败')).not.toBeInTheDocument()
+  })
+
+  it('does not hide the list when load-more fails', async () => {
+    const user = userEvent.setup()
+    const fetchNextPage = vi.fn()
+    render(
+      <InfiniteFeedList
+        pages={[{ items: [createFeedItem('1', '保留列表')] }]}
+        emptyLabel="暂无内容"
+        loadingLabel="加载中"
+        errorMessage={null}
+        loadMoreErrorMessage="next page failed"
+        isLoading={false}
+        hasNextPage={true}
+        isFetchingNextPage={false}
+        fetchNextPage={fetchNextPage}
+      />,
+    )
+
+    expect(screen.getByText('保留列表')).toBeInTheDocument()
+    expect(screen.getByText('next page failed')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '加载失败，点击重试' }))
+    expect(fetchNextPage).toHaveBeenCalledTimes(1)
   })
 })

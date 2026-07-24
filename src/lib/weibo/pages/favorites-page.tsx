@@ -30,7 +30,14 @@ export function FavoritesPage() {
     enabled: isEnabled && uid !== '',
   })
 
-  const errorMessage = favoritesQuery.error instanceof Error ? favoritesQuery.error.message : null
+  const errorMessage =
+    favoritesQuery.error instanceof Error && !favoritesQuery.isFetchNextPageError
+      ? favoritesQuery.error.message
+      : null
+  const loadMoreErrorMessage =
+    favoritesQuery.error instanceof Error && favoritesQuery.isFetchNextPageError
+      ? favoritesQuery.error.message
+      : null
   const hasNextPage = Boolean(favoritesQuery.hasNextPage)
   const isFetchingNextPage = favoritesQuery.isFetchingNextPage
   const isLoading = favoritesQuery.isLoading
@@ -66,6 +73,7 @@ export function FavoritesPage() {
         emptyLabel="暂无收藏内容"
         loadingLabel="正在加载收藏..."
         errorMessage={errorMessage}
+        loadMoreErrorMessage={loadMoreErrorMessage}
         isLoading={isLoading}
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}

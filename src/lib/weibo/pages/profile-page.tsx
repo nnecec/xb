@@ -52,7 +52,14 @@ function ProfilePostsFeed({
   })
 
   const activeQuery = searchState.active ? searchQuery : postsQuery
-  const errorMessage = activeQuery.error instanceof Error ? activeQuery.error.message : null
+  const errorMessage =
+    activeQuery.error instanceof Error && !activeQuery.isFetchNextPageError
+      ? activeQuery.error.message
+      : null
+  const loadMoreErrorMessage =
+    activeQuery.error instanceof Error && activeQuery.isFetchNextPageError
+      ? activeQuery.error.message
+      : null
   const hasNextPage = Boolean(activeQuery.hasNextPage)
   const isFetchingNextPage = activeQuery.isFetchingNextPage
   const total = searchQuery.data?.pages[0]?.total
@@ -78,6 +85,7 @@ function ProfilePostsFeed({
         emptyLabel={searchState.active ? '没有找到相关微博' : '暂时还没有微博内容'}
         loadingLabel={searchState.active ? '正在搜索此用户微博...' : '正在加载此用户微博...'}
         errorMessage={errorMessage}
+        loadMoreErrorMessage={loadMoreErrorMessage}
         isLoading={activeQuery.isLoading}
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}

@@ -98,7 +98,14 @@ export function TopicPage() {
     setSelectedChannelId(id)
   }, [])
 
-  const errorMessage = topicQuery.error instanceof Error ? topicQuery.error.message : null
+  const errorMessage =
+    topicQuery.error instanceof Error && !topicQuery.isFetchNextPageError
+      ? topicQuery.error.message
+      : null
+  const loadMoreErrorMessage =
+    topicQuery.error instanceof Error && topicQuery.isFetchNextPageError
+      ? topicQuery.error.message
+      : null
   const hasNextPage = Boolean(topicQuery.hasNextPage)
   const isFetchingNextPage = topicQuery.isFetchingNextPage
   const isLoading = topicQuery.isLoading
@@ -144,6 +151,7 @@ export function TopicPage() {
         emptyLabel="暂无话题内容"
         loadingLabel="正在加载话题内容..."
         errorMessage={errorMessage}
+        loadMoreErrorMessage={loadMoreErrorMessage}
         isLoading={isLoading}
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}
