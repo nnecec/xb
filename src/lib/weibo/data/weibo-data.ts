@@ -190,6 +190,7 @@ export function followingNewPostsCheckOptions(
     },
     staleTime: 0,
     refetchInterval: 5 * 60 * 1000,
+    refetchIntervalInBackground: false,
     gcTime: 5 * 60 * 1000,
   }
 }
@@ -358,6 +359,7 @@ export function hotSearchQueryOptions(type: HotSearchType = 'hot') {
     queryFn: () => loadHotSearchByType(type),
     staleTime: 5 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000,
+    refetchIntervalInBackground: false,
   }
 }
 
@@ -443,5 +445,6 @@ export const unreadNotificationsQueryOptions = {
   queryFn: (): Promise<UnreadCounts> => checkUnreadNotifications(),
   staleTime: 30 * 1000,
   refetchInterval: 60 * 1000,
+  refetchIntervalInBackground: false,
   gcTime: 5 * 60 * 1000,
 }

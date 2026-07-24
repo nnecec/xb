@@ -6,8 +6,10 @@ import {
   favoritesInfiniteOptions,
   FEED_INFINITE_QUERY_MAX_PAGES,
   FEED_TIMELINE_GC_TIME_MS,
+  followingNewPostsCheckOptions,
   friendsInfiniteOptions,
   homeTimelineInfiniteOptions,
+  hotSearchQueryOptions,
   likedStatusesInfiniteOptions,
   profilePostsInfiniteOptions,
   profileSearchInfiniteOptions,
@@ -16,6 +18,7 @@ import {
   nestedCommentsInfiniteOptions,
   topicSearchInfiniteOptions,
   TOPIC_INFINITE_QUERY_MAX_PAGES,
+  unreadNotificationsQueryOptions,
 } from '@/lib/weibo/data/weibo-data'
 import { DEFAULT_PROFILE_SEARCH_FILTERS } from '@/lib/weibo/route/profile-search-params'
 
@@ -111,5 +114,24 @@ describe('topicSearchInfiniteOptions getNextPageParam', () => {
       nextCursor: '3',
     }
     expect(getNextPageParam(lastPage, [], 2)).toBeUndefined()
+  })
+})
+
+describe('interval polling pauses when document is hidden', () => {
+  it('disables background refetch for following new posts check', () => {
+    const options = followingNewPostsCheckOptions('id')
+    expect(options.refetchInterval).toBe(5 * 60 * 1000)
+    expect(options.refetchIntervalInBackground).toBe(false)
+  })
+
+  it('disables background refetch for hot search', () => {
+    const options = hotSearchQueryOptions('hot')
+    expect(options.refetchInterval).toBe(10 * 60 * 1000)
+    expect(options.refetchIntervalInBackground).toBe(false)
+  })
+
+  it('disables background refetch for unread notifications', () => {
+    expect(unreadNotificationsQueryOptions.refetchInterval).toBe(60 * 1000)
+    expect(unreadNotificationsQueryOptions.refetchIntervalInBackground).toBe(false)
   })
 })
