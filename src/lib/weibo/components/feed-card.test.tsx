@@ -21,6 +21,8 @@ vi.mock('@/lib/weibo/data/weibo-io', async () => {
     loadFeedComments: vi.fn().mockResolvedValue({ items: [], totalNumber: 0 }),
     setStatusLike: vi.fn().mockResolvedValue(undefined),
     cancelStatusLike: vi.fn().mockResolvedValue(undefined),
+    createFavorite: vi.fn().mockResolvedValue(undefined),
+    destroyFavorite: vi.fn().mockResolvedValue(undefined),
     deleteWeiboStatus: vi.fn().mockResolvedValue(undefined),
   }
 })
@@ -106,12 +108,16 @@ describe('FeedCard', () => {
     onNavigate,
     onCommentClick,
     onRepostClick,
+    item,
   }: {
     onNavigate?: (item: FeedItem) => void
     onCommentClick?: (item: FeedItem) => void
     onRepostClick?: (item: FeedItem) => void
+    item?: Partial<FeedItem>
   } = {}) {
-    const queryClient = new QueryClient()
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    })
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -131,6 +137,7 @@ describe('FeedCard', () => {
                 media: null,
                 regionName: '',
                 source: '',
+                ...item,
               }}
               onNavigate={onNavigate}
               onCommentClick={onCommentClick}
@@ -451,6 +458,66 @@ describe('FeedCard', () => {
     expect(commentsPanelId).toBeTruthy()
     expect(document.getElementById(commentsPanelId!)).not.toBeNull()
     expect(screen.getByRole('button', { name: '收起精选评论' })).toBe(commentButton)
+  })
+
+  describe('like and favorite actions', () => {
+    it('calls setStatusLike when clicking 点赞微博 on an unliked item', async () => {
+      const { setStatusLike } = await import('@/lib/weibo/data/weibo-io')
+      vi.mocked(setStatusLike).mockResolvedValueOnce(undefined)
+
+      renderCard({ item: { liked: false } })
+
+      fireEvent.click(screen.getByRole('button', { name: '点赞微博' }))
+
+      await waitFor(() => {
+        expect(vi.mocked(setStatusLike)).toHaveBeenCalledWith('501')
+      })
+    })
+
+    it('calls cancelStatusLike when clicking 取消点赞 on a liked item', async () => {
+      const { cancelStatusLike } = await import('@/lib/weibo/data/weibo-io')
+      vi.mocked(cancelStatusLike).mockResolvedValueOnce(undefined)
+
+      renderCard({ item: { liked: true } })
+
+      fireEvent.click(screen.getByRole('button', { name: '取消点赞' }))
+
+      await waitFor(() => {
+        expect(vi.mocked(cancelStatusLike)).toHaveBeenCalledWith('501')
+      })
+    })
+
+    it('calls createFavorite when clicking 收藏 on an unfavorited item', async () => {
+      const store = getAppSettingsStore()
+      store.setState({ feedToolbarButtonIds: ['favorite'] })
+
+      const { createFavorite } = await import('@/lib/weibo/data/weibo-io')
+      vi.mocked(createFavorite).mockResolvedValueOnce(undefined)
+
+      renderCard({ item: { favorited: false } })
+
+      fireEvent.click(screen.getByRole('button', { name: '收藏' }))
+
+      await waitFor(() => {
+        expect(vi.mocked(createFavorite)).toHaveBeenCalledWith('501')
+      })
+    })
+
+    it('calls destroyFavorite when clicking 取消收藏 on a favorited item', async () => {
+      const store = getAppSettingsStore()
+      store.setState({ feedToolbarButtonIds: ['favorite'] })
+
+      const { destroyFavorite } = await import('@/lib/weibo/data/weibo-io')
+      vi.mocked(destroyFavorite).mockResolvedValueOnce(undefined)
+
+      renderCard({ item: { favorited: true } })
+
+      fireEvent.click(screen.getByRole('button', { name: '取消收藏' }))
+
+      await waitFor(() => {
+        expect(vi.mocked(destroyFavorite)).toHaveBeenCalledWith('501')
+      })
+    })
   })
 
   describe('new tab open on modifier / middle click', () => {
