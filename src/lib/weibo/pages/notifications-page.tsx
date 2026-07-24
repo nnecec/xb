@@ -50,6 +50,8 @@ function NotificationTabContent({
   emptyLabel: string
 }) {
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
+  const onFetchNextPageRef = useRef(onFetchNextPage)
+  onFetchNextPageRef.current = onFetchNextPage
   const isFetchingNextPageRef = useRef(isFetchingNextPage)
   isFetchingNextPageRef.current = isFetchingNextPage
 
@@ -60,7 +62,7 @@ function NotificationTabContent({
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting && !isFetchingNextPageRef.current) {
-          onFetchNextPage()
+          onFetchNextPageRef.current()
         }
       },
       { threshold: 0.2 },
@@ -68,7 +70,7 @@ function NotificationTabContent({
 
     observer.observe(el)
     return () => observer.disconnect()
-  }, [hasNextPage, onFetchNextPage])
+  }, [hasNextPage])
 
   if (isLoading) {
     return <PageLoadingState label="正在加载..." />
