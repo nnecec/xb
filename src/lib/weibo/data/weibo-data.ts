@@ -142,6 +142,8 @@ export const COMMENT_INFINITE_QUERY_MAX_PAGES = 8
 export const RELATION_INFINITE_QUERY_MAX_PAGES = 8
 export const TOPIC_INFINITE_QUERY_MAX_PAGES = 8
 export const NOTIFICATION_INFINITE_QUERY_MAX_PAGES = 8
+/** Inactive home/explore timeline group keys are GC'd after 1 hour. */
+export const FEED_TIMELINE_GC_TIME_MS = 60 * 60 * 1000
 
 /** Result of checking for new posts on the "following" timeline. */
 interface FollowingNewPostsCheck {
@@ -211,7 +213,7 @@ export function homeTimelineInfiniteOptions(
     getNextPageParam: (lastPage: TimelinePage) => lastPage.nextCursor ?? undefined,
     maxPages: FEED_INFINITE_QUERY_MAX_PAGES,
     staleTime: Infinity,
-    gcTime: Infinity,
+    gcTime: FEED_TIMELINE_GC_TIME_MS,
   }
 }
 
@@ -384,7 +386,7 @@ export function exploreTimelineInfiniteOptions(group: ExploreGroup) {
     getNextPageParam: (lastPage: TimelinePage) => lastPage.nextCursor ?? undefined,
     maxPages: FEED_INFINITE_QUERY_MAX_PAGES,
     staleTime: Infinity,
-    gcTime: Infinity,
+    gcTime: FEED_TIMELINE_GC_TIME_MS,
   }
 }
 

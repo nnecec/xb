@@ -5,6 +5,7 @@ import {
   exploreTimelineInfiniteOptions,
   favoritesInfiniteOptions,
   FEED_INFINITE_QUERY_MAX_PAGES,
+  FEED_TIMELINE_GC_TIME_MS,
   friendsInfiniteOptions,
   homeTimelineInfiniteOptions,
   likedStatusesInfiniteOptions,
@@ -26,7 +27,7 @@ describe('feed infinite query cache policy', () => {
     expect(options.initialPageParam).toBeNull()
     expect(options.maxPages).toBe(FEED_INFINITE_QUERY_MAX_PAGES)
     expect(options.staleTime).toBe(Infinity)
-    expect(options.gcTime).toBe(Infinity)
+    expect(options.gcTime).toBe(FEED_TIMELINE_GC_TIME_MS)
   })
 
   it('bounds explore timeline cached pages while preserving pagination policy', () => {
@@ -40,7 +41,7 @@ describe('feed infinite query cache policy', () => {
     expect(options.initialPageParam).toBeNull()
     expect(options.maxPages).toBe(FEED_INFINITE_QUERY_MAX_PAGES)
     expect(options.staleTime).toBe(Infinity)
-    expect(options.gcTime).toBe(Infinity)
+    expect(options.gcTime).toBe(FEED_TIMELINE_GC_TIME_MS)
   })
 
   it('bounds remaining feed-like infinite query cached pages', () => {
