@@ -10,6 +10,7 @@ import {
   optimisticallyToggleStatusFavorite,
   optimisticallyToggleStatusLike,
   restoreStatusCacheMutation,
+  shouldCancelWeiboQueryForStatusMutation,
 } from '@/lib/weibo/queries/status-cache'
 
 function createFeedItem(overrides: Partial<FeedItem> = {}): FeedItem {
@@ -248,5 +249,34 @@ describe('status-cache', () => {
     expect(feedComments?.items[0]?.comments[0]?.likeCount).toBe(5)
     expect(nestedComments?.items[0]?.liked).toBe(true)
     expect(nestedComments?.items[0]?.likeCount).toBe(5)
+  })
+})
+
+describe('shouldCancelWeiboQueryForStatusMutation', () => {
+  it('returns false for non-weibo and status-unrelated weibo keys', () => {
+    expect(shouldCancelWeiboQueryForStatusMutation(['other', 'timeline'])).toBe(false)
+    expect(shouldCancelWeiboQueryForStatusMutation(['weibo', 'unread'])).toBe(false)
+    expect(shouldCancelWeiboQueryForStatusMutation(['weibo', 'hotsearch'])).toBe(false)
+    expect(shouldCancelWeiboQueryForStatusMutation(['weibo', 'explore', 'groups'])).toBe(false)
+    expect(shouldCancelWeiboQueryForStatusMutation(['weibo', 'follow-groups'])).toBe(false)
+    expect(shouldCancelWeiboQueryForStatusMutation(['weibo', 'friends'])).toBe(false)
+    expect(shouldCancelWeiboQueryForStatusMutation(['weibo', 'search'])).toBe(false)
+    expect(shouldCancelWeiboQueryForStatusMutation(['weibo', 'super-topics'])).toBe(false)
+    expect(shouldCancelWeiboQueryForStatusMutation(['weibo', 'longtext', 'id'])).toBe(false)
+  })
+
+  it('returns true for status-relevant weibo query keys', () => {
+    expect(shouldCancelWeiboQueryForStatusMutation(['weibo', 'timeline'])).toBe(true)
+    expect(shouldCancelWeiboQueryForStatusMutation(['weibo', 'timeline', 'new-check'])).toBe(true)
+    expect(shouldCancelWeiboQueryForStatusMutation(['weibo', 'explore', 'gid-1'])).toBe(true)
+    expect(shouldCancelWeiboQueryForStatusMutation(['weibo', 'profile', 'uid'])).toBe(true)
+    expect(shouldCancelWeiboQueryForStatusMutation(['weibo', 'favorites'])).toBe(true)
+    expect(shouldCancelWeiboQueryForStatusMutation(['weibo', 'liked-statuses'])).toBe(true)
+    expect(shouldCancelWeiboQueryForStatusMutation(['weibo', 'status', 'id'])).toBe(true)
+    expect(shouldCancelWeiboQueryForStatusMutation(['weibo', 'status-comments', 'id'])).toBe(true)
+    expect(shouldCancelWeiboQueryForStatusMutation(['weibo', 'nested-comments', 'id'])).toBe(true)
+    expect(shouldCancelWeiboQueryForStatusMutation(['weibo', 'feed-comments', 'id'])).toBe(true)
+    expect(shouldCancelWeiboQueryForStatusMutation(['weibo', 'topic', 'slug'])).toBe(true)
+    expect(shouldCancelWeiboQueryForStatusMutation(['weibo', 'notifications'])).toBe(true)
   })
 })

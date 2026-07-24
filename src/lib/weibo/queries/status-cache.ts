@@ -277,8 +277,29 @@ function updateCommentInTree(
   return comment
 }
 
+export function shouldCancelWeiboQueryForStatusMutation(queryKey: readonly unknown[]): boolean {
+  if (!Array.isArray(queryKey) || queryKey[0] !== 'weibo') return false
+  const second = queryKey[1]
+  if (second === 'explore' && queryKey[2] === 'groups') return false
+  return (
+    second === 'timeline' ||
+    second === 'explore' ||
+    second === 'profile' ||
+    second === 'favorites' ||
+    second === 'liked-statuses' ||
+    second === 'status' ||
+    second === 'status-comments' ||
+    second === 'nested-comments' ||
+    second === 'feed-comments' ||
+    second === 'topic' ||
+    second === 'notifications'
+  )
+}
+
 async function prepareMutation(queryClient: QueryClient): Promise<StatusCacheMutationContext> {
-  await queryClient.cancelQueries({ queryKey: ['weibo'] })
+  await queryClient.cancelQueries({
+    predicate: (query) => shouldCancelWeiboQueryForStatusMutation(query.queryKey),
+  })
   return createStatusCacheMutationContext()
 }
 
