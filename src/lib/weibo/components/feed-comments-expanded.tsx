@@ -13,16 +13,10 @@ import type { CommentItem } from '@/lib/weibo/models/status'
 interface FeedCommentsExpandedProps {
   id?: string
   item: FeedItem
-  onCommentReply: (target: import('@/lib/weibo/models/compose').ComposeTarget) => void
   onCollapse?: () => void
 }
 
-export function FeedCommentsExpanded({
-  id,
-  item,
-  onCommentReply,
-  onCollapse,
-}: FeedCommentsExpandedProps) {
+export function FeedCommentsExpanded({ id, item, onCollapse }: FeedCommentsExpandedProps) {
   const commentsQuery = useQuery(feedCommentsQueryOptions(item.id, item.author.id))
 
   const comments = (commentsQuery.data?.items ?? []) as CommentItem[]
@@ -60,7 +54,6 @@ export function FeedCommentsExpanded({
             emptyLabel="暂无评论"
             rootStatusId={item.id}
             authorUid={item.author.id}
-            onCommentReply={onCommentReply}
           />
           <div className="flex gap-2">
             {totalNumber > 0 && (

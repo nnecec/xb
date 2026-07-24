@@ -25,22 +25,15 @@ const FEED_ACTION_TINT = {
   comment: 'hover:bg-sky-500/10 hover:text-sky-500',
   repost: 'hover:bg-emerald-500/10 hover:text-emerald-500',
   like: 'hover:bg-rose-500/10 hover:text-rose-500',
-  genImage: 'hover:bg-violet-500/10 hover:text-violet-500',
-  download: 'hover:bg-indigo-500/10 hover:text-indigo-500',
-  favorite: 'hover:bg-amber-500/10 hover:text-amber-500',
-  copyLink: 'hover:bg-cyan-500/10 hover:text-cyan-500',
-  copyText: 'hover:bg-muted hover:text-foreground',
+  // Secondary tools stay muted — Silent Canvas: only comment/repost/like earn color.
+  tool: 'hover:bg-muted hover:text-foreground',
 } as const
 
 const FEED_ACTION_ICON_TINT = {
   comment: 'group-hover:text-sky-500',
   repost: 'group-hover:text-emerald-500',
   like: 'group-hover:text-rose-500',
-  genImage: 'group-hover:text-violet-500',
-  download: 'group-hover:text-indigo-500',
-  favorite: 'group-hover:text-amber-500',
-  copyLink: 'group-hover:text-cyan-500',
-  copyText: 'group-hover:text-foreground',
+  tool: 'group-hover:text-foreground',
 } as const
 
 function FeedActionButton({
@@ -53,6 +46,7 @@ function FeedActionButton({
   ariaPressed,
   ariaControls,
   ariaExpanded,
+  ariaBusy,
   disabled,
   onClick,
 }: {
@@ -65,6 +59,7 @@ function FeedActionButton({
   ariaPressed?: boolean
   ariaControls?: string
   ariaExpanded?: boolean
+  ariaBusy?: boolean
   disabled?: boolean
   onClick: (event: MouseEvent<HTMLButtonElement>) => void
 }) {
@@ -76,6 +71,7 @@ function FeedActionButton({
       aria-pressed={ariaPressed}
       aria-controls={ariaControls}
       aria-expanded={ariaExpanded}
+      aria-busy={ariaBusy || undefined}
       disabled={disabled}
       className={cn('group rounded-full py-2 font-normal', tint)}
       onClick={onClick}
@@ -205,6 +201,7 @@ export function FeedActions({
         ariaLabel={liked ? '取消点赞' : '点赞微博'}
         ariaPressed={liked}
         disabled={likePending}
+        ariaBusy={likePending}
         icon={
           <Heart
             className={cn(
@@ -229,12 +226,10 @@ export function FeedActions({
       return (
         <FeedActionButton
           key={id}
-          tint={FEED_ACTION_TINT.genImage}
-          iconTint={FEED_ACTION_ICON_TINT.genImage}
+          tint={FEED_ACTION_TINT.tool}
+          iconTint={FEED_ACTION_ICON_TINT.tool}
           ariaLabel="生图"
-          icon={
-            <Image className={cn('size-3.5 transition-colors', FEED_ACTION_ICON_TINT.genImage)} />
-          }
+          icon={<Image className={cn('size-3.5 transition-colors', FEED_ACTION_ICON_TINT.tool)} />}
           onClick={(event) => {
             event.stopPropagation()
             onGenImage()
@@ -247,14 +242,12 @@ export function FeedActions({
       return (
         <FeedActionButton
           key={id}
-          tint={FEED_ACTION_TINT.download}
-          iconTint={FEED_ACTION_ICON_TINT.download}
+          tint={FEED_ACTION_TINT.tool}
+          iconTint={FEED_ACTION_ICON_TINT.tool}
           ariaLabel="批量下载"
           disabled={downloadPending}
           icon={
-            <Download
-              className={cn('size-3.5 transition-colors', FEED_ACTION_ICON_TINT.download)}
-            />
+            <Download className={cn('size-3.5 transition-colors', FEED_ACTION_ICON_TINT.tool)} />
           }
           onClick={(event) => {
             event.stopPropagation()
@@ -268,17 +261,18 @@ export function FeedActions({
       return (
         <FeedActionButton
           key={id}
-          tint={FEED_ACTION_TINT.favorite}
-          iconTint={FEED_ACTION_ICON_TINT.favorite}
+          tint={FEED_ACTION_TINT.tool}
+          iconTint={FEED_ACTION_ICON_TINT.tool}
           ariaLabel={isBookmarked ? '取消收藏' : '收藏'}
           ariaPressed={isBookmarked}
           disabled={favoritePending}
+          ariaBusy={favoritePending}
           icon={
             <Bookmark
               className={cn(
                 'size-3.5 transition-[color,fill] duration-200',
-                FEED_ACTION_ICON_TINT.favorite,
-                isBookmarked && 'fill-amber-500 text-amber-500',
+                FEED_ACTION_ICON_TINT.tool,
+                isBookmarked && 'fill-foreground text-foreground',
               )}
             />
           }
@@ -294,13 +288,11 @@ export function FeedActions({
       return (
         <FeedActionButton
           key={id}
-          tint={FEED_ACTION_TINT.copyLink}
-          iconTint={FEED_ACTION_ICON_TINT.copyLink}
+          tint={FEED_ACTION_TINT.tool}
+          iconTint={FEED_ACTION_ICON_TINT.tool}
           ariaLabel="复制链接"
           icon={
-            <LinkIcon
-              className={cn('size-3.5 transition-colors', FEED_ACTION_ICON_TINT.copyLink)}
-            />
+            <LinkIcon className={cn('size-3.5 transition-colors', FEED_ACTION_ICON_TINT.tool)} />
           }
           onClick={(event) => {
             event.stopPropagation()
@@ -314,12 +306,10 @@ export function FeedActions({
       return (
         <FeedActionButton
           key={id}
-          tint={FEED_ACTION_TINT.copyText}
-          iconTint={FEED_ACTION_ICON_TINT.copyText}
+          tint={FEED_ACTION_TINT.tool}
+          iconTint={FEED_ACTION_ICON_TINT.tool}
           ariaLabel="复制内容"
-          icon={
-            <Copy className={cn('size-3.5 transition-colors', FEED_ACTION_ICON_TINT.copyText)} />
-          }
+          icon={<Copy className={cn('size-3.5 transition-colors', FEED_ACTION_ICON_TINT.tool)} />}
           onClick={(event) => {
             event.stopPropagation()
             onCopyText()

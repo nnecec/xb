@@ -152,7 +152,6 @@ export function TopicPage() {
         onNavigate={ctx.navigateToStatusDetail}
         onCommentClick={(item) => ctx.setComposeTarget(composeTargetFromFeedItem(item, 'comment'))}
         onRepostClick={(item) => ctx.setComposeTarget(composeTargetFromFeedItem(item, 'repost'))}
-        onCommentReply={ctx.setComposeTarget}
       />
     </div>
   )

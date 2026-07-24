@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { SpecialFollowButton } from '@/lib/weibo/components/special-follow-button'
-import { setSpecialFollowUser } from '@/lib/weibo/services/weibo-repository'
+import { setSpecialFollowUser } from '@/lib/weibo/data/weibo-io'
 
 const getCurrentUserUidMock = vi.fn<() => string | null>()
 
@@ -18,9 +18,9 @@ vi.mock('sonner', () => ({
   },
 }))
 
-vi.mock('@/lib/weibo/services/weibo-repository', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/weibo/services/weibo-repository')>(
-    '@/lib/weibo/services/weibo-repository',
+vi.mock('@/lib/weibo/data/weibo-io', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/weibo/data/weibo-io')>(
+    '@/lib/weibo/data/weibo-io',
   )
 
   return {

@@ -113,7 +113,6 @@ export function ExplorePage() {
             ctx.setComposeTarget(composeTargetFromFeedItem(item, 'comment'))
           }
           onRepostClick={(item) => ctx.setComposeTarget(composeTargetFromFeedItem(item, 'repost'))}
-          onCommentReply={ctx.setComposeTarget}
         />
       </div>
     </div>

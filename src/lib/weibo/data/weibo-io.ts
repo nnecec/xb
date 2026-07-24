@@ -1,3 +1,9 @@
+/**
+ * Private Weibo IO implementation (load* / mutations).
+ * Not a public seam — import from `@/lib/weibo/data/weibo-data` in production code.
+ * Tests may mock this module so queryFn closures and re-exports both see fakes.
+ */
+
 import type { HotSearchType } from '@/lib/app-settings'
 import type { SubmitComposeInput } from '@/lib/weibo/models/compose'
 import type { WeiboEmoticonConfig } from '@/lib/weibo/models/emoticon'

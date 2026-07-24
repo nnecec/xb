@@ -1,20 +1,21 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { APP_SETTINGS_STORAGE_KEY } from '@/lib/app-settings'
 import { getAppSettingsStore, resetAppSettingsStoreForTest } from '@/lib/app-settings-store'
 import { CommentCard } from '@/lib/weibo/components/comment-card'
+import { loadNestedComments } from '@/lib/weibo/data/weibo-io'
 import type { CommentItem } from '@/lib/weibo/models/status'
-import { loadNestedComments } from '@/lib/weibo/services/weibo-repository'
 
-vi.mock('@/lib/weibo/services/weibo-repository', () => ({
+vi.mock('@/lib/weibo/data/weibo-io', () => ({
   cancelCommentLike: vi.fn(),
   deleteWeiboComment: vi.fn(),
   loadEmoticonConfig: vi.fn(async () => ({ groups: [], phraseMap: {} })),
   loadNestedComments: vi.fn(),
   setCommentLike: vi.fn(),
+  submitComposeAction: vi.fn(),
 }))
 
 vi.mock('@/lib/weibo/hooks/use-font-settings', () => ({
@@ -104,9 +105,39 @@ describe('CommentCard', () => {
     expect(container.querySelectorAll('img.aspect-square')).toHaveLength(2)
   })
 
-  it('keeps the root status id when replying from nested comments dialog', async () => {
+  it('shows reply-to context when replyComment is present', () => {
     const queryClient = new QueryClient()
-    const onCommentReply = vi.fn()
+    const item: CommentItem = {
+      id: 'c1',
+      text: 'my reply',
+      createdAtLabel: 'now',
+      author: { id: '1', name: 'A', avatarUrl: null },
+      likeCount: 0,
+      images: [],
+      replyComment: {
+        id: 'c0',
+        text: 'original thought',
+        author: { id: '9', name: 'Orig', avatarUrl: null },
+        images: [],
+      },
+      comments: [],
+    }
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <CommentCard item={item} rootStatusId="s1" authorUid="u1" />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    expect(screen.getByText('回复')).toBeInTheDocument()
+    expect(screen.getByText('@Orig')).toBeInTheDocument()
+    expect(screen.getByText('original thought')).toBeInTheDocument()
+  })
+
+  it('loads more nested replies inline and opens inline reply for child', async () => {
+    const queryClient = new QueryClient()
     const item: CommentItem = {
       id: 'c1',
       text: 'parent',
@@ -148,30 +179,41 @@ describe('CommentCard', () => {
     render(
       <QueryClientProvider client={queryClient}>
         <MemoryRouter>
-          <CommentCard
-            item={item}
-            rootStatusId="status-1"
-            authorUid="root-author"
-            onCommentReply={onCommentReply}
-          />
+          <CommentCard item={item} rootStatusId="status-1" authorUid="root-author" />
         </MemoryRouter>
       </QueryClientProvider>,
     )
 
     fireEvent.click(screen.getByRole('button', { name: '查看更多回复' }))
     expect(await screen.findByText('child reply')).toBeInTheDocument()
+
     const replyButtons = screen.getAllByRole('button', { name: '回复评论' })
     fireEvent.click(replyButtons[replyButtons.length - 1])
 
-    await waitFor(() => {
-      expect(onCommentReply).toHaveBeenCalledWith({
-        kind: 'comment',
-        mode: 'comment',
-        statusId: 'status-1',
-        targetCommentId: 'c2',
-        authorName: 'B',
-        excerpt: 'child reply',
-      })
-    })
+    expect(await screen.findByPlaceholderText('回复 @B')).toBeInTheDocument()
+  })
+
+  it('marks the status author with a 博主 badge', () => {
+    const queryClient = new QueryClient()
+    const item: CommentItem = {
+      id: 'c1',
+      text: 'from author',
+      createdAtLabel: 'now',
+      author: { id: 'root-author', name: 'Author', avatarUrl: null },
+      likeCount: 0,
+      images: [],
+      replyComment: null,
+      comments: [],
+    }
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <CommentCard item={item} rootStatusId="s1" authorUid="root-author" />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    expect(screen.getByText('博主')).toBeInTheDocument()
   })
 })

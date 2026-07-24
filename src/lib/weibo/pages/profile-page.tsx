@@ -13,6 +13,7 @@ import {
   profilePostsInfiniteOptions,
   profileSearchInfiniteOptions,
 } from '@/lib/weibo/data/weibo-data'
+import { loadProfileHoverCard } from '@/lib/weibo/data/weibo-data'
 import { composeTargetFromFeedItem } from '@/lib/weibo/models/compose'
 import type { TimelinePage } from '@/lib/weibo/models/feed'
 import {
@@ -21,7 +22,6 @@ import {
   writeProfileSearchParams,
 } from '@/lib/weibo/route/profile-search-params'
 import { useWeiboPage } from '@/lib/weibo/route/use-weibo-page'
-import { loadProfileHoverCard } from '@/lib/weibo/services/weibo-repository'
 
 function ProfilePostsFeed({
   profileId,
@@ -32,7 +32,6 @@ function ProfilePostsFeed({
   onNavigate,
   onCommentClick,
   onRepostClick,
-  onCommentReply,
 }: {
   profileId: string
   searchState: ReturnType<typeof parseProfileSearchUrlState>
@@ -42,7 +41,6 @@ function ProfilePostsFeed({
   onNavigate: ReturnType<typeof useAppShellContext>['navigateToStatusDetail']
   onCommentClick: (item: Parameters<typeof composeTargetFromFeedItem>[0]) => void
   onRepostClick: (item: Parameters<typeof composeTargetFromFeedItem>[0]) => void
-  onCommentReply: ReturnType<typeof useAppShellContext>['setComposeTarget']
 }) {
   const postsQuery = useInfiniteQuery({
     ...profilePostsInfiniteOptions(profileId),
@@ -88,7 +86,6 @@ function ProfilePostsFeed({
         onNavigate={onNavigate}
         onCommentClick={onCommentClick}
         onRepostClick={onRepostClick}
-        onCommentReply={onCommentReply}
         className="flex flex-col gap-4"
       />
     </div>
@@ -151,7 +148,6 @@ export function ProfilePage() {
             onRepostClick={(item) =>
               ctx.setComposeTarget(composeTargetFromFeedItem(item, 'repost'))
             }
-            onCommentReply={ctx.setComposeTarget}
           />
         </div>
       ) : null}

@@ -24,9 +24,9 @@ vi.mock('@/lib/weibo/components/emoticon-picker', () => ({
   ),
 }))
 
-vi.mock('@/lib/weibo/services/weibo-repository', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/weibo/services/weibo-repository')>(
-    '@/lib/weibo/services/weibo-repository',
+vi.mock('@/lib/weibo/data/weibo-io', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/weibo/data/weibo-io')>(
+    '@/lib/weibo/data/weibo-io',
   )
 
   return {
@@ -126,7 +126,7 @@ describe('CommentModal', () => {
     fireEvent.click(screen.getByLabelText('同时转发原微博'))
     fireEvent.click(screen.getByRole('button', { name: '发布评论' }))
 
-    const { submitComposeAction } = await import('@/lib/weibo/services/weibo-repository')
+    const { submitComposeAction } = await import('@/lib/weibo/data/weibo-io')
 
     await waitFor(() => {
       expect(vi.mocked(submitComposeAction)).toHaveBeenCalledWith(

@@ -49,7 +49,8 @@ src/
 │       ├── components/   # feed, profile, gen-image, media-player, …
 │       ├── content/      # host selectors, shell state, page takeover, lifecycle
 │       ├── hooks/ pages/ route/ inject/ platform/ stores/ utils/
-│       ├── services/     # client, adapters, weibo-repository, xb-server-*
+│       ├── data/         # weibo-data (public IO + query options), weibo-io (private)
+│       ├── services/     # client, adapters, m-weibo-client, endpoints
 │       ├── models/ queries/
 ├── components/ui/     # shadcn
 ├── hooks/
@@ -66,12 +67,13 @@ src/
   `hydrate()` before use.
 - **Host Shell Lifecycle**: `host-shell-lifecycle.tsx` — inject bridge, wait for
   host DOM, hydrate, first-load redirect, mount UI, cleanup.
-- **API Layer**: `client.ts` + `adapters/` → internal models.
-- **Query Layer**: `weibo-queries.ts` wraps repository.
-- **Status Cache**: `status-cache.ts` — optimistic like/favorite/comment count
-  across timeline/detail/comment caches.
-- **xb Rating**: `xb-server-client.ts` + `xb-server-sign.ts` +
-  `rating-queries.ts`.
+- **Data Layer**: `data/weibo-data.ts` is the **only** public Weibo IO seam
+  (load*/mutations + TanStack Query options). Private impl: `data/weibo-io.ts`
+  → `client.ts` / `m-weibo-client` + `adapters/` + `utils/transform/`.
+  UI and pages must not import `weibo-io` or `services/adapters` directly.
+- **Status Cache**: `queries/status-cache.ts` — optimistic like/favorite/comment
+  count across timeline/detail/comment caches.
+- **xb Rating**: `rating/xb-rating.ts` (hooks + signed server client).
 
 ## Key Patterns
 

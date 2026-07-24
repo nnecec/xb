@@ -1,7 +1,7 @@
 import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 
-import { loadEmoticonConfig } from '@/lib/weibo/services/weibo-repository'
+import { loadEmoticonConfig } from '@/lib/weibo/data/weibo-data'
 
 export const EMOTICON_CONFIG_QUERY_KEY = ['weibo', 'emoticon-config'] as const
 

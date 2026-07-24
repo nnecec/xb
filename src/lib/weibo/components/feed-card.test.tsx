@@ -7,12 +7,12 @@ import { APP_SETTINGS_STORAGE_KEY } from '@/lib/app-settings'
 import { getAppSettingsStore, resetAppSettingsStoreForTest } from '@/lib/app-settings-store'
 import { FeedCard } from '@/lib/weibo/components/feed-card'
 import { GenImageDialogProvider } from '@/lib/weibo/components/gen-image-dialog-context'
+import { loadStatusLongText } from '@/lib/weibo/data/weibo-io'
 import type { FeedItem } from '@/lib/weibo/models/feed'
-import { loadStatusLongText } from '@/lib/weibo/services/weibo-repository'
 
-vi.mock('@/lib/weibo/services/weibo-repository', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/weibo/services/weibo-repository')>(
-    '@/lib/weibo/services/weibo-repository',
+vi.mock('@/lib/weibo/data/weibo-io', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/weibo/data/weibo-io')>(
+    '@/lib/weibo/data/weibo-io',
   )
 
   return {
@@ -106,12 +106,10 @@ describe('FeedCard', () => {
     onNavigate,
     onCommentClick,
     onRepostClick,
-    onCommentReply,
   }: {
     onNavigate?: (item: FeedItem) => void
     onCommentClick?: (item: FeedItem) => void
     onRepostClick?: (item: FeedItem) => void
-    onCommentReply?: Parameters<typeof FeedCard>[0]['onCommentReply']
   } = {}) {
     const queryClient = new QueryClient()
 
@@ -137,7 +135,6 @@ describe('FeedCard', () => {
               onNavigate={onNavigate}
               onCommentClick={onCommentClick}
               onRepostClick={onRepostClick}
-              onCommentReply={onCommentReply}
             />
           </GenImageDialogProvider>
         </MemoryRouter>
@@ -413,6 +410,12 @@ describe('FeedCard', () => {
   })
 
   it('does not trigger card navigation when clicking comment or repost actions', () => {
+    const store = getAppSettingsStore({
+      get: async () => ({ [APP_SETTINGS_STORAGE_KEY]: undefined }),
+      set: async () => {},
+    })
+    store.setState({ feedInteractionMode: 'x' })
+
     const onNavigate = vi.fn()
     const onCommentClick = vi.fn()
     const onRepostClick = vi.fn()
@@ -433,7 +436,7 @@ describe('FeedCard', () => {
   })
 
   it('exposes inline comment expansion state when comments can expand in weibo mode', async () => {
-    renderCard({ onCommentReply: vi.fn() })
+    renderCard({})
 
     const commentButton = screen.getByRole('button', { name: '展开精选评论' })
     expect(commentButton).toHaveAttribute('aria-expanded', 'false')

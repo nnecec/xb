@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { SubmitComposeInput } from '@/lib/weibo/models/compose'
 import {
   createProfileGroup,
   loadHomeTimeline,
@@ -11,7 +10,8 @@ import {
   setSpecialFollowUser,
   setProfileGroups,
   submitComposeAction,
-} from '@/lib/weibo/services/weibo-repository'
+} from '@/lib/weibo/data/weibo-io'
+import type { SubmitComposeInput } from '@/lib/weibo/models/compose'
 
 const { wbGet, wbPostForm } = vi.hoisted(() => ({
   wbGet: vi.fn(),
@@ -23,7 +23,7 @@ vi.mock('@/lib/weibo/services/client', () => ({
   wbPostForm,
 }))
 
-describe('weibo-repository', () => {
+describe('weibo-io', () => {
   beforeEach(() => {
     vi.mocked(wbGet).mockReset()
     vi.mocked(wbPostForm).mockReset()

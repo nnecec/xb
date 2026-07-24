@@ -14,7 +14,7 @@ import {
   loadProfileAssignedGroups,
   loadProfileAvailableGroups,
   setProfileGroups,
-} from '@/lib/weibo/services/weibo-repository'
+} from '@/lib/weibo/data/weibo-io'
 
 const getCurrentUserUidMock = vi.fn<() => string | null>()
 
@@ -29,9 +29,9 @@ vi.mock('sonner', () => ({
   },
 }))
 
-vi.mock('@/lib/weibo/services/weibo-repository', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/weibo/services/weibo-repository')>(
-    '@/lib/weibo/services/weibo-repository',
+vi.mock('@/lib/weibo/data/weibo-io', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/weibo/data/weibo-io')>(
+    '@/lib/weibo/data/weibo-io',
   )
 
   return {

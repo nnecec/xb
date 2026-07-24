@@ -1,56 +1,35 @@
 import { useCallback, useRef, type KeyboardEvent, type MouseEvent } from 'react'
-import { toast } from 'sonner'
 
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import {
-  type FeedInteractionMode,
-  type FeedPrimaryActionId,
-  type FeedToolbarButtonId,
-} from '@/lib/app-settings'
+import { type FeedInteractionMode } from '@/lib/app-settings'
 import { cn } from '@/lib/utils'
-import { useGenImageDialog } from '@/lib/weibo/components/gen-image-dialog-context'
 import { ImageCarousel } from '@/lib/weibo/components/image-carousel'
-import { useFeedCardMediaDownload } from '@/lib/weibo/components/use-feed-card-media-download'
 import { browsingHistoryStore } from '@/lib/weibo/hooks/use-browsing-history'
 import { useFeedLongText } from '@/lib/weibo/hooks/use-feed-long-text'
 import type { FeedItem } from '@/lib/weibo/models/feed'
 
-import { FeedActions } from './feed-card-actions'
 import { RetweetedAuthorHeader } from './feed-card-author'
 import { FeedMediaBlock } from './feed-card-media'
 import { FeedTextBlock } from './feed-card-text'
 import {
   getMediaDownloadFilename,
-  getStatusCopyText,
   getStatusDetailPath,
   hasTextSelectionWithin,
   openStatusDetailInNewTab,
 } from './feed-card-utils'
 
+/**
+ * Nested retweet preview: content only (no nested FeedActions).
+ * Interaction stays on the outer card or status detail — Silent Canvas density.
+ */
 export function RetweetedFeedBlock({
   item,
   onNavigate,
-  onCommentClick,
-  onRepostClick,
-  onLikeClick,
-  likePendingForId,
   feedInteractionMode,
-  primaryActionOrder,
-  toolbarButtonIds,
-  onFavorite,
-  favoritePendingForId,
 }: {
   item: NonNullable<FeedItem['retweetedStatus']>
   onNavigate?: (item: FeedItem) => void
-  onCommentClick?: (item: FeedItem) => void
-  onRepostClick?: (item: FeedItem) => void
-  onLikeClick?: (item: FeedItem) => void
-  likePendingForId: string | null
   feedInteractionMode: FeedInteractionMode
-  primaryActionOrder: FeedPrimaryActionId[]
-  toolbarButtonIds: FeedToolbarButtonId[]
-  onFavorite?: (target: FeedItem) => void | Promise<void>
-  favoritePendingForId: string | null
 }) {
   const {
     resolvedItem,
@@ -59,14 +38,11 @@ export function RetweetedFeedBlock({
     hasLongTextError,
     onLoadLongText,
   } = useFeedLongText(item)
-  const { openGenImage } = useGenImageDialog()
-  const { downloadDialog, downloadLoading, handleDownload } = useFeedCardMediaDownload(resolvedItem)
 
   const addEntry = useCallback(() => {
     browsingHistoryStore.getState().addEntry(resolvedItem)
   }, [resolvedItem])
 
-  const isDeletedAuthor = !resolvedItem.author.id
   const detailPath = getStatusDetailPath(resolvedItem)
   const canNavigate = feedInteractionMode === 'x' && onNavigate !== undefined && detailPath !== null
   const pointerDownPositionRef = useRef<{ x: number; y: number } | null>(null)
@@ -78,41 +54,6 @@ export function RetweetedFeedBlock({
         'aria-label': `查看 ${resolvedItem.author.name || '微博'} 的微博详情`,
       } as const)
     : {}
-
-  const handleCopyLink = () => {
-    const weiboUrl = `https://weibo.com/${resolvedItem.author.id}/${resolvedItem.mblogId}`
-    void navigator.clipboard.writeText(weiboUrl).then(() => {
-      toast.success('已复制链接')
-    })
-  }
-
-  const handleCopyText = () => {
-    const copyText = getStatusCopyText(resolvedItem)
-    if (!copyText) {
-      toast.error('没有可复制的文字')
-      return
-    }
-
-    void navigator.clipboard
-      .writeText(copyText)
-      .then(() => {
-        toast.success('已复制文字')
-      })
-      .catch(() => {
-        toast.error('复制失败，请稍后再试')
-      })
-  }
-
-  const handleRetweetedCommentClick = useCallback(
-    (target: FeedItem) => {
-      if (feedInteractionMode === 'weibo') {
-        onNavigate?.(target)
-      } else {
-        onCommentClick?.(target)
-      }
-    },
-    [feedInteractionMode, onNavigate, onCommentClick],
-  )
 
   const handleRetweetedMouseDown = (event: MouseEvent<HTMLDivElement>) => {
     if (event.button !== 0) {
@@ -151,8 +92,6 @@ export function RetweetedFeedBlock({
       'a,button,[role="button"],input,textarea,select,label',
     )
 
-    // cmd/ctrl + left click on the inert area → open in new tab. The browser
-    // already handles modifier+click on inner <a>/<button> children natively.
     if (
       event.button === 0 &&
       (event.metaKey || event.ctrlKey) &&
@@ -207,6 +146,7 @@ export function RetweetedFeedBlock({
     if (event.target !== event.currentTarget) return
     if (event.key !== 'Enter' && event.key !== ' ') return
 
+    event.preventDefault()
     onNavigate?.(resolvedItem)
   }
 
@@ -225,10 +165,10 @@ export function RetweetedFeedBlock({
       onKeyDown={handleRetweetedKeyDown}
       {...navigationProps}
     >
-      <CardHeader>
+      <CardHeader className="px-4">
         <RetweetedAuthorHeader item={resolvedItem} />
       </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+      <CardContent className="flex flex-col gap-4 px-4">
         <FeedTextBlock
           item={resolvedItem}
           canLoadLongText={shouldShowLoadLongText}
@@ -245,30 +185,7 @@ export function RetweetedFeedBlock({
           downloadFilename={getMediaDownloadFilename(resolvedItem)}
           onOpen={addEntry}
         />
-
-        {!isDeletedAuthor && (
-          <FeedActions
-            item={resolvedItem}
-            onCommentClick={handleRetweetedCommentClick}
-            onCommentExpand={onNavigate}
-            onRepostClick={onRepostClick}
-            onLikeClick={onLikeClick}
-            likePending={likePendingForId === resolvedItem.id}
-            feedInteractionMode={feedInteractionMode}
-            primaryActionOrder={primaryActionOrder}
-            toolbarButtonIds={toolbarButtonIds}
-            favorited={resolvedItem.favorited}
-            onFavorite={onFavorite ? () => onFavorite(resolvedItem) : undefined}
-            favoritePending={favoritePendingForId === resolvedItem.id}
-            onCopyLink={handleCopyLink}
-            onCopyText={handleCopyText}
-            onGenImage={() => openGenImage(resolvedItem)}
-            onDownload={() => void handleDownload()}
-            downloadPending={downloadLoading}
-          />
-        )}
       </CardContent>
-      {downloadDialog}
     </Card>
   )
 }

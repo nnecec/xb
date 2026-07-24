@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { EmoticonPicker } from '@/lib/weibo/components/emoticon-picker'
-import { publishWeiboStatus } from '@/lib/weibo/services/weibo-repository'
+import { publishWeiboStatus } from '@/lib/weibo/data/weibo-data'
 
 interface ComposeDialogProps {
   open: boolean

@@ -113,15 +113,15 @@ export function NotificationsPage() {
     queryKey: ['weibo', 'notifications', activeTab],
     queryFn: async ({ pageParam }) => {
       if (activeTab === 'mentions') {
-        const { loadMentions } = await import('@/lib/weibo/services/weibo-repository')
+        const { loadMentions } = await import('@/lib/weibo/data/weibo-data')
         return loadMentions(pageParam)
       }
       if (activeTab === 'comments') {
-        const { loadComments } = await import('@/lib/weibo/services/weibo-repository')
+        const { loadComments } = await import('@/lib/weibo/data/weibo-data')
         return loadComments(pageParam)
       }
       if (activeTab === 'likes') {
-        const { loadLikes } = await import('@/lib/weibo/services/weibo-repository')
+        const { loadLikes } = await import('@/lib/weibo/data/weibo-data')
         return loadLikes(pageParam)
       }
       return { items: [], nextCursor: null }

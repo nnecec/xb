@@ -14,7 +14,7 @@ import {
   ProfileMutualFollowers,
 } from '@/lib/weibo/components/profile-shared'
 import { RatingPanel } from '@/lib/weibo/components/rating-panel'
-import { loadProfileHoverCard } from '@/lib/weibo/services/weibo-repository'
+import { loadProfileHoverCard } from '@/lib/weibo/data/weibo-data'
 
 function UserHoverCardSkeleton() {
   return (

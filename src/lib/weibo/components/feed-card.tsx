@@ -23,6 +23,13 @@ import { useGenImageDialog } from '@/lib/weibo/components/gen-image-dialog-conte
 import { ImageCarousel } from '@/lib/weibo/components/image-carousel'
 import { RatingSummaryBadge } from '@/lib/weibo/components/rating-panel'
 import { useFeedCardMediaDownload } from '@/lib/weibo/components/use-feed-card-media-download'
+import {
+  cancelStatusLike,
+  createFavorite,
+  deleteWeiboStatus,
+  destroyFavorite,
+  setStatusLike,
+} from '@/lib/weibo/data/weibo-data'
 import { browsingHistoryStore } from '@/lib/weibo/hooks/use-browsing-history'
 import { useFeedLongText } from '@/lib/weibo/hooks/use-feed-long-text'
 import type { FeedItem } from '@/lib/weibo/models/feed'
@@ -37,13 +44,6 @@ import {
   optimisticallyToggleStatusLike,
   restoreStatusCacheMutation,
 } from '@/lib/weibo/queries/status-cache'
-import {
-  cancelStatusLike,
-  createFavorite,
-  deleteWeiboStatus,
-  destroyFavorite,
-  setStatusLike,
-} from '@/lib/weibo/services/weibo-repository'
 
 import { FeedActions } from './feed-card/feed-card-actions'
 import { FeedAuthorHeader } from './feed-card/feed-card-author'
@@ -64,7 +64,6 @@ export const FeedCard = memo(function FeedCard({
   onNavigate,
   onCommentClick,
   onRepostClick,
-  onCommentReply,
   onStatusDeleted,
   className,
 }: {
@@ -73,7 +72,6 @@ export const FeedCard = memo(function FeedCard({
   onNavigate?: (item: FeedItem) => void
   onCommentClick?: (item: FeedItem) => void
   onRepostClick?: (item: FeedItem) => void
-  onCommentReply?: (target: import('@/lib/weibo/models/compose').ComposeTarget) => void
   /** After deleting this status (owner only), e.g. navigate back from detail. */
   onStatusDeleted?: () => void
   className?: string
@@ -293,19 +291,25 @@ export const FeedCard = memo(function FeedCard({
       return
     }
 
+    event.preventDefault()
     onNavigate?.(resolvedItem)
   }
 
   const handleCommentExpand = useCallback(() => {
     setCommentsExpanded((prev) => !prev)
   }, [])
-  const canExpandInlineComments = feedInteractionMode === 'weibo' && onCommentReply !== undefined
+  const canExpandInlineComments = feedInteractionMode === 'weibo'
 
   const handleCopyLink = useCallback((target: FeedItem) => {
     const weiboUrl = `https://weibo.com/${target.author.id}/${target.mblogId}`
-    void navigator.clipboard.writeText(weiboUrl).then(() => {
-      toast.success('已复制链接')
-    })
+    void navigator.clipboard
+      .writeText(weiboUrl)
+      .then(() => {
+        toast.success('已复制链接')
+      })
+      .catch(() => {
+        toast.error('复制失败，请稍后再试')
+      })
   }, [])
 
   const handleCopyText = useCallback((target: FeedItem) => {
@@ -330,18 +334,21 @@ export const FeedCard = memo(function FeedCard({
       <Card className={cn('xb-feed-card xb-feed-card--compact gap-4 py-4 relative', className)}>
         <CardContent className="flex flex-col items-center gap-3 py-8">
           <p className="text-muted-foreground text-sm">此微博已被删除</p>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={unfavoriteMutation.isPending}
-            onClick={(event) => {
-              event.stopPropagation()
-              void unfavoriteMutation.mutateAsync(resolvedItem.id)
-            }}
-          >
-            <Bookmark className="mr-1 size-3" />
-            取消收藏
-          </Button>
+          {resolvedItem.favorited ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={unfavoriteMutation.isPending}
+              aria-busy={unfavoriteMutation.isPending || undefined}
+              onClick={(event) => {
+                event.stopPropagation()
+                void unfavoriteMutation.mutateAsync(resolvedItem.id)
+              }}
+            >
+              <Bookmark className="mr-1 size-3" />
+              取消收藏
+            </Button>
+          ) : null}
         </CardContent>
       </Card>
     )
@@ -350,8 +357,9 @@ export const FeedCard = memo(function FeedCard({
   return (
     <Card
       className={cn(
-        'xb-feed-card group/card gap-4 py-4 relative',
-        canNavigate && 'cursor-pointer outline-none',
+        'xb-feed-card group/card relative gap-4 py-4',
+        canNavigate &&
+          'cursor-pointer focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none',
         className,
       )}
       data-testid="feed-card-body"
@@ -360,35 +368,39 @@ export const FeedCard = memo(function FeedCard({
       onKeyDown={handleCardKeyDown}
       {...navigationProps}
     >
-      <div className="absolute top-4 right-4">
-        <FeedCardMoreMenu
-          type="status"
-          isOwner={showOwnerMenu}
-          item={resolvedItem}
-          favorited={resolvedItem.favorited}
-          onFavorite={() => favoriteMutation.mutateAsync(resolvedItem)}
-          contentLabel="这条微博"
-          isDeleting={deleteMutation.isPending}
-          onDelete={() => deleteMutation.mutateAsync()}
-          visibleActionIds={moreMenuActionIds}
-          onCopyText={() => handleCopyText(resolvedItem)}
-        />
-      </div>
       {resolvedItem.title ? (
         <div className="px-4">
           <Badge variant="secondary">{resolvedItem.title.text}</Badge>
         </div>
       ) : null}
-      <FeedAuthorHeader
-        item={resolvedItem}
-        trailing={
-          ratingEnabled ? (
-            <RatingSummaryBadge targetUid={resolvedItem.author.id} size="sm" useBatchCache />
-          ) : null
-        }
-      />
+      <div className="relative flex items-start gap-2 pr-2 pl-0">
+        <div className="min-w-0 flex-1">
+          <FeedAuthorHeader
+            item={resolvedItem}
+            trailing={
+              ratingEnabled ? (
+                <RatingSummaryBadge targetUid={resolvedItem.author.id} size="sm" useBatchCache />
+              ) : null
+            }
+          />
+        </div>
+        <div className="shrink-0 pt-1 pr-2">
+          <FeedCardMoreMenu
+            type="status"
+            isOwner={showOwnerMenu}
+            item={resolvedItem}
+            favorited={resolvedItem.favorited}
+            onFavorite={() => favoriteMutation.mutateAsync(resolvedItem)}
+            contentLabel="这条微博"
+            isDeleting={deleteMutation.isPending}
+            onDelete={() => deleteMutation.mutateAsync()}
+            visibleActionIds={moreMenuActionIds}
+            onCopyText={() => handleCopyText(resolvedItem)}
+          />
+        </div>
+      </div>
       <CardContent
-        className="flex flex-col gap-4"
+        className="flex flex-col gap-4 px-4"
         onMouseDown={handleCardMouseDown}
         onMouseUp={handleCardMouseUp}
       >
@@ -413,21 +425,11 @@ export const FeedCard = memo(function FeedCard({
           <RetweetedFeedBlock
             item={resolvedItem.retweetedStatus}
             onNavigate={onNavigate}
-            onCommentClick={onCommentClick}
-            onRepostClick={onRepostClick}
-            onLikeClick={(target) => likeMutation.mutate(target)}
-            likePendingForId={likePendingId}
             feedInteractionMode={feedInteractionMode}
-            primaryActionOrder={feedPrimaryActionOrder}
-            toolbarButtonIds={feedToolbarButtonIds}
-            onFavorite={(target) => favoriteMutation.mutate(target)}
-            favoritePendingForId={
-              favoriteMutation.isPending ? resolvedItem.retweetedStatus.id : null
-            }
           />
         ) : null}
       </CardContent>
-      <CardFooter>
+      <CardFooter className="px-4">
         <FeedActions
           item={resolvedItem}
           surface={surfaceProp}
@@ -455,7 +457,6 @@ export const FeedCard = memo(function FeedCard({
         <FeedCommentsExpanded
           id={commentsPanelId}
           item={resolvedItem}
-          onCommentReply={onCommentReply}
           onCollapse={handleCommentExpand}
         />
       ) : null}

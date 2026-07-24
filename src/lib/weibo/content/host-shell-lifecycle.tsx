@@ -7,8 +7,8 @@ import { AppRoot } from '@/lib/weibo/app/app-root'
 import { waitForWeiboHostRegions } from '@/lib/weibo/content/host-selectors'
 import { markWeiboPageReady } from '@/lib/weibo/content/page-takeover'
 import { bindShellState } from '@/lib/weibo/content/shell-state'
+import { loadFollowGroups } from '@/lib/weibo/data/weibo-data'
 import { homeTimelinePathFromTab } from '@/lib/weibo/route/home-timeline-path'
-import { loadFollowGroups } from '@/lib/weibo/services/weibo-repository'
 
 interface MountedWeiboUi {
   root: Root

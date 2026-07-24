@@ -6,16 +6,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { APP_SETTINGS_STORAGE_KEY } from '@/lib/app-settings'
 import { getAppSettingsStore, resetAppSettingsStoreForTest } from '@/lib/app-settings-store'
 import { AppShell } from '@/lib/weibo/app/app-shell'
+import { loadFollowGroups, loadGroupTimeline, loadHomeTimeline } from '@/lib/weibo/data/weibo-io'
 import { HomeTimelinePage } from '@/lib/weibo/pages/home-timeline-page'
-import {
-  loadFollowGroups,
-  loadGroupTimeline,
-  loadHomeTimeline,
-} from '@/lib/weibo/services/weibo-repository'
 
-vi.mock('@/lib/weibo/services/weibo-repository', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/weibo/services/weibo-repository')>(
-    '@/lib/weibo/services/weibo-repository',
+vi.mock('@/lib/weibo/data/weibo-io', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/weibo/data/weibo-io')>(
+    '@/lib/weibo/data/weibo-io',
   )
 
   return {

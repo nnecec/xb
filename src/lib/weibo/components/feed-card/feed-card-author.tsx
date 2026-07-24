@@ -78,6 +78,7 @@ export function RetweetedAuthorHeader({
         <button
           type="button"
           className="cursor-pointer"
+          aria-label={`${item.author.name} 的主页`}
           onClick={(event) => event.stopPropagation()}
         >
           <UserAvatar

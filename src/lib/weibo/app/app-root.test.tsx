@@ -3,7 +3,7 @@ import { render, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { AppRoot } from '@/lib/weibo/app/app-root'
-import * as repositoryModule from '@/lib/weibo/services/weibo-repository'
+import * as repositoryModule from '@/lib/weibo/data/weibo-io'
 
 vi.mock('@/lib/weibo/app/app-shell', () => ({
   AppShell: () => <div>app-shell</div>,
@@ -13,9 +13,9 @@ vi.mock('@/lib/weibo/app/error-boundary', () => ({
   AppErrorBoundary: ({ children }: { children: React.ReactNode }) => children,
 }))
 
-vi.mock('@/lib/weibo/services/weibo-repository', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/weibo/services/weibo-repository')>(
-    '@/lib/weibo/services/weibo-repository',
+vi.mock('@/lib/weibo/data/weibo-io', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/weibo/data/weibo-io')>(
+    '@/lib/weibo/data/weibo-io',
   )
 
   return {

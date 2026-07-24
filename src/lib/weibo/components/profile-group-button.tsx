@@ -24,9 +24,9 @@ import {
   profileAssignedGroupsQueryOptions,
   profileAvailableGroupsQueryOptions,
 } from '@/lib/weibo/data/weibo-data'
+import { createProfileGroup, setProfileGroups } from '@/lib/weibo/data/weibo-data'
 import type { ProfileFollowGroup } from '@/lib/weibo/models/profile'
 import { getCurrentUserUid } from '@/lib/weibo/platform/current-user'
-import { createProfileGroup, setProfileGroups } from '@/lib/weibo/services/weibo-repository'
 
 interface ProfileGroupButtonProps {
   uid: string

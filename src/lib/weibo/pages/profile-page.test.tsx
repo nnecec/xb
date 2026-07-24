@@ -6,16 +6,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { APP_SETTINGS_STORAGE_KEY } from '@/lib/app-settings'
 import { getAppSettingsStore, resetAppSettingsStoreForTest } from '@/lib/app-settings-store'
 import { AppShell } from '@/lib/weibo/app/app-shell'
-import { ProfilePage } from '@/lib/weibo/pages/profile-page'
 import {
   loadProfileHoverCard,
   loadProfilePosts,
   loadProfileSearchPosts,
-} from '@/lib/weibo/services/weibo-repository'
+} from '@/lib/weibo/data/weibo-io'
+import { ProfilePage } from '@/lib/weibo/pages/profile-page'
 
-vi.mock('@/lib/weibo/services/weibo-repository', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/weibo/services/weibo-repository')>(
-    '@/lib/weibo/services/weibo-repository',
+vi.mock('@/lib/weibo/data/weibo-io', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/weibo/data/weibo-io')>(
+    '@/lib/weibo/data/weibo-io',
   )
 
   return {

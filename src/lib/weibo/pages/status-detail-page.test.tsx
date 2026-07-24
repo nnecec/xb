@@ -18,9 +18,9 @@ vi.mock('@/lib/weibo/app/app-shell-layout', () => ({
   }),
 }))
 
-vi.mock('@/lib/weibo/services/weibo-repository', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/weibo/services/weibo-repository')>(
-    '@/lib/weibo/services/weibo-repository',
+vi.mock('@/lib/weibo/data/weibo-io', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/weibo/data/weibo-io')>(
+    '@/lib/weibo/data/weibo-io',
   )
   return {
     ...actual,
@@ -57,8 +57,8 @@ vi.mock('@/lib/weibo/components/feed-card', () => ({
 
 import { APP_SETTINGS_STORAGE_KEY } from '@/lib/app-settings'
 import { getAppSettingsStore, resetAppSettingsStoreForTest } from '@/lib/app-settings-store'
+import { loadStatusComments, loadStatusDetail } from '@/lib/weibo/data/weibo-io'
 import { StatusDetailPage } from '@/lib/weibo/pages/status-detail-page'
-import { loadStatusComments, loadStatusDetail } from '@/lib/weibo/services/weibo-repository'
 
 class TestIntersectionObserver {
   static instances: TestIntersectionObserver[] = []
@@ -329,33 +329,21 @@ describe('StatusDetailPage', () => {
       excerpt: 'main post',
     })
 
+    // Nested comment replies are inline CommentBox (not global compose modal).
     const replyButtons = screen.getAllByRole('button', { name: '回复评论' })
-    replyButtons.forEach((button) => fireEvent.click(button))
+    expect(replyButtons.length).toBeGreaterThanOrEqual(3)
 
-    expect(setComposeTarget).toHaveBeenCalledWith({
-      kind: 'comment',
-      mode: 'comment',
-      statusId: '501',
-      targetCommentId: '601',
-      authorName: 'Bob',
-      excerpt: 'reply level 1',
-    })
-    expect(setComposeTarget).toHaveBeenCalledWith({
-      kind: 'comment',
-      mode: 'comment',
-      statusId: '501',
-      targetCommentId: '602',
-      authorName: 'Carol',
-      excerpt: 'reply level 2',
-    })
-    expect(setComposeTarget).toHaveBeenCalledWith({
-      kind: 'comment',
-      mode: 'comment',
-      statusId: '501',
-      targetCommentId: '603',
-      authorName: 'Dave',
-      excerpt: 'reply level 3',
-    })
+    fireEvent.click(replyButtons[0])
+    expect(await screen.findByPlaceholderText('回复 @Bob')).toBeInTheDocument()
+
+    fireEvent.click(replyButtons[1])
+    expect(await screen.findByPlaceholderText('回复 @Carol')).toBeInTheDocument()
+
+    fireEvent.click(replyButtons[2])
+    expect(await screen.findByPlaceholderText('回复 @Dave')).toBeInTheDocument()
+
+    // Status-level reply/repost still go through global compose; comment replies do not.
+    expect(setComposeTarget).toHaveBeenCalledTimes(2)
   })
 
   it('lets the detail column fill the available content width', async () => {

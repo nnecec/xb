@@ -37,14 +37,12 @@ function StatusCommentsSection({
   authorName,
   statusText,
   commentsCount,
-  onCommentReply,
 }: {
   statusId: string
   authorId: string
   authorName: string
   statusText: string
   commentsCount: number
-  onCommentReply: ReturnType<typeof useAppShellContext>['setComposeTarget']
 }) {
   const [filter, setFilter] = useState<string | undefined>(undefined)
   const commentsQuery = useInfiniteQuery({
@@ -123,7 +121,6 @@ function StatusCommentsSection({
               emptyLabel="此微博暂无评论"
               rootStatusId={statusId}
               authorUid={authorId}
-              onCommentReply={onCommentReply}
             />
           ) : null}
         </div>
@@ -322,7 +319,6 @@ export function StatusDetailPage() {
               authorName={detail.status.author.name}
               statusText={detail.status.text}
               commentsCount={detail.status.stats.comments}
-              onCommentReply={ctx.setComposeTarget}
             />
           ) : null}
         </div>

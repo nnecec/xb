@@ -1,24 +1,12 @@
 /**
- * Weibo Data Layer
+ * Weibo Data Layer — public seam for all Weibo IO + TanStack Query options.
  *
- * Consolidated data access layer combining TanStack Query configuration,
- * API calls via client.ts, and response adaptation via adapters/.
- *
- * Replaces the three-layer architecture:
- * - weibo-queries.ts (query options)
- * - weibo-repository.ts (API calls)
- * - client.ts (postMessage bridge - preserved)
+ * Production code imports only from this module (or `@/lib/weibo/data`).
+ * Transport + adapt live in private `weibo-io.ts` (not for UI imports).
+ * `client.ts` remains the postMessage bridge behind weibo-io.
  */
 
 import type { HotSearchType } from '@/lib/app-settings'
-import type { ExploreGroup } from '@/lib/weibo/models/explore'
-import type { FeedAuthor, TimelinePage, TopicChannel } from '@/lib/weibo/models/feed'
-import type { StatusCommentsPage } from '@/lib/weibo/models/status'
-import type { RelationPage } from '@/lib/weibo/models/user-relation'
-import type { WeiboPageDescriptor } from '@/lib/weibo/route/page-descriptor'
-import type { ProfileSearchParams } from '@/lib/weibo/route/profile-search-params'
-import { PROFILE_SEARCH_FILTER_KEYS } from '@/lib/weibo/route/profile-search-params'
-import type { UnreadCounts } from '@/lib/weibo/services/weibo-repository'
 import {
   checkUnreadNotifications,
   loadExploreGroups,
@@ -43,7 +31,73 @@ import {
   loadStatusLongText,
   loadTopicSearch,
   type HomeTimelineTab,
-} from '@/lib/weibo/services/weibo-repository'
+  type UnreadCounts,
+} from '@/lib/weibo/data/weibo-io'
+import type { ExploreGroup } from '@/lib/weibo/models/explore'
+import type { FeedAuthor, TimelinePage, TopicChannel } from '@/lib/weibo/models/feed'
+import type { StatusCommentsPage } from '@/lib/weibo/models/status'
+import type { RelationPage } from '@/lib/weibo/models/user-relation'
+import type { WeiboPageDescriptor } from '@/lib/weibo/route/page-descriptor'
+import type { ProfileSearchParams } from '@/lib/weibo/route/profile-search-params'
+import { PROFILE_SEARCH_FILTER_KEYS } from '@/lib/weibo/route/profile-search-params'
+
+// ─── Public re-exports of load* / mutations / IO types (implementation: weibo-io) ───
+
+export type {
+  FeedCommentsResult,
+  HomeTimelineTab,
+  LoadExploreHotOptions,
+  LoadFavoritesOptions,
+  LoadProfileSearchParams,
+  LoadTimelineOptions,
+  ProfileSearchPage,
+  UnreadCounts,
+} from '@/lib/weibo/data/weibo-io'
+
+export {
+  cancelCommentLike,
+  cancelStatusLike,
+  checkUnreadNotifications,
+  createFavorite,
+  createProfileGroup,
+  deleteWeiboComment,
+  deleteWeiboStatus,
+  destroyFavorite,
+  followUser,
+  loadComments,
+  loadEmoticonConfig,
+  loadExploreGroups,
+  loadExploreHot,
+  loadFavorites,
+  loadFeedComments,
+  loadFollowGroups,
+  loadFollowedSuperTopics,
+  loadFriends,
+  loadGroupTimeline,
+  loadHomeTimeline,
+  loadHotSearchByType,
+  loadLikedStatuses,
+  loadLikes,
+  loadMentions,
+  loadNestedComments,
+  loadProfileAssignedGroups,
+  loadProfileAvailableGroups,
+  loadProfileHoverCard,
+  loadProfilePosts,
+  loadProfileSearchPosts,
+  loadSearch,
+  loadStatusComments,
+  loadStatusDetail,
+  loadStatusLongText,
+  loadTopicSearch,
+  publishWeiboStatus,
+  setCommentLike,
+  setProfileGroups,
+  setSpecialFollowUser,
+  setStatusLike,
+  submitComposeAction,
+  unfollowUser,
+} from '@/lib/weibo/data/weibo-io'
 
 // ─── Utility Functions ───
 

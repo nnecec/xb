@@ -15,9 +15,9 @@ vi.mock('@/lib/weibo/components/emoticon-picker', () => ({
   EmoticonPicker: () => <div data-testid="emoticon-picker" />,
 }))
 
-vi.mock('@/lib/weibo/services/weibo-repository', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/weibo/services/weibo-repository')>(
-    '@/lib/weibo/services/weibo-repository',
+vi.mock('@/lib/weibo/data/weibo-io', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/weibo/data/weibo-io')>(
+    '@/lib/weibo/data/weibo-io',
   )
 
   return {
@@ -71,7 +71,7 @@ describe('ComposeDialog', () => {
   })
 
   it('publishes content and closes on success', async () => {
-    const { publishWeiboStatus } = await import('@/lib/weibo/services/weibo-repository')
+    const { publishWeiboStatus } = await import('@/lib/weibo/data/weibo-io')
     const { toast } = await import('sonner')
     vi.mocked(publishWeiboStatus).mockImplementation(async () => {})
 
@@ -88,7 +88,7 @@ describe('ComposeDialog', () => {
   })
 
   it('shows an error toast when publish fails', async () => {
-    const { publishWeiboStatus } = await import('@/lib/weibo/services/weibo-repository')
+    const { publishWeiboStatus } = await import('@/lib/weibo/data/weibo-io')
     const { toast } = await import('sonner')
     vi.mocked(publishWeiboStatus).mockImplementation(async () => {
       throw new Error('publish failed')

@@ -16,9 +16,9 @@ vi.mock('@/lib/weibo/components/emoticon-picker', () => ({
   EmoticonPicker: () => <div data-testid="emoticon-picker" />,
 }))
 
-vi.mock('@/lib/weibo/services/weibo-repository', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/weibo/services/weibo-repository')>(
-    '@/lib/weibo/services/weibo-repository',
+vi.mock('@/lib/weibo/data/weibo-io', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/weibo/data/weibo-io')>(
+    '@/lib/weibo/data/weibo-io',
   )
 
   return {
@@ -73,7 +73,7 @@ describe('CommentBox', () => {
   })
 
   it('submits a comment and clears the textarea on success', async () => {
-    const { submitComposeAction } = await import('@/lib/weibo/services/weibo-repository')
+    const { submitComposeAction } = await import('@/lib/weibo/data/weibo-io')
     const { toast } = await import('sonner')
     vi.mocked(submitComposeAction).mockResolvedValueOnce(undefined)
 
@@ -101,7 +101,7 @@ describe('CommentBox', () => {
   })
 
   it('restores optimistic state and shows an error toast on failure', async () => {
-    const { submitComposeAction } = await import('@/lib/weibo/services/weibo-repository')
+    const { submitComposeAction } = await import('@/lib/weibo/data/weibo-io')
     const { toast } = await import('sonner')
     vi.mocked(submitComposeAction).mockRejectedValueOnce(new Error('compose failed'))
 

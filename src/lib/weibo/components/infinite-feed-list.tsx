@@ -4,7 +4,6 @@ import { Spinner } from '@/components/ui/spinner'
 import { FeedList } from '@/lib/weibo/components/feed-list'
 import { PageErrorState, PageLoadingState } from '@/lib/weibo/components/page-state'
 import { flattenInfiniteItems } from '@/lib/weibo/data/weibo-data'
-import type { ComposeTarget } from '@/lib/weibo/models/compose'
 import type { FeedItem } from '@/lib/weibo/models/feed'
 import { useFeedRatingBatchSync } from '@/lib/weibo/rating/xb-rating'
 
@@ -21,7 +20,6 @@ interface InfiniteFeedListProps {
   onNavigate?: (item: FeedItem) => void
   onCommentClick?: (item: FeedItem) => void
   onRepostClick?: (item: FeedItem) => void
-  onCommentReply?: (target: ComposeTarget) => void
   className?: string
 }
 
@@ -38,7 +36,6 @@ export function InfiniteFeedList({
   onNavigate,
   onCommentClick,
   onRepostClick,
-  onCommentReply,
   className = 'flex flex-col gap-3',
 }: InfiniteFeedListProps) {
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
@@ -81,7 +78,6 @@ export function InfiniteFeedList({
           onNavigate={onNavigate}
           onCommentClick={onCommentClick}
           onRepostClick={onRepostClick}
-          onCommentReply={onCommentReply}
         />
       ) : null}
       {hasNextPage ? (

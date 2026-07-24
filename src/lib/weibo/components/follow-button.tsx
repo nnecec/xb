@@ -1,8 +1,8 @@
 import { useMutation } from '@tanstack/react-query'
 
 import { Button } from '@/components/ui/button'
+import { followUser, unfollowUser } from '@/lib/weibo/data/weibo-data'
 import { getCurrentUserUid } from '@/lib/weibo/platform/current-user'
-import { followUser, unfollowUser } from '@/lib/weibo/services/weibo-repository'
 
 interface FollowButtonProps {
   uid: string

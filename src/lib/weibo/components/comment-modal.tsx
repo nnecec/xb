@@ -15,12 +15,12 @@ import {
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { EmoticonPicker } from '@/lib/weibo/components/emoticon-picker'
+import { submitComposeAction } from '@/lib/weibo/data/weibo-data'
 import type { ComposeTarget } from '@/lib/weibo/models/compose'
 import {
   optimisticallyIncrementStatusComments,
   restoreStatusCacheMutation,
 } from '@/lib/weibo/queries/status-cache'
-import { submitComposeAction } from '@/lib/weibo/services/weibo-repository'
 
 function getModalCopy(target: ComposeTarget) {
   if (target.mode === 'repost') {

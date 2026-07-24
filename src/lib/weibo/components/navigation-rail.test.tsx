@@ -14,8 +14,8 @@ vi.mock('@/lib/weibo/platform/current-user', () => ({
   getCurrentUserUid: () => getCurrentUserUidMock(),
 }))
 
-vi.mock('@/lib/weibo/services/weibo-repository', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/lib/weibo/services/weibo-repository')>()
+vi.mock('@/lib/weibo/data/weibo-io', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/weibo/data/weibo-io')>()
   return {
     ...actual,
     checkUnreadNotifications: () => checkUnreadNotificationsMock(),

@@ -1,4 +1,4 @@
-import { Copy, Download, Image, Link, MoreHorizontal, Star, Trash } from 'lucide-react'
+import { Bookmark, Copy, Download, Image, Link, MoreHorizontal, Trash } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -139,7 +139,7 @@ export function FeedCardMoreMenu({
               }}
               disabled={favoriteLoading}
             >
-              <Star className="mr-2 size-4" fill={favorited ? 'currentColor' : 'none'} />
+              <Bookmark className="mr-2 size-4" fill={favorited ? 'currentColor' : 'none'} />
               {favorited ? '取消收藏' : '收藏'}
             </DropdownMenuItem>
           )}
@@ -148,9 +148,14 @@ export function FeedCardMoreMenu({
               onSelect={() => {
                 setMenuOpen(false)
                 const url = `https://weibo.com/${item!.author.id}/${item!.mblogId}`
-                void navigator.clipboard.writeText(url).then(() => {
-                  toast.success('已复制链接')
-                })
+                void navigator.clipboard
+                  .writeText(url)
+                  .then(() => {
+                    toast.success('已复制链接')
+                  })
+                  .catch(() => {
+                    toast.error('复制失败，请稍后再试')
+                  })
               }}
             >
               <Link className="mr-2 size-4" />
