@@ -773,15 +773,13 @@ export interface LoadExploreHotOptions {
 
 export async function loadExploreHot(options: LoadExploreHotOptions = {}): Promise<TimelinePage> {
   const isFirstPage = !options.cursor
-  const cursorNum = options.cursor ? Number(options.cursor) : 0
-  const nextCursor = isFirstPage ? 0 : cursorNum + 1
 
   const payload = await wbGet<ExploreHotPayload>(WEIBO_ENDPOINTS.exploreHot, {
     refresh: isFirstPage ? 0 : 2,
     group_id: options.groupId ?? '102803',
     containerid: options.containerid ?? '102803',
     extparam: 'discover|new_feed',
-    max_id: isFirstPage ? 0 : nextCursor,
+    max_id: isFirstPage ? 0 : options.cursor,
     count: 10,
   })
   return adaptExploreHotResponse(payload)

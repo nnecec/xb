@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   createProfileGroup,
+  loadExploreHot,
   loadHomeTimeline,
   loadLikedStatuses,
   loadProfileAssignedGroups,
@@ -398,6 +399,40 @@ describe('submitComposeAction', () => {
       is_comment: '1',
       visible: '0',
       share_id: '',
+    })
+  })
+
+  it('loads explore hot first page with max_id 0 and refresh 0', async () => {
+    await expect(loadExploreHot()).resolves.toEqual({
+      items: [],
+      nextCursor: null,
+    })
+
+    expect(wbGet).toHaveBeenCalledWith('/ajax/feed/hottimeline', {
+      refresh: 0,
+      group_id: '102803',
+      containerid: '102803',
+      extparam: 'discover|new_feed',
+      max_id: 0,
+      count: 10,
+    })
+  })
+
+  it('loads explore hot next page with cursor as max_id without +1', async () => {
+    await expect(loadExploreHot({ cursor: '42', groupId: 'g', containerid: 'c' })).resolves.toEqual(
+      {
+        items: [],
+        nextCursor: null,
+      },
+    )
+
+    expect(wbGet).toHaveBeenCalledWith('/ajax/feed/hottimeline', {
+      refresh: 2,
+      group_id: 'g',
+      containerid: 'c',
+      extparam: 'discover|new_feed',
+      max_id: '42',
+      count: 10,
     })
   })
 })
