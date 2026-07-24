@@ -119,10 +119,8 @@ export const FeedCard = memo(function FeedCard({
       }
     },
     onMutate: (target: FeedItem) => optimisticallyToggleStatusLike(queryClient, target),
-    onSuccess: (_data, target) => {
-      if (target.liked) {
-        void queryClient.invalidateQueries({ queryKey: ['weibo', 'liked-statuses'] })
-      }
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['weibo', 'liked-statuses'] })
     },
     onError: (_error, _target, context) => {
       restoreStatusCacheMutation(queryClient, context)
