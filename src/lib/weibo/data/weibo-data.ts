@@ -422,8 +422,14 @@ export function topicSearchInfiniteOptions(topic: string, channelType?: string) 
     queryFn: ({ pageParam }: { pageParam: number }) =>
       loadTopicSearch(topic, pageParam, channelType),
     initialPageParam: 1 as number,
-    getNextPageParam: (lastPage: TimelinePage, allPages: TimelinePage[]) =>
-      lastPage.items.length > 0 ? allPages.length + 1 : undefined,
+    getNextPageParam: (
+      lastPage: TimelinePage,
+      _allPages: TimelinePage[],
+      lastPageParam: number,
+    ) => {
+      if (!lastPage.nextCursor || lastPage.items.length === 0) return undefined
+      return lastPageParam + 1
+    },
     maxPages: TOPIC_INFINITE_QUERY_MAX_PAGES,
     staleTime: 5 * 60 * 1000,
   }

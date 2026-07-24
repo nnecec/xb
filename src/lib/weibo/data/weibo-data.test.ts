@@ -75,3 +75,40 @@ describe('feed infinite query cache policy', () => {
     expect(topicSearchInfiniteOptions('topic').maxPages).toBe(TOPIC_INFINITE_QUERY_MAX_PAGES)
   })
 })
+
+describe('topicSearchInfiniteOptions getNextPageParam', () => {
+  const getNextPageParam = topicSearchInfiniteOptions('topic').getNextPageParam
+
+  it('returns lastPageParam + 1 when items and nextCursor are present', () => {
+    const lastPage = {
+      items: [{ id: '1' } as never],
+      nextCursor: '3',
+    }
+    expect(getNextPageParam(lastPage, [], 2)).toBe(3)
+  })
+
+  it('uses lastPageParam not allPages.length after maxPages trims pages', () => {
+    const lastPage = {
+      items: [{ id: '1' } as never],
+      nextCursor: '11',
+    }
+    const allPages = Array.from({ length: 8 }, () => lastPage)
+    expect(getNextPageParam(lastPage, allPages, 10)).toBe(11)
+  })
+
+  it('returns undefined when nextCursor is null', () => {
+    const lastPage = {
+      items: [{ id: '1' } as never],
+      nextCursor: null,
+    }
+    expect(getNextPageParam(lastPage, [], 2)).toBeUndefined()
+  })
+
+  it('returns undefined when items are empty', () => {
+    const lastPage = {
+      items: [],
+      nextCursor: '3',
+    }
+    expect(getNextPageParam(lastPage, [], 2)).toBeUndefined()
+  })
+})
