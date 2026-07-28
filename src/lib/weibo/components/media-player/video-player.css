@@ -104,30 +104,6 @@
 }
 
 /* ============================================
-   Seek Time Preview on Hover
-   ============================================ */
-
-/* The default skin.css shows preview only when :has([role="img"]:not([data-hidden]))
-   (i.e., only when there's a loaded thumbnail). Override to show on pointer hover
-   since we don't use VTT thumbnail tracks. */
-.media-default-skin--video .media-slider[data-pointing] .media-slider__preview {
-  opacity: 1;
-  scale: 1;
-  filter: blur(0);
-}
-
-.video-time-preview {
-  background: oklch(0 0 0 / 0.9);
-  border-radius: 0.5rem;
-  padding: 0.25rem 0.5rem;
-  color: oklch(1 0 0);
-  font-size: 0.75rem;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-/* ============================================
    Buffer Progress Bar Color
    ============================================ */
 

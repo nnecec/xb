@@ -623,9 +623,6 @@ export function VideoPlayer({
                   <TimeSlider.Buffer className="media-slider__buffer" />
                 </TimeSlider.Track>
                 <TimeSlider.Thumb className="media-slider__thumb" />
-                <TimeSlider.Preview className="media-surface media-slider__preview">
-                  <TimeSlider.Value type="pointer" className="video-time-preview" />
-                </TimeSlider.Preview>
               </TimeSlider.Root>
               <Time.Value type="duration" className="media-time" />
             </div>
