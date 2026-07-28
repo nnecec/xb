@@ -251,7 +251,11 @@ function getMediaRequestInit(
 }
 
 function isMediaContentType(contentType: string | null): contentType is string {
-  return contentType?.startsWith('image/') === true || contentType?.startsWith('video/') === true
+  return (
+    contentType?.startsWith('image/') === true ||
+    contentType?.startsWith('video/') === true ||
+    contentType === 'application/octet-stream'
+  )
 }
 
 function getMediaContentType(response: Response): string | null {

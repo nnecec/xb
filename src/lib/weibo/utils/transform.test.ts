@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { extractMediaUrls } from '@/lib/weibo/utils/download-media'
 import { normalizeSafeExternalUrl } from '@/lib/weibo/utils/safe-url'
 
 import { mergeLongTextIntoFeedItem, toFeedItem, toMedia } from './transform'
@@ -369,6 +370,37 @@ describe('toFeedItem media images', () => {
         videoDownloadUrl: 'https://example.com/download.mp4',
         videoTitle: '混合视频',
       },
+    ])
+  })
+
+  it('keeps a mixed-media Live Photo video in the batch download queue', () => {
+    const result = toFeedItem({
+      idstr: 'mixed-live-photo',
+      text_raw: 'mixed live photo',
+      user: { idstr: '1', screen_name: 'Alice' },
+      mix_media_info: {
+        items: [
+          {
+            type: 'pic',
+            id: 'live-pic',
+            data: {
+              pic_id: 'live-pic',
+              pic_infos: {
+                'live-pic': {
+                  large: { url: 'https://wx3.sinaimg.cn/large/live-pic.jpg' },
+                  type: 'livephoto',
+                  video_hd: 'https://livephoto.us.sinaimg.cn/live-pic.mp4',
+                },
+              },
+            },
+          },
+        ],
+      },
+    } as any)
+
+    expect(extractMediaUrls(result).map(({ url }) => url)).toEqual([
+      'https://wx3.sinaimg.cn/large/live-pic.jpg',
+      'https://livephoto.us.sinaimg.cn/live-pic.mp4',
     ])
   })
 })

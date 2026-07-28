@@ -149,7 +149,7 @@ describe('extractMediaUrls', () => {
           thumbnailUrl: 'https://example.com/thumb1.jpg',
           largeUrl: 'https://example.com/large1.jpg',
           type: 'livephoto',
-          livePhotoVideoUrl: 'https://example.com/video1.mp4',
+          livePhotoVideoUrl: 'http://livephoto.us.sinaimg.cn/video1.mp4',
         },
       ],
     })
@@ -159,7 +159,7 @@ describe('extractMediaUrls', () => {
     expect(urls).toHaveLength(2)
     expect(urls[0].url).toBe('https://example.com/large1.jpg')
     expect(urls[0].type).toBe('image')
-    expect(urls[1].url).toBe('https://example.com/video1.mp4')
+    expect(urls[1].url).toBe('https://livephoto.us.sinaimg.cn/video1.mp4')
     expect(urls[1].type).toBe('video')
   })
 

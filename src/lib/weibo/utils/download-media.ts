@@ -277,9 +277,10 @@ export function extractMediaUrls(item: FeedItem): MediaUrl[] {
 
     // Live Photo 视频
     if (image.livePhotoVideoUrl) {
+      const videoUrl = normalizeDownloadUrl(image.livePhotoVideoUrl) ?? image.livePhotoVideoUrl
       urls.push({
-        url: image.livePhotoVideoUrl,
-        filename: generateFilename(author, text, index++, image.livePhotoVideoUrl),
+        url: videoUrl,
+        filename: generateFilename(author, text, index++, videoUrl),
         type: 'video',
       })
     }
@@ -314,9 +315,11 @@ export function extractMediaUrls(item: FeedItem): MediaUrl[] {
 
         // 混合媒体中的 Live Photo
         if (mixItem.image.livePhotoVideoUrl) {
+          const videoUrl =
+            normalizeDownloadUrl(mixItem.image.livePhotoVideoUrl) ?? mixItem.image.livePhotoVideoUrl
           urls.push({
-            url: mixItem.image.livePhotoVideoUrl,
-            filename: generateFilename(author, text, index++, mixItem.image.livePhotoVideoUrl),
+            url: videoUrl,
+            filename: generateFilename(author, text, index++, videoUrl),
             type: 'video',
           })
         }

@@ -6,6 +6,7 @@
 import type { FeedDashQuality, FeedDashSource, FeedMixMediaItem } from '@/lib/weibo/models/feed'
 
 import { pickNonEmptyUrl, uniqueNonEmptyUrls } from './helpers'
+import { toImagesFromParts } from './images'
 import type { WeiboMediaInfo, WeiboStatus } from './types'
 
 /**
@@ -229,6 +230,19 @@ export function toMixMediaInfo(mixMediaInfo: any): FeedMixMediaItem[] | undefine
       })
     } else {
       // type === 'pic'
+      const imageFromPicInfo = toImagesFromParts(
+        item.data.pic_id ? [item.data.pic_id] : Object.keys(item.data.pic_infos ?? {}),
+        item.data.pic_infos,
+      )[0]
+      if (imageFromPicInfo) {
+        results.push({
+          type: 'pic',
+          id: item.id,
+          image: imageFromPicInfo,
+        })
+        continue
+      }
+
       const thumbnailImage = item.data.large ?? item.data.bmiddle ?? item.data.thumbnail
       const largeImage =
         item.data.largest ??

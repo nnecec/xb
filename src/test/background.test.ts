@@ -167,6 +167,34 @@ describe('background media proxy responses', () => {
       data: Buffer.from('image-bytes').toString('base64'),
     })
   })
+
+  it('accepts Live Photo videos served as generic binary data', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response('live-photo-bytes', {
+          headers: {
+            'content-length': '16',
+            'content-type': 'application/octet-stream',
+          },
+        }),
+      ),
+    )
+
+    await expect(
+      handleMediaFetch(
+        {
+          type: 'media-fetch',
+          url: 'https://livephoto.us.sinaimg.cn/live-pic.mov',
+        },
+        'https://weibo.com/',
+      ),
+    ).resolves.toEqual({
+      ok: true,
+      contentType: 'application/octet-stream',
+      data: Buffer.from('live-photo-bytes').toString('base64'),
+    })
+  })
 })
 
 describe('m.weibo fetch allowlist', () => {
