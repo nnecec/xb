@@ -34,13 +34,88 @@ export function useFeedCardMediaDownload(item?: FeedItem) {
   const [pendingDownload, setPendingDownload] = useState<{ urls: MediaUrl[] } | null>(null)
 
   const performDownload = async (urls: MediaUrl[], feedItem: FeedItem) => {
-    const result = await downloadAsZip(urls, getMediaZipFilename(feedItem))
-    if (result.failCount > 0) {
-      toast.warning(`已下载 ${result.successCount} 个文件，${result.failCount} 个未完成`)
+    const toastId = toast.loading('正在准备媒体', {
+      duration: Infinity,
+    })
+
+    let result
+    try {
+      result = await downloadAsZip(urls, getMediaZipFilename(feedItem), (progress) => {
+        if (progress.stage === 'downloading') {
+          toast.loading(`正在下载媒体（${progress.completed}/${progress.total}）`, {
+            id: toastId,
+            duration: Infinity,
+          })
+        } else {
+          toast.loading('正在生成 ZIP', { id: toastId, duration: Infinity })
+        }
+      })
+    } catch {
+      toast.error('媒体下载失败，请稍后再试', { id: toastId })
       return
     }
 
-    toast.success(`媒体已下载（${result.successCount} 个文件）`)
+    if (result.failCount > 0) {
+      const failedUrls = result.failedUrls ?? []
+      toast.warning(`已下载 ${result.successCount} 个文件，${result.failCount} 个未完成`, {
+        id: toastId,
+        action:
+          failedUrls.length > 0
+            ? {
+                label: '重试失败项',
+                onClick: () => {
+                  void retryFailedDownload(failedUrls, feedItem, toastId)
+                },
+              }
+            : undefined,
+      })
+      return
+    }
+
+    toast.success(`媒体已下载（${result.successCount} 个文件）`, { id: toastId })
+  }
+
+  const retryFailedDownload = async (
+    urls: MediaUrl[],
+    feedItem: FeedItem,
+    toastId: string | number,
+  ) => {
+    setDownloadLoading(true)
+    try {
+      toast.loading('正在准备媒体', { id: toastId, duration: Infinity })
+      const result = await downloadAsZip(urls, getMediaZipFilename(feedItem), (progress) => {
+        if (progress.stage === 'downloading') {
+          toast.loading(`正在下载媒体（${progress.completed}/${progress.total}）`, {
+            id: toastId,
+            duration: Infinity,
+          })
+        } else {
+          toast.loading('正在生成 ZIP', { id: toastId, duration: Infinity })
+        }
+      })
+
+      if (result.failCount > 0) {
+        const failedUrls = result.failedUrls ?? []
+        toast.warning(`已下载 ${result.successCount} 个文件，${result.failCount} 个未完成`, {
+          id: toastId,
+          action:
+            failedUrls.length > 0
+              ? {
+                  label: '重试失败项',
+                  onClick: () => {
+                    void retryFailedDownload(failedUrls, feedItem, toastId)
+                  },
+                }
+              : undefined,
+        })
+      } else {
+        toast.success(`媒体已下载（${result.successCount} 个文件）`, { id: toastId })
+      }
+    } catch {
+      toast.error('媒体下载失败，请稍后再试', { id: toastId })
+    } finally {
+      setDownloadLoading(false)
+    }
   }
 
   const handleDownload = async () => {

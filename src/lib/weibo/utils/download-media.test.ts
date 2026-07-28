@@ -647,4 +647,80 @@ describe('download media proxy', () => {
 
     click.mockRestore()
   })
+
+  it('应该报告下载项进度和 ZIP 生成阶段，并返回失败媒体', async () => {
+    const sendMessage = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, contentType: 'image/jpeg', data: 'aW1hZ2U=' })
+      .mockResolvedValueOnce({ ok: false, error: 'media-fetch-failed:403' })
+    const createObjectURL = vi.fn().mockReturnValue('blob:zip')
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    vi.spyOn(window, 'setTimeout').mockImplementation(
+      () => 1 as unknown as ReturnType<typeof window.setTimeout>,
+    )
+
+    Object.defineProperty(globalThis, 'browser', {
+      writable: true,
+      configurable: true,
+      value: { runtime: { sendMessage } },
+    })
+    Object.defineProperty(URL, 'createObjectURL', {
+      writable: true,
+      configurable: true,
+      value: createObjectURL,
+    })
+
+    const first = { url: 'https://example.com/a.jpg', filename: 'a.jpg', type: 'image' as const }
+    const second = {
+      url: 'https://example.com/b.jpg',
+      filename: 'b.jpg',
+      type: 'image' as const,
+    }
+    const progress: Array<{ stage: string; completed?: number; total?: number }> = []
+
+    const result = await downloadAsZip([first, second], 'media.zip', (event) => {
+      progress.push(event)
+    })
+
+    expect(progress).toEqual([
+      { stage: 'downloading', completed: 1, total: 2 },
+      { stage: 'downloading', completed: 2, total: 2 },
+      { stage: 'generating-zip' },
+    ])
+    expect(result).toEqual({ successCount: 1, failCount: 1, failedUrls: [second] })
+    click.mockRestore()
+  })
+
+  it('进度回调异常时不应中断下载', async () => {
+    const sendMessage = vi.fn().mockResolvedValue({
+      ok: true,
+      contentType: 'image/jpeg',
+      data: Buffer.from('image-bytes').toString('base64'),
+    })
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    vi.spyOn(window, 'setTimeout').mockImplementation(
+      () => 1 as unknown as ReturnType<typeof window.setTimeout>,
+    )
+    Object.defineProperty(globalThis, 'browser', {
+      writable: true,
+      configurable: true,
+      value: { runtime: { sendMessage } },
+    })
+    Object.defineProperty(URL, 'createObjectURL', {
+      writable: true,
+      configurable: true,
+      value: vi.fn().mockReturnValue('blob:zip'),
+    })
+
+    await expect(
+      downloadAsZip(
+        [{ url: 'https://example.com/a.jpg', filename: 'a.jpg', type: 'image' }],
+        'media.zip',
+        () => {
+          throw new Error('callback failed')
+        },
+      ),
+    ).resolves.toMatchObject({ successCount: 1, failCount: 0 })
+    click.mockRestore()
+  })
 })

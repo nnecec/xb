@@ -12,7 +12,15 @@ export interface MediaUrl {
 export interface DownloadZipResult {
   successCount: number
   failCount: number
+  /** Media entries which failed all of their candidate URLs. */
+  failedUrls?: MediaUrl[]
 }
+
+export type DownloadProgress =
+  | { stage: 'downloading'; completed: number; total: number }
+  | { stage: 'generating-zip' }
+
+export type DownloadProgressCallback = (progress: DownloadProgress) => void
 
 interface MediaHeadResponse {
   ok: boolean
@@ -378,6 +386,7 @@ export async function estimateTotalSize(urls: MediaUrl[]): Promise<number> {
 export async function downloadAsZip(
   urls: MediaUrl[],
   zipFilename: string,
+  onProgress?: DownloadProgressCallback,
 ): Promise<DownloadZipResult> {
   if (urls.length === 0) {
     throw new Error('没有可下载的媒体资源')
@@ -386,6 +395,16 @@ export async function downloadAsZip(
   const zip = new JSZip()
   let successCount = 0
   let failCount = 0
+  const failedUrls: MediaUrl[] = []
+  let completedCount = 0
+
+  const reportProgress = (progress: DownloadProgress) => {
+    try {
+      onProgress?.(progress)
+    } catch {
+      // Progress reporting must never affect the download itself.
+    }
+  }
 
   for (let i = 0; i < urls.length; i += MEDIA_DOWNLOAD_CONCURRENCY) {
     const batch = urls.slice(i, i + MEDIA_DOWNLOAD_CONCURRENCY)
@@ -398,7 +417,10 @@ export async function downloadAsZip(
         successCount++
       } else {
         failCount++
+        failedUrls.push(batch[j])
       }
+      completedCount++
+      reportProgress({ stage: 'downloading', completed: completedCount, total: urls.length })
     }
   }
 
@@ -406,8 +428,11 @@ export async function downloadAsZip(
     throw new Error('所有资源下载失败')
   }
 
+  reportProgress({ stage: 'generating-zip' })
   const content = await zip.generateAsync({ type: 'blob' })
   triggerBlobDownload(content, zipFilename)
 
-  return { successCount, failCount }
+  return failedUrls.length > 0
+    ? { successCount, failCount, failedUrls }
+    : { successCount, failCount }
 }
