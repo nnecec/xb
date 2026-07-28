@@ -51,12 +51,12 @@ describe('useFeedCardMediaDownload', () => {
     })
 
     const { toast } = await import('sonner')
-    expect(toast.loading).toHaveBeenCalledWith('正在下载媒体（0/2）', { duration: Infinity })
+    expect(toast.loading).toHaveBeenCalledWith('正在准备媒体', { duration: Infinity })
     expect(toast.loading).toHaveBeenCalledWith('正在下载媒体（1/2）', {
       id: 'download-toast',
       duration: Infinity,
     })
-    expect(toast.loading).toHaveBeenCalledWith('正在生成压缩包…', {
+    expect(toast.loading).toHaveBeenCalledWith('正在生成 ZIP', {
       id: 'download-toast',
       duration: Infinity,
     })
@@ -82,6 +82,10 @@ describe('useFeedCardMediaDownload', () => {
     downloadAsZip.mockResolvedValueOnce({ successCount: 1, failCount: 0 })
     await act(async () => {
       action?.onClick({} as never)
+    })
+    expect(toast.loading).toHaveBeenCalledWith('正在准备媒体', {
+      id: 'download-toast',
+      duration: Infinity,
     })
     await waitFor(() =>
       expect(downloadAsZip).toHaveBeenLastCalledWith(

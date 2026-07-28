@@ -29,3 +29,17 @@
 ## Concerns
 
 - 未运行完整 lint/build；仅运行提交钩子覆盖的格式化与 lint，以及聚焦测试和 compile。
+
+## Review 修复（2026-07-28）
+
+- 修复初始 Toast 直接显示 `0/T` 的阶段遗漏：批量下载与失败项重试现在均先显示“正在准备媒体”，再由进度回调显示下载计数，最后显示“正在生成 ZIP”。
+- 保持每个任务独立常驻 Toast、重试仅使用 `failedUrls`，并补充聚焦测试覆盖重试准备阶段。
+
+### 验证
+
+- `bunx vitest run src/lib/weibo/components/use-feed-card-media-download.test.tsx`：1 个文件、2 个测试通过。
+- `bun run compile`：通过。
+
+### 修复提交
+
+详见本报告对应的后续修复提交 SHA。

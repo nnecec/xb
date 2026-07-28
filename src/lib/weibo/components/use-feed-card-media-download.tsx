@@ -34,7 +34,7 @@ export function useFeedCardMediaDownload(item?: FeedItem) {
   const [pendingDownload, setPendingDownload] = useState<{ urls: MediaUrl[] } | null>(null)
 
   const performDownload = async (urls: MediaUrl[], feedItem: FeedItem) => {
-    const toastId = toast.loading(`正在下载媒体（0/${urls.length}）`, {
+    const toastId = toast.loading('正在准备媒体', {
       duration: Infinity,
     })
 
@@ -47,7 +47,7 @@ export function useFeedCardMediaDownload(item?: FeedItem) {
             duration: Infinity,
           })
         } else {
-          toast.loading('正在生成压缩包…', { id: toastId, duration: Infinity })
+          toast.loading('正在生成 ZIP', { id: toastId, duration: Infinity })
         }
       })
     } catch {
@@ -82,7 +82,7 @@ export function useFeedCardMediaDownload(item?: FeedItem) {
   ) => {
     setDownloadLoading(true)
     try {
-      toast.loading(`正在下载媒体（0/${urls.length}）`, { id: toastId, duration: Infinity })
+      toast.loading('正在准备媒体', { id: toastId, duration: Infinity })
       const result = await downloadAsZip(urls, getMediaZipFilename(feedItem), (progress) => {
         if (progress.stage === 'downloading') {
           toast.loading(`正在下载媒体（${progress.completed}/${progress.total}）`, {
@@ -90,7 +90,7 @@ export function useFeedCardMediaDownload(item?: FeedItem) {
             duration: Infinity,
           })
         } else {
-          toast.loading('正在生成压缩包…', { id: toastId, duration: Infinity })
+          toast.loading('正在生成 ZIP', { id: toastId, duration: Infinity })
         }
       })
 
