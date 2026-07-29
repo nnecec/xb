@@ -72,7 +72,12 @@ export type LineHeightClass =
   | 'leading-relaxed'
   | 'leading-loose'
 
-export type ContentWidth = 'standard' | 'wide' | 'wider'
+export type ContentWidth = 'narrower' | 'narrow' | 'standard' | 'wide' | 'wider' | 'custom'
+
+export const CUSTOM_CONTENT_WIDTH_MIN = 800
+export const CUSTOM_CONTENT_WIDTH_MAX = 1600
+export const CUSTOM_CONTENT_WIDTH_STEP = 20
+export const DEFAULT_CUSTOM_CONTENT_WIDTH = 1200
 
 export type HomeTab = 'for-you' | 'following' | 'special-follow' | 'friend-circle'
 
@@ -125,6 +130,7 @@ type PlaybackRate = (typeof PLAYBACK_RATE_OPTIONS)[number]
 
 export interface AppSettings {
   contentWidth: ContentWidth
+  customContentWidth: number
   theme: AppTheme
   rewriteEnabled: boolean
   fontSizeClass: FontSizeClass
@@ -145,9 +151,12 @@ export interface AppSettings {
   xbEntryCollapsed: boolean
   showFollowedSuperTopicsCard: boolean
   sidebarCollapsed: boolean
+  immersiveMode: boolean
   collapseRepliesEnabled: boolean
   renderReplyChainEnabled: boolean
   darkModeImageDim: boolean
+  autoLoadLongText: boolean
+  textOnlyFeed: boolean
   lightModeBgColor: LightBgColorPreset
   darkModeBgColor: DarkBgColorPreset
   imageGenEnabled: boolean
@@ -199,6 +208,7 @@ export const APP_SETTINGS_STORAGE_KEY = 'xb:app-settings'
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   contentWidth: 'standard' as ContentWidth,
+  customContentWidth: DEFAULT_CUSTOM_CONTENT_WIDTH,
   theme: 'system',
   rewriteEnabled: true,
   fontSizeClass: 'text-base',
@@ -219,9 +229,12 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   xbEntryCollapsed: false,
   showFollowedSuperTopicsCard: false,
   sidebarCollapsed: false,
+  immersiveMode: false,
   collapseRepliesEnabled: false,
   renderReplyChainEnabled: true,
   darkModeImageDim: false,
+  autoLoadLongText: false,
+  textOnlyFeed: false,
   lightModeBgColor: 'white' as LightBgColorPreset,
   darkModeBgColor: 'near-black' as DarkBgColorPreset,
   imageGenEnabled: true,
@@ -404,7 +417,28 @@ function isLineHeightClass(value: unknown): value is LineHeightClass {
 }
 
 function isContentWidth(value: unknown): value is ContentWidth {
-  return value === 'standard' || value === 'wide' || value === 'wider'
+  return (
+    value === 'narrower' ||
+    value === 'narrow' ||
+    value === 'standard' ||
+    value === 'wide' ||
+    value === 'wider' ||
+    value === 'custom'
+  )
+}
+
+export function normalizeCustomContentWidth(value: unknown): number {
+  const numeric = typeof value === 'number' ? value : Number.NaN
+  if (!Number.isFinite(numeric)) {
+    return DEFAULT_APP_SETTINGS.customContentWidth
+  }
+
+  const clamped = Math.min(CUSTOM_CONTENT_WIDTH_MAX, Math.max(CUSTOM_CONTENT_WIDTH_MIN, numeric))
+  return (
+    Math.round((clamped - CUSTOM_CONTENT_WIDTH_MIN) / CUSTOM_CONTENT_WIDTH_STEP) *
+      CUSTOM_CONTENT_WIDTH_STEP +
+    CUSTOM_CONTENT_WIDTH_MIN
+  )
 }
 
 function isHomeTab(value: unknown): value is HomeTab {
@@ -477,6 +511,7 @@ export function normalizeAppSettings(value: unknown): AppSettings {
     contentWidth: isContentWidth(candidate.contentWidth)
       ? candidate.contentWidth
       : DEFAULT_APP_SETTINGS.contentWidth,
+    customContentWidth: normalizeCustomContentWidth(candidate.customContentWidth),
     theme: isAppTheme(candidate.theme) ? candidate.theme : DEFAULT_APP_SETTINGS.theme,
     rewriteEnabled:
       typeof candidate.rewriteEnabled === 'boolean'
@@ -534,6 +569,10 @@ export function normalizeAppSettings(value: unknown): AppSettings {
       typeof candidate.sidebarCollapsed === 'boolean'
         ? candidate.sidebarCollapsed
         : DEFAULT_APP_SETTINGS.sidebarCollapsed,
+    immersiveMode:
+      typeof candidate.immersiveMode === 'boolean'
+        ? candidate.immersiveMode
+        : DEFAULT_APP_SETTINGS.immersiveMode,
     collapseRepliesEnabled:
       typeof candidate.collapseRepliesEnabled === 'boolean'
         ? candidate.collapseRepliesEnabled
@@ -546,6 +585,14 @@ export function normalizeAppSettings(value: unknown): AppSettings {
       typeof candidate.darkModeImageDim === 'boolean'
         ? candidate.darkModeImageDim
         : DEFAULT_APP_SETTINGS.darkModeImageDim,
+    autoLoadLongText:
+      typeof candidate.autoLoadLongText === 'boolean'
+        ? candidate.autoLoadLongText
+        : DEFAULT_APP_SETTINGS.autoLoadLongText,
+    textOnlyFeed:
+      typeof candidate.textOnlyFeed === 'boolean'
+        ? candidate.textOnlyFeed
+        : DEFAULT_APP_SETTINGS.textOnlyFeed,
     lightModeBgColor: isLightBgColorPreset(candidate.lightModeBgColor)
       ? candidate.lightModeBgColor
       : DEFAULT_APP_SETTINGS.lightModeBgColor,

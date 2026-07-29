@@ -40,6 +40,8 @@ Object.defineProperty(global, 'chrome', {
 describe('SettingsDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockSettings.contentWidth = DEFAULT_APP_SETTINGS.contentWidth
+    mockSettings.customContentWidth = DEFAULT_APP_SETTINGS.customContentWidth
   })
 
   it('renders dialog when open', () => {
@@ -93,6 +95,27 @@ describe('SettingsDialog', () => {
     // Appearance panel should be default
     expect(screen.getByText('主题模式')).toBeInTheDocument()
     expect(screen.getByText('内容宽度')).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: '更窄' })).toBeInTheDocument()
+  })
+
+  it('shows the custom content width slider when custom width is selected', () => {
+    mockSettings.contentWidth = 'custom'
+    mockSettings.customContentWidth = 1340
+
+    render(<SettingsDialog open={true} onOpenChange={() => {}} />)
+
+    expect(screen.getByRole('slider', { name: '自定义内容宽度' })).toHaveValue(1340)
+    expect(screen.getByText('1340px')).toBeInTheDocument()
+  })
+
+  it('shows timeline reading preferences in the personalize panel', async () => {
+    const user = userEvent.setup()
+    render(<SettingsDialog open={true} onOpenChange={() => {}} />)
+
+    await user.click(screen.getByRole('button', { name: /个性化/ }))
+
+    expect(screen.getByText('自动查看全文')).toBeInTheDocument()
+    expect(screen.getByText('纯文字信息流')).toBeInTheDocument()
   })
 
   it('renders page visibility section in appearance panel', async () => {

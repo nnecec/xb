@@ -37,6 +37,7 @@ import {
   DialogTitle,
   VisuallyHidden,
 } from '@/components/ui/dialog'
+import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
 import {
   BROWSING_HISTORY_LIMIT_OPTIONS,
@@ -146,11 +147,14 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
     collapseRepliesEnabled,
     renderReplyChainEnabled,
     darkModeImageDim,
+    autoLoadLongText,
+    textOnlyFeed,
     theme,
     feedInteractionMode,
     feedPrimaryActionOrder,
     feedToolbarButtonIds,
     contentWidth,
+    customContentWidth,
     xbTopicPage,
     ratingEnabled,
     rememberPlaybackRate,
@@ -186,11 +190,14 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
       collapseRepliesEnabled: s.collapseRepliesEnabled,
       renderReplyChainEnabled: s.renderReplyChainEnabled,
       darkModeImageDim: s.darkModeImageDim,
+      autoLoadLongText: s.autoLoadLongText,
+      textOnlyFeed: s.textOnlyFeed,
       theme: s.theme,
       feedInteractionMode: s.feedInteractionMode,
       feedPrimaryActionOrder: s.feedPrimaryActionOrder,
       feedToolbarButtonIds: s.feedToolbarButtonIds,
       contentWidth: s.contentWidth,
+      customContentWidth: s.customContentWidth,
       xbTopicPage: s.xbTopicPage,
       ratingEnabled: s.ratingEnabled,
       rememberPlaybackRate: s.rememberPlaybackRate,
@@ -463,19 +470,41 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
                       onChange={(value) => void updateSettings({ theme: value as AppTheme })}
                     />
                   </Field>
-                  <Field label="内容宽度" description="调整主时间线在大屏幕上的宽度">
+                  <StackedField label="内容宽度" description="调整应用内容区域在大屏幕上的宽度">
                     <OptionPills
                       value={contentWidth}
                       options={[
+                        { value: 'narrower', label: '更窄' },
+                        { value: 'narrow', label: '窄' },
                         { value: 'standard', label: '标准' },
                         { value: 'wide', label: '宽' },
                         { value: 'wider', label: '更宽' },
+                        { value: 'custom', label: '自定义' },
                       ]}
                       onChange={(value) =>
                         void updateSettings({ contentWidth: value as ContentWidth })
                       }
                     />
-                  </Field>
+                    {contentWidth === 'custom' ? (
+                      <div className="flex items-center gap-3 pt-1">
+                        <Slider
+                          min={800}
+                          max={1600}
+                          step={20}
+                          value={[customContentWidth]}
+                          aria-label="自定义内容宽度"
+                          onValueChange={([value]) => {
+                            if (value !== undefined) {
+                              void updateSettings({ customContentWidth: value })
+                            }
+                          }}
+                        />
+                        <output className="text-muted-foreground w-16 shrink-0 text-right font-mono text-xs tabular-nums">
+                          {customContentWidth}px
+                        </output>
+                      </div>
+                    ) : null}
+                  </StackedField>
                   <StackedField
                     label="微博操作顺序"
                     description="拖动调整评论、转发、点赞三个主操作的位置"
@@ -559,6 +588,8 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
               <SettingsPersonalizeSection
                 feedInteractionMode={feedInteractionMode}
                 darkModeImageDim={darkModeImageDim}
+                autoLoadLongText={autoLoadLongText}
+                textOnlyFeed={textOnlyFeed}
                 rememberPlaybackRate={rememberPlaybackRate}
                 firstLoadRedirect={firstLoadRedirect}
                 renderReplyChainEnabled={renderReplyChainEnabled}
