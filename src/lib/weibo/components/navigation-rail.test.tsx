@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -80,10 +80,14 @@ describe('NavigationRail', () => {
     pageKind = 'home',
     viewingProfileUserId = null,
     rewriteEnabled = false,
+    immersiveMode = false,
+    onImmersiveModeChange = vi.fn(),
   }: {
     pageKind?: 'home' | 'profile' | 'status' | 'unsupported'
     viewingProfileUserId?: string | null
     rewriteEnabled?: boolean
+    immersiveMode?: boolean
+    onImmersiveModeChange?: (enabled: boolean) => void
   } = {}) {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
@@ -102,6 +106,8 @@ describe('NavigationRail', () => {
             onSettingsOpen={vi.fn()}
             onComposeOpen={vi.fn()}
             onSidebarCollapsedChange={vi.fn()}
+            immersiveMode={immersiveMode}
+            onImmersiveModeChange={onImmersiveModeChange}
           />
         </MemoryRouter>
       </QueryClientProvider>,
@@ -141,6 +147,15 @@ describe('NavigationRail', () => {
       'aria-pressed',
       'true',
     )
+  })
+
+  it('shows only the exit control while immersive mode is active', () => {
+    const onImmersiveModeChange = vi.fn()
+    renderNavigationRail({ immersiveMode: true, onImmersiveModeChange })
+
+    expect(screen.queryByRole('navigation', { name: '主导航' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '退出沉浸模式' }))
+    expect(onImmersiveModeChange).toHaveBeenCalledWith(false)
   })
 
   it('uses expanded bottom control width without relying on the CSS xl breakpoint', () => {

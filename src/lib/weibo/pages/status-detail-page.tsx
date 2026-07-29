@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/select'
 import { useAppSettings } from '@/lib/app-settings-store'
 import { useAppShellContext } from '@/lib/weibo/app/app-shell-layout'
+import { useImmersiveHeaderClassName } from '@/lib/weibo/app/immersive-header'
 import { CommentBox } from '@/lib/weibo/components/comment-box'
 import { CommentList } from '@/lib/weibo/components/comment-list'
 import { FeedCard } from '@/lib/weibo/components/feed-card'
@@ -164,13 +165,16 @@ function StatusDetailTopBar({
   regionName?: string
 }) {
   const shouldReduceMotion = useReducedMotion()
+  const headerClassName = useImmersiveHeaderClassName(
+    'bg-background/85 border-border/45 sticky top-0 z-50 border-b backdrop-blur-lg',
+  )
   const titleTransition = {
     duration: shouldReduceMotion ? 0.12 : 0.15,
     ease: [0.23, 1, 0.32, 1] as const,
   }
 
   return (
-    <div className="bg-background/85 border-border/45 sticky top-0 z-50 border-b backdrop-blur-lg">
+    <div className={headerClassName}>
       <div className="relative flex min-h-16 items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
           <Button

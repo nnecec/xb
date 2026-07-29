@@ -4,6 +4,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { useAppSettings } from '@/lib/app-settings-store'
 import { cn } from '@/lib/utils'
 import { useAppShellContext } from '@/lib/weibo/app/app-shell-layout'
+import { useImmersiveHeaderClassName } from '@/lib/weibo/app/immersive-header'
 import { InfiniteFeedList } from '@/lib/weibo/components/infinite-feed-list'
 import { MweiboCaptchaPrompt } from '@/lib/weibo/components/mweibo-captcha-prompt'
 import {
@@ -73,6 +74,7 @@ export function TopicPage() {
   const ctx = useAppShellContext()
   const page = useWeiboPage()
   const rewriteEnabled = useAppSettings((s) => s.rewriteEnabled)
+  const headerClassName = useImmersiveHeaderClassName('bg-muted/80 sticky top-0 z-10 backdrop-blur')
 
   const topic = page.kind === 'topic' ? page.topic : ''
   const isEnabled = rewriteEnabled && page.kind === 'topic' && topic !== ''
@@ -125,7 +127,7 @@ export function TopicPage() {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="bg-muted/80 sticky top-0 z-10 backdrop-blur">
+      <div className={headerClassName}>
         <div className="gap-0.5 px-4 py-3">
           <h2 className="text-lg font-semibold">#{topic}#</h2>
           {headData ? (

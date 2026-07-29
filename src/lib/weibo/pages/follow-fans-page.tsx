@@ -4,6 +4,7 @@ import { useParams, useSearchParams } from 'react-router'
 import { useAppSettings } from '@/lib/app-settings-store'
 import { cn } from '@/lib/utils'
 import { getContentWidthAdjustedMaxWidth } from '@/lib/weibo/app/content-width'
+import { useImmersiveHeaderClassName } from '@/lib/weibo/app/immersive-header'
 import { UserList } from '@/lib/weibo/components/user-list'
 import { friendsInfiniteOptions } from '@/lib/weibo/data/weibo-data'
 
@@ -16,6 +17,10 @@ export function FollowFansPage() {
   const { uid } = useParams<{ uid: string }>()
   const [searchParams, setSearchParams] = useSearchParams()
   const contentWidth = useAppSettings((state) => state.contentWidth)
+  const customContentWidth = useAppSettings((state) => state.customContentWidth)
+  const headerClassName = useImmersiveHeaderClassName(
+    'bg-background/80 sticky top-0 z-10 border-b backdrop-blur-sm',
+  )
   const activeTab = searchParams.get('tab') === 'fans' ? 'fans' : 'following'
 
   if (!uid) return null
@@ -30,9 +35,9 @@ export function FollowFansPage() {
   return (
     <div
       className="mx-auto w-full"
-      style={{ maxWidth: getContentWidthAdjustedMaxWidth(contentWidth, 672) }}
+      style={{ maxWidth: getContentWidthAdjustedMaxWidth(contentWidth, 672, customContentWidth) }}
     >
-      <div className="bg-background/80 sticky top-0 z-10 border-b backdrop-blur-sm">
+      <div className={headerClassName}>
         <div className="flex">
           {TABS.map((tab) => (
             <button

@@ -41,14 +41,16 @@ export function AppShell() {
   const page = useWeiboPage()
   const queryClient = useQueryClient()
 
-  const { theme, rewriteEnabled, contentWidth, updateSettings } = useAppSettings(
-    useShallow((state) => ({
-      theme: state.theme,
-      rewriteEnabled: state.rewriteEnabled,
-      contentWidth: state.contentWidth,
-      updateSettings: state.updateSettings,
-    })),
-  )
+  const { theme, rewriteEnabled, contentWidth, customContentWidth, updateSettings } =
+    useAppSettings(
+      useShallow((state) => ({
+        theme: state.theme,
+        rewriteEnabled: state.rewriteEnabled,
+        contentWidth: state.contentWidth,
+        customContentWidth: state.customContentWidth,
+        updateSettings: state.updateSettings,
+      })),
+    )
   const [composeTarget, setComposeTarget] = useState<ComposeTarget | null>(null)
   const [viewingProfileUserId, setViewingProfileUserId] = useState<string | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -189,6 +191,7 @@ export function AppShell() {
         rewriteEnabled={rewriteEnabled}
         theme={theme}
         contentWidth={contentWidth}
+        customContentWidth={customContentWidth}
         onRewriteEnabledChange={(enabled: boolean) => {
           void updateSettings({ rewriteEnabled: enabled })
           if (!enabled) {

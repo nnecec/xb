@@ -1,6 +1,13 @@
 import { useMediaQuery } from '@reactuses/core'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowUpRightIcon, ChevronsLeftIcon, ChevronsRightIcon, Pencil } from 'lucide-react'
+import {
+  ArrowUpRightIcon,
+  ChevronsLeftIcon,
+  ChevronsRightIcon,
+  Diamond,
+  DiamondMinus,
+  Pencil,
+} from 'lucide-react'
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router'
 
@@ -146,6 +153,35 @@ interface NavigationRailProps {
   onSettingsOpen: () => void
   onComposeOpen: () => void
   onSidebarCollapsedChange: (collapsed: boolean) => void
+  immersiveMode?: boolean
+  onImmersiveModeChange?: (enabled: boolean) => void
+}
+
+export function ImmersiveExitRail({
+  onImmersiveModeChange,
+}: Pick<NavigationRailProps, 'onImmersiveModeChange'>) {
+  return (
+    <TooltipProvider>
+      <aside className="flex h-full min-h-0 flex-col items-center px-1 py-3 md:px-2 md:py-4 xl:px-3 xl:py-5">
+        <div className="mt-auto">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                size="icon"
+                variant="secondary"
+                aria-label="退出沉浸模式"
+                onClick={() => onImmersiveModeChange?.(false)}
+              >
+                <DiamondMinus className="size-4" aria-hidden="true" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">退出沉浸模式</TooltipContent>
+          </Tooltip>
+        </div>
+      </aside>
+    </TooltipProvider>
+  )
 }
 
 export function NavigationRail({
@@ -158,6 +194,8 @@ export function NavigationRail({
   onSettingsOpen,
   onComposeOpen,
   onSidebarCollapsedChange,
+  immersiveMode = false,
+  onImmersiveModeChange,
 }: NavigationRailProps) {
   const {
     homeTab,
@@ -187,7 +225,7 @@ export function NavigationRail({
   const currentUserUid = useMemo(() => getCurrentUserUid(), [])
   const navigate = useNavigate()
   const isXl = useMediaQuery('(min-width: 1280px)')
-  const isCollapsed = !isXl || sidebarCollapsed
+  const isCollapsed = immersiveMode || !isXl || sidebarCollapsed
 
   const profileHref = useMemo(
     () => (currentUserUid ? `/u/${currentUserUid}` : '/'),
@@ -204,13 +242,17 @@ export function NavigationRail({
     currentUserUid === viewingProfileUserId
   const isSavedItemsActive = pageKind === 'favorites' || pageKind === 'liked'
 
-  const shouldPollUnread = showNotifications || showDMs
+  const shouldPollUnread = !immersiveMode && (showNotifications || showDMs)
   const { data: unreadCounts } = useQuery({
     ...unreadNotificationsQueryOptions,
     enabled: shouldPollUnread,
   })
   const showNotificationBadge = unreadCounts ? hasNotificationBadge(unreadCounts) : false
   const showDmBadge = unreadCounts ? hasDmBadge(unreadCounts) : false
+
+  if (immersiveMode) {
+    return <ImmersiveExitRail onImmersiveModeChange={onImmersiveModeChange} />
+  }
 
   return (
     <TooltipProvider>
@@ -352,6 +394,19 @@ export function NavigationRail({
 
             <RailControl label="深色模式" isCollapsed={isCollapsed}>
               <ThemeModeToggle value={theme} onChange={onThemeChange} />
+            </RailControl>
+
+            <RailControl label="沉浸模式" isCollapsed={isCollapsed}>
+              <Button
+                type="button"
+                size="icon"
+                variant="secondary"
+                aria-label="切换沉浸模式"
+                aria-pressed={immersiveMode}
+                onClick={() => onImmersiveModeChange?.(!immersiveMode)}
+              >
+                <Diamond className="size-4" aria-hidden="true" />
+              </Button>
             </RailControl>
 
             {isXl ? (
