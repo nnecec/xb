@@ -176,6 +176,85 @@ describe('FeedCard', () => {
     })
   })
 
+  it('automatically loads long text after a timeline card enters the viewport', async () => {
+    class TestIntersectionObserver {
+      static instances: TestIntersectionObserver[] = []
+
+      constructor(readonly callback: IntersectionObserverCallback) {
+        TestIntersectionObserver.instances.push(this)
+      }
+
+      observe() {}
+      disconnect() {}
+      unobserve() {}
+      takeRecords() {
+        return []
+      }
+    }
+
+    vi.stubGlobal('IntersectionObserver', TestIntersectionObserver)
+    const store = getAppSettingsStore()
+    store.setState({ autoLoadLongText: true })
+    vi.mocked(loadStatusLongText).mockResolvedValueOnce({ longTextContent: '自动展开的正文' })
+
+    renderCard()
+
+    expect(vi.mocked(loadStatusLongText)).not.toHaveBeenCalled()
+
+    TestIntersectionObserver.instances[0]?.callback(
+      [{ isIntersecting: true } as IntersectionObserverEntry],
+      TestIntersectionObserver.instances[0] as unknown as IntersectionObserver,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('自动展开的正文')).toBeInTheDocument()
+    })
+    expect(screen.queryByRole('button', { name: '阅读全文' })).not.toBeInTheDocument()
+
+    vi.unstubAllGlobals()
+  })
+
+  it('hides avatars and media in text-only timeline mode', () => {
+    const store = getAppSettingsStore()
+    store.setState({ textOnlyFeed: true })
+
+    renderCard({
+      item: {
+        author: { id: '1', name: 'Alice', avatarUrl: 'https://example.com/avatar.jpg' },
+        text: 'preview content http://t.cn/inline-image',
+        images: [
+          {
+            id: 'image-1',
+            thumbnailUrl: 'https://example.com/thumbnail.jpg',
+            largeUrl: 'https://example.com/large.jpg',
+          },
+        ],
+        mixMediaInfo: [
+          {
+            id: 'video-1',
+            type: 'video',
+            videoCoverUrl: 'https://example.com/video-cover.jpg',
+          },
+        ],
+        imageEntities: {
+          'http://t.cn/inline-image': [
+            {
+              id: 'inline-image',
+              thumbnailUrl: 'https://example.com/inline-thumbnail.jpg',
+              largeUrl: 'https://example.com/inline-large.jpg',
+            },
+          ],
+        },
+      },
+    })
+
+    expect(screen.queryByRole('img', { name: 'Alice' })).not.toBeInTheDocument()
+    expect(document.querySelector('img[src="https://example.com/thumbnail.jpg"]')).toBeNull()
+    expect(document.querySelector('img[src="https://example.com/video-cover.jpg"]')).toBeNull()
+    expect(document.querySelector('img[src="https://example.com/inline-thumbnail.jpg"]')).toBeNull()
+    expect(screen.getByText('preview content http://t.cn/inline-image')).toBeInTheDocument()
+  })
+
   it('renders long text entities and images from the expanded payload', async () => {
     vi.mocked(loadStatusLongText).mockResolvedValueOnce({
       longTextContent: '#话题# 展开正文 http://t.cn/REAL http://t.cn/IMG',

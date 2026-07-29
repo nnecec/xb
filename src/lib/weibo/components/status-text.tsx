@@ -653,6 +653,7 @@ export function StatusText({
   item,
   text,
   mode = 'plain',
+  hideMedia = false,
 }: {
   item: Pick<
     FeedItem,
@@ -660,13 +661,14 @@ export function StatusText({
   >
   text: string
   mode?: 'plain' | 'markdown'
+  hideMedia?: boolean
 }) {
   const emoticonQuery = useEmoticonConfigQuery()
   const collapseRepliesEnabled = useAppSettings((s) => s.collapseRepliesEnabled)
   const renderReplyChainEnabled = useAppSettings((s) => s.renderReplyChainEnabled)
   const phraseMap = {
-    ...emoticonQuery.data?.phraseMap,
-    ...item.emoticons,
+    ...(hideMedia ? {} : emoticonQuery.data?.phraseMap),
+    ...(hideMedia ? {} : item.emoticons),
   }
   const raw = text ?? ''
   if (!raw) {
@@ -680,7 +682,9 @@ export function StatusText({
   const hasUrlEntities = Boolean(item.urlEntities && item.urlEntities.length > 0)
   const hasTopicEntities = Boolean(item.topicEntities && item.topicEntities.length > 0)
   const imageEntities = item.imageEntities ?? {}
-  const extractImages = createImageExtractor(imageEntities)
+  const extractImages: ImageExtractor = hideMedia
+    ? (value) => ({ strippedText: value, images: [] })
+    : createImageExtractor(imageEntities)
   const parsedReplyChain = parseReplyChainText(raw)
   const shouldRenderAsReplyChain =
     renderReplyChainEnabled && parsedReplyChain.kind === 'reply-chain'

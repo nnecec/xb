@@ -1,13 +1,20 @@
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { longTextQueryOptions } from '@/lib/weibo/data/weibo-data'
 import type { FeedItem } from '@/lib/weibo/models/feed'
 import { mergeLongTextIntoFeedItem } from '@/lib/weibo/utils/transform'
 
-export function useFeedLongText(item: FeedItem) {
+export function useFeedLongText(item: FeedItem, autoLoad = false) {
   const [longTextEnabled, setLongTextEnabled] = useState(false)
   const canLoadLongText = item.isLongText
+
+  useEffect(() => {
+    if (autoLoad && canLoadLongText) {
+      setLongTextEnabled(true)
+    }
+  }, [autoLoad, canLoadLongText])
+
   const {
     data: longText,
     error: longTextError,

@@ -9,24 +9,28 @@ import type { FeedItem } from '@/lib/weibo/models/feed'
 export function FeedAuthorHeader({
   item,
   trailing,
+  hideAvatar = false,
 }: {
   item: Pick<FeedItem, 'author' | 'createdAtLabel' | 'source' | 'regionName'>
   trailing?: ReactNode
+  hideAvatar?: boolean
 }) {
   return (
     <CardHeader className="flex flex-row gap-3 px-4">
-      <UserHoverCard uid={item.author.id}>
-        <Link
-          to={`/n/${encodeURIComponent(item.author.name)}`}
-          onClick={(event) => event.stopPropagation()}
-        >
-          <UserAvatar
-            author={item.author}
-            sizeClassName="size-12"
-            fallbackClassName="text-sm font-semibold"
-          />
-        </Link>
-      </UserHoverCard>
+      {!hideAvatar ? (
+        <UserHoverCard uid={item.author.id}>
+          <Link
+            to={`/n/${encodeURIComponent(item.author.name)}`}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <UserAvatar
+              author={item.author}
+              sizeClassName="size-12"
+              fallbackClassName="text-sm font-semibold"
+            />
+          </Link>
+        </UserHoverCard>
+      ) : null}
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -63,8 +67,10 @@ export function FeedAuthorHeader({
 
 export function RetweetedAuthorHeader({
   item,
+  hideAvatar = false,
 }: {
   item: Pick<FeedItem, 'author' | 'createdAtLabel' | 'source' | 'regionName'>
+  hideAvatar?: boolean
 }) {
   const isDeletedAuthor = !item.author.id
 
@@ -73,21 +79,23 @@ export function RetweetedAuthorHeader({
   }
 
   return (
-    <div className="grid grid-cols-[36px_minmax(0,1fr)] gap-2">
-      <UserHoverCard uid={item.author.id}>
-        <button
-          type="button"
-          className="cursor-pointer"
-          aria-label={`${item.author.name} 的主页`}
-          onClick={(event) => event.stopPropagation()}
-        >
-          <UserAvatar
-            author={item.author}
-            sizeClassName="size-9"
-            fallbackClassName="text-xs font-semibold"
-          />
-        </button>
-      </UserHoverCard>
+    <div className={hideAvatar ? 'grid grid-cols-1' : 'grid grid-cols-[36px_minmax(0,1fr)] gap-2'}>
+      {!hideAvatar ? (
+        <UserHoverCard uid={item.author.id}>
+          <button
+            type="button"
+            className="cursor-pointer"
+            aria-label={`${item.author.name} 的主页`}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <UserAvatar
+              author={item.author}
+              sizeClassName="size-9"
+              fallbackClassName="text-xs font-semibold"
+            />
+          </button>
+        </UserHoverCard>
+      ) : null}
       <div className="flex min-w-0 flex-col gap-1">
         <div className="flex flex-wrap items-center gap-2">
           <UserHoverCard uid={item.author.id}>

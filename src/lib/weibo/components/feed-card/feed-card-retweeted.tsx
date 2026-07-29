@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { ImageCarousel } from '@/lib/weibo/components/image-carousel'
 import { browsingHistoryStore } from '@/lib/weibo/hooks/use-browsing-history'
 import { useFeedLongText } from '@/lib/weibo/hooks/use-feed-long-text'
+import { useHasEnteredViewport } from '@/lib/weibo/hooks/use-has-entered-viewport'
 import type { FeedItem } from '@/lib/weibo/models/feed'
 
 import { RetweetedAuthorHeader } from './feed-card-author'
@@ -26,18 +27,24 @@ export function RetweetedFeedBlock({
   item,
   onNavigate,
   feedInteractionMode,
+  autoLoadLongText,
+  textOnly,
 }: {
   item: NonNullable<FeedItem['retweetedStatus']>
   onNavigate?: (item: FeedItem) => void
   feedInteractionMode: FeedInteractionMode
+  autoLoadLongText: boolean
+  textOnly: boolean
 }) {
+  const retweetedCardRef = useRef<HTMLDivElement>(null)
+  const hasEnteredViewport = useHasEnteredViewport(retweetedCardRef)
   const {
     resolvedItem,
     shouldShowLoadLongText,
     isLongTextLoading,
     hasLongTextError,
     onLoadLongText,
-  } = useFeedLongText(item)
+  } = useFeedLongText(item, autoLoadLongText && hasEnteredViewport)
 
   const addEntry = useCallback(() => {
     browsingHistoryStore.getState().addEntry(resolvedItem)
@@ -151,41 +158,46 @@ export function RetweetedFeedBlock({
   }
 
   return (
-    <Card
-      className={cn(
-        'xb-feed-card xb-feed-card--compact gap-3 py-4',
-        canNavigate &&
-          'cursor-pointer focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none',
-      )}
-      data-testid="feed-card-body"
-      onMouseDown={handleRetweetedMouseDown}
-      onMouseUp={handleRetweetedMouseUp}
-      onClick={handleRetweetedClick}
-      onAuxClick={handleRetweetedAuxClick}
-      onKeyDown={handleRetweetedKeyDown}
-      {...navigationProps}
-    >
-      <CardHeader className="px-4">
-        <RetweetedAuthorHeader item={resolvedItem} />
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4 px-4">
-        <FeedTextBlock
-          item={resolvedItem}
-          canLoadLongText={shouldShowLoadLongText}
-          isLongTextLoading={isLongTextLoading}
-          hasLongTextError={hasLongTextError}
-          onLoadLongText={onLoadLongText}
-        />
+    <div ref={retweetedCardRef}>
+      <Card
+        className={cn(
+          'xb-feed-card xb-feed-card--compact gap-3 py-4',
+          canNavigate &&
+            'cursor-pointer focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none',
+        )}
+        data-testid="feed-card-body"
+        onMouseDown={handleRetweetedMouseDown}
+        onMouseUp={handleRetweetedMouseUp}
+        onClick={handleRetweetedClick}
+        onAuxClick={handleRetweetedAuxClick}
+        onKeyDown={handleRetweetedKeyDown}
+        {...navigationProps}
+      >
+        <CardHeader className="px-4">
+          <RetweetedAuthorHeader item={resolvedItem} hideAvatar={textOnly} />
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4 px-4">
+          <FeedTextBlock
+            item={resolvedItem}
+            canLoadLongText={shouldShowLoadLongText}
+            isLongTextLoading={isLongTextLoading}
+            hasLongTextError={hasLongTextError}
+            onLoadLongText={onLoadLongText}
+            hideMedia={textOnly}
+          />
 
-        <FeedMediaBlock item={resolvedItem} />
+          {!textOnly ? <FeedMediaBlock item={resolvedItem} /> : null}
 
-        <ImageCarousel
-          images={resolvedItem.images}
-          mixMediaItems={resolvedItem.mixMediaInfo}
-          downloadFilename={getMediaDownloadFilename(resolvedItem)}
-          onOpen={addEntry}
-        />
-      </CardContent>
-    </Card>
+          {!textOnly ? (
+            <ImageCarousel
+              images={resolvedItem.images}
+              mixMediaItems={resolvedItem.mixMediaInfo}
+              downloadFilename={getMediaDownloadFilename(resolvedItem)}
+              onOpen={addEntry}
+            />
+          ) : null}
+        </CardContent>
+      </Card>
+    </div>
   )
 }

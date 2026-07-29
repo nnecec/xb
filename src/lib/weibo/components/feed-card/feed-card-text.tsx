@@ -12,12 +12,14 @@ export function FeedTextBlock({
   isLongTextLoading,
   hasLongTextError,
   onLoadLongText,
+  hideMedia = false,
 }: {
   item: FeedItem
   canLoadLongText: boolean
   isLongTextLoading: boolean
   hasLongTextError: boolean
   onLoadLongText: () => void
+  hideMedia?: boolean
 }) {
   const { textClassName } = useFontSettings()
   const [textMode, setTextMode] = useState<'markdown' | 'plain'>('markdown')
@@ -26,7 +28,7 @@ export function FeedTextBlock({
 
   return (
     <div className={cn('text-foreground', textClassName)}>
-      <StatusText item={item} text={item.text} mode={resolvedTextMode} />
+      <StatusText item={item} text={item.text} mode={resolvedTextMode} hideMedia={hideMedia} />
 
       {canLoadLongText ? (
         <LongTextButton

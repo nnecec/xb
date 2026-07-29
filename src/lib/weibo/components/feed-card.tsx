@@ -32,6 +32,7 @@ import {
 } from '@/lib/weibo/data/weibo-data'
 import { browsingHistoryStore } from '@/lib/weibo/hooks/use-browsing-history'
 import { useFeedLongText } from '@/lib/weibo/hooks/use-feed-long-text'
+import { useHasEnteredViewport } from '@/lib/weibo/hooks/use-has-entered-viewport'
 import type { FeedItem } from '@/lib/weibo/models/feed'
 import {
   type StatusFeedSurface,
@@ -76,26 +77,39 @@ export const FeedCard = memo(function FeedCard({
   onStatusDeleted?: () => void
   className?: string
 }) {
-  const { feedInteractionMode, feedPrimaryActionOrder, feedToolbarButtonIds, ratingEnabled } =
-    useAppSettings(
-      useShallow((s) => ({
-        feedInteractionMode: s.feedInteractionMode,
-        feedPrimaryActionOrder: s.feedPrimaryActionOrder,
-        feedToolbarButtonIds: s.feedToolbarButtonIds,
-        ratingEnabled: s.ratingEnabled,
-      })),
-    )
+  const {
+    feedInteractionMode,
+    feedPrimaryActionOrder,
+    feedToolbarButtonIds,
+    ratingEnabled,
+    autoLoadLongText,
+    textOnlyFeed,
+  } = useAppSettings(
+    useShallow((s) => ({
+      feedInteractionMode: s.feedInteractionMode,
+      feedPrimaryActionOrder: s.feedPrimaryActionOrder,
+      feedToolbarButtonIds: s.feedToolbarButtonIds,
+      ratingEnabled: s.ratingEnabled,
+      autoLoadLongText: s.autoLoadLongText,
+      textOnlyFeed: s.textOnlyFeed,
+    })),
+  )
   const [commentsExpanded, setCommentsExpanded] = useState(false)
   const commentsPanelId = useId()
   const pointerDownPositionRef = useRef<{ x: number; y: number } | null>(null)
   const suppressNextClickRef = useRef(false)
+  const feedCardRef = useRef<HTMLDivElement>(null)
+  const hasEnteredViewport = useHasEnteredViewport(feedCardRef)
+  const isTimeline = surfaceProp === 'timeline'
+  const shouldAutoLoadLongText = isTimeline && autoLoadLongText && hasEnteredViewport
+  const isTextOnly = isTimeline && textOnlyFeed
   const {
     resolvedItem,
     shouldShowLoadLongText,
     isLongTextLoading,
     hasLongTextError,
     onLoadLongText,
-  } = useFeedLongText(item)
+  } = useFeedLongText(item, shouldAutoLoadLongText)
 
   const addEntry = useCallback(() => {
     browsingHistoryStore.getState().addEntry(resolvedItem)
@@ -353,112 +367,120 @@ export const FeedCard = memo(function FeedCard({
   }
 
   return (
-    <Card
-      className={cn(
-        'xb-feed-card group/card relative gap-4 py-4',
-        canNavigate &&
-          'cursor-pointer focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none',
-        className,
-      )}
-      data-testid="feed-card-body"
-      onClick={handleCardClick}
-      onAuxClick={handleCardAuxClick}
-      onKeyDown={handleCardKeyDown}
-      {...navigationProps}
-    >
-      {resolvedItem.title ? (
-        <div className="px-4">
-          <Badge variant="secondary">{resolvedItem.title.text}</Badge>
+    <div ref={feedCardRef}>
+      <Card
+        className={cn(
+          'xb-feed-card group/card relative gap-4 py-4',
+          canNavigate &&
+            'cursor-pointer focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none',
+          className,
+        )}
+        data-testid="feed-card-body"
+        onClick={handleCardClick}
+        onAuxClick={handleCardAuxClick}
+        onKeyDown={handleCardKeyDown}
+        {...navigationProps}
+      >
+        {resolvedItem.title ? (
+          <div className="px-4">
+            <Badge variant="secondary">{resolvedItem.title.text}</Badge>
+          </div>
+        ) : null}
+        <div className="relative flex items-start gap-2 pr-2 pl-0">
+          <div className="min-w-0 flex-1">
+            <FeedAuthorHeader
+              item={resolvedItem}
+              hideAvatar={isTextOnly}
+              trailing={
+                ratingEnabled ? (
+                  <RatingSummaryBadge targetUid={resolvedItem.author.id} size="sm" useBatchCache />
+                ) : null
+              }
+            />
+          </div>
+          <div className="shrink-0 pt-1 pr-2">
+            <FeedCardMoreMenu
+              type="status"
+              isOwner={showOwnerMenu}
+              item={resolvedItem}
+              favorited={resolvedItem.favorited}
+              onFavorite={() => favoriteMutation.mutateAsync(resolvedItem)}
+              contentLabel="这条微博"
+              isDeleting={deleteMutation.isPending}
+              onDelete={() => deleteMutation.mutateAsync()}
+              visibleActionIds={moreMenuActionIds}
+              onCopyText={() => handleCopyText(resolvedItem)}
+            />
+          </div>
         </div>
-      ) : null}
-      <div className="relative flex items-start gap-2 pr-2 pl-0">
-        <div className="min-w-0 flex-1">
-          <FeedAuthorHeader
+        <CardContent
+          className="flex flex-col gap-4 px-4"
+          onMouseDown={handleCardMouseDown}
+          onMouseUp={handleCardMouseUp}
+        >
+          <FeedTextBlock
             item={resolvedItem}
-            trailing={
-              ratingEnabled ? (
-                <RatingSummaryBadge targetUid={resolvedItem.author.id} size="sm" useBatchCache />
-              ) : null
-            }
+            canLoadLongText={shouldShowLoadLongText}
+            isLongTextLoading={isLongTextLoading}
+            hasLongTextError={hasLongTextError}
+            onLoadLongText={onLoadLongText}
+            hideMedia={isTextOnly}
           />
-        </div>
-        <div className="shrink-0 pt-1 pr-2">
-          <FeedCardMoreMenu
-            type="status"
-            isOwner={showOwnerMenu}
+
+          {!isTextOnly ? <FeedMediaBlock item={resolvedItem} /> : null}
+
+          {!isTextOnly ? (
+            <ImageCarousel
+              images={resolvedItem.images}
+              mixMediaItems={resolvedItem.mixMediaInfo}
+              downloadFilename={getMediaDownloadFilename(resolvedItem)}
+              onOpen={addEntry}
+            />
+          ) : null}
+
+          {resolvedItem.retweetedStatus ? (
+            <RetweetedFeedBlock
+              item={resolvedItem.retweetedStatus}
+              onNavigate={onNavigate}
+              feedInteractionMode={feedInteractionMode}
+              autoLoadLongText={shouldAutoLoadLongText}
+              textOnly={isTextOnly}
+            />
+          ) : null}
+        </CardContent>
+        <CardFooter className="px-4">
+          <FeedActions
             item={resolvedItem}
+            surface={surfaceProp}
+            onCommentClick={onCommentClick}
+            onCommentExpand={handleCommentExpand}
+            commentsExpanded={commentsExpanded}
+            commentsPanelId={canExpandInlineComments ? commentsPanelId : undefined}
+            onRepostClick={onRepostClick}
+            onLikeClick={(target) => likeMutation.mutate(target)}
+            likePending={likePendingId === resolvedItem.id}
+            feedInteractionMode={feedInteractionMode}
+            primaryActionOrder={feedPrimaryActionOrder}
+            toolbarButtonIds={feedToolbarButtonIds}
             favorited={resolvedItem.favorited}
             onFavorite={() => favoriteMutation.mutateAsync(resolvedItem)}
-            contentLabel="这条微博"
-            isDeleting={deleteMutation.isPending}
-            onDelete={() => deleteMutation.mutateAsync()}
-            visibleActionIds={moreMenuActionIds}
+            favoritePending={favoriteMutation.isPending}
+            onCopyLink={() => handleCopyLink(resolvedItem)}
             onCopyText={() => handleCopyText(resolvedItem)}
+            onGenImage={() => openGenImage(resolvedItem)}
+            onDownload={() => void handleDownload()}
+            downloadPending={downloadLoading}
           />
-        </div>
-      </div>
-      <CardContent
-        className="flex flex-col gap-4 px-4"
-        onMouseDown={handleCardMouseDown}
-        onMouseUp={handleCardMouseUp}
-      >
-        <FeedTextBlock
-          item={resolvedItem}
-          canLoadLongText={shouldShowLoadLongText}
-          isLongTextLoading={isLongTextLoading}
-          hasLongTextError={hasLongTextError}
-          onLoadLongText={onLoadLongText}
-        />
-
-        <FeedMediaBlock item={resolvedItem} />
-
-        <ImageCarousel
-          images={resolvedItem.images}
-          mixMediaItems={resolvedItem.mixMediaInfo}
-          downloadFilename={getMediaDownloadFilename(resolvedItem)}
-          onOpen={addEntry}
-        />
-
-        {resolvedItem.retweetedStatus ? (
-          <RetweetedFeedBlock
-            item={resolvedItem.retweetedStatus}
-            onNavigate={onNavigate}
-            feedInteractionMode={feedInteractionMode}
+        </CardFooter>
+        {commentsExpanded && canExpandInlineComments ? (
+          <FeedCommentsExpanded
+            id={commentsPanelId}
+            item={resolvedItem}
+            onCollapse={handleCommentExpand}
           />
         ) : null}
-      </CardContent>
-      <CardFooter className="px-4">
-        <FeedActions
-          item={resolvedItem}
-          surface={surfaceProp}
-          onCommentClick={onCommentClick}
-          onCommentExpand={handleCommentExpand}
-          commentsExpanded={commentsExpanded}
-          commentsPanelId={canExpandInlineComments ? commentsPanelId : undefined}
-          onRepostClick={onRepostClick}
-          onLikeClick={(target) => likeMutation.mutate(target)}
-          likePending={likePendingId === resolvedItem.id}
-          feedInteractionMode={feedInteractionMode}
-          primaryActionOrder={feedPrimaryActionOrder}
-          toolbarButtonIds={feedToolbarButtonIds}
-          favorited={resolvedItem.favorited}
-          onFavorite={() => favoriteMutation.mutateAsync(resolvedItem)}
-          favoritePending={favoriteMutation.isPending}
-          onCopyLink={() => handleCopyLink(resolvedItem)}
-          onCopyText={() => handleCopyText(resolvedItem)}
-          onGenImage={() => openGenImage(resolvedItem)}
-          onDownload={() => void handleDownload()}
-          downloadPending={downloadLoading}
-        />
-      </CardFooter>
-      {commentsExpanded && canExpandInlineComments ? (
-        <FeedCommentsExpanded
-          id={commentsPanelId}
-          item={resolvedItem}
-          onCollapse={handleCommentExpand}
-        />
-      ) : null}
-      {downloadDialog}
-    </Card>
+        {downloadDialog}
+      </Card>
+    </div>
   )
 })
