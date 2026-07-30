@@ -18,9 +18,9 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },
 })
 
-const animateTo = vi.fn(() => ({
-  stop: vi.fn(),
-}))
+const animateTo = vi.fn<
+  (value: unknown, target: number, options?: unknown) => { stop: () => void }
+>(() => ({ stop: vi.fn() }))
 
 vi.mock('@/lib/weibo/components/right-rail', () => ({
   RightRail: () => <div data-testid="right-rail">right rail</div>,
@@ -30,7 +30,8 @@ vi.mock('motion/react', async () => {
   const actual = await vi.importActual<typeof import('motion/react')>('motion/react')
   return {
     ...actual,
-    animate: (...args: unknown[]) => animateTo(...args),
+    animate: (value: unknown, target: number, options?: unknown) =>
+      animateTo(value, target, options),
   }
 })
 

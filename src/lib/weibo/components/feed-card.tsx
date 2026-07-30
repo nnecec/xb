@@ -143,13 +143,15 @@ export const FeedCard = memo(function FeedCard({
   })
 
   const deleteMutation = useMutation({
-    mutationFn: () => deleteWeiboStatus(item.id),
+    mutationFn: (target: FeedItem) => deleteWeiboStatus(target.id),
     meta: {
       invalidates: [['weibo']],
     },
-    onSuccess: () => {
+    onSuccess: (_data, target) => {
       toast.success('已删除')
-      onStatusDeleted?.()
+      if (target.id === item.id) {
+        onStatusDeleted?.()
+      }
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : '删除失败')
@@ -407,7 +409,7 @@ export const FeedCard = memo(function FeedCard({
               onFavorite={() => favoriteMutation.mutateAsync(resolvedItem)}
               contentLabel="这条微博"
               isDeleting={deleteMutation.isPending}
-              onDelete={() => deleteMutation.mutateAsync()}
+              onDelete={() => deleteMutation.mutateAsync(resolvedItem)}
               visibleActionIds={moreMenuActionIds}
               onCopyText={() => handleCopyText(resolvedItem)}
             />
@@ -442,7 +444,20 @@ export const FeedCard = memo(function FeedCard({
             <RetweetedFeedBlock
               item={resolvedItem.retweetedStatus}
               onNavigate={onNavigate}
+              onCommentClick={onCommentClick}
+              onRepostClick={onRepostClick}
+              onLikeClick={(target) => likeMutation.mutate(target)}
+              likePending={likePendingId === resolvedItem.retweetedStatus.id}
+              onFavorite={(target) => favoriteMutation.mutateAsync(target)}
+              favoritePending={
+                favoriteMutation.isPending &&
+                favoriteMutation.variables?.id === resolvedItem.retweetedStatus.id
+              }
+              onDelete={(target) => deleteMutation.mutateAsync(target)}
               feedInteractionMode={feedInteractionMode}
+              primaryActionOrder={feedPrimaryActionOrder}
+              toolbarButtonIds={feedToolbarButtonIds}
+              moreMenuActionIds={moreMenuActionIds}
               autoLoadLongText={shouldAutoLoadLongText}
               textOnly={isTextOnly}
             />

@@ -441,8 +441,10 @@ export function parseCustomThemeVariables(css: string): Record<string, string> {
 
   while ((match = declarationPattern.exec(css))) {
     const name = match[1]
+    const value = match[2]
+    if (!name || !value) continue
     if (CUSTOM_THEME_VARIABLE_SET.has(name)) {
-      variables[name] = cleanValue(match[2])
+      variables[name] = cleanValue(value)
     }
   }
 

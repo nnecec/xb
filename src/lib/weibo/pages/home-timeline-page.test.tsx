@@ -226,7 +226,7 @@ describe('HomeTimelinePage', () => {
 
     expect(await screen.findByText('1条新微博')).toBeInTheDocument()
 
-    const refreshButton = screen.getAllByRole('button', { name: '刷新' })[0]
+    const refreshButton = screen.getAllByRole('button', { name: '刷新' })[0]!
     fireEvent.click(refreshButton)
 
     expect(timelineRequestCount).toBe(2)

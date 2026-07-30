@@ -31,7 +31,7 @@ export interface FeedCardMoreMenuProps {
   item?: FeedItem
   favorited?: boolean
   onFavorite?: () => void | Promise<void>
-  onDelete: () => void | Promise<void>
+  onDelete?: () => void | Promise<void>
   isDeleting?: boolean
   contentLabel?: string
   visibleActionIds?: FeedToolbarButtonId[]
@@ -204,7 +204,7 @@ export function FeedCardMoreMenu({
               onClick={() => {
                 void (async () => {
                   try {
-                    await onDelete()
+                    await onDelete?.()
                     setConfirmOpen(false)
                   } catch {
                     // Caller shows toast

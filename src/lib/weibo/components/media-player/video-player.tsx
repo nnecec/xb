@@ -220,6 +220,7 @@ export function VideoPlayer({
   useIntersectionObserver(
     videoRef,
     ([entry]) => {
+      if (!entry) return
       const video = videoRef.current
       if (video && !entry.isIntersecting && !video.paused && !video.ended && !isInPiPRef.current) {
         video.pause()

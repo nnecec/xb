@@ -1,4 +1,4 @@
-import { AppTheme } from '@/lib/app-settings'
+import type { AppTheme } from '@/lib/app-settings'
 
 export type ThemeMode = 'light' | 'dark'
 

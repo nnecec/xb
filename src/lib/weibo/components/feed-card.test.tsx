@@ -521,6 +521,55 @@ describe('FeedCard', () => {
     expect(screen.getByRole('button', { name: '点赞微博' }).className).toContain('rounded-full')
   })
 
+  it('renders actions and the media download menu for a retweeted status', () => {
+    const store = getAppSettingsStore()
+    store.setState({ feedInteractionMode: 'x' })
+    const onCommentClick = vi.fn()
+    const onRepostClick = vi.fn()
+
+    renderCard({
+      onCommentClick,
+      onRepostClick,
+      item: {
+        retweetedStatus: {
+          id: 'retweeted-501',
+          mblogId: 'm-retweeted-501',
+          isLongText: false,
+          text: 'retweeted content',
+          createdAt: '2024-01-01',
+          createdAtLabel: 'today',
+          author: { id: '2', name: 'Bob', avatarUrl: null },
+          stats: { likes: 4, comments: 5, reposts: 6 },
+          images: [
+            {
+              id: 'retweeted-image-1',
+              thumbnailUrl: 'https://example.com/retweeted-thumbnail.jpg',
+              largeUrl: 'https://example.com/retweeted-large.jpg',
+            },
+          ],
+          media: null,
+          regionName: '',
+          source: '',
+        },
+      },
+    })
+
+    const retweetedCard = screen.getAllByTestId('feed-card-body')[1]!
+    const commentButton = within(retweetedCard).getByRole('button', { name: '回复微博' })
+    const repostButton = within(retweetedCard).getByRole('button', { name: '转发微博' })
+
+    expect(within(retweetedCard).getByRole('button', { name: '点赞微博' })).toBeInTheDocument()
+
+    fireEvent.click(commentButton)
+    fireEvent.click(repostButton)
+    const moreButton = within(retweetedCard).getByRole('button', { name: '更多操作' })
+    fireEvent.pointerDown(moreButton, { button: 0, ctrlKey: false })
+
+    expect(onCommentClick).toHaveBeenCalledWith(expect.objectContaining({ id: 'retweeted-501' }))
+    expect(onRepostClick).toHaveBeenCalledWith(expect.objectContaining({ id: 'retweeted-501' }))
+    expect(screen.getByRole('menuitem', { name: '批量下载' })).toBeInTheDocument()
+  })
+
   it('exposes inline comment expansion state when comments can expand in weibo mode', async () => {
     renderCard({})
 
@@ -761,7 +810,7 @@ describe('FeedCard', () => {
         </QueryClientProvider>,
       )
 
-      const retweeted = screen.getAllByTestId('feed-card-body')[1]
+      const retweeted = screen.getAllByTestId('feed-card-body')[1]!
       fireEvent.click(retweeted, { button: 0, metaKey: true })
 
       expect(windowOpenSpy).toHaveBeenCalledTimes(1)
@@ -817,7 +866,7 @@ describe('FeedCard', () => {
         </QueryClientProvider>,
       )
 
-      const retweeted = screen.getAllByTestId('feed-card-body')[1]
+      const retweeted = screen.getAllByTestId('feed-card-body')[1]!
       fireEvent(retweeted, new MouseEvent('auxclick', { button: 1, bubbles: true }))
 
       expect(windowOpenSpy).toHaveBeenCalledTimes(1)
@@ -873,7 +922,7 @@ describe('FeedCard', () => {
         </QueryClientProvider>,
       )
 
-      const retweeted = screen.getAllByTestId('feed-card-body')[1]
+      const retweeted = screen.getAllByTestId('feed-card-body')[1]!
       fireEvent.click(retweeted, { button: 0 })
 
       expect(windowOpenSpy).not.toHaveBeenCalled()
@@ -924,7 +973,7 @@ describe('FeedCard', () => {
         </QueryClientProvider>,
       )
 
-      const retweeted = screen.getAllByTestId('feed-card-body')[1]
+      const retweeted = screen.getAllByTestId('feed-card-body')[1]!
       const text = within(retweeted).getByText('inner post content')
 
       fireEvent.mouseDown(text, { button: 0, clientX: 10, clientY: 10 })
@@ -979,7 +1028,7 @@ describe('FeedCard', () => {
         </QueryClientProvider>,
       )
 
-      const retweeted = screen.getAllByTestId('feed-card-body')[1]
+      const retweeted = screen.getAllByTestId('feed-card-body')[1]!
       const text = within(retweeted).getByText('inner post content')
 
       fireEvent.mouseDown(text, { button: 0, clientX: 10, clientY: 10 })
@@ -1034,7 +1083,7 @@ describe('FeedCard', () => {
         </QueryClientProvider>,
       )
 
-      const retweeted = screen.getAllByTestId('feed-card-body')[1]
+      const retweeted = screen.getAllByTestId('feed-card-body')[1]!
       const text = within(retweeted).getByText('inner post content')
 
       fireEvent.mouseDown(text, { button: 0, clientX: 10, clientY: 10 })

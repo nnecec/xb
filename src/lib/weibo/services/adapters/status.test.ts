@@ -166,7 +166,7 @@ describe('adaptStatusDetailResponse', () => {
     expect(result.status.media?.dash?.type).toBe('playback')
     if (result.status.media?.dash?.type === 'playback') {
       expect(result.status.media?.dash?.sources.length).toBe(1)
-      expect(result.status.media?.dash?.sources[0].url).toContain('v-720.mp4')
+      expect(result.status.media?.dash?.sources[0]!.url).toContain('v-720.mp4')
     }
   })
 

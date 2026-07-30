@@ -86,12 +86,12 @@ describe('extractMediaUrls', () => {
     const urls = extractMediaUrls(item)
 
     expect(urls).toHaveLength(2)
-    expect(urls[0].url).toBe('https://example.com/large1.jpg')
-    expect(urls[0].type).toBe('image')
-    expect(urls[0].filename).toContain('测试用户')
-    expect(urls[0].filename).toContain('_1.jpg')
-    expect(urls[1].url).toBe('https://example.com/large2.jpg')
-    expect(urls[1].filename).toContain('_2.jpg')
+    expect(urls[0]!.url).toBe('https://example.com/large1.jpg')
+    expect(urls[0]!.type).toBe('image')
+    expect(urls[0]!.filename).toContain('测试用户')
+    expect(urls[0]!.filename).toContain('_1.jpg')
+    expect(urls[1]!.url).toBe('https://example.com/large2.jpg')
+    expect(urls[1]!.filename).toContain('_2.jpg')
   })
 
   it('应该保留图片下载候选 URL', () => {
@@ -108,7 +108,7 @@ describe('extractMediaUrls', () => {
 
     const urls = extractMediaUrls(item)
 
-    expect(urls[0].fallbackUrls).toEqual([
+    expect(urls[0]!.fallbackUrls).toEqual([
       'https://example.com/large1.jpg',
       'https://example.com/original1.jpg',
     ])
@@ -128,8 +128,8 @@ describe('extractMediaUrls', () => {
 
     const urls = extractMediaUrls(item)
 
-    expect(urls[0].url).toBe('https://wx1.sinaimg.cn/large/pic.jpg')
-    expect(urls[0].fallbackUrls).toEqual([
+    expect(urls[0]!.url).toBe('https://wx1.sinaimg.cn/large/pic.jpg')
+    expect(urls[0]!.fallbackUrls).toEqual([
       'https://wx1.sinaimg.cn/large/pic.jpg',
       'https://wx1.sinaimg.cn/woriginal/pic.jpg',
       'https://wx1.sinaimg.cn/mw2000/pic.jpg',
@@ -157,10 +157,10 @@ describe('extractMediaUrls', () => {
     const urls = extractMediaUrls(item)
 
     expect(urls).toHaveLength(2)
-    expect(urls[0].url).toBe('https://example.com/large1.jpg')
-    expect(urls[0].type).toBe('image')
-    expect(urls[1].url).toBe('https://livephoto.us.sinaimg.cn/video1.mp4')
-    expect(urls[1].type).toBe('video')
+    expect(urls[0]!.url).toBe('https://example.com/large1.jpg')
+    expect(urls[0]!.type).toBe('image')
+    expect(urls[1]!.url).toBe('https://livephoto.us.sinaimg.cn/video1.mp4')
+    expect(urls[1]!.type).toBe('video')
   })
 
   it('应该提取单视频微博', () => {
@@ -177,8 +177,8 @@ describe('extractMediaUrls', () => {
     const urls = extractMediaUrls(item)
 
     expect(urls).toHaveLength(1)
-    expect(urls[0].url).toBe('https://example.com/download.mp4')
-    expect(urls[0].type).toBe('video')
+    expect(urls[0]!.url).toBe('https://example.com/download.mp4')
+    expect(urls[0]!.type).toBe('video')
   })
 
   it('应该在没有 downloadUrl 时降级到 streamUrl', () => {
@@ -194,7 +194,7 @@ describe('extractMediaUrls', () => {
     const urls = extractMediaUrls(item)
 
     expect(urls).toHaveLength(1)
-    expect(urls[0].url).toBe('https://example.com/stream.mp4')
+    expect(urls[0]!.url).toBe('https://example.com/stream.mp4')
   })
 
   it('应该提取混合媒体中的图片和视频', () => {
@@ -222,10 +222,10 @@ describe('extractMediaUrls', () => {
     const urls = extractMediaUrls(item)
 
     expect(urls).toHaveLength(2)
-    expect(urls[0].url).toBe('https://example.com/large1.jpg')
-    expect(urls[0].type).toBe('image')
-    expect(urls[1].url).toBe('https://example.com/download.mp4')
-    expect(urls[1].type).toBe('video')
+    expect(urls[0]!.url).toBe('https://example.com/large1.jpg')
+    expect(urls[0]!.type).toBe('image')
+    expect(urls[1]!.url).toBe('https://example.com/download.mp4')
+    expect(urls[1]!.type).toBe('video')
   })
 
   it('应该处理混合媒体中的 Live Photo', () => {
@@ -248,8 +248,8 @@ describe('extractMediaUrls', () => {
     const urls = extractMediaUrls(item)
 
     expect(urls).toHaveLength(2)
-    expect(urls[0].type).toBe('image')
-    expect(urls[1].type).toBe('video')
+    expect(urls[0]!.type).toBe('image')
+    expect(urls[1]!.type).toBe('video')
   })
 
   it('应该跳过没有 URL 的混合媒体视频', () => {
@@ -295,9 +295,9 @@ describe('extractMediaUrls', () => {
 
     const urls = extractMediaUrls(item)
 
-    expect(urls[0].filename).toContain('张三')
-    expect(urls[0].filename).toContain('今天天气真好啊')
-    expect(urls[0].filename).toMatch(/张三_今天天气真好啊.*_1\.jpg/)
+    expect(urls[0]!.filename).toContain('张三')
+    expect(urls[0]!.filename).toContain('今天天气真好啊')
+    expect(urls[0]!.filename).toMatch(/张三_今天天气真好啊.*_1\.jpg/)
   })
 
   it('应该处理包含 HTML 标签的文本', () => {
@@ -314,9 +314,9 @@ describe('extractMediaUrls', () => {
 
     const urls = extractMediaUrls(item)
 
-    expect(urls[0].filename).not.toContain('<')
-    expect(urls[0].filename).not.toContain('>')
-    expect(urls[0].filename).toContain('链接这是内容')
+    expect(urls[0]!.filename).not.toContain('<')
+    expect(urls[0]!.filename).not.toContain('>')
+    expect(urls[0]!.filename).toContain('链接这是内容')
   })
 
   it('应该处理包含特殊字符的文本', () => {
@@ -333,9 +333,9 @@ describe('extractMediaUrls', () => {
 
     const urls = extractMediaUrls(item)
 
-    expect(urls[0].filename).not.toContain('/')
-    expect(urls[0].filename).not.toContain(':')
-    expect(urls[0].filename).not.toContain('*')
+    expect(urls[0]!.filename).not.toContain('/')
+    expect(urls[0]!.filename).not.toContain(':')
+    expect(urls[0]!.filename).not.toContain('*')
   })
 
   it('应该截断超过 10 个字符的文本', () => {
@@ -352,7 +352,7 @@ describe('extractMediaUrls', () => {
 
     const urls = extractMediaUrls(item)
 
-    const textPart = urls[0].filename.split('_')[1]
+    const textPart = urls[0]!.filename.split('_')[1]!
     expect(textPart.length).toBeLessThanOrEqual(10)
   })
 })

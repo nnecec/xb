@@ -105,8 +105,10 @@ const TreeView = React.forwardRef<HTMLDivElement, TreeProps>(
       function walkTreeItems(items: TreeDataItem[] | TreeDataItem, targetId: string) {
         if (Array.isArray(items)) {
           for (let i = 0; i < items.length; i++) {
-            ids.push(items[i].id)
-            if (walkTreeItems(items[i], targetId) && !expandAll) {
+            const item = items[i]
+            if (!item) continue
+            ids.push(item.id)
+            if (walkTreeItems(item, targetId) && !expandAll) {
               return true
             }
             if (!expandAll) ids.pop()

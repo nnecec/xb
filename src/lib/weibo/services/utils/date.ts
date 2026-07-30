@@ -22,6 +22,19 @@ function parseWeiboDate(dateStr: string): Date | null {
   const parts = dateStr.trim().split(/\s+/)
   if (parts.length < 6) return null
 
+  const month = parts[1]
+  const dayPart = parts[2]
+  const timePart = parts[3]
+  const tz = parts[4]
+  const yearPart = parts[5]
+  if (!month || !dayPart || !timePart || !tz || !yearPart) return null
+
+  const timeParts = timePart.split(':')
+  const hoursPart = timeParts[0]
+  const minutesPart = timeParts[1]
+  const secondsPart = timeParts[2]
+  if (!hoursPart || !minutesPart || !secondsPart) return null
+
   const months = [
     'Jan',
     'Feb',
@@ -36,13 +49,15 @@ function parseWeiboDate(dateStr: string): Date | null {
     'Nov',
     'Dec',
   ]
-  const monthIndex = months.indexOf(parts[1])
+  const monthIndex = months.indexOf(month)
   if (monthIndex < 0) return null
 
-  const day = parseInt(parts[2], 10)
-  const [hours, minutes, seconds] = parts[3].split(':').map(Number)
-  const year = parseInt(parts[5], 10)
-  const tz = parts[4] // e.g. "+0800"
+  const day = parseInt(dayPart, 10)
+  const hours = parseInt(hoursPart, 10)
+  const minutes = parseInt(minutesPart, 10)
+  const seconds = parseInt(secondsPart, 10)
+  const year = parseInt(yearPart, 10)
+  // e.g. "+0800"
   const tzSign = tz[0] === '+' ? 1 : -1
   const tzH = parseInt(tz.slice(1, 3), 10)
   const tzM = parseInt(tz.slice(3, 5), 10)

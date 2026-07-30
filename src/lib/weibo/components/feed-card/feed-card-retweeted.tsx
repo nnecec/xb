@@ -1,38 +1,68 @@
 import { useCallback, useRef, type KeyboardEvent, type MouseEvent } from 'react'
+import { toast } from 'sonner'
 
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { type FeedInteractionMode } from '@/lib/app-settings'
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
+import {
+  type FeedInteractionMode,
+  type FeedPrimaryActionId,
+  type FeedToolbarButtonId,
+} from '@/lib/app-settings'
 import { cn } from '@/lib/utils'
+import { FeedCardMoreMenu } from '@/lib/weibo/components/feed-card-more-menu'
+import { useGenImageDialog } from '@/lib/weibo/components/gen-image-dialog-context'
 import { ImageCarousel } from '@/lib/weibo/components/image-carousel'
+import { useFeedCardMediaDownload } from '@/lib/weibo/components/use-feed-card-media-download'
 import { browsingHistoryStore } from '@/lib/weibo/hooks/use-browsing-history'
 import { useFeedLongText } from '@/lib/weibo/hooks/use-feed-long-text'
 import { useHasEnteredViewport } from '@/lib/weibo/hooks/use-has-entered-viewport'
 import type { FeedItem } from '@/lib/weibo/models/feed'
+import { getCurrentUserUid } from '@/lib/weibo/platform/current-user'
 
+import { FeedActions } from './feed-card-actions'
 import { RetweetedAuthorHeader } from './feed-card-author'
 import { FeedMediaBlock } from './feed-card-media'
 import { FeedTextBlock } from './feed-card-text'
 import {
   getMediaDownloadFilename,
+  getStatusCopyText,
   getStatusDetailPath,
   hasTextSelectionWithin,
   openStatusDetailInNewTab,
 } from './feed-card-utils'
 
 /**
- * Nested retweet preview: content only (no nested FeedActions).
- * Interaction stays on the outer card or status detail — Silent Canvas density.
+ * Nested retweet preview with the same actions as the root status.
  */
 export function RetweetedFeedBlock({
   item,
   onNavigate,
+  onCommentClick,
+  onRepostClick,
+  onLikeClick,
+  likePending,
+  onFavorite,
+  favoritePending,
+  onDelete,
   feedInteractionMode,
+  primaryActionOrder,
+  toolbarButtonIds,
+  moreMenuActionIds,
   autoLoadLongText,
   textOnly,
 }: {
   item: NonNullable<FeedItem['retweetedStatus']>
   onNavigate?: (item: FeedItem) => void
+  onCommentClick?: (item: FeedItem) => void
+  onRepostClick?: (item: FeedItem) => void
+  onLikeClick: (item: FeedItem) => void
+  likePending: boolean
+  onFavorite: (item: FeedItem) => void | Promise<void>
+  favoritePending: boolean
+  onDelete: (item: FeedItem) => void | Promise<void>
   feedInteractionMode: FeedInteractionMode
+  primaryActionOrder: FeedPrimaryActionId[]
+  toolbarButtonIds: FeedToolbarButtonId[]
+  moreMenuActionIds: FeedToolbarButtonId[]
   autoLoadLongText: boolean
   textOnly: boolean
 }) {
@@ -45,11 +75,16 @@ export function RetweetedFeedBlock({
     hasLongTextError,
     onLoadLongText,
   } = useFeedLongText(item, autoLoadLongText && hasEnteredViewport)
+  const { openGenImage } = useGenImageDialog()
+  const { downloadDialog, downloadLoading, handleDownload } = useFeedCardMediaDownload(resolvedItem)
 
   const addEntry = useCallback(() => {
     browsingHistoryStore.getState().addEntry(resolvedItem)
   }, [resolvedItem])
 
+  const isDeletedAuthor = !resolvedItem.author.id
+  const currentUserUid = getCurrentUserUid()
+  const isOwner = currentUserUid !== null && currentUserUid === resolvedItem.author.id
   const detailPath = getStatusDetailPath(resolvedItem)
   const canNavigate = feedInteractionMode === 'x' && onNavigate !== undefined && detailPath !== null
   const pointerDownPositionRef = useRef<{ x: number; y: number } | null>(null)
@@ -157,6 +192,34 @@ export function RetweetedFeedBlock({
     onNavigate?.(resolvedItem)
   }
 
+  const handleRetweetedCommentClick = useCallback(
+    (target: FeedItem) => {
+      if (feedInteractionMode === 'weibo') {
+        onNavigate?.(target)
+      } else {
+        onCommentClick?.(target)
+      }
+    },
+    [feedInteractionMode, onNavigate, onCommentClick],
+  )
+
+  const handleCopyText = useCallback(() => {
+    const copyText = getStatusCopyText(resolvedItem)
+    if (!copyText) {
+      toast.error('没有可复制的文字')
+      return
+    }
+
+    void navigator.clipboard
+      .writeText(copyText)
+      .then(() => {
+        toast.success('已复制文字')
+      })
+      .catch(() => {
+        toast.error('复制失败，请稍后再试')
+      })
+  }, [resolvedItem])
+
   return (
     <div ref={retweetedCardRef}>
       <Card
@@ -174,7 +237,25 @@ export function RetweetedFeedBlock({
         {...navigationProps}
       >
         <CardHeader className="px-4">
-          <RetweetedAuthorHeader item={resolvedItem} hideAvatar={textOnly} />
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1">
+              <RetweetedAuthorHeader item={resolvedItem} hideAvatar={textOnly} />
+            </div>
+            {!isDeletedAuthor ? (
+              <FeedCardMoreMenu
+                type="status"
+                isOwner={isOwner}
+                item={resolvedItem}
+                favorited={resolvedItem.favorited}
+                onFavorite={() => onFavorite(resolvedItem)}
+                onDelete={() => onDelete(resolvedItem)}
+                contentLabel="这条微博"
+                visibleActionIds={moreMenuActionIds}
+                onCopyText={handleCopyText}
+                className="-mt-1"
+              />
+            ) : null}
+          </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-4 px-4">
           <FeedTextBlock
@@ -197,7 +278,40 @@ export function RetweetedFeedBlock({
             />
           ) : null}
         </CardContent>
+        {!isDeletedAuthor ? (
+          <CardFooter className="px-4">
+            <FeedActions
+              item={resolvedItem}
+              onCommentClick={handleRetweetedCommentClick}
+              onRepostClick={onRepostClick}
+              onLikeClick={onLikeClick}
+              likePending={likePending}
+              feedInteractionMode={feedInteractionMode}
+              primaryActionOrder={primaryActionOrder}
+              toolbarButtonIds={toolbarButtonIds}
+              favorited={resolvedItem.favorited}
+              onFavorite={() => onFavorite(resolvedItem)}
+              favoritePending={favoritePending}
+              onCopyLink={() => {
+                const weiboUrl = `https://weibo.com/${resolvedItem.author.id}/${resolvedItem.mblogId}`
+                void navigator.clipboard
+                  .writeText(weiboUrl)
+                  .then(() => {
+                    toast.success('已复制链接')
+                  })
+                  .catch(() => {
+                    toast.error('复制失败，请稍后再试')
+                  })
+              }}
+              onCopyText={handleCopyText}
+              onGenImage={() => openGenImage(resolvedItem)}
+              onDownload={() => void handleDownload()}
+              downloadPending={downloadLoading}
+            />
+          </CardFooter>
+        ) : null}
       </Card>
+      {downloadDialog}
     </div>
   )
 }

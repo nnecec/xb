@@ -235,8 +235,9 @@ function triggerBlobDownload(blob: Blob, filename: string): void {
  */
 export function inferExtension(url: string): string {
   const match = url.match(/\.(jpg|jpeg|png|gif|webp|mp4|mov)(\?|$)/i)
-  if (match) {
-    return match[1].toLowerCase()
+  const extension = match?.[1]
+  if (extension) {
+    return extension.toLowerCase()
   }
   // 默认根据类型推断
   return url.includes('video') || url.includes('.mp4') ? 'mp4' : 'jpg'
@@ -410,14 +411,14 @@ export async function downloadAsZip(
     const batch = urls.slice(i, i + MEDIA_DOWNLOAD_CONCURRENCY)
     const batchResults = await Promise.allSettled(batch.map((mediaUrl) => fetchMediaBlob(mediaUrl)))
 
-    for (let j = 0; j < batch.length; j++) {
+    for (const [j, mediaUrl] of batch.entries()) {
       const result = batchResults[j]
-      if (result.status === 'fulfilled') {
-        zip.file(batch[j].filename, result.value)
+      if (result?.status === 'fulfilled') {
+        zip.file(mediaUrl.filename, result.value)
         successCount++
       } else {
         failCount++
-        failedUrls.push(batch[j])
+        failedUrls.push(mediaUrl)
       }
       completedCount++
       reportProgress({ stage: 'downloading', completed: completedCount, total: urls.length })

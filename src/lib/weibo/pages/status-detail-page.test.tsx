@@ -333,13 +333,13 @@ describe('StatusDetailPage', () => {
     const replyButtons = screen.getAllByRole('button', { name: '回复评论' })
     expect(replyButtons.length).toBeGreaterThanOrEqual(3)
 
-    fireEvent.click(replyButtons[0])
+    fireEvent.click(replyButtons[0]!)
     expect(await screen.findByPlaceholderText('回复 @Bob')).toBeInTheDocument()
 
-    fireEvent.click(replyButtons[1])
+    fireEvent.click(replyButtons[1]!)
     expect(await screen.findByPlaceholderText('回复 @Carol')).toBeInTheDocument()
 
-    fireEvent.click(replyButtons[2])
+    fireEvent.click(replyButtons[2]!)
     expect(await screen.findByPlaceholderText('回复 @Dave')).toBeInTheDocument()
 
     // Status-level reply/repost still go through global compose; comment replies do not.

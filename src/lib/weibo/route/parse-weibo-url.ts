@@ -103,11 +103,13 @@ export function parseWeiboUrl(input: string): WeiboPageDescriptor {
     return q ? { kind: 'topic', topic: q } : { kind: 'unsupported', reason: 'unmatched-path' }
   }
 
-  if (parts.length >= 2 && /^\d+$/.test(parts[0])) {
+  const authorId = parts[0]
+  const statusId = parts[1]
+  if (authorId && statusId && /^\d+$/.test(authorId)) {
     return {
       kind: 'status',
-      authorId: parts[0],
-      statusId: parts[1],
+      authorId,
+      statusId,
     }
   }
 

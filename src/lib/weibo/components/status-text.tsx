@@ -552,6 +552,7 @@ function renderReplyChainText(
     const secondItem = chain[1]
     const middleItems = chain.slice(2, chain.length - 1)
     const lastItem = chain[chain.length - 1]
+    if (!firstItem || !secondItem || !lastItem) return null
 
     return (
       <span className="flex flex-col gap-2">

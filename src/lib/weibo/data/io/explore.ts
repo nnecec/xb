@@ -25,7 +25,7 @@ import {
 } from '@/lib/weibo/services/adapters/hotsearch'
 import {
   adaptSearchResponse,
-  SearchPayload,
+  type SearchPayload,
   type SearchResult,
 } from '@/lib/weibo/services/adapters/search'
 import {

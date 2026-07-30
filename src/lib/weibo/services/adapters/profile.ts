@@ -2,7 +2,7 @@ import type { UserProfile } from '@/lib/weibo/models/profile'
 
 function stripUrlQuery(url: string | null | undefined): string | null {
   if (!url) return null
-  return url.split('?')[0]
+  return url.split('?')[0] ?? null
 }
 
 interface ProfileUserPayload {

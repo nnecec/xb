@@ -80,7 +80,7 @@ export function EmoticonPicker({ onSelect }: { onSelect: (entry: EmoticonEntry) 
           <TabsList className="my-1 flex w-full overflow-x-auto">
             {data?.groups.map((group) => (
               <TabsTrigger key={group.title} value={group.title} className="gap-1 px-2 py-1.5">
-                <img alt="" className="size-5" src={group.items[0].url} />
+                {group.items[0] ? <img alt="" className="size-5" src={group.items[0].url} /> : null}
                 <span className="sr-only">{group.title}</span>
               </TabsTrigger>
             ))}

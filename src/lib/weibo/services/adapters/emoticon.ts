@@ -72,9 +72,8 @@ function resolveGroupsFromFlatLocale(
   nestedEmoticon: Record<string, unknown>,
 ): WeiboEmoticonLocaleGroups | null {
   const entries = Object.entries(nestedEmoticon)
-  for (const [, value] of entries) {
+  for (const [groupName, value] of entries) {
     if (isEmoticonArray(value)) {
-      const groupName = entries[0][0]
       const emoticonArray = value as Array<{ phrase?: string; url?: string }>
       return { [groupName]: emoticonArray } as WeiboEmoticonLocaleGroups
     }

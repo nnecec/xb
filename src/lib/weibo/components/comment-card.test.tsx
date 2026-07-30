@@ -188,7 +188,7 @@ describe('CommentCard', () => {
     expect(await screen.findByText('child reply')).toBeInTheDocument()
 
     const replyButtons = screen.getAllByRole('button', { name: '回复评论' })
-    fireEvent.click(replyButtons[replyButtons.length - 1])
+    fireEvent.click(replyButtons[replyButtons.length - 1]!)
 
     expect(await screen.findByPlaceholderText('回复 @B')).toBeInTheDocument()
   })

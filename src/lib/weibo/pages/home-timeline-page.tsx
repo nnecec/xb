@@ -102,7 +102,8 @@ export function HomeTimelinePage() {
   const isRefreshing = timelineQuery.isFetching && !isFetchingNextPage && !isLoading
 
   // ─── New posts check (following tab only) ───
-  const followingFirstItemId = items.length > 0 && activeTab === 'following' ? items[0].id : null
+  const followingFirstItemId =
+    items.length > 0 && activeTab === 'following' ? (items[0]?.id ?? null) : null
 
   const newPostsCheckQuery = useQuery({
     ...followingNewPostsCheckOptions(followingFirstItemId, groupListId),
