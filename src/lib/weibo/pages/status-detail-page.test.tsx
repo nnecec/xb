@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+const feedCardMock = vi.hoisted(() => vi.fn())
 const setComposeTarget = vi.fn()
 
 vi.mock('@/lib/weibo/app/app-shell-layout', () => ({
@@ -37,22 +38,27 @@ vi.mock('@/lib/weibo/components/feed-card', () => ({
   }: {
     item: {
       text: string
+      images: Array<{ id: string }>
       retweetedStatus: { text: string } | null
     }
     onCommentClick?: (item: { text: string }) => void
     onRepostClick?: (item: { text: string }) => void
-  }) => (
-    <div>
-      <p>{item.text}</p>
-      {item.retweetedStatus ? <p>{item.retweetedStatus.text}</p> : null}
-      <button type="button" aria-label="回复微博" onClick={() => onCommentClick?.(item)}>
-        1
-      </button>
-      <button type="button" aria-label="转发微博" onClick={() => onRepostClick?.(item)}>
-        2
-      </button>
-    </div>
-  ),
+  }) => {
+    feedCardMock(item)
+
+    return (
+      <div>
+        <p>{item.text}</p>
+        {item.retweetedStatus ? <p>{item.retweetedStatus.text}</p> : null}
+        <button type="button" aria-label="回复微博" onClick={() => onCommentClick?.(item)}>
+          1
+        </button>
+        <button type="button" aria-label="转发微博" onClick={() => onRepostClick?.(item)}>
+          2
+        </button>
+      </div>
+    )
+  },
 }))
 
 import { APP_SETTINGS_STORAGE_KEY } from '@/lib/app-settings'
@@ -129,7 +135,13 @@ describe('StatusDetailPage', () => {
         createdAtLabel: 'today',
         author: { id: '1', name: 'Alice', avatarUrl: null },
         stats: { likes: 1, comments: 1, reposts: 0 },
-        images: [],
+        images: [
+          {
+            id: 'detail-image-1',
+            thumbnailUrl: 'https://example.com/detail-thumbnail.jpg',
+            largeUrl: 'https://example.com/detail-large.jpg',
+          },
+        ],
         media: null,
         regionName: '',
         source: '',
@@ -206,6 +218,25 @@ describe('StatusDetailPage', () => {
     expect(await screen.findByText('reply')).toBeInTheDocument()
     expect(await screen.findByText('nested reply')).toBeInTheDocument()
     expect(await screen.findByText('third level reply')).toBeInTheDocument()
+  })
+
+  it('passes detail media through the shared FeedCard path', async () => {
+    const queryClient = new QueryClient()
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={['/1/501']}>
+          <StatusDetailPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    await screen.findByText('main post')
+
+    expect(feedCardMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        images: [expect.objectContaining({ id: 'detail-image-1' })],
+      }),
+    )
   })
 
   it('shows the status summary in the top bar only after the status leaves view', async () => {

@@ -20,6 +20,8 @@ interface ImageCarouselProps {
   mixMediaItems?: FeedMixMediaItem[]
   downloadFilename?: string
   onOpen?: () => void
+  singleMediaMaxWidth?: number
+  variant?: 'inline' | 'card'
 }
 
 type GridItem =
@@ -35,12 +37,20 @@ type GridItem =
     }
 
 const LONG_IMAGE_RATIO = 2.6
+const STRIP_DRAG_THRESHOLD_PX = 5
+
+interface StripDragState {
+  pointerId: number
+  startX: number
+  startScrollLeft: number
+  moved: boolean
+}
 
 function isLongImage(image: FeedImage) {
   return Boolean(image.width && image.height && image.height / image.width >= LONG_IMAGE_RATIO)
 }
 
-function gridClassName(count: number) {
+function legacyGridClassName(count: number) {
   if (count === 1) return 'max-w-[450px] grid-cols-1'
   if (count === 2) return 'grid-cols-2 max-w-[650px]'
   if (count === 3) return 'grid-cols-2 max-w-[650px] sm:grid-cols-3'
@@ -49,11 +59,7 @@ function gridClassName(count: number) {
   return 'grid-cols-3 max-w-[650px]'
 }
 
-function mediaRatio(item: GridItem, total: number) {
-  if (total > 1) {
-    return 1
-  }
-
+function intrinsicMediaRatio(item: GridItem) {
   if (item.kind === 'video') {
     return item.video.videoOrientation === 'vertical' ? 4 / 5 : 16 / 9
   }
@@ -66,17 +72,61 @@ function mediaRatio(item: GridItem, total: number) {
   return 1
 }
 
+function mediaRatio(item: GridItem, total: number, horizontal: boolean) {
+  if (horizontal || total === 1) return intrinsicMediaRatio(item)
+  return 1
+}
+
+function cardGridClassName(count: number) {
+  if (count === 2) return 'grid-cols-2'
+  if (count === 3) return 'grid-cols-2 sm:grid-cols-3'
+  if (count === 4) return 'grid-cols-2'
+  if (count <= 9) return 'grid-cols-2 sm:grid-cols-3'
+  return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4'
+}
+
+function closestStripItemIndex(element: HTMLElement) {
+  const items = Array.from(element.querySelectorAll<HTMLElement>('[data-media-strip-item]'))
+  if (items.length === 0) return 0
+
+  let closestIndex = 0
+  let closestDistance = Number.POSITIVE_INFINITY
+  for (const [index, item] of items.entries()) {
+    const distance = Math.abs(item.offsetLeft - element.scrollLeft)
+    if (distance < closestDistance) {
+      closestDistance = distance
+      closestIndex = index
+    }
+  }
+  return closestIndex
+}
+
+function scrollToStripItem(element: HTMLElement, index: number) {
+  const items = Array.from(element.querySelectorAll<HTMLElement>('[data-media-strip-item]'))
+  const target = items[Math.min(Math.max(index, 0), items.length - 1)]
+  if (!target) return
+  element.scrollLeft = target.offsetLeft
+}
+
 /** Inset media outline: pure black/white only (never tinted neutrals). */
 const mediaOutlineClassName =
   'outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10'
 
-function ImageOverlay({ image, dim }: { image: FeedImage; dim: boolean }) {
+function ImageOverlay({
+  image,
+  dim,
+  square = true,
+}: {
+  image: FeedImage
+  dim: boolean
+  square?: boolean
+}) {
   return (
     <>
       {dim ? <div className="dark:bg-background/25 absolute inset-0 z-10" /> : null}
       <img
         src={image.thumbnailUrl}
-        className="aspect-square h-full w-full object-cover object-center"
+        className={cn(square && 'aspect-square', 'h-full w-full object-cover object-center')}
         alt=""
         width={image.width ?? 1}
         height={image.height ?? 1}
@@ -100,6 +150,17 @@ function ImageOverlay({ image, dim }: { image: FeedImage; dim: boolean }) {
         </Badge>
       ) : null}
     </>
+  )
+}
+
+function RemainingMediaOverlay({ count }: { count: number }) {
+  return (
+    <div
+      className="absolute inset-0 z-30 flex items-center justify-center bg-black/45 text-2xl font-semibold text-white backdrop-grayscale"
+      aria-label={`还有 ${count} 项媒体`}
+    >
+      +{count}
+    </div>
   )
 }
 
@@ -202,10 +263,20 @@ export const ImageCarousel = memo(function ImageCarousel({
   mixMediaItems,
   downloadFilename,
   onOpen,
+  singleMediaMaxWidth,
+  variant = 'inline',
 }: ImageCarouselProps) {
   const container = React.useMemo(() => getUiPortalContainer(), [])
   const darkModeImageDim = useAppSettings((s) => s.darkModeImageDim)
   const photoLoopEnabled = useAppSettings((s) => s.photoLoopEnabled)
+  const cardLayout = useAppSettings((s) => s.weiboCardMultiMediaLayout)
+  const cardGridLimit = useAppSettings((s) => s.weiboCardMultiMediaGridLimit)
+  const cardGridMaxWidth = useAppSettings((s) => s.weiboCardMultiMediaGridMaxWidth)
+  const cardStripHeight = useAppSettings((s) => s.weiboCardMultiMediaStripHeight)
+  const [activeStripIndex, setActiveStripIndex] = React.useState(0)
+  const [isStripDragging, setIsStripDragging] = React.useState(false)
+  const stripDragRef = React.useRef<StripDragState | null>(null)
+  const suppressNextStripClickRef = React.useRef(false)
 
   const gridItems = React.useMemo<GridItem[]>(() => {
     const items: GridItem[] = images.map((image) => ({
@@ -226,8 +297,79 @@ export const ImageCarousel = memo(function ImageCarousel({
     return items
   }, [images, mixMediaItems])
 
+  const usesCardLayout = variant === 'card' && gridItems.length > 1
+  const horizontal = usesCardLayout && cardLayout === 'horizontal'
+  const visibleCount =
+    usesCardLayout && cardLayout === 'grid'
+      ? Math.min(gridItems.length, cardGridLimit)
+      : gridItems.length
+  const remainingCount = gridItems.length - visibleCount
+
   if (gridItems.length === 0) {
     return null
+  }
+
+  function handleStripKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    let nextIndex: number | null = null
+    if (event.key === 'ArrowLeft') nextIndex = activeStripIndex - 1
+    if (event.key === 'ArrowRight') nextIndex = activeStripIndex + 1
+    if (event.key === 'Home') nextIndex = 0
+    if (event.key === 'End') nextIndex = gridItems.length - 1
+    if (nextIndex === null) return
+
+    event.preventDefault()
+    const clampedIndex = Math.min(Math.max(nextIndex, 0), gridItems.length - 1)
+    setActiveStripIndex(clampedIndex)
+    scrollToStripItem(event.currentTarget, clampedIndex)
+  }
+
+  function handleStripPointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    if (event.pointerType !== 'mouse' || event.button !== 0) return
+
+    stripDragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startScrollLeft: event.currentTarget.scrollLeft,
+      moved: false,
+    }
+    suppressNextStripClickRef.current = false
+  }
+
+  function handleStripPointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    const drag = stripDragRef.current
+    if (!drag || drag.pointerId !== event.pointerId) return
+
+    const deltaX = event.clientX - drag.startX
+    if (!drag.moved && Math.abs(deltaX) > STRIP_DRAG_THRESHOLD_PX) {
+      drag.moved = true
+      suppressNextStripClickRef.current = true
+      event.currentTarget.setPointerCapture?.(event.pointerId)
+      setIsStripDragging(true)
+    }
+    if (!drag.moved) return
+
+    event.preventDefault()
+    event.currentTarget.scrollLeft = drag.startScrollLeft - deltaX
+  }
+
+  function finishStripDrag(event: React.PointerEvent<HTMLDivElement>, cancelled = false) {
+    const drag = stripDragRef.current
+    if (!drag || drag.pointerId !== event.pointerId) return
+
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+      event.currentTarget.releasePointerCapture?.(event.pointerId)
+    }
+    stripDragRef.current = null
+    if (cancelled) suppressNextStripClickRef.current = false
+    setIsStripDragging(false)
+  }
+
+  function handleStripClickCapture(event: React.MouseEvent<HTMLDivElement>) {
+    if (!suppressNextStripClickRef.current) return
+
+    suppressNextStripClickRef.current = false
+    event.preventDefault()
+    event.stopPropagation()
   }
 
   return (
@@ -241,14 +383,62 @@ export const ImageCarousel = memo(function ImageCarousel({
         }}
         toolbarRender={(overlayProps) => <PhotoToolbar overlayProps={overlayProps} />}
       >
-        <div className={cn('grid gap-2', gridClassName(gridItems.length))}>
-          {gridItems.map((item) => {
-            const ratio = mediaRatio(item, gridItems.length)
+        <div
+          role={horizontal ? 'region' : undefined}
+          aria-label={horizontal ? `横向媒体画廊，共 ${gridItems.length} 项` : undefined}
+          tabIndex={horizontal ? 0 : undefined}
+          className={cn(
+            horizontal
+              ? 'scrollbar-none flex max-h-[60vh] gap-2 overflow-x-auto overscroll-x-contain md:max-h-none'
+              : 'grid w-full gap-2',
+            horizontal &&
+              (isStripDragging ? 'cursor-grabbing select-none' : 'cursor-grab select-none'),
+            !horizontal &&
+              (usesCardLayout
+                ? cardGridClassName(visibleCount)
+                : legacyGridClassName(gridItems.length)),
+          )}
+          style={
+            horizontal
+              ? {
+                  height: `${cardStripHeight}px`,
+                }
+              : usesCardLayout
+                ? { maxWidth: `${cardGridMaxWidth}px` }
+                : singleMediaMaxWidth !== undefined && gridItems.length === 1
+                  ? { maxWidth: `${singleMediaMaxWidth}px` }
+                  : undefined
+          }
+          onClickCapture={horizontal ? handleStripClickCapture : undefined}
+          onDragStart={horizontal ? (event) => event.preventDefault() : undefined}
+          onKeyDown={horizontal ? handleStripKeyDown : undefined}
+          onPointerCancel={horizontal ? (event) => finishStripDrag(event, true) : undefined}
+          onPointerDown={horizontal ? handleStripPointerDown : undefined}
+          onPointerMove={horizontal ? handleStripPointerMove : undefined}
+          onPointerUp={horizontal ? finishStripDrag : undefined}
+          onScroll={
+            horizontal
+              ? (event) => setActiveStripIndex(closestStripItemIndex(event.currentTarget))
+              : undefined
+          }
+        >
+          {gridItems.map((item, index) => {
+            const ratio = mediaRatio(item, gridItems.length, horizontal)
             const roundedClassName = gridItems.length === 1 ? 'rounded-xl' : 'rounded-lg'
+            const hiddenByGridLimit = !horizontal && index >= visibleCount
+            const itemRemainingCount = index === visibleCount - 1 ? remainingCount : 0
 
             return (
               <div
-                key={item.id}
+                key={`${item.kind}:${item.id}`}
+                data-media-strip-item={horizontal ? '' : undefined}
+                role={horizontal ? 'group' : undefined}
+                aria-label={
+                  horizontal ? `第 ${index + 1} 项，共 ${gridItems.length} 项` : undefined
+                }
+                aria-hidden={hiddenByGridLimit || undefined}
+                className={cn(horizontal && 'h-full shrink-0', hiddenByGridLimit && 'hidden')}
+                style={horizontal ? { aspectRatio: ratio } : undefined}
                 onClick={(event) => {
                   event.preventDefault()
                   event.stopPropagation()
@@ -260,11 +450,19 @@ export const ImageCarousel = memo(function ImageCarousel({
                       ratio={ratio}
                       className={cn(
                         'bg-muted relative overflow-hidden',
+                        horizontal && 'h-full w-full',
                         mediaOutlineClassName,
                         roundedClassName,
                       )}
                     >
-                      <ImageOverlay image={item.image} dim={darkModeImageDim} />
+                      <ImageOverlay
+                        image={item.image}
+                        dim={darkModeImageDim}
+                        square={!horizontal}
+                      />
+                      {itemRemainingCount > 0 ? (
+                        <RemainingMediaOverlay count={itemRemainingCount} />
+                      ) : null}
                     </AspectRatio>
                   </ImagePhotoView>
                 ) : (
@@ -317,6 +515,7 @@ export const ImageCarousel = memo(function ImageCarousel({
                       ratio={ratio}
                       className={cn(
                         'bg-muted relative overflow-hidden',
+                        horizontal && 'h-full w-full',
                         mediaOutlineClassName,
                         roundedClassName,
                       )}
@@ -324,7 +523,7 @@ export const ImageCarousel = memo(function ImageCarousel({
                       {item.video.videoCoverUrl ? (
                         <img
                           src={item.video.videoCoverUrl}
-                          className="aspect-square h-full w-full object-cover object-center"
+                          className="h-full w-full object-cover object-center"
                           alt=""
                           width={item.video.videoOrientation === 'vertical' ? 600 : 960}
                           height={item.video.videoOrientation === 'vertical' ? 800 : 540}
@@ -338,6 +537,9 @@ export const ImageCarousel = memo(function ImageCarousel({
                           <PlayIcon className="ml-0.5 size-6 fill-current" />
                         </span>
                       </div>
+                      {itemRemainingCount > 0 ? (
+                        <RemainingMediaOverlay count={itemRemainingCount} />
+                      ) : null}
                     </AspectRatio>
                   </PhotoView>
                 )}
@@ -345,6 +547,11 @@ export const ImageCarousel = memo(function ImageCarousel({
             )
           })}
         </div>
+        {horizontal ? (
+          <span className="sr-only" aria-live="polite">
+            当前第 {activeStripIndex + 1} 项，共 {gridItems.length} 项
+          </span>
+        ) : null}
       </PhotoProvider>
     </div>
   )

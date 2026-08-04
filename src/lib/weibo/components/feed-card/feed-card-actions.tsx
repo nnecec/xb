@@ -107,6 +107,7 @@ export function FeedActions({
   onGenImage,
   onDownload,
   downloadPending,
+  showInteractionCounts = true,
 }: {
   item: FeedItem
   surface?: StatusFeedSurface
@@ -128,6 +129,7 @@ export function FeedActions({
   onGenImage?: () => void
   onDownload?: () => void
   downloadPending?: boolean
+  showInteractionCounts?: boolean
 }) {
   const liked = item.liked === true
   const isBookmarked = favorited === true
@@ -161,7 +163,7 @@ export function FeedActions({
               className={cn('size-3.5 transition-colors', FEED_ACTION_ICON_TINT.comment)}
             />
           }
-          count={item.stats.comments}
+          count={showInteractionCounts ? item.stats.comments : undefined}
           onClick={(event) => {
             event.stopPropagation()
             if (!controlsInlineComments) {
@@ -184,7 +186,7 @@ export function FeedActions({
           icon={
             <Repeat2 className={cn('size-3.5 transition-colors', FEED_ACTION_ICON_TINT.repost)} />
           }
-          count={item.stats.reposts}
+          count={showInteractionCounts ? item.stats.reposts : undefined}
           onClick={(event) => {
             event.stopPropagation()
             onRepostClick?.(item)
@@ -211,7 +213,7 @@ export function FeedActions({
             )}
           />
         }
-        count={item.stats.likes}
+        count={showInteractionCounts ? item.stats.likes : undefined}
         countClassName={liked ? 'text-rose-500' : undefined}
         onClick={(event) => {
           event.stopPropagation()

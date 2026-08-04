@@ -15,9 +15,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import type { ContentDisplay } from '@/lib/app-settings'
 import { useAppSettings } from '@/lib/app-settings-store'
 import { cn } from '@/lib/utils'
 import { useEmoticonConfigQuery } from '@/lib/weibo/app/emoticon-query'
+import { CollapsibleMedia } from '@/lib/weibo/components/collapsible-media'
 import { ImageCarousel } from '@/lib/weibo/components/image-carousel'
 import { UserHoverCard } from '@/lib/weibo/components/user-hover-card'
 import type { WeiboEmoticonItem } from '@/lib/weibo/models/emoticon'
@@ -517,6 +519,7 @@ function renderReplyChainItem(
   topicEntities: FeedTopicEntity[],
   phraseMap: Record<string, WeiboEmoticonItem>,
   extractImages: ImageExtractor,
+  imageDisplay: ContentDisplay,
 ) {
   const { strippedText, images } = extractImages(segment.text)
   return (
@@ -531,7 +534,11 @@ function renderReplyChainItem(
           {renderInlineText(strippedText, `chain-${index}`, urlEntities, topicEntities, phraseMap)}
         </span>
       ) : null}
-      {images.length > 0 ? <ImageCarousel images={images} /> : null}
+      {images.length > 0 ? (
+        <CollapsibleMedia display={imageDisplay} summary={`此微博包含 ${images.length} 张图片`}>
+          <ImageCarousel images={images} />
+        </CollapsibleMedia>
+      ) : null}
     </blockquote>
   )
 }
@@ -543,6 +550,7 @@ function renderReplyChainText(
   phraseMap: Record<string, WeiboEmoticonItem>,
   extractImages: ImageExtractor,
   collapseRepliesEnabled: boolean,
+  imageDisplay: ContentDisplay,
 ) {
   const leading = parsed.leading ? extractImages(parsed.leading) : null
   const chain = parsed.replyChain
@@ -567,9 +575,32 @@ function renderReplyChainText(
             )}
           </span>
         ) : null}
-        {leading && leading.images.length > 0 ? <ImageCarousel images={leading.images} /> : null}
-        {renderReplyChainItem(firstItem, 0, urlEntities, topicEntities, phraseMap, extractImages)}
-        {renderReplyChainItem(secondItem, 1, urlEntities, topicEntities, phraseMap, extractImages)}
+        {leading && leading.images.length > 0 ? (
+          <CollapsibleMedia
+            display={imageDisplay}
+            summary={`此微博包含 ${leading.images.length} 张图片`}
+          >
+            <ImageCarousel images={leading.images} />
+          </CollapsibleMedia>
+        ) : null}
+        {renderReplyChainItem(
+          firstItem,
+          0,
+          urlEntities,
+          topicEntities,
+          phraseMap,
+          extractImages,
+          imageDisplay,
+        )}
+        {renderReplyChainItem(
+          secondItem,
+          1,
+          urlEntities,
+          topicEntities,
+          phraseMap,
+          extractImages,
+          imageDisplay,
+        )}
         {middleItems.length > 0 ? (
           <Collapsible>
             <CollapsibleTrigger asChild>
@@ -593,6 +624,7 @@ function renderReplyChainText(
                   topicEntities,
                   phraseMap,
                   extractImages,
+                  imageDisplay,
                 ),
               )}
             </CollapsibleContent>
@@ -605,6 +637,7 @@ function renderReplyChainText(
           topicEntities,
           phraseMap,
           extractImages,
+          imageDisplay,
         )}
       </span>
     )
@@ -617,7 +650,14 @@ function renderReplyChainText(
           {renderInlineText(leading.strippedText, 'leading', urlEntities, topicEntities, phraseMap)}
         </span>
       ) : null}
-      {leading && leading.images.length > 0 ? <ImageCarousel images={leading.images} /> : null}
+      {leading && leading.images.length > 0 ? (
+        <CollapsibleMedia
+          display={imageDisplay}
+          summary={`此微博包含 ${leading.images.length} 张图片`}
+        >
+          <ImageCarousel images={leading.images} />
+        </CollapsibleMedia>
+      ) : null}
       <div data-testid="reply-chain" className="flex flex-col gap-2">
         {chain.map((segment, index) =>
           renderReplyChainItem(
@@ -627,6 +667,7 @@ function renderReplyChainText(
             topicEntities,
             phraseMap,
             extractImages,
+            imageDisplay,
           ),
         )}
       </div>
@@ -655,6 +696,7 @@ export function StatusText({
   text,
   mode = 'plain',
   hideMedia = false,
+  imageDisplay = 'expanded',
 }: {
   item: Pick<
     FeedItem,
@@ -663,6 +705,7 @@ export function StatusText({
   text: string
   mode?: 'plain' | 'markdown'
   hideMedia?: boolean
+  imageDisplay?: ContentDisplay
 }) {
   const emoticonQuery = useEmoticonConfigQuery()
   const collapseRepliesEnabled = useAppSettings((s) => s.collapseRepliesEnabled)
@@ -700,6 +743,7 @@ export function StatusText({
           phraseMap,
           extractImages,
           collapseRepliesEnabled,
+          imageDisplay,
         )}
       </span>
     )
@@ -723,7 +767,9 @@ export function StatusText({
     return (
       <span className="flex flex-col gap-2">
         {strippedText ? <span className="whitespace-pre-wrap">{textNode}</span> : null}
-        <ImageCarousel images={images} />
+        <CollapsibleMedia display={imageDisplay} summary={`此微博包含 ${images.length} 张图片`}>
+          <ImageCarousel images={images} />
+        </CollapsibleMedia>
       </span>
     )
   }

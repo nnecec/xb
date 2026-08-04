@@ -214,9 +214,13 @@ describe('FeedCard', () => {
     vi.unstubAllGlobals()
   })
 
-  it('hides avatars and media in text-only timeline mode', () => {
+  it('applies avatar visibility and folds media without removing access', () => {
     const store = getAppSettingsStore()
-    store.setState({ textOnlyFeed: true })
+    store.setState({
+      weiboCardShowAvatar: false,
+      weiboCardImageDisplay: 'collapsed',
+      weiboCardVideoDisplay: 'collapsed',
+    })
 
     renderCard({
       item: {
@@ -252,7 +256,42 @@ describe('FeedCard', () => {
     expect(document.querySelector('img[src="https://example.com/thumbnail.jpg"]')).toBeNull()
     expect(document.querySelector('img[src="https://example.com/video-cover.jpg"]')).toBeNull()
     expect(document.querySelector('img[src="https://example.com/inline-thumbnail.jpg"]')).toBeNull()
-    expect(screen.getByText('preview content http://t.cn/inline-image')).toBeInTheDocument()
+    expect(screen.getByText('preview content')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: '此微博包含 2 项媒体，点击显示' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: '此微博包含 1 张图片，点击显示' }),
+    ).toBeInTheDocument()
+  })
+
+  it('applies author metadata, title, and interaction count visibility', () => {
+    getAppSettingsStore().setState({
+      weiboCardShowAvatar: false,
+      weiboCardShowTimestamp: false,
+      weiboCardShowPublishInfo: false,
+      weiboCardShowTitleBadge: false,
+      weiboCardShowInteractionCounts: false,
+    })
+
+    renderCard({
+      item: {
+        author: { id: '1', name: 'Alice', avatarUrl: 'https://example.com/avatar.jpg' },
+        createdAtLabel: '刚刚',
+        source: 'iPhone 客户端',
+        regionName: '发布于 北京',
+        title: { text: '热门微博' },
+      },
+    })
+
+    expect(screen.getByText('Alice')).toBeInTheDocument()
+    expect(screen.queryByRole('img', { name: 'Alice' })).not.toBeInTheDocument()
+    expect(screen.queryByText('刚刚')).not.toBeInTheDocument()
+    expect(screen.queryByText('iPhone 客户端 发布于 北京')).not.toBeInTheDocument()
+    expect(screen.queryByText('热门微博')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '展开精选评论' })).toHaveTextContent('')
+    expect(screen.getByRole('button', { name: '转发微博' })).toHaveTextContent('')
+    expect(screen.getByRole('button', { name: '点赞微博' })).toHaveTextContent('')
   })
 
   it('renders long text entities and images from the expanded payload', async () => {
@@ -568,6 +607,50 @@ describe('FeedCard', () => {
     expect(onCommentClick).toHaveBeenCalledWith(expect.objectContaining({ id: 'retweeted-501' }))
     expect(onRepostClick).toHaveBeenCalledWith(expect.objectContaining({ id: 'retweeted-501' }))
     expect(screen.getByRole('menuitem', { name: '批量下载' })).toBeInTheDocument()
+  })
+
+  it('applies the configured single image width to main and retweeted cards', () => {
+    getAppSettingsStore().setState({ weiboCardSingleImageMaxWidth: 520 })
+
+    renderCard({
+      item: {
+        images: [
+          {
+            id: 'main-image-1',
+            thumbnailUrl: 'https://example.com/main-thumbnail.jpg',
+            largeUrl: 'https://example.com/main-large.jpg',
+          },
+        ],
+        retweetedStatus: {
+          id: 'retweeted-width-501',
+          mblogId: 'm-retweeted-width-501',
+          isLongText: false,
+          text: 'retweeted content',
+          createdAt: '2024-01-01',
+          createdAtLabel: 'today',
+          author: { id: '2', name: 'Bob', avatarUrl: null },
+          stats: { likes: 0, comments: 0, reposts: 0 },
+          images: [
+            {
+              id: 'retweeted-image-1',
+              thumbnailUrl: 'https://example.com/retweeted-width-thumbnail.jpg',
+              largeUrl: 'https://example.com/retweeted-width-large.jpg',
+            },
+          ],
+          media: null,
+          regionName: '',
+          source: '',
+        },
+      },
+    })
+
+    const mainImage = document.querySelector('img[src="https://example.com/main-thumbnail.jpg"]')
+    const retweetedImage = document.querySelector(
+      'img[src="https://example.com/retweeted-width-thumbnail.jpg"]',
+    )
+
+    expect(mainImage?.closest('.grid')).toHaveStyle({ maxWidth: '520px' })
+    expect(retweetedImage?.closest('.grid')).toHaveStyle({ maxWidth: '520px' })
   })
 
   it('exposes inline comment expansion state when comments can expand in weibo mode', async () => {

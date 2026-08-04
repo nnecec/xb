@@ -3,6 +3,8 @@ import { toast } from 'sonner'
 
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import {
+  type ContentDensity,
+  type ContentDisplay,
   type FeedInteractionMode,
   type FeedPrimaryActionId,
   type FeedToolbarButtonId,
@@ -10,7 +12,6 @@ import {
 import { cn } from '@/lib/utils'
 import { FeedCardMoreMenu } from '@/lib/weibo/components/feed-card-more-menu'
 import { useGenImageDialog } from '@/lib/weibo/components/gen-image-dialog-context'
-import { ImageCarousel } from '@/lib/weibo/components/image-carousel'
 import { useFeedCardMediaDownload } from '@/lib/weibo/components/use-feed-card-media-download'
 import { browsingHistoryStore } from '@/lib/weibo/hooks/use-browsing-history'
 import { useFeedLongText } from '@/lib/weibo/hooks/use-feed-long-text'
@@ -20,7 +21,7 @@ import { getCurrentUserUid } from '@/lib/weibo/platform/current-user'
 
 import { FeedActions } from './feed-card-actions'
 import { RetweetedAuthorHeader } from './feed-card-author'
-import { FeedMediaBlock } from './feed-card-media'
+import { FeedCardMediaContent } from './feed-card-media-content'
 import { FeedTextBlock } from './feed-card-text'
 import {
   getMediaDownloadFilename,
@@ -48,7 +49,16 @@ export function RetweetedFeedBlock({
   toolbarButtonIds,
   moreMenuActionIds,
   autoLoadLongText,
-  textOnly,
+  density,
+  showAvatar,
+  showTimestamp,
+  showPublishInfo,
+  showInteractionCounts,
+  imageDisplay,
+  videoDisplay,
+  audioDisplay,
+  singleImageMaxWidth,
+  singleVideoMaxWidth,
 }: {
   item: NonNullable<FeedItem['retweetedStatus']>
   onNavigate?: (item: FeedItem) => void
@@ -64,7 +74,16 @@ export function RetweetedFeedBlock({
   toolbarButtonIds: FeedToolbarButtonId[]
   moreMenuActionIds: FeedToolbarButtonId[]
   autoLoadLongText: boolean
-  textOnly: boolean
+  density: ContentDensity
+  showAvatar: boolean
+  showTimestamp: boolean
+  showPublishInfo: boolean
+  showInteractionCounts: boolean
+  imageDisplay: ContentDisplay
+  videoDisplay: ContentDisplay
+  audioDisplay: ContentDisplay
+  singleImageMaxWidth: number
+  singleVideoMaxWidth: number
 }) {
   const retweetedCardRef = useRef<HTMLDivElement>(null)
   const hasEnteredViewport = useHasEnteredViewport(retweetedCardRef)
@@ -224,7 +243,10 @@ export function RetweetedFeedBlock({
     <div ref={retweetedCardRef}>
       <Card
         className={cn(
-          'xb-feed-card xb-feed-card--compact gap-3 py-4',
+          'xb-feed-card xb-feed-card--compact',
+          density === 'compact' && 'gap-2.5 py-3',
+          density === 'standard' && 'gap-3 py-4',
+          density === 'relaxed' && 'gap-4 py-5',
           canNavigate &&
             'cursor-pointer focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none',
         )}
@@ -239,7 +261,12 @@ export function RetweetedFeedBlock({
         <CardHeader className="px-4">
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">
-              <RetweetedAuthorHeader item={resolvedItem} hideAvatar={textOnly} />
+              <RetweetedAuthorHeader
+                item={resolvedItem}
+                hideAvatar={!showAvatar}
+                showTimestamp={showTimestamp}
+                showPublishInfo={showPublishInfo}
+              />
             </div>
             {!isDeletedAuthor ? (
               <FeedCardMoreMenu
@@ -257,26 +284,33 @@ export function RetweetedFeedBlock({
             ) : null}
           </div>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4 px-4">
+        <CardContent
+          className={cn(
+            'flex flex-col px-4',
+            density === 'compact' && 'gap-3',
+            density === 'standard' && 'gap-4',
+            density === 'relaxed' && 'gap-5',
+          )}
+        >
           <FeedTextBlock
             item={resolvedItem}
             canLoadLongText={shouldShowLoadLongText}
             isLongTextLoading={isLongTextLoading}
             hasLongTextError={hasLongTextError}
             onLoadLongText={onLoadLongText}
-            hideMedia={textOnly}
+            imageDisplay={imageDisplay}
           />
 
-          {!textOnly ? <FeedMediaBlock item={resolvedItem} /> : null}
-
-          {!textOnly ? (
-            <ImageCarousel
-              images={resolvedItem.images}
-              mixMediaItems={resolvedItem.mixMediaInfo}
-              downloadFilename={getMediaDownloadFilename(resolvedItem)}
-              onOpen={addEntry}
-            />
-          ) : null}
+          <FeedCardMediaContent
+            item={resolvedItem}
+            imageDisplay={imageDisplay}
+            videoDisplay={videoDisplay}
+            audioDisplay={audioDisplay}
+            singleImageMaxWidth={singleImageMaxWidth}
+            singleVideoMaxWidth={singleVideoMaxWidth}
+            downloadFilename={getMediaDownloadFilename(resolvedItem)}
+            onOpen={addEntry}
+          />
         </CardContent>
         {!isDeletedAuthor ? (
           <CardFooter className="px-4">
@@ -307,6 +341,7 @@ export function RetweetedFeedBlock({
               onGenImage={() => openGenImage(resolvedItem)}
               onDownload={() => void handleDownload()}
               downloadPending={downloadLoading}
+              showInteractionCounts={showInteractionCounts}
             />
           </CardFooter>
         ) : null}
