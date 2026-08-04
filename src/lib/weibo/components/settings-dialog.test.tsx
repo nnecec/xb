@@ -8,8 +8,18 @@ import { DEFAULT_APP_SETTINGS } from '@/lib/app-settings'
 import { SettingsDialog } from './settings-dialog'
 
 // Mock app settings store
-const mockSettings: AppSettings = {
+const mockUpdateSettings = vi.fn().mockResolvedValue(undefined)
+const mockSettings: AppSettings & {
+  updateSettings: typeof mockUpdateSettings
+  addUserTheme: ReturnType<typeof vi.fn>
+  deleteUserTheme: ReturnType<typeof vi.fn>
+  updateUserTheme: ReturnType<typeof vi.fn>
+} = {
   ...DEFAULT_APP_SETTINGS,
+  updateSettings: mockUpdateSettings,
+  addUserTheme: vi.fn(),
+  deleteUserTheme: vi.fn(),
+  updateUserTheme: vi.fn(),
 }
 
 vi.mock('@/lib/app-settings-store', () => ({
@@ -40,8 +50,7 @@ Object.defineProperty(global, 'chrome', {
 describe('SettingsDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockSettings.contentWidth = DEFAULT_APP_SETTINGS.contentWidth
-    mockSettings.customContentWidth = DEFAULT_APP_SETTINGS.customContentWidth
+    Object.assign(mockSettings, DEFAULT_APP_SETTINGS)
   })
 
   it('renders dialog when open', () => {
@@ -69,7 +78,7 @@ describe('SettingsDialog', () => {
     expect(appearanceElements.length).toBeGreaterThan(0)
 
     expect(screen.getByText('主题')).toBeInTheDocument()
-    expect(screen.getByText('个性化')).toBeInTheDocument()
+    expect(screen.queryByText('个性化')).not.toBeInTheDocument()
     expect(screen.getByText('字体')).toBeInTheDocument()
     expect(screen.getByText('高级')).toBeInTheDocument()
   })
@@ -79,13 +88,14 @@ describe('SettingsDialog', () => {
     render(<SettingsDialog open={true} onOpenChange={() => {}} />)
 
     // Default panel is 'appearance'
-    expect(screen.getByText('主题模式')).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: '应用整体' })).toHaveAttribute('data-state', 'active')
 
     // Click on theme panel
     const themeButton = screen.getByRole('button', { name: /主题/ })
     await user.click(themeButton)
 
     // Should show theme-related content
+    expect(screen.getByText('主题模式')).toBeInTheDocument()
     expect(screen.getByText('自定义主题')).toBeInTheDocument()
   })
 
@@ -93,9 +103,11 @@ describe('SettingsDialog', () => {
     render(<SettingsDialog open={true} onOpenChange={() => {}} />)
 
     // Appearance panel should be default
-    expect(screen.getByText('主题模式')).toBeInTheDocument()
     expect(screen.getByText('内容宽度')).toBeInTheDocument()
     expect(screen.getByRole('radio', { name: '更窄' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: '信息流' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: '微博卡片' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: '评论卡片' })).toBeInTheDocument()
   })
 
   it('shows the custom content width slider when custom width is selected', () => {
@@ -104,18 +116,99 @@ describe('SettingsDialog', () => {
 
     render(<SettingsDialog open={true} onOpenChange={() => {}} />)
 
-    expect(screen.getByRole('slider', { name: '自定义内容宽度' })).toHaveValue(1340)
+    const slider = screen.getByRole('slider', { name: '自定义内容宽度' })
+    expect(slider).toHaveValue(1340)
+    expect(slider).toHaveAttribute('aria-valuemax', '2000')
     expect(screen.getByText('1340px')).toBeInTheDocument()
   })
 
-  it('shows timeline reading preferences in the personalize panel', async () => {
+  it('shows timeline reading preferences in the feed tab', async () => {
     const user = userEvent.setup()
     render(<SettingsDialog open={true} onOpenChange={() => {}} />)
 
-    await user.click(screen.getByRole('button', { name: /个性化/ }))
+    await user.click(screen.getByRole('tab', { name: '信息流' }))
 
     expect(screen.getByText('自动查看全文')).toBeInTheDocument()
-    expect(screen.getByText('纯文字信息流')).toBeInTheDocument()
+    expect(screen.getByText('信息流密度')).toBeInTheDocument()
+    expect(screen.queryByText('纯文字信息流')).not.toBeInTheDocument()
+  })
+
+  it('shows entity-specific controls in card tabs', async () => {
+    const user = userEvent.setup()
+    render(<SettingsDialog open={true} onOpenChange={() => {}} />)
+
+    await user.click(screen.getByRole('tab', { name: '微博卡片' }))
+    expect(screen.getByText('显示发布信息')).toBeInTheDocument()
+    expect(screen.getByText('固定到操作栏')).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: /X 风格/ })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: /微博风格/ })).toBeInTheDocument()
+    expect(screen.queryByText('作者与元信息')).not.toBeInTheDocument()
+    expect(screen.queryByText('媒体')).not.toBeInTheDocument()
+    expect(screen.queryByText('正文')).not.toBeInTheDocument()
+    expect(screen.queryByText('互动')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('tab', { name: '评论卡片' }))
+    expect(screen.getByText('评论密度')).toBeInTheDocument()
+    expect(screen.getByText('默认折叠回复')).toBeInTheDocument()
+  })
+
+  it('shows grid-specific multi-media controls by default', async () => {
+    const user = userEvent.setup()
+    render(<SettingsDialog open={true} onOpenChange={() => {}} />)
+
+    await user.click(screen.getByRole('tab', { name: '微博卡片' }))
+
+    expect(screen.getByText('多图展示')).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: '宫格' })).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByRole('slider', { name: '单图最大宽度' })).toHaveValue(450)
+    expect(screen.getByRole('slider', { name: '单图最大宽度' })).toHaveAttribute(
+      'aria-valuemin',
+      '160',
+    )
+    expect(screen.getByRole('slider', { name: '单图最大宽度' })).toHaveAttribute(
+      'aria-valuemax',
+      '1200',
+    )
+    expect(screen.getByRole('slider', { name: '单视频最大宽度' })).toHaveValue(650)
+    expect(screen.getByRole('radio', { name: '9 张' })).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByRole('slider', { name: '宫格最大宽度' })).toHaveValue(650)
+    expect(screen.queryByRole('slider', { name: '画廊高度' })).not.toBeInTheDocument()
+  })
+
+  it('shows only the strip height control for horizontal multi-media layout', async () => {
+    const user = userEvent.setup()
+    mockSettings.weiboCardMultiMediaLayout = 'horizontal'
+    mockSettings.weiboCardMultiMediaStripHeight = 480
+
+    render(<SettingsDialog open={true} onOpenChange={() => {}} />)
+    await user.click(screen.getByRole('tab', { name: '微博卡片' }))
+
+    const label = screen.getByText('多图展示')
+    expect(label.parentElement?.parentElement).toHaveClass(
+      'flex',
+      'items-center',
+      'justify-between',
+    )
+    expect(screen.getByRole('radio', { name: '画廊' })).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByRole('slider', { name: '画廊高度' })).toHaveValue(480)
+    expect(screen.queryByRole('slider', { name: '宫格最大宽度' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('radio', { name: '9 张' })).not.toBeInTheDocument()
+  })
+
+  it('confirms and resets only the active category', async () => {
+    const user = userEvent.setup()
+    render(<SettingsDialog open={true} onOpenChange={() => {}} />)
+
+    await user.click(screen.getByRole('tab', { name: '信息流' }))
+    await user.click(screen.getByRole('button', { name: '恢复默认设置' }))
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '恢复默认' }))
+
+    expect(mockUpdateSettings).toHaveBeenCalledWith({
+      firstLoadRedirect: DEFAULT_APP_SETTINGS.firstLoadRedirect,
+      feedDensity: DEFAULT_APP_SETTINGS.feedDensity,
+      autoLoadLongText: DEFAULT_APP_SETTINGS.autoLoadLongText,
+    })
   })
 
   it('renders page visibility section in appearance panel', async () => {

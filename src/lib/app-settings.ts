@@ -75,7 +75,7 @@ export type LineHeightClass =
 export type ContentWidth = 'narrower' | 'narrow' | 'standard' | 'wide' | 'wider' | 'custom'
 
 export const CUSTOM_CONTENT_WIDTH_MIN = 800
-export const CUSTOM_CONTENT_WIDTH_MAX = 1600
+export const CUSTOM_CONTENT_WIDTH_MAX = 2000
 export const CUSTOM_CONTENT_WIDTH_STEP = 20
 export const DEFAULT_CUSTOM_CONTENT_WIDTH = 1200
 
@@ -128,6 +128,35 @@ const PLAYBACK_RATE_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] as const
 
 type PlaybackRate = (typeof PLAYBACK_RATE_OPTIONS)[number]
 
+export type MotionPreference = 'system' | 'full' | 'reduced'
+
+export type ContentDensity = 'relaxed' | 'standard' | 'compact'
+
+export type ContentDisplay = 'expanded' | 'collapsed'
+
+export type WeiboCardMultiMediaLayout = 'grid' | 'horizontal'
+
+export const WEIBO_CARD_MULTI_MEDIA_GRID_LIMIT_OPTIONS = [4, 6, 9, 12, 16] as const
+
+export type WeiboCardMultiMediaGridLimit =
+  (typeof WEIBO_CARD_MULTI_MEDIA_GRID_LIMIT_OPTIONS)[number]
+
+export const WEIBO_CARD_MULTI_MEDIA_GRID_MAX_WIDTH_MIN = 400
+export const WEIBO_CARD_MULTI_MEDIA_GRID_MAX_WIDTH_MAX = 900
+export const WEIBO_CARD_MULTI_MEDIA_GRID_MAX_WIDTH_STEP = 50
+export const DEFAULT_WEIBO_CARD_MULTI_MEDIA_GRID_MAX_WIDTH = 650
+
+export const WEIBO_CARD_MULTI_MEDIA_STRIP_HEIGHT_MIN = 200
+export const WEIBO_CARD_MULTI_MEDIA_STRIP_HEIGHT_MAX = 600
+export const WEIBO_CARD_MULTI_MEDIA_STRIP_HEIGHT_STEP = 20
+export const DEFAULT_WEIBO_CARD_MULTI_MEDIA_STRIP_HEIGHT = 360
+
+export const WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_MIN = 160
+export const WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_MAX = 1200
+export const WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_STEP = 10
+export const DEFAULT_WEIBO_CARD_SINGLE_IMAGE_MAX_WIDTH = 450
+export const DEFAULT_WEIBO_CARD_SINGLE_VIDEO_MAX_WIDTH = 650
+
 export interface AppSettings {
   contentWidth: ContentWidth
   customContentWidth: number
@@ -152,11 +181,35 @@ export interface AppSettings {
   showFollowedSuperTopicsCard: boolean
   sidebarCollapsed: boolean
   immersiveMode: boolean
+  motionPreference: MotionPreference
   collapseRepliesEnabled: boolean
   renderReplyChainEnabled: boolean
   darkModeImageDim: boolean
   autoLoadLongText: boolean
-  textOnlyFeed: boolean
+  feedDensity: ContentDensity
+  weiboCardShowAvatar: boolean
+  weiboCardShowTimestamp: boolean
+  weiboCardShowPublishInfo: boolean
+  weiboCardShowTitleBadge: boolean
+  weiboCardShowInteractionCounts: boolean
+  weiboCardImageDisplay: ContentDisplay
+  weiboCardVideoDisplay: ContentDisplay
+  weiboCardAudioDisplay: ContentDisplay
+  weiboCardSingleImageMaxWidth: number
+  weiboCardSingleVideoMaxWidth: number
+  weiboCardMultiMediaLayout: WeiboCardMultiMediaLayout
+  weiboCardMultiMediaGridLimit: WeiboCardMultiMediaGridLimit
+  weiboCardMultiMediaGridMaxWidth: number
+  weiboCardMultiMediaStripHeight: number
+  commentDensity: ContentDensity
+  commentCardShowAvatar: boolean
+  commentCardShowTimestamp: boolean
+  commentCardShowPublishInfo: boolean
+  commentCardShowAuthorBadge: boolean
+  commentCardShowLikeCount: boolean
+  commentCardShowThreadLine: boolean
+  commentCardImageDisplay: ContentDisplay
+  commentCardCollapseRepliesByDefault: boolean
   lightModeBgColor: LightBgColorPreset
   darkModeBgColor: DarkBgColorPreset
   imageGenEnabled: boolean
@@ -230,11 +283,35 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   showFollowedSuperTopicsCard: false,
   sidebarCollapsed: false,
   immersiveMode: false,
+  motionPreference: 'system',
   collapseRepliesEnabled: false,
   renderReplyChainEnabled: true,
   darkModeImageDim: false,
   autoLoadLongText: false,
-  textOnlyFeed: false,
+  feedDensity: 'standard',
+  weiboCardShowAvatar: true,
+  weiboCardShowTimestamp: true,
+  weiboCardShowPublishInfo: true,
+  weiboCardShowTitleBadge: true,
+  weiboCardShowInteractionCounts: true,
+  weiboCardImageDisplay: 'expanded',
+  weiboCardVideoDisplay: 'expanded',
+  weiboCardAudioDisplay: 'expanded',
+  weiboCardSingleImageMaxWidth: DEFAULT_WEIBO_CARD_SINGLE_IMAGE_MAX_WIDTH,
+  weiboCardSingleVideoMaxWidth: DEFAULT_WEIBO_CARD_SINGLE_VIDEO_MAX_WIDTH,
+  weiboCardMultiMediaLayout: 'grid',
+  weiboCardMultiMediaGridLimit: 9,
+  weiboCardMultiMediaGridMaxWidth: DEFAULT_WEIBO_CARD_MULTI_MEDIA_GRID_MAX_WIDTH,
+  weiboCardMultiMediaStripHeight: DEFAULT_WEIBO_CARD_MULTI_MEDIA_STRIP_HEIGHT,
+  commentDensity: 'standard',
+  commentCardShowAvatar: true,
+  commentCardShowTimestamp: true,
+  commentCardShowPublishInfo: false,
+  commentCardShowAuthorBadge: true,
+  commentCardShowLikeCount: true,
+  commentCardShowThreadLine: true,
+  commentCardImageDisplay: 'expanded',
+  commentCardCollapseRepliesByDefault: false,
   lightModeBgColor: 'white' as LightBgColorPreset,
   darkModeBgColor: 'near-black' as DarkBgColorPreset,
   imageGenEnabled: true,
@@ -338,6 +415,40 @@ function isHotSearchType(value: unknown): value is HotSearchType {
 
 function isFeedInteractionMode(value: unknown): value is FeedInteractionMode {
   return value === 'x' || value === 'weibo'
+}
+
+function isMotionPreference(value: unknown): value is MotionPreference {
+  return value === 'system' || value === 'full' || value === 'reduced'
+}
+
+function isContentDensity(value: unknown): value is ContentDensity {
+  return value === 'relaxed' || value === 'standard' || value === 'compact'
+}
+
+function isContentDisplay(value: unknown): value is ContentDisplay {
+  return value === 'expanded' || value === 'collapsed'
+}
+
+function isWeiboCardMultiMediaLayout(value: unknown): value is WeiboCardMultiMediaLayout {
+  return value === 'grid' || value === 'horizontal'
+}
+
+function isWeiboCardMultiMediaGridLimit(value: unknown): value is WeiboCardMultiMediaGridLimit {
+  return WEIBO_CARD_MULTI_MEDIA_GRID_LIMIT_OPTIONS.includes(value as WeiboCardMultiMediaGridLimit)
+}
+
+function normalizeSteppedNumber(
+  value: unknown,
+  min: number,
+  max: number,
+  step: number,
+  fallback: number,
+) {
+  const numeric = typeof value === 'number' ? value : Number.NaN
+  if (!Number.isFinite(numeric)) return fallback
+
+  const clamped = Math.min(max, Math.max(min, numeric))
+  return Math.round((clamped - min) / step) * step + min
 }
 
 function isFeedPrimaryActionId(value: unknown): value is FeedPrimaryActionId {
@@ -573,6 +684,9 @@ export function normalizeAppSettings(value: unknown): AppSettings {
       typeof candidate.immersiveMode === 'boolean'
         ? candidate.immersiveMode
         : DEFAULT_APP_SETTINGS.immersiveMode,
+    motionPreference: isMotionPreference(candidate.motionPreference)
+      ? candidate.motionPreference
+      : DEFAULT_APP_SETTINGS.motionPreference,
     collapseRepliesEnabled:
       typeof candidate.collapseRepliesEnabled === 'boolean'
         ? candidate.collapseRepliesEnabled
@@ -589,10 +703,108 @@ export function normalizeAppSettings(value: unknown): AppSettings {
       typeof candidate.autoLoadLongText === 'boolean'
         ? candidate.autoLoadLongText
         : DEFAULT_APP_SETTINGS.autoLoadLongText,
-    textOnlyFeed:
-      typeof candidate.textOnlyFeed === 'boolean'
-        ? candidate.textOnlyFeed
-        : DEFAULT_APP_SETTINGS.textOnlyFeed,
+    feedDensity: isContentDensity(candidate.feedDensity)
+      ? candidate.feedDensity
+      : DEFAULT_APP_SETTINGS.feedDensity,
+    weiboCardShowAvatar:
+      typeof candidate.weiboCardShowAvatar === 'boolean'
+        ? candidate.weiboCardShowAvatar
+        : DEFAULT_APP_SETTINGS.weiboCardShowAvatar,
+    weiboCardShowTimestamp:
+      typeof candidate.weiboCardShowTimestamp === 'boolean'
+        ? candidate.weiboCardShowTimestamp
+        : DEFAULT_APP_SETTINGS.weiboCardShowTimestamp,
+    weiboCardShowPublishInfo:
+      typeof candidate.weiboCardShowPublishInfo === 'boolean'
+        ? candidate.weiboCardShowPublishInfo
+        : DEFAULT_APP_SETTINGS.weiboCardShowPublishInfo,
+    weiboCardShowTitleBadge:
+      typeof candidate.weiboCardShowTitleBadge === 'boolean'
+        ? candidate.weiboCardShowTitleBadge
+        : DEFAULT_APP_SETTINGS.weiboCardShowTitleBadge,
+    weiboCardShowInteractionCounts:
+      typeof candidate.weiboCardShowInteractionCounts === 'boolean'
+        ? candidate.weiboCardShowInteractionCounts
+        : DEFAULT_APP_SETTINGS.weiboCardShowInteractionCounts,
+    weiboCardImageDisplay: isContentDisplay(candidate.weiboCardImageDisplay)
+      ? candidate.weiboCardImageDisplay
+      : DEFAULT_APP_SETTINGS.weiboCardImageDisplay,
+    weiboCardVideoDisplay: isContentDisplay(candidate.weiboCardVideoDisplay)
+      ? candidate.weiboCardVideoDisplay
+      : DEFAULT_APP_SETTINGS.weiboCardVideoDisplay,
+    weiboCardAudioDisplay: isContentDisplay(candidate.weiboCardAudioDisplay)
+      ? candidate.weiboCardAudioDisplay
+      : DEFAULT_APP_SETTINGS.weiboCardAudioDisplay,
+    weiboCardSingleImageMaxWidth: normalizeSteppedNumber(
+      candidate.weiboCardSingleImageMaxWidth,
+      WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_MIN,
+      WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_MAX,
+      WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_STEP,
+      DEFAULT_APP_SETTINGS.weiboCardSingleImageMaxWidth,
+    ),
+    weiboCardSingleVideoMaxWidth: normalizeSteppedNumber(
+      candidate.weiboCardSingleVideoMaxWidth,
+      WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_MIN,
+      WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_MAX,
+      WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_STEP,
+      DEFAULT_APP_SETTINGS.weiboCardSingleVideoMaxWidth,
+    ),
+    weiboCardMultiMediaLayout: isWeiboCardMultiMediaLayout(candidate.weiboCardMultiMediaLayout)
+      ? candidate.weiboCardMultiMediaLayout
+      : DEFAULT_APP_SETTINGS.weiboCardMultiMediaLayout,
+    weiboCardMultiMediaGridLimit: isWeiboCardMultiMediaGridLimit(
+      candidate.weiboCardMultiMediaGridLimit,
+    )
+      ? candidate.weiboCardMultiMediaGridLimit
+      : DEFAULT_APP_SETTINGS.weiboCardMultiMediaGridLimit,
+    weiboCardMultiMediaGridMaxWidth: normalizeSteppedNumber(
+      candidate.weiboCardMultiMediaGridMaxWidth,
+      WEIBO_CARD_MULTI_MEDIA_GRID_MAX_WIDTH_MIN,
+      WEIBO_CARD_MULTI_MEDIA_GRID_MAX_WIDTH_MAX,
+      WEIBO_CARD_MULTI_MEDIA_GRID_MAX_WIDTH_STEP,
+      DEFAULT_APP_SETTINGS.weiboCardMultiMediaGridMaxWidth,
+    ),
+    weiboCardMultiMediaStripHeight: normalizeSteppedNumber(
+      candidate.weiboCardMultiMediaStripHeight,
+      WEIBO_CARD_MULTI_MEDIA_STRIP_HEIGHT_MIN,
+      WEIBO_CARD_MULTI_MEDIA_STRIP_HEIGHT_MAX,
+      WEIBO_CARD_MULTI_MEDIA_STRIP_HEIGHT_STEP,
+      DEFAULT_APP_SETTINGS.weiboCardMultiMediaStripHeight,
+    ),
+    commentDensity: isContentDensity(candidate.commentDensity)
+      ? candidate.commentDensity
+      : DEFAULT_APP_SETTINGS.commentDensity,
+    commentCardShowAvatar:
+      typeof candidate.commentCardShowAvatar === 'boolean'
+        ? candidate.commentCardShowAvatar
+        : DEFAULT_APP_SETTINGS.commentCardShowAvatar,
+    commentCardShowTimestamp:
+      typeof candidate.commentCardShowTimestamp === 'boolean'
+        ? candidate.commentCardShowTimestamp
+        : DEFAULT_APP_SETTINGS.commentCardShowTimestamp,
+    commentCardShowPublishInfo:
+      typeof candidate.commentCardShowPublishInfo === 'boolean'
+        ? candidate.commentCardShowPublishInfo
+        : DEFAULT_APP_SETTINGS.commentCardShowPublishInfo,
+    commentCardShowAuthorBadge:
+      typeof candidate.commentCardShowAuthorBadge === 'boolean'
+        ? candidate.commentCardShowAuthorBadge
+        : DEFAULT_APP_SETTINGS.commentCardShowAuthorBadge,
+    commentCardShowLikeCount:
+      typeof candidate.commentCardShowLikeCount === 'boolean'
+        ? candidate.commentCardShowLikeCount
+        : DEFAULT_APP_SETTINGS.commentCardShowLikeCount,
+    commentCardShowThreadLine:
+      typeof candidate.commentCardShowThreadLine === 'boolean'
+        ? candidate.commentCardShowThreadLine
+        : DEFAULT_APP_SETTINGS.commentCardShowThreadLine,
+    commentCardImageDisplay: isContentDisplay(candidate.commentCardImageDisplay)
+      ? candidate.commentCardImageDisplay
+      : DEFAULT_APP_SETTINGS.commentCardImageDisplay,
+    commentCardCollapseRepliesByDefault:
+      typeof candidate.commentCardCollapseRepliesByDefault === 'boolean'
+        ? candidate.commentCardCollapseRepliesByDefault
+        : DEFAULT_APP_SETTINGS.commentCardCollapseRepliesByDefault,
     lightModeBgColor: isLightBgColorPreset(candidate.lightModeBgColor)
       ? candidate.lightModeBgColor
       : DEFAULT_APP_SETTINGS.lightModeBgColor,

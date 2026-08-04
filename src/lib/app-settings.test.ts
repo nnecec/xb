@@ -134,11 +134,35 @@ describe('app-settings', () => {
       xbEntryCollapsed: false,
       sidebarCollapsed: false,
       immersiveMode: false,
+      motionPreference: 'system',
       collapseRepliesEnabled: false,
       renderReplyChainEnabled: true,
       darkModeImageDim: false,
       autoLoadLongText: false,
-      textOnlyFeed: false,
+      feedDensity: 'standard',
+      weiboCardShowAvatar: true,
+      weiboCardShowTimestamp: true,
+      weiboCardShowPublishInfo: true,
+      weiboCardShowTitleBadge: true,
+      weiboCardShowInteractionCounts: true,
+      weiboCardImageDisplay: 'expanded',
+      weiboCardVideoDisplay: 'expanded',
+      weiboCardAudioDisplay: 'expanded',
+      weiboCardSingleImageMaxWidth: 450,
+      weiboCardSingleVideoMaxWidth: 650,
+      weiboCardMultiMediaLayout: 'grid',
+      weiboCardMultiMediaGridLimit: 9,
+      weiboCardMultiMediaGridMaxWidth: 650,
+      weiboCardMultiMediaStripHeight: 360,
+      commentDensity: 'standard',
+      commentCardShowAvatar: true,
+      commentCardShowTimestamp: true,
+      commentCardShowPublishInfo: false,
+      commentCardShowAuthorBadge: true,
+      commentCardShowLikeCount: true,
+      commentCardShowThreadLine: true,
+      commentCardImageDisplay: 'expanded',
+      commentCardCollapseRepliesByDefault: false,
       lightModeBgColor: 'white',
       darkModeBgColor: 'near-black',
       imageGenEnabled: true,
@@ -193,11 +217,35 @@ describe('app-settings', () => {
         xbEntryCollapsed: false,
         sidebarCollapsed: false,
         immersiveMode: true,
+        motionPreference: 'reduced',
         collapseRepliesEnabled: false,
         renderReplyChainEnabled: true,
         darkModeImageDim: false,
         autoLoadLongText: false,
-        textOnlyFeed: false,
+        feedDensity: 'compact',
+        weiboCardShowAvatar: false,
+        weiboCardShowTimestamp: true,
+        weiboCardShowPublishInfo: false,
+        weiboCardShowTitleBadge: true,
+        weiboCardShowInteractionCounts: false,
+        weiboCardImageDisplay: 'collapsed',
+        weiboCardVideoDisplay: 'expanded',
+        weiboCardAudioDisplay: 'collapsed',
+        weiboCardSingleImageMaxWidth: 520,
+        weiboCardSingleVideoMaxWidth: 760,
+        weiboCardMultiMediaLayout: 'horizontal',
+        weiboCardMultiMediaGridLimit: 12,
+        weiboCardMultiMediaGridMaxWidth: 800,
+        weiboCardMultiMediaStripHeight: 480,
+        commentDensity: 'relaxed',
+        commentCardShowAvatar: false,
+        commentCardShowTimestamp: true,
+        commentCardShowPublishInfo: true,
+        commentCardShowAuthorBadge: false,
+        commentCardShowLikeCount: false,
+        commentCardShowThreadLine: false,
+        commentCardImageDisplay: 'collapsed',
+        commentCardCollapseRepliesByDefault: true,
         lightModeBgColor: 'paper',
         darkModeBgColor: 'dark-gray',
         imageGenEnabled: true,
@@ -253,11 +301,35 @@ describe('app-settings', () => {
       xbEntryCollapsed: false,
       sidebarCollapsed: false,
       immersiveMode: true,
+      motionPreference: 'reduced',
       collapseRepliesEnabled: false,
       renderReplyChainEnabled: true,
       darkModeImageDim: false,
       autoLoadLongText: false,
-      textOnlyFeed: false,
+      feedDensity: 'compact',
+      weiboCardShowAvatar: false,
+      weiboCardShowTimestamp: true,
+      weiboCardShowPublishInfo: false,
+      weiboCardShowTitleBadge: true,
+      weiboCardShowInteractionCounts: false,
+      weiboCardImageDisplay: 'collapsed',
+      weiboCardVideoDisplay: 'expanded',
+      weiboCardAudioDisplay: 'collapsed',
+      weiboCardSingleImageMaxWidth: 520,
+      weiboCardSingleVideoMaxWidth: 760,
+      weiboCardMultiMediaLayout: 'horizontal',
+      weiboCardMultiMediaGridLimit: 12,
+      weiboCardMultiMediaGridMaxWidth: 800,
+      weiboCardMultiMediaStripHeight: 480,
+      commentDensity: 'relaxed',
+      commentCardShowAvatar: false,
+      commentCardShowTimestamp: true,
+      commentCardShowPublishInfo: true,
+      commentCardShowAuthorBadge: false,
+      commentCardShowLikeCount: false,
+      commentCardShowThreadLine: false,
+      commentCardImageDisplay: 'collapsed',
+      commentCardCollapseRepliesByDefault: true,
       lightModeBgColor: 'paper',
       darkModeBgColor: 'dark-gray',
       imageGenEnabled: true,
@@ -315,10 +387,63 @@ describe('app-settings', () => {
 
   it('normalizes reading preferences and custom content widths', () => {
     expect(normalizeAppSettings({ autoLoadLongText: true }).autoLoadLongText).toBe(true)
-    expect(normalizeAppSettings({ textOnlyFeed: true }).textOnlyFeed).toBe(true)
+    expect(normalizeAppSettings({ motionPreference: 'reduced' }).motionPreference).toBe('reduced')
+    expect(normalizeAppSettings({ motionPreference: 'unknown' as never }).motionPreference).toBe(
+      'system',
+    )
+    expect(normalizeAppSettings({ feedDensity: 'compact' }).feedDensity).toBe('compact')
+    expect(normalizeAppSettings({ commentDensity: 'relaxed' }).commentDensity).toBe('relaxed')
+    expect(normalizeAppSettings({ weiboCardImageDisplay: 'collapsed' }).weiboCardImageDisplay).toBe(
+      'collapsed',
+    )
+    expect(
+      normalizeAppSettings({ weiboCardMultiMediaLayout: 'horizontal' }).weiboCardMultiMediaLayout,
+    ).toBe('horizontal')
+    expect(
+      normalizeAppSettings({ weiboCardMultiMediaLayout: 'masonry' as never })
+        .weiboCardMultiMediaLayout,
+    ).toBe('grid')
+    expect(
+      normalizeAppSettings({ weiboCardMultiMediaGridLimit: 12 }).weiboCardMultiMediaGridLimit,
+    ).toBe(12)
+    expect(
+      normalizeAppSettings({ weiboCardMultiMediaGridLimit: 8 as never })
+        .weiboCardMultiMediaGridLimit,
+    ).toBe(9)
+    expect(
+      normalizeAppSettings({ weiboCardMultiMediaGridMaxWidth: 874 })
+        .weiboCardMultiMediaGridMaxWidth,
+    ).toBe(850)
+    expect(
+      normalizeAppSettings({ weiboCardSingleImageMaxWidth: 155 }).weiboCardSingleImageMaxWidth,
+    ).toBe(160)
+    expect(
+      normalizeAppSettings({ weiboCardSingleImageMaxWidth: 456 }).weiboCardSingleImageMaxWidth,
+    ).toBe(460)
+    expect(
+      normalizeAppSettings({ weiboCardSingleVideoMaxWidth: 1400 }).weiboCardSingleVideoMaxWidth,
+    ).toBe(1200)
+    expect(
+      normalizeAppSettings({ weiboCardMultiMediaGridMaxWidth: 1000 })
+        .weiboCardMultiMediaGridMaxWidth,
+    ).toBe(900)
+    expect(
+      normalizeAppSettings({ weiboCardMultiMediaStripHeight: 391 }).weiboCardMultiMediaStripHeight,
+    ).toBe(400)
+    expect(
+      normalizeAppSettings({ weiboCardMultiMediaStripHeight: 100 }).weiboCardMultiMediaStripHeight,
+    ).toBe(200)
+    expect(
+      normalizeAppSettings({ commentCardImageDisplay: 'invalid' as never }).commentCardImageDisplay,
+    ).toBe('expanded')
+    expect(normalizeAppSettings({ weiboCardShowAvatar: false }).weiboCardShowAvatar).toBe(false)
+    expect(
+      normalizeAppSettings({ commentCardShowPublishInfo: true }).commentCardShowPublishInfo,
+    ).toBe(true)
     expect(normalizeAppSettings({ customContentWidth: 801 }).customContentWidth).toBe(800)
     expect(normalizeAppSettings({ customContentWidth: 1511 }).customContentWidth).toBe(1520)
-    expect(normalizeAppSettings({ customContentWidth: 2000 }).customContentWidth).toBe(1600)
+    expect(normalizeAppSettings({ customContentWidth: 2000 }).customContentWidth).toBe(2000)
+    expect(normalizeAppSettings({ customContentWidth: 2400 }).customContentWidth).toBe(2000)
     expect(normalizeAppSettings({ customContentWidth: 0 }).customContentWidth).toBe(800)
     expect(normalizeAppSettings({ customContentWidth: 'wide' as never }).customContentWidth).toBe(
       1200,
