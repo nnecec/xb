@@ -247,7 +247,7 @@
       "Content-first: the feed dominates; chrome is minimal",
       "Achromatic at rest: all color is reserved for interactive feedback",
       "Tonal layering: depth through background shade differences, not shadows",
-      "System typography: no custom fonts; the OS native stack provides clarity at all sizes",
+      "System typography by default: the OS native stack provides clarity at all sizes; explicit user font choices stay in the preference layer",
       "Responsive rail layout: navigation collapses from labeled sidebar to icon rail on smaller screens"
     ],
     "rules": [
@@ -268,7 +268,7 @@
       },
       {
         "name": "The System Font Rule",
-        "body": "Never load custom web fonts for the UI chrome. The system font stack renders instantly, handles CJK text natively, and respects the user's OS preferences.",
+        "body": "Use the system font stack for the default UI chrome. Custom web fonts may load only after an explicit user choice through settings and must remain isolated to the preference layer.",
         "section": "typography"
       },
       {
@@ -290,7 +290,7 @@
     "dos": [
       "Use OKLCH for all color definitions. Perceptual uniformity depends on OKLCH's lightness channel.",
       "Keep all surfaces achromatic at rest. Color is reserved for interactive feedback only.",
-      "Use system-ui font stack. Custom fonts are a performance and consistency liability for a browser extension.",
+      "Use the system-ui font stack in the default layer. Keep explicit user-selected fonts isolated to the preference layer.",
       "Use tonal layering (background shade differences) to indicate elevation, not shadows.",
       "Maintain the three-column responsive layout: navigation rail → main feed → right sidebar.",
       "Use active:scale-[0.96] on action buttons for tactile press feedback.",
@@ -303,7 +303,7 @@
       "Add drop shadows to cards or containers. The system is flat by default — rejects Weibo's shadow-heavy aesthetic.",
       "Use gradient text (background-clip: text with gradients). Single solid colors only.",
       "Use side-stripe borders (border-left or border-right > 1px as colored accents).",
-      "Load custom web fonts for UI chrome. System fonts render instantly and handle CJK natively.",
+      "Load custom web fonts by default or outside the explicit font preference path. System fonts render instantly and handle CJK natively.",
       "Use glassmorphism as a default treatment. backdrop-blur is reserved for sticky headers only.",
       "Create identical card grids with icon + heading + text repeated endlessly. Rejects '传统 SaaS 仪表盘'.",
       "Use modals as the first solution for user flows. Exhaust inline and progressive alternatives first.",

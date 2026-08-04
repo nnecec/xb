@@ -50,11 +50,12 @@ describe('buildManualPopupStyle', () => {
       position: 'fixed',
       inset: 'auto',
       margin: 0,
-      top: '46px',
+      top: 'auto',
+      bottom: 'calc(100% - 90px + 12px)',
       left: '140px',
       [PopoverCSSVars.anchorWidth]: '40px',
       [PopoverCSSVars.anchorHeight]: '18px',
-      [PopoverCSSVars.availableWidth]: '260px',
+      [PopoverCSSVars.availableWidth]: '400px',
       [PopoverCSSVars.availableHeight]: '78px',
     })
     expect(style).not.toHaveProperty('positionAnchor')
@@ -98,7 +99,7 @@ describe('buildManualPopupStyle', () => {
       [TooltipCSSVars.anchorWidth]: '40px',
       [TooltipCSSVars.anchorHeight]: '32px',
       [TooltipCSSVars.availableWidth]: '172px',
-      [TooltipCSSVars.availableHeight]: '124px',
+      [TooltipCSSVars.availableHeight]: '240px',
     })
   })
 })

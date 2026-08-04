@@ -32,8 +32,8 @@
 
 [![Bun](https://img.shields.io/badge/bun-1.3.14-000000?logo=bun&logoColor=white)](https://bun.sh)
 [![React](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=black)](https://react.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![WXT](https://img.shields.io/badge/WXT-0.20-000000)](https://wxt.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-7.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![WXT](https://img.shields.io/badge/WXT-0.21-000000)](https://wxt.dev)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.3-38B2AC?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 
 ---
@@ -43,7 +43,7 @@
 xb strips away the noise and gives you a focused, distraction-free reading
 experience — similar to X.
 
-xb is a chrome extension. Once installed, simply browse Weibo as usual and enjoy
+xb is a browser extension. Once installed, simply browse Weibo as usual and enjoy
 the beautifully redesigned interface.
 
 👉 Screenshots and more: [xb website](https://xb-extension.vercel.app/)
@@ -59,9 +59,11 @@ the beautifully redesigned interface.
 ## Features
 
 1. ✨ **X like Style** — Clean, reading-first.
-2. 🔓 **Fully Open Source** — No privacy concerns, open-source totally.
+2. 🔓 **Fully Open Source** — Auditable code; network requests and data use are
+   documented in the [privacy policy](./PRIVACY_POLICY.md).
 3. 🎯 **Focus on Reading** — Distraction-free, clearly feed.
-4. 🚫 **No Interruptions** — No stickers, ads, or supertopics.
+4. 🚫 **Fewer Interruptions** — Hides stickers, ads, and other distractions by
+   default; the supertopic card is optional.
 5. 🆓 **Everything is Free** - No paid features.
 6. 📷 **Take a shot** - Export Weibo as an image with multiple card templates.
 7. 🔤 **Custom Font** - Choose from system fonts or downloadable open-source

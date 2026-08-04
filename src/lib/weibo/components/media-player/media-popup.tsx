@@ -2,6 +2,7 @@ import { PopoverCSSVars } from '@videojs/core'
 import {
   getManualPositionStyle,
   getPopupPositionRect,
+  getPositionedSide,
   getPositioningBoundaryRect,
   getPositioningCSSVars,
   isEventWithinElement,
@@ -63,7 +64,13 @@ export function buildManualPopupStyle({
   const resolvedOffsets = normalizeManualOffsets(offsets)
 
   return {
-    ...getManualPositionStyle(triggerRect, popupRect, { side, align }, resolvedOffsets),
+    ...getManualPositionStyle(
+      triggerRect,
+      popupRect,
+      { side, align },
+      resolvedOffsets,
+      boundaryRect,
+    ),
     ...getPositioningCSSVars(triggerRect, boundaryRect, { side, align }, resolvedOffsets, cssVars),
     ...POPUP_RESET_STYLE,
   }
@@ -95,7 +102,17 @@ function ManualPopoverPopup(
   { render, className, style, ...elementProps }: ComponentProps<typeof Popover.Popup>,
   forwardedRef: ForwardedRef<HTMLDivElement>,
 ) {
-  const { core, popover, state, stateAttrMap, popupId, boundary, container } = usePopoverContext()
+  const {
+    core,
+    popover,
+    state,
+    preferredSide,
+    setPositionedSide,
+    stateAttrMap,
+    popupId,
+    boundary,
+    container,
+  } = usePopoverContext()
   const internalRef = useRef<HTMLDivElement | null>(null)
   const composedRef = composeRefs(
     forwardedRef,
@@ -109,10 +126,10 @@ function ManualPopoverPopup(
   )
   const positionOptions = useMemo(
     () => ({
-      side: state.side,
+      side: preferredSide,
       align: state.align,
     }),
-    [state.side, state.align],
+    [preferredSide, state.align],
   )
   const [manualStyle, setManualStyle] = useState<Record<string, string | number> | null>(null)
 
@@ -128,25 +145,27 @@ function ManualPopoverPopup(
       if (!triggerElement || !popupElement) return
 
       const triggerRect = triggerElement.getBoundingClientRect()
-      const popupRect = getPopupPositionRect(popupElement)
       const boundaryElement = resolvePositioningBoundary(boundary, {
         container,
         root: getPopupRoot(popupElement),
       })
       const boundaryRect = getPositioningBoundaryRect(boundaryElement)
+      const popupRect = getPopupPositionRect(popupElement, positionOptions.side)
       const offsets = resolveOffsets(popupElement)
+      const side = getPositionedSide(triggerRect, popupRect, boundaryRect, positionOptions, offsets)
 
       setManualStyle(
         buildManualPopupStyle({
           triggerRect,
           popupRect,
           boundaryRect,
-          side: positionOptions.side,
+          side,
           align: positionOptions.align,
           offsets,
           cssVars: PopoverCSSVars,
         }),
       )
+      setPositionedSide(side)
     }
 
     measure()
@@ -189,7 +208,7 @@ function ManualPopoverPopup(
       window.removeEventListener('scroll', reposition, true)
       window.removeEventListener('resize', reposition)
     }
-  }, [state.open, popover, boundary, container, positionOptions])
+  }, [state.open, popover, boundary, container, positionOptions, setPositionedSide])
 
   if (!state.open) return null
 

@@ -136,7 +136,7 @@ const followMutation = useMutation({
 ## Browser Extension Notes
 
 - Manifest v3 (WXT)
-- Permissions: `storage`, `cookies`
+- Permissions: `storage`, `cookies`, `declarativeNetRequest` (media download request headers)
 - Host permissions: `https://weibo.com/*`, `https://www.weibo.com/*`,
   `https://*.sinaimg.cn/*`, `https://*.sinajs.cn/*`, `https://*.weibocdn.com/*`,
   `https://m.weibo.cn/*`, `https://xb-server.nnecec-3d5.workers.dev/*`

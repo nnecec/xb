@@ -32,8 +32,8 @@
 
 [![Bun](https://img.shields.io/badge/bun-1.3.14-000000?logo=bun&logoColor=white)](https://bun.sh)
 [![React](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=black)](https://react.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![WXT](https://img.shields.io/badge/WXT-0.20-000000)](https://wxt.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-7.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![WXT](https://img.shields.io/badge/WXT-0.21-000000)](https://wxt.dev)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.3-38B2AC?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 
 ---
@@ -57,9 +57,9 @@ xb 是一个浏览器插件。安装后，正常浏览微博，就能享受到�
 ## 功能特点
 
 1. ✨ **X 风格** — 简洁纯粹，阅读优先
-2. 🔓 **完全开源** — 没有隐私担忧，开源
+2. 🔓 **完全开源** — 代码可审计；网络请求与数据用途见[隐私政策](./PRIVACY_POLICY.md)
 3. 🎯 **聚焦阅读** — 无干扰、清楚的信息流
-4. 🚫 **无干扰** — 没有贴图、广告、超话等扰人信息
+4. 🚫 **减少干扰** — 默认隐藏贴图、广告等干扰，超话卡片可按需开启
 5. 🆓 **完全免费** - 没有付费功能
 6. 📷 **生图** - 把微博导出成图片，支持多种卡片模板
 7. 🔤 **自定义字体** - 支持系统字体和可下载的开源字体
