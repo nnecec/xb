@@ -13,6 +13,10 @@ vi.mock('@/lib/weibo/app/error-boundary', () => ({
   AppErrorBoundary: ({ children }: { children: React.ReactNode }) => children,
 }))
 
+vi.mock('@/lib/app-settings-store', () => ({
+  useAppSettings: vi.fn((selector) => selector({ motionPreference: 'system' })),
+}))
+
 vi.mock('@/lib/weibo/data/weibo-io', async () => {
   const actual = await vi.importActual<typeof import('@/lib/weibo/data/weibo-io')>(
     '@/lib/weibo/data/weibo-io',

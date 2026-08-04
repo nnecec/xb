@@ -5,11 +5,13 @@ import {
   QueryClientProvider,
   type QueryKey,
 } from '@tanstack/react-query'
+import { MotionConfig } from 'motion/react'
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router'
 
 import { Toaster } from '@/components/ui/sonner'
 import { Spinner } from '@/components/ui/spinner'
+import { useAppSettings } from '@/lib/app-settings-store'
 import { AppShell } from '@/lib/weibo/app/app-shell'
 import { usePrewarmEmoticonConfig } from '@/lib/weibo/app/emoticon-query'
 import { AppErrorBoundary } from '@/lib/weibo/app/error-boundary'
@@ -109,11 +111,17 @@ function AppRootBootstrap() {
 }
 
 export function AppRoot() {
+  const motionPreference = useAppSettings((state) => state.motionPreference)
+  const reducedMotion =
+    motionPreference === 'reduced' ? 'always' : motionPreference === 'full' ? 'never' : 'user'
+
   return (
     <QueryClientProvider client={queryClient}>
       <AppErrorBoundary>
-        <AppRootBootstrap />
-        <Toaster />
+        <MotionConfig reducedMotion={reducedMotion}>
+          <AppRootBootstrap />
+          <Toaster />
+        </MotionConfig>
       </AppErrorBoundary>
     </QueryClientProvider>
   )
