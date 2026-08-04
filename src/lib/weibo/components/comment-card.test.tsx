@@ -136,7 +136,7 @@ describe('CommentCard', () => {
     expect(screen.getByText('original thought')).toBeInTheDocument()
   })
 
-  it('loads more nested replies inline and opens inline reply for child', async () => {
+  it('loads more nested replies in a dialog and opens inline reply for child', async () => {
     const queryClient = new QueryClient()
     const item: CommentItem = {
       id: 'c1',
@@ -185,6 +185,8 @@ describe('CommentCard', () => {
     )
 
     fireEvent.click(screen.getByRole('button', { name: '查看更多回复' }))
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '评论详情' })).toBeInTheDocument()
     expect(await screen.findByText('child reply')).toBeInTheDocument()
 
     const replyButtons = screen.getAllByRole('button', { name: '回复评论' })
@@ -215,5 +217,87 @@ describe('CommentCard', () => {
     )
 
     expect(screen.getByText('博主')).toBeInTheDocument()
+  })
+
+  it('applies comment metadata and image display settings', () => {
+    getAppSettingsStore().setState({
+      commentCardShowAvatar: false,
+      commentCardShowTimestamp: false,
+      commentCardShowPublishInfo: true,
+      commentCardShowAuthorBadge: false,
+      commentCardShowLikeCount: false,
+      commentCardImageDisplay: 'collapsed',
+    })
+    const queryClient = new QueryClient()
+    const item: CommentItem = {
+      id: 'c1',
+      text: 'from author',
+      createdAtLabel: '刚刚',
+      source: 'iPhone 客户端',
+      author: {
+        id: 'root-author',
+        name: 'Author',
+        avatarUrl: 'https://example.com/avatar.jpg',
+      },
+      likeCount: 8,
+      images: [{ id: 'i1', thumbnailUrl: thumb, largeUrl: large }],
+      replyComment: null,
+      comments: [],
+    }
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <CommentCard item={item} rootStatusId="s1" authorUid="root-author" />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    expect(screen.queryByRole('img', { name: 'Author' })).not.toBeInTheDocument()
+    expect(screen.queryByText('刚刚')).not.toBeInTheDocument()
+    expect(screen.getByText('iPhone 客户端')).toBeInTheDocument()
+    expect(screen.queryByText('博主')).not.toBeInTheDocument()
+    expect(screen.queryByText('8')).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: '此评论包含 1 张图片，点击显示' }),
+    ).toBeInTheDocument()
+  })
+
+  it('collapses nested replies by default and allows a temporary reveal', () => {
+    getAppSettingsStore().setState({ commentCardCollapseRepliesByDefault: true })
+    const queryClient = new QueryClient()
+    const item: CommentItem = {
+      id: 'c1',
+      text: 'parent',
+      createdAtLabel: 'now',
+      author: { id: '1', name: 'A', avatarUrl: null },
+      likeCount: 0,
+      images: [],
+      replyComment: null,
+      comments: [
+        {
+          id: 'c2',
+          text: 'nested reply',
+          createdAtLabel: 'now',
+          author: { id: '2', name: 'B', avatarUrl: null },
+          likeCount: 0,
+          images: [],
+          replyComment: null,
+          comments: [],
+        },
+      ],
+    }
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <CommentCard item={item} rootStatusId="s1" authorUid="root-author" />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    expect(screen.queryByText('nested reply')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '查看 1 条回复' }))
+    expect(screen.getByText('nested reply')).toBeInTheDocument()
   })
 })

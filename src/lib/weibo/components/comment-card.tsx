@@ -1,9 +1,10 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Heart, MessageCircleIcon, Trash2 } from 'lucide-react'
-import { memo, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
 
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -13,19 +14,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { useAppSettings, useShallow } from '@/lib/app-settings-store'
 import { cn } from '@/lib/utils'
+import { CollapsibleMedia } from '@/lib/weibo/components/collapsible-media'
 import { CommentBox } from '@/lib/weibo/components/comment-box'
+import { CommentsDialog } from '@/lib/weibo/components/comments-dialog'
 import { ImageCarousel } from '@/lib/weibo/components/image-carousel'
 import { StatusText } from '@/lib/weibo/components/status-text'
 import { UserHoverCard } from '@/lib/weibo/components/user-hover-card'
 import { CreatedAtBadge, UserAvatar } from '@/lib/weibo/components/user-presenter'
-import {
-  cancelCommentLike,
-  deleteWeiboComment,
-  flattenInfiniteItems,
-  nestedCommentsInfiniteOptions,
-  setCommentLike,
-} from '@/lib/weibo/data/weibo-data'
+import { cancelCommentLike, deleteWeiboComment, setCommentLike } from '@/lib/weibo/data/weibo-data'
 import { useFontSettings } from '@/lib/weibo/hooks/use-font-settings'
 import { composeTargetFromComment } from '@/lib/weibo/models/compose'
 import type { CommentItem } from '@/lib/weibo/models/status'
@@ -74,8 +72,32 @@ export const CommentCard = memo(function CommentCard({
   depth?: number
 }) {
   const [showInlineReply, setShowInlineReply] = useState(false)
-  const [showMoreReplies, setShowMoreReplies] = useState(false)
+  const [showNestedCommentsDialog, setShowNestedCommentsDialog] = useState(false)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+  const {
+    commentDensity,
+    commentCardShowAvatar,
+    commentCardShowTimestamp,
+    commentCardShowPublishInfo,
+    commentCardShowAuthorBadge,
+    commentCardShowLikeCount,
+    commentCardShowThreadLine,
+    commentCardImageDisplay,
+    commentCardCollapseRepliesByDefault,
+  } = useAppSettings(
+    useShallow((settings) => ({
+      commentDensity: settings.commentDensity,
+      commentCardShowAvatar: settings.commentCardShowAvatar,
+      commentCardShowTimestamp: settings.commentCardShowTimestamp,
+      commentCardShowPublishInfo: settings.commentCardShowPublishInfo,
+      commentCardShowAuthorBadge: settings.commentCardShowAuthorBadge,
+      commentCardShowLikeCount: settings.commentCardShowLikeCount,
+      commentCardShowThreadLine: settings.commentCardShowThreadLine,
+      commentCardImageDisplay: settings.commentCardImageDisplay,
+      commentCardCollapseRepliesByDefault: settings.commentCardCollapseRepliesByDefault,
+    })),
+  )
+  const [showNestedReplies, setShowNestedReplies] = useState(!commentCardCollapseRepliesByDefault)
   const uid = getCurrentUserUid()
   const isOwner = uid !== null && uid === item.author.id
   const isStatusAuthor = authorUid !== undefined && authorUid !== '' && authorUid === item.author.id
@@ -83,11 +105,6 @@ export const CommentCard = memo(function CommentCard({
   const queryClient = useQueryClient()
   const canLoadMore =
     Boolean(item.moreInfoText) && Boolean(authorUid) && authorUid !== undefined && authorUid !== ''
-
-  const moreRepliesQuery = useInfiniteQuery({
-    ...nestedCommentsInfiniteOptions(item.id, authorUid ?? '', showMoreReplies && canLoadMore),
-  })
-  const moreReplies = flattenInfiniteItems(moreRepliesQuery.data?.pages)
 
   const likeMutation = useMutation({
     mutationFn: async (target: CommentItem) => {
@@ -122,6 +139,10 @@ export const CommentCard = memo(function CommentCard({
   const nestedPreview = Array.isArray(item.comments) ? item.comments : []
   const avatarSize = depth > 0 ? 'size-7' : 'size-8'
 
+  useEffect(() => {
+    setShowNestedReplies(!commentCardCollapseRepliesByDefault)
+  }, [commentCardCollapseRepliesByDefault])
+
   const handleUserLinkClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.stopPropagation()
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
@@ -134,17 +155,35 @@ export const CommentCard = memo(function CommentCard({
   }
 
   return (
-    <div className={cn('flex gap-3', depth > 0 && 'border-border/60 relative border-l pl-3')}>
-      <UserHoverCard uid={item.author.id}>
-        <Link to={`/n/${encodeURIComponent(item.author.name)}`} onClick={handleUserLinkClick}>
-          <UserAvatar
-            author={item.author}
-            sizeClassName={avatarSize}
-            fallbackClassName="text-[10px] font-semibold"
-          />
-        </Link>
-      </UserHoverCard>
-      <div className="relative flex min-w-0 flex-1 flex-col gap-0.5">
+    <div
+      className={cn(
+        'flex',
+        commentDensity === 'compact' && 'gap-2',
+        commentDensity === 'standard' && 'gap-3',
+        commentDensity === 'relaxed' && 'gap-4',
+        depth > 0 && 'relative pl-3',
+        depth > 0 && commentCardShowThreadLine && 'border-l border-border/60',
+      )}
+    >
+      {commentCardShowAvatar ? (
+        <UserHoverCard uid={item.author.id}>
+          <Link to={`/n/${encodeURIComponent(item.author.name)}`} onClick={handleUserLinkClick}>
+            <UserAvatar
+              author={item.author}
+              sizeClassName={avatarSize}
+              fallbackClassName="text-[10px] font-semibold"
+            />
+          </Link>
+        </UserHoverCard>
+      ) : null}
+      <div
+        className={cn(
+          'relative flex min-w-0 flex-1 flex-col',
+          commentDensity === 'compact' && 'gap-0',
+          commentDensity === 'standard' && 'gap-0.5',
+          commentDensity === 'relaxed' && 'gap-1',
+        )}
+      >
         {isOwner ? (
           <div className="absolute top-0 right-0 z-10">
             <Button
@@ -168,13 +207,15 @@ export const CommentCard = memo(function CommentCard({
               </span>
             </Link>
           </UserHoverCard>
-          {isStatusAuthor ? (
-            <span className="bg-muted text-muted-foreground rounded px-1 py-0.5 text-[10px] font-medium">
-              博主
-            </span>
+          {isStatusAuthor && commentCardShowAuthorBadge ? (
+            <Badge variant="secondary">博主</Badge>
           ) : null}
-          <CreatedAtBadge label={item.createdAtLabel} />
+          {commentCardShowTimestamp ? <CreatedAtBadge label={item.createdAtLabel} /> : null}
         </div>
+
+        {commentCardShowPublishInfo && item.source ? (
+          <p className="text-muted-foreground text-xs">{item.source}</p>
+        ) : null}
 
         {item.replyComment ? <ReplyCommentPreview reply={item.replyComment} /> : null}
 
@@ -182,12 +223,20 @@ export const CommentCard = memo(function CommentCard({
           <StatusText
             item={{ emoticons: item.emoticons, urlEntities: item.urlEntities }}
             text={item.text || ''}
+            imageDisplay={commentCardImageDisplay}
           />
         </div>
 
-        <div className="mt-0.5">
-          <ImageCarousel images={item.images} />
-        </div>
+        {item.images.length > 0 ? (
+          <div className="mt-0.5">
+            <CollapsibleMedia
+              display={commentCardImageDisplay}
+              summary={`此评论包含 ${item.images.length} 张图片`}
+            >
+              <ImageCarousel images={item.images} />
+            </CollapsibleMedia>
+          </div>
+        ) : null}
 
         <div className="text-muted-foreground flex items-center gap-1">
           <Button
@@ -226,7 +275,7 @@ export const CommentCard = memo(function CommentCard({
                 liked ? 'fill-rose-500 text-rose-500' : 'hover:text-rose-500',
               )}
             />
-            {item.likeCount > 0 ? (
+            {commentCardShowLikeCount && item.likeCount > 0 ? (
               <span className={cn(liked && 'text-rose-500')}>{item.likeCount}</span>
             ) : null}
           </Button>
@@ -245,7 +294,18 @@ export const CommentCard = memo(function CommentCard({
           </div>
         ) : null}
 
-        {nestedPreview.length > 0 ? (
+        {nestedPreview.length > 0 && !showNestedReplies ? (
+          <Button
+            variant="link"
+            size="xs"
+            className="mt-1 h-auto w-fit px-0"
+            onClick={() => setShowNestedReplies(true)}
+          >
+            查看 {nestedPreview.length} 条回复
+          </Button>
+        ) : null}
+
+        {nestedPreview.length > 0 && showNestedReplies ? (
           <div className="mt-2 flex flex-col gap-2">
             {nestedPreview.map((child) => (
               <CommentCard
@@ -261,47 +321,24 @@ export const CommentCard = memo(function CommentCard({
 
         {canLoadMore ? (
           <div className="mt-1">
-            {!showMoreReplies ? (
-              <Button
-                variant="link"
-                size="xs"
-                className="h-auto px-0"
-                onClick={() => setShowMoreReplies(true)}
-              >
-                {item.moreInfoText}
-              </Button>
-            ) : (
-              <div className="mt-1 flex flex-col gap-2">
-                {moreRepliesQuery.isLoading ? (
-                  <p className="text-muted-foreground text-xs">正在加载回复…</p>
-                ) : null}
-                {moreRepliesQuery.error instanceof Error ? (
-                  <p className="text-destructive text-xs">{moreRepliesQuery.error.message}</p>
-                ) : null}
-                {moreReplies.map((child) => (
-                  <CommentCard
-                    key={child.id}
-                    item={child}
-                    rootStatusId={rootStatusId}
-                    authorUid={authorUid}
-                    depth={depth + 1}
-                  />
-                ))}
-                {moreRepliesQuery.hasNextPage ? (
-                  <Button
-                    variant="link"
-                    size="xs"
-                    className="h-auto px-0"
-                    disabled={moreRepliesQuery.isFetchingNextPage}
-                    onClick={() => void moreRepliesQuery.fetchNextPage()}
-                  >
-                    {moreRepliesQuery.isFetchingNextPage ? '加载中…' : '加载更多回复'}
-                  </Button>
-                ) : null}
-              </div>
-            )}
+            <Button
+              variant="link"
+              size="xs"
+              className="h-auto px-0"
+              onClick={() => setShowNestedCommentsDialog(true)}
+            >
+              {item.moreInfoText}
+            </Button>
           </div>
         ) : null}
+
+        <CommentsDialog
+          open={showNestedCommentsDialog}
+          rootStatusId={rootStatusId}
+          statusId={item.id}
+          authorUid={authorUid ?? ''}
+          onOpenChange={setShowNestedCommentsDialog}
+        />
 
         <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
           <DialogContent className="sm:max-w-md">
