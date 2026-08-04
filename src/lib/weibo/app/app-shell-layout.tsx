@@ -494,11 +494,11 @@ export function ShellFrame({
                 style={immersiveChromeStyle}
               >
                 <RightRail />
-                <BackToTop scrollRoot={mainScrollRoot} />
               </motion.div>
             )}
           </AnimatePresence>
-        </div>{' '}
+        </div>
+        {!immersiveMode && <BackToTop scrollRoot={mainScrollRoot} />}
       </div>
     </ImmersiveHeaderHiddenContext.Provider>
   )

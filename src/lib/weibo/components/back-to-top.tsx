@@ -36,7 +36,7 @@ export function BackToTop({ scrollRoot, threshold = 200 }: BackToTopProps) {
       onClick={scrollToTop}
       title="返回顶部"
       className={cn(
-        'absolute right-0 bottom-4 z-50 rounded-full border-border/70 bg-background/85 shadow-lg shadow-black/10 backdrop-blur transition-[opacity,transform,background-color] duration-250 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none hover:bg-accent',
+        'fixed right-4 bottom-4 z-50 rounded-full border-border/70 bg-background/85 shadow-lg shadow-black/10 backdrop-blur transition-[opacity,transform,background-color] duration-250 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none hover:bg-accent',
         isVisible
           ? 'pointer-events-auto translate-y-0 opacity-100'
           : 'pointer-events-none translate-y-3 opacity-0',

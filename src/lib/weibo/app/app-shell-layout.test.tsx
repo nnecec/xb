@@ -172,6 +172,40 @@ describe('ShellFrame', () => {
     expect(screen.getByText('center content')).toBeInTheDocument()
   })
 
+  it('keeps one fixed back-to-top button when the right rail is hidden', () => {
+    getAppSettingsStore().setState({
+      ...getAppSettingsStore().getState(),
+      showRightRail: false,
+    })
+    const mainRef = createRef<HTMLDivElement>()
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <ShellFrame
+            pageKind="home"
+            viewingProfileUserId={null}
+            rewriteEnabled
+            theme="system"
+            contentWidth="standard"
+            customContentWidth={1200}
+            onRewriteEnabledChange={vi.fn()}
+            onThemeChange={vi.fn()}
+            onSettingsOpen={vi.fn()}
+            onComposeOpen={vi.fn()}
+            mainRef={mainRef}
+          >
+            <div>center content</div>
+          </ShellFrame>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    expect(screen.queryByTestId('right-rail')).not.toBeInTheDocument()
+    const backToTopButtons = screen.getAllByRole('button', { name: '返回顶部' })
+    expect(backToTopButtons).toHaveLength(1)
+    expect(backToTopButtons[0]).toHaveClass('fixed', 'right-4', 'bottom-4')
+  })
+
   it('uses an exit-only rail and hides headers while scrolling in immersive mode', () => {
     getAppSettingsStore().setState({
       ...getAppSettingsStore().getState(),
@@ -203,6 +237,7 @@ describe('ShellFrame', () => {
     expect(screen.queryByRole('navigation', { name: '主导航' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: '退出沉浸模式' })).toBeInTheDocument()
     expect(screen.queryByTestId('right-rail')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '返回顶部' })).not.toBeInTheDocument()
 
     const main = mainRef.current
     expect(main).not.toBeNull()
