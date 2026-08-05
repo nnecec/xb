@@ -50,6 +50,7 @@ interface VideoPlayerProps {
   /** Used to generate the downloaded filename: "作者名+前15个字.mp4" */
   downloadFilename?: string
   onPlay?: () => void
+  onPictureInPictureChange?: (active: boolean) => void
 }
 
 export function VideoPlayer({
@@ -60,6 +61,7 @@ export function VideoPlayer({
   downloadUrl,
   downloadFilename,
   onPlay,
+  onPictureInPictureChange,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const playerRef = useRef<MediaPlayerClass | null>(null)
@@ -311,9 +313,11 @@ export function VideoPlayer({
     // unavailable when the video lives inside a shadow root).
     const handleEnterPiP = () => {
       isInPiPRef.current = true
+      onPictureInPictureChange?.(true)
     }
     const handleLeavePiP = () => {
       isInPiPRef.current = false
+      onPictureInPictureChange?.(false)
     }
 
     video.addEventListener('play', handlePlay)
@@ -325,13 +329,14 @@ export function VideoPlayer({
     return () => {
       unregisterPlayingVideo(video)
       isInPiPRef.current = false
+      onPictureInPictureChange?.(false)
       video.removeEventListener('play', handlePlay)
       video.removeEventListener('pause', handleStop)
       video.removeEventListener('ended', handleStop)
       video.removeEventListener('enterpictureinpicture', handleEnterPiP)
       video.removeEventListener('leavepictureinpicture', handleLeavePiP)
     }
-  }, [sourceKey])
+  }, [onPictureInPictureChange, sourceKey])
 
   useEffect(() => {
     if (!isMpd || !shouldLoad || !manifestXml) {

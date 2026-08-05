@@ -41,9 +41,27 @@ vi.mock('@/lib/weibo/components/image-carousel', () => ({
 }))
 
 vi.mock('./inline-video-panel', () => ({
-  InlineVideoPanel: ({ video, onBack }: { video: { id: string }; onBack?: () => void }) => (
+  InlineVideoPanel: ({
+    video,
+    onBack,
+    onPictureInPictureChange,
+  }: {
+    video: { id: string }
+    onBack?: () => void
+    onPictureInPictureChange?: (active: boolean) => void
+  }) => (
     <div data-testid="inline-video">
       {video.id}
+      {onPictureInPictureChange ? (
+        <button type="button" onClick={() => onPictureInPictureChange(true)}>
+          进入画中画
+        </button>
+      ) : null}
+      {onPictureInPictureChange ? (
+        <button type="button" onClick={() => onPictureInPictureChange(false)}>
+          退出画中画
+        </button>
+      ) : null}
       {onBack ? (
         <button type="button" onClick={onBack}>
           返回媒体区域
@@ -136,8 +154,27 @@ describe('MediaRegion', () => {
     })
 
     expect(screen.getByTestId('gallery-video')).toBeInTheDocument()
+    expect(screen.queryByTestId('inline-video')).not.toBeInTheDocument()
     expect(imageCarouselMock).toHaveBeenLastCalledWith(
       expect.objectContaining({ initialStripIndex: 1 }),
     )
+  })
+
+  it('keeps the playback session mounted while returning from an active PiP video', () => {
+    render(<MediaRegion item={item} />)
+
+    fireEvent.click(screen.getByTestId('gallery-video'))
+    fireEvent.click(screen.getByRole('button', { name: '进入画中画' }))
+    fireEvent.click(screen.getByRole('button', { name: '返回媒体区域' }))
+
+    expect(screen.getByTestId('gallery-video')).toBeInTheDocument()
+    expect(screen.getByTestId('inline-video')).toHaveAttribute('data-testid', 'inline-video')
+    expect(screen.getByTestId('inline-video').parentElement).toHaveAttribute(
+      'data-media-playback-retained',
+      '',
+    )
+
+    fireEvent.click(screen.getByText('退出画中画'))
+    expect(screen.queryByTestId('inline-video')).not.toBeInTheDocument()
   })
 })

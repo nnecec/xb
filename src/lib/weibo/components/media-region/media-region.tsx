@@ -103,6 +103,9 @@ export function MediaRegion({
     [item, singleImageMaxWidth, singleVideoMaxWidth],
   )
   const [activeVideo, setActiveVideo] = useState<FeedMixMediaItem | null>(null)
+  const [focusedViewVisible, setFocusedViewVisible] = useState(false)
+  const focusedViewVisibleRef = useRef(false)
+  const pictureInPictureActiveRef = useRef(false)
   const stripIndexRef = useRef(0)
   const rootRef = useRef<HTMLDivElement>(null)
 
@@ -113,11 +116,15 @@ export function MediaRegion({
   const handleVideoActivate = useCallback((video: FeedMixMediaItem, index: number) => {
     stripIndexRef.current = index
     setActiveVideo(video)
+    focusedViewVisibleRef.current = true
+    setFocusedViewVisible(true)
   }, [])
 
   const handleBack = useCallback(() => {
     const videoId = activeVideo?.id
-    setActiveVideo(null)
+    focusedViewVisibleRef.current = false
+    setFocusedViewVisible(false)
+    if (!pictureInPictureActiveRef.current) setActiveVideo(null)
     requestAnimationFrame(() => {
       if (!videoId) return
       const triggers = rootRef.current?.querySelectorAll<HTMLElement>('[data-media-video-id]')
@@ -127,6 +134,11 @@ export function MediaRegion({
       trigger?.focus()
     })
   }, [activeVideo?.id])
+
+  const handlePictureInPictureChange = useCallback((active: boolean) => {
+    pictureInPictureActiveRef.current = active
+    if (!active && !focusedViewVisibleRef.current) setActiveVideo(null)
+  }, [])
 
   if (!region) return null
 
@@ -148,42 +160,58 @@ export function MediaRegion({
             downloadFilename={downloadFilename}
             maxWidth={region.singleMediaMaxWidth}
           />
-        ) : activeVideo ? (
-          <InlineVideoPanel
-            video={activeVideo}
-            downloadFilename={downloadFilename}
-            maxWidth={region.singleMediaMaxWidth}
-            onBack={handleBack}
-          />
         ) : (
-          <div className="flex flex-col gap-2">
-            {standaloneAssets.map((asset) => (
-              <StandaloneMedia
-                key={asset.id}
-                item={item}
-                media={asset.media}
-                downloadFilename={downloadFilename}
-                maxWidth={region.singleMediaMaxWidth}
-                onOpen={onOpen}
-              />
-            ))}
-            {galleryItems.length > 0 ? (
-              <ImageCarousel
-                images={[]}
-                items={galleryItems}
-                downloadFilename={downloadFilename}
-                onOpen={onOpen}
-                singleMediaMaxWidth={region.singleMediaMaxWidth}
-                variant="card"
-                initialStripIndex={Math.min(
-                  stripIndexRef.current,
-                  Math.max(galleryItems.length - 1, 0),
-                )}
-                onStripIndexChange={handleStripIndexChange}
-                onVideoActivate={handleVideoActivate}
-              />
+          <>
+            {activeVideo ? (
+              <div
+                className={
+                  focusedViewVisible
+                    ? undefined
+                    : 'pointer-events-none absolute size-px overflow-hidden opacity-0'
+                }
+                aria-hidden={focusedViewVisible ? undefined : true}
+                data-media-playback-retained={focusedViewVisible ? undefined : ''}
+              >
+                <InlineVideoPanel
+                  video={activeVideo}
+                  downloadFilename={downloadFilename}
+                  maxWidth={region.singleMediaMaxWidth}
+                  onBack={handleBack}
+                  onPictureInPictureChange={handlePictureInPictureChange}
+                />
+              </div>
             ) : null}
-          </div>
+            {!focusedViewVisible ? (
+              <div className="flex flex-col gap-2">
+                {standaloneAssets.map((asset) => (
+                  <StandaloneMedia
+                    key={asset.id}
+                    item={item}
+                    media={asset.media}
+                    downloadFilename={downloadFilename}
+                    maxWidth={region.singleMediaMaxWidth}
+                    onOpen={onOpen}
+                  />
+                ))}
+                {galleryItems.length > 0 ? (
+                  <ImageCarousel
+                    images={[]}
+                    items={galleryItems}
+                    downloadFilename={downloadFilename}
+                    onOpen={onOpen}
+                    singleMediaMaxWidth={region.singleMediaMaxWidth}
+                    variant="card"
+                    initialStripIndex={Math.min(
+                      stripIndexRef.current,
+                      Math.max(galleryItems.length - 1, 0),
+                    )}
+                    onStripIndexChange={handleStripIndexChange}
+                    onVideoActivate={handleVideoActivate}
+                  />
+                ) : null}
+              </div>
+            ) : null}
+          </>
         )}
       </div>
     </CollapsibleMedia>

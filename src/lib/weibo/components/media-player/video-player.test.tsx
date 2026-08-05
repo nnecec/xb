@@ -110,4 +110,22 @@ describe('VideoPlayer', () => {
       expect(document.querySelector('.media-menu--settings')).not.toBeInTheDocument()
     })
   })
+
+  it('reports native Picture-in-Picture transitions without owning the player skin', () => {
+    const onPictureInPictureChange = vi.fn()
+    render(
+      <VideoPlayer
+        progressiveSrc="https://example.com/video.mp4"
+        onPictureInPictureChange={onPictureInPictureChange}
+      />,
+    )
+
+    const video = document.querySelector('video')
+    expect(video).toBeInTheDocument()
+    video?.dispatchEvent(new Event('enterpictureinpicture'))
+    video?.dispatchEvent(new Event('leavepictureinpicture'))
+
+    expect(onPictureInPictureChange).toHaveBeenNthCalledWith(1, true)
+    expect(onPictureInPictureChange).toHaveBeenNthCalledWith(2, false)
+  })
 })
