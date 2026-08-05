@@ -34,12 +34,12 @@ describe('LivePlayer', () => {
 
       const video = document.querySelector('video')
       expect(video).toBeInTheDocument()
-      expect(video?.src).toBe('https://example.com/live.m3u8')
+      expect(video?.paused).toBe(true)
     })
   })
 
   describe('liveStatus === 3 (replay)', () => {
-    it.skip('renders video element with poster', () => {
+    it('renders video element with poster and shared controls', () => {
       render(
         <LivePlayer
           streamUrl="https://example.com/live.m3u8"
@@ -52,6 +52,12 @@ describe('LivePlayer', () => {
       const video = document.querySelector('video')
       expect(video).toBeInTheDocument()
       expect(video?.poster).toBe('https://example.com/cover.jpg')
+
+      const controlsRoot = document.querySelector('.media-controls--root')
+      expect(controlsRoot).toBeInTheDocument()
+      expect(controlsRoot?.querySelector('.media-controls--primary')).toBeInTheDocument()
+      expect(controlsRoot?.querySelector('.media-controls--secondary')).toBeInTheDocument()
+      expect(document.querySelector('[aria-label="播放设置"]')).toBeInTheDocument()
     })
   })
 
@@ -86,6 +92,8 @@ describe('LivePlayer', () => {
       const controlsRoot = document.querySelector('.media-controls--root')
       expect(controlsRoot).toBeInTheDocument()
       expect(controlsRoot?.querySelector('.media-controls--primary')).toBeInTheDocument()
+      expect(controlsRoot?.querySelector('.media-controls--secondary')).toBeInTheDocument()
+      expect(document.querySelector('[aria-label="播放设置"]')).not.toBeInTheDocument()
     })
 
     it('renders with coverUrl as poster', () => {

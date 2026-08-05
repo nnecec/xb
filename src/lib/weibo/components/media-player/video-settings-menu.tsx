@@ -1,4 +1,5 @@
 import { Menu, usePlaybackRateOptions } from '@videojs/react'
+import type { PlaybackRateOptionsResult } from '@videojs/react'
 import { Check, ChevronLeft, ChevronRight, Gauge, Settings2 } from 'lucide-react'
 
 import { IconButton } from './video-player-controls'
@@ -22,9 +23,27 @@ function MenuChevron({ back = false }: { back?: boolean }) {
 }
 
 export function VideoSettingsMenu({ quality, allowPlaybackRate = true }: VideoSettingsMenuProps) {
+  if (!allowPlaybackRate) {
+    return <VideoSettingsMenuContent quality={quality} playbackRate={null} />
+  }
+
+  return <VideoSettingsMenuWithPlaybackRate quality={quality} />
+}
+
+function VideoSettingsMenuWithPlaybackRate({ quality }: Pick<VideoSettingsMenuProps, 'quality'>) {
   const playbackRate = usePlaybackRateOptions()
+  return <VideoSettingsMenuContent quality={quality} playbackRate={playbackRate} />
+}
+
+function VideoSettingsMenuContent({
+  quality,
+  playbackRate,
+}: {
+  quality?: VideoQualitySettings
+  playbackRate: PlaybackRateOptionsResult | null
+}) {
   const hasQuality = Boolean(quality?.options.length)
-  const hasPlaybackRate = allowPlaybackRate && playbackRate?.state.availability === 'available'
+  const hasPlaybackRate = playbackRate?.state.availability === 'available'
 
   if (!hasQuality && !hasPlaybackRate) {
     return null
