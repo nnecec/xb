@@ -1,24 +1,17 @@
-import type { FeedImage, FeedItem, FeedMedia, FeedMixMediaItem } from '@/lib/weibo/models/feed'
+import type { FeedItem, FeedMedia } from '@/lib/weibo/models/feed'
+
+import {
+  buildMediaCollectionItems,
+  type MediaCollectionItem,
+} from '../media-collection/media-collection-model'
 
 export type MediaAsset =
-  | {
-      kind: 'image'
-      id: string
-      image: FeedImage
-    }
-  | {
-      kind: 'video'
-      id: string
-      video: FeedMixMediaItem
-      playable: boolean
-    }
+  | MediaCollectionItem
   | {
       kind: 'standalone'
       id: string
       media: FeedMedia
     }
-
-export type MediaGalleryItem = Extract<MediaAsset, { kind: 'image' | 'video' }>
 
 export interface MediaRegionModel {
   key: string
@@ -51,33 +44,6 @@ function mediaSummary(assets: MediaAsset[]) {
   return itemLabel(assets.length, '项媒体')
 }
 
-export function buildMediaGalleryItems(
-  images: FeedImage[],
-  mixMediaItems: FeedMixMediaItem[] = [],
-): MediaGalleryItem[] {
-  if (mixMediaItems.length === 0) {
-    return images.map((image) => ({ kind: 'image', id: image.id, image }))
-  }
-
-  const items: MediaGalleryItem[] = []
-  for (const item of mixMediaItems) {
-    if (item.type === 'pic' && item.image) {
-      items.push({ kind: 'image', id: item.id, image: item.image })
-    } else if (
-      item.type === 'video' &&
-      (item.videoCoverUrl || item.videoStreamUrl || item.videoDash)
-    ) {
-      items.push({
-        kind: 'video',
-        id: item.id,
-        video: item,
-        playable: Boolean(item.videoStreamUrl || item.videoDash),
-      })
-    }
-  }
-  return items
-}
-
 function mediaAssetKey(asset: MediaAsset) {
   return `${asset.kind}:${asset.id}`
 }
@@ -87,25 +53,7 @@ export function buildMediaAssets(
 ): MediaAsset[] {
   const source: MediaAsset[] =
     item.mixMediaInfo && item.mixMediaInfo.length > 0
-      ? item.mixMediaInfo.flatMap((media): MediaAsset[] => {
-          if (media.type === 'pic' && media.image) {
-            return [{ kind: 'image', id: media.id, image: media.image }]
-          }
-          if (
-            media.type === 'video' &&
-            (media.videoCoverUrl || media.videoStreamUrl || media.videoDash)
-          ) {
-            return [
-              {
-                kind: 'video',
-                id: media.id,
-                video: media,
-                playable: Boolean(media.videoStreamUrl || media.videoDash),
-              },
-            ]
-          }
-          return []
-        })
+      ? buildMediaCollectionItems([], item.mixMediaInfo)
       : [
           ...(item.media
             ? [{ kind: 'standalone' as const, id: `${item.id}:media`, media: item.media }]

@@ -20,7 +20,7 @@ import { useAppSettings } from '@/lib/app-settings-store'
 import { cn } from '@/lib/utils'
 import { useEmoticonConfigQuery } from '@/lib/weibo/app/emoticon-query'
 import { CollapsibleMedia } from '@/lib/weibo/components/collapsible-media'
-import { ImageCarousel } from '@/lib/weibo/components/image-carousel'
+import { buildMediaCollectionItems, MediaCollection } from '@/lib/weibo/components/media-collection'
 import { UserHoverCard } from '@/lib/weibo/components/user-hover-card'
 import type { WeiboEmoticonItem } from '@/lib/weibo/models/emoticon'
 import type { FeedImage, FeedItem, FeedTopicEntity, FeedUrlEntity } from '@/lib/weibo/models/feed'
@@ -536,7 +536,7 @@ function renderReplyChainItem(
       ) : null}
       {images.length > 0 ? (
         <CollapsibleMedia display={imageDisplay} summary={`此微博包含 ${images.length} 张图片`}>
-          <ImageCarousel images={images} />
+          <MediaCollection items={buildMediaCollectionItems(images)} />
         </CollapsibleMedia>
       ) : null}
     </blockquote>
@@ -580,7 +580,7 @@ function renderReplyChainText(
             display={imageDisplay}
             summary={`此微博包含 ${leading.images.length} 张图片`}
           >
-            <ImageCarousel images={leading.images} />
+            <MediaCollection items={buildMediaCollectionItems(leading.images)} />
           </CollapsibleMedia>
         ) : null}
         {renderReplyChainItem(
@@ -655,7 +655,7 @@ function renderReplyChainText(
           display={imageDisplay}
           summary={`此微博包含 ${leading.images.length} 张图片`}
         >
-          <ImageCarousel images={leading.images} />
+          <MediaCollection items={buildMediaCollectionItems(leading.images)} />
         </CollapsibleMedia>
       ) : null}
       <div data-testid="reply-chain" className="flex flex-col gap-2">
@@ -768,7 +768,7 @@ export function StatusText({
       <span className="flex flex-col gap-2">
         {strippedText ? <span className="whitespace-pre-wrap">{textNode}</span> : null}
         <CollapsibleMedia display={imageDisplay} summary={`此微博包含 ${images.length} 张图片`}>
-          <ImageCarousel images={images} />
+          <MediaCollection items={buildMediaCollectionItems(images)} />
         </CollapsibleMedia>
       </span>
     )

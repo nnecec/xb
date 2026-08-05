@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils'
 import { CollapsibleMedia } from '@/lib/weibo/components/collapsible-media'
 import { CommentBox } from '@/lib/weibo/components/comment-box'
 import { CommentsDialog } from '@/lib/weibo/components/comments-dialog'
-import { ImageCarousel } from '@/lib/weibo/components/image-carousel'
+import { buildMediaCollectionItems, MediaCollection } from '@/lib/weibo/components/media-collection'
 import { StatusText } from '@/lib/weibo/components/status-text'
 import { UserHoverCard } from '@/lib/weibo/components/user-hover-card'
 import { CreatedAtBadge, UserAvatar } from '@/lib/weibo/components/user-presenter'
@@ -233,7 +233,7 @@ export const CommentCard = memo(function CommentCard({
               display={commentCardImageDisplay}
               summary={`此评论包含 ${item.images.length} 张图片`}
             >
-              <ImageCarousel images={item.images} />
+              <MediaCollection items={buildMediaCollectionItems(item.images)} />
             </CollapsibleMedia>
           </div>
         ) : null}

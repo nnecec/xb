@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { APP_SETTINGS_STORAGE_KEY } from '@/lib/app-settings'
 import { getAppSettingsStore, resetAppSettingsStoreForTest } from '@/lib/app-settings-store'
-import { ImageCarousel } from '@/lib/weibo/components/image-carousel'
+import { buildMediaCollectionItems, MediaCollection } from '@/lib/weibo/components/media-collection'
 
 function createImages(count: number) {
   return Array.from({ length: count }, (_, index) => ({
@@ -14,6 +14,10 @@ function createImages(count: number) {
     width: 1200,
     height: 800,
   }))
+}
+
+function createItems(count: number) {
+  return buildMediaCollectionItems(createImages(count))
 }
 
 function firePointerEvent(
@@ -148,7 +152,7 @@ vi.mock('react-photo-view', () => ({
   ),
 }))
 
-describe('ImageCarousel', () => {
+describe('MediaCollection', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     resetEmblaMock()
@@ -177,8 +181,8 @@ describe('ImageCarousel', () => {
 
   it('uses default PhotoView for long images so drag-to-pan works in the lightbox', () => {
     render(
-      <ImageCarousel
-        images={[
+      <MediaCollection
+        items={buildMediaCollectionItems([
           {
             id: 'long-pic',
             thumbnailUrl: 'https://example.com/thumb.jpg',
@@ -186,7 +190,7 @@ describe('ImageCarousel', () => {
             width: 400,
             height: 2000,
           },
-        ]}
+        ])}
       />,
     )
 
@@ -200,7 +204,7 @@ describe('ImageCarousel', () => {
 
   it('limits a single card media item to its configured maximum width', () => {
     const { container } = render(
-      <ImageCarousel images={createImages(1)} variant="card" singleMediaMaxWidth={720} />,
+      <MediaCollection items={createItems(1)} presentation="card" singleMediaMaxWidth={720} />,
     )
 
     expect(container.querySelector('.grid')).toHaveStyle({ maxWidth: '720px' })
@@ -208,8 +212,8 @@ describe('ImageCarousel', () => {
 
   it('auto-plays the live photo in the lightbox and switches to replay when video ends', () => {
     render(
-      <ImageCarousel
-        images={[
+      <MediaCollection
+        items={buildMediaCollectionItems([
           {
             id: 'live-pic',
             thumbnailUrl: 'https://example.com/thumb.jpg',
@@ -217,7 +221,7 @@ describe('ImageCarousel', () => {
             type: 'livephoto',
             livePhotoVideoUrl: 'https://example.com/live.mov',
           },
-        ]}
+        ])}
       />,
     )
 
@@ -256,7 +260,7 @@ describe('ImageCarousel', () => {
       weiboCardMultiMediaGridMaxWidth: 800,
     })
 
-    const { container } = render(<ImageCarousel images={createImages(12)} variant="card" />)
+    const { container } = render(<MediaCollection items={createItems(12)} presentation="card" />)
 
     expect(screen.getByLabelText('还有 6 项媒体')).toHaveTextContent('+6')
     expect(screen.getAllByTestId('photo-view')).toHaveLength(12)
@@ -274,7 +278,7 @@ describe('ImageCarousel', () => {
       weiboCardMultiMediaGridLimit: 4,
     })
 
-    const { container } = render(<ImageCarousel images={createImages(10)} />)
+    const { container } = render(<MediaCollection items={createItems(10)} />)
 
     expect(screen.queryByRole('region', { name: /横向媒体画廊/ })).not.toBeInTheDocument()
     expect(screen.queryByText(/^\+\d+$/)).not.toBeInTheDocument()
@@ -290,9 +294,9 @@ describe('ImageCarousel', () => {
     })
 
     render(
-      <ImageCarousel
-        variant="card"
-        images={[
+      <MediaCollection
+        presentation="card"
+        items={buildMediaCollectionItems([
           {
             id: 'portrait',
             thumbnailUrl: 'https://example.com/portrait-thumb.jpg',
@@ -307,7 +311,7 @@ describe('ImageCarousel', () => {
             width: 2400,
             height: 800,
           },
-        ]}
+        ])}
       />,
     )
 
@@ -343,7 +347,7 @@ describe('ImageCarousel', () => {
       weiboCardMultiMediaLayout: 'horizontal',
     })
 
-    render(<ImageCarousel variant="card" images={createImages(2)} />)
+    render(<MediaCollection presentation="card" items={createItems(2)} />)
 
     const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
     const photoView = screen.getAllByTestId('photo-view')[0]!
@@ -381,7 +385,7 @@ describe('ImageCarousel', () => {
   it('announces the Embla-selected media item after select and reInit', () => {
     const store = getAppSettingsStore()
     store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
-    render(<ImageCarousel variant="card" images={createImages(2)} />)
+    render(<MediaCollection presentation="card" items={createItems(2)} />)
 
     act(() => {
       setEmblaSelectedIndex(1)
@@ -396,11 +400,48 @@ describe('ImageCarousel', () => {
     expect(screen.getByText('当前第 1 项，共 2 项')).toBeInTheDocument()
   })
 
+  it('uses stable item ids for initial position and preserves the visible item after reordering', () => {
+    const store = getAppSettingsStore()
+    store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
+    const onVisibleItemChange = vi.fn()
+    const items = createItems(2)
+    const { rerender } = render(
+      <MediaCollection
+        presentation="card"
+        items={items}
+        initialItemId="image-2"
+        onVisibleItemChange={onVisibleItemChange}
+      />,
+    )
+
+    expect(useEmblaCarouselMock).toHaveBeenCalledWith(
+      expect.objectContaining({ startIndex: 1 }),
+      expect.any(Array),
+    )
+
+    act(() => {
+      setEmblaSelectedIndex(1)
+      emitEmblaEvent('select')
+    })
+    expect(onVisibleItemChange).toHaveBeenLastCalledWith('image-2')
+
+    emblaApi.scrollTo.mockClear()
+    rerender(
+      <MediaCollection
+        presentation="card"
+        items={[items[1]!, items[0]!]}
+        initialItemId="image-2"
+        onVisibleItemChange={onVisibleItemChange}
+      />,
+    )
+    expect(emblaApi.scrollTo).toHaveBeenCalledWith(0, true)
+  })
+
   it('does not draw a focus border around the gallery container', () => {
     const store = getAppSettingsStore()
     store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
 
-    render(<ImageCarousel variant="card" images={createImages(2)} />)
+    render(<MediaCollection presentation="card" items={createItems(2)} />)
 
     const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
     expect(strip).toHaveClass('outline-none', 'focus:outline-none', 'focus:ring-0')
@@ -423,7 +464,7 @@ describe('ImageCarousel', () => {
   ])('clears dragging state on %s', (_name, pointerId, finish) => {
     const store = getAppSettingsStore()
     store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
-    render(<ImageCarousel variant="card" images={createImages(2)} />)
+    render(<MediaCollection presentation="card" items={createItems(2)} />)
 
     const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
     firePointerEvent(strip, 'pointerdown', {
@@ -441,7 +482,7 @@ describe('ImageCarousel', () => {
   it('clears dragging state when the window blurs or pointer releases outside', () => {
     const store = getAppSettingsStore()
     store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
-    render(<ImageCarousel variant="card" images={createImages(2)} />)
+    render(<MediaCollection presentation="card" items={createItems(2)} />)
 
     const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
     const photoView = screen.getAllByTestId('photo-view')[0]!
@@ -475,7 +516,7 @@ describe('ImageCarousel', () => {
   it('resets drag and click suppression when horizontal layout is disabled', () => {
     const store = getAppSettingsStore()
     store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
-    render(<ImageCarousel variant="card" images={createImages(2)} />)
+    render(<MediaCollection presentation="card" items={createItems(2)} />)
 
     const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
     firePointerEvent(strip, 'pointerdown', {
@@ -504,7 +545,7 @@ describe('ImageCarousel', () => {
   it('does not suppress a click after a below-threshold release', () => {
     const store = getAppSettingsStore()
     store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
-    render(<ImageCarousel variant="card" images={createImages(2)} />)
+    render(<MediaCollection presentation="card" items={createItems(2)} />)
 
     const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
     const photoView = screen.getAllByTestId('photo-view')[0]!
@@ -527,28 +568,30 @@ describe('ImageCarousel', () => {
   it('keeps the legacy grid image structure free of horizontal press feedback', () => {
     const store = getAppSettingsStore()
     store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
-    render(<ImageCarousel images={createImages(2)} />)
+    render(<MediaCollection items={createItems(2)} />)
 
     expect(screen.queryByTestId('media-strip-pressable')).not.toBeInTheDocument()
   })
 
   it('activates mixed video inline without registering it as a lightbox item', () => {
     const onOpen = vi.fn()
-    const onVideoActivate = vi.fn()
+    const onItemActivate = vi.fn()
     render(
-      <ImageCarousel
-        images={[]}
-        mixMediaItems={[
-          {
-            type: 'video',
-            id: 'video-1',
-            videoTitle: '示例视频',
-            videoCoverUrl: 'https://example.com/video.jpg',
-            videoStreamUrl: 'https://example.com/video.mp4',
-          },
-        ]}
+      <MediaCollection
+        items={buildMediaCollectionItems(
+          [],
+          [
+            {
+              type: 'video',
+              id: 'video-1',
+              videoTitle: '示例视频',
+              videoCoverUrl: 'https://example.com/video.jpg',
+              videoStreamUrl: 'https://example.com/video.mp4',
+            },
+          ],
+        )}
         onOpen={onOpen}
-        onVideoActivate={onVideoActivate}
+        onItemActivate={onItemActivate}
       />,
     )
 
@@ -557,29 +600,33 @@ describe('ImageCarousel', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '播放视频：示例视频' }))
     expect(onOpen).toHaveBeenCalledTimes(1)
-    expect(onVideoActivate).toHaveBeenCalledWith(expect.objectContaining({ id: 'video-1' }), 0)
+    expect(onItemActivate).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'video', id: 'video-1' }),
+    )
   })
 
   it('keeps a preview-only mixed video visible but non-interactive', () => {
-    const onVideoActivate = vi.fn()
+    const onItemActivate = vi.fn()
     render(
-      <ImageCarousel
-        images={[]}
-        mixMediaItems={[
-          {
-            type: 'video',
-            id: 'video-1',
-            videoCoverUrl: 'https://example.com/video.jpg',
-          },
-        ]}
-        onVideoActivate={onVideoActivate}
+      <MediaCollection
+        items={buildMediaCollectionItems(
+          [],
+          [
+            {
+              type: 'video',
+              id: 'video-1',
+              videoCoverUrl: 'https://example.com/video.jpg',
+            },
+          ],
+        )}
+        onItemActivate={onItemActivate}
       />,
     )
 
     const trigger = screen.getByRole('button', { name: '视频暂不可播放' })
     expect(trigger).toBeDisabled()
     fireEvent.click(trigger)
-    expect(onVideoActivate).not.toHaveBeenCalled()
+    expect(onItemActivate).not.toHaveBeenCalled()
   })
 
   it('keeps Embla drag enabled but disables drag-free motion when reduced motion is requested', () => {
@@ -587,7 +634,7 @@ describe('ImageCarousel', () => {
     const store = getAppSettingsStore()
     store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
 
-    render(<ImageCarousel variant="card" images={createImages(2)} />)
+    render(<MediaCollection presentation="card" items={createItems(2)} />)
 
     expect(useEmblaCarouselMock).toHaveBeenCalledWith(
       expect.not.objectContaining({ watchDrag: false }),
@@ -602,7 +649,7 @@ describe('ImageCarousel', () => {
   it('normalizes Shift plus vertical wheel input for the Embla wheel gesture plugin', () => {
     const store = getAppSettingsStore()
     store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
-    render(<ImageCarousel variant="card" images={createImages(2)} />)
+    render(<MediaCollection presentation="card" items={createItems(2)} />)
 
     const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
     const normalizedEvents: WheelEvent[] = []
@@ -632,7 +679,7 @@ describe('ImageCarousel', () => {
       weiboCardMultiMediaLayout: 'horizontal',
     })
 
-    render(<ImageCarousel variant="card" images={createImages(2)} />)
+    render(<MediaCollection presentation="card" items={createItems(2)} />)
 
     const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
     const photoView = screen.getAllByTestId('photo-view')[0]!

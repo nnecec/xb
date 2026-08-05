@@ -4,27 +4,24 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getAppSettingsStore, resetAppSettingsStoreForTest } from '@/lib/app-settings-store'
 import type { FeedItem } from '@/lib/weibo/models/feed'
 
+import type { MediaCollectionItem } from '../media-collection'
 import { MediaRegion } from './media-region'
-import type { MediaGalleryItem } from './media-region-model'
 
-const { imageCarouselMock, inlineVideoPanelMock } = vi.hoisted(() => ({
-  imageCarouselMock: vi.fn(),
+const { mediaCollectionMock, inlineVideoPanelMock } = vi.hoisted(() => ({
+  mediaCollectionMock: vi.fn(),
   inlineVideoPanelMock: vi.fn(),
 }))
 
-vi.mock('@/lib/weibo/components/image-carousel', () => ({
-  ImageCarousel: (props: {
-    items: MediaGalleryItem[]
-    initialStripIndex: number
-    onStripIndexChange: (index: number) => void
-    onVideoActivate: (
-      video: Extract<MediaGalleryItem, { kind: 'video' }>['video'],
-      index: number,
-    ) => void
+vi.mock('@/lib/weibo/components/media-collection', () => ({
+  MediaCollection: (props: {
+    items: MediaCollectionItem[]
+    initialItemId?: string
+    onVisibleItemChange: (itemId: string) => void
+    onItemActivate: (item: MediaCollectionItem) => void
   }) => {
-    imageCarouselMock(props)
+    mediaCollectionMock(props)
     const video = props.items.find(
-      (entry): entry is Extract<MediaGalleryItem, { kind: 'video' }> => entry.kind === 'video',
+      (entry): entry is Extract<MediaCollectionItem, { kind: 'video' }> => entry.kind === 'video',
     )
     return (
       <button
@@ -33,8 +30,8 @@ vi.mock('@/lib/weibo/components/image-carousel', () => ({
         data-media-video-id={video?.id}
         onClick={() => {
           if (!video) return
-          props.onStripIndexChange(1)
-          props.onVideoActivate(video.video, 1)
+          props.onVisibleItemChange(video.id)
+          props.onItemActivate(video)
         }}
       >
         视频缩略图
@@ -136,7 +133,7 @@ describe('MediaRegion', () => {
       },
     })
     resetAppSettingsStoreForTest()
-    imageCarouselMock.mockClear()
+    mediaCollectionMock.mockClear()
     inlineVideoPanelMock.mockClear()
   })
 
@@ -145,10 +142,10 @@ describe('MediaRegion', () => {
     render(<MediaRegion item={item} />)
 
     expect(screen.getByRole('button', { name: /此微博包含 2 项媒体/ })).toBeInTheDocument()
-    expect(imageCarouselMock).not.toHaveBeenCalled()
+    expect(mediaCollectionMock).not.toHaveBeenCalled()
 
     fireEvent.click(screen.getByRole('button', { name: /此微博包含 2 项媒体/ }))
-    expect(imageCarouselMock).toHaveBeenCalledWith(
+    expect(mediaCollectionMock).toHaveBeenCalledWith(
       expect.objectContaining({
         items: [
           expect.objectContaining({ kind: 'video', id: 'video-1' }),
@@ -171,8 +168,8 @@ describe('MediaRegion', () => {
 
     expect(screen.getByTestId('gallery-video')).toBeInTheDocument()
     expect(screen.queryByTestId('inline-video')).not.toBeInTheDocument()
-    expect(imageCarouselMock).toHaveBeenLastCalledWith(
-      expect.objectContaining({ initialStripIndex: 1 }),
+    expect(mediaCollectionMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({ initialItemId: 'video-1' }),
     )
   })
 

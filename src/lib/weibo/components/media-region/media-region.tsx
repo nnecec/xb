@@ -3,16 +3,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AspectRatio } from '@/components/ui/aspect-ratio'
 import { useAppSettings, useShallow } from '@/lib/app-settings-store'
 import { CollapsibleMedia } from '@/lib/weibo/components/collapsible-media'
-import { ImageCarousel } from '@/lib/weibo/components/image-carousel'
+import { MediaCollection, type MediaCollectionItem } from '@/lib/weibo/components/media-collection'
 import { browsingHistoryStore } from '@/lib/weibo/hooks/use-browsing-history'
-import type { FeedItem, FeedMedia, FeedMixMediaItem } from '@/lib/weibo/models/feed'
+import type { FeedItem, FeedMedia } from '@/lib/weibo/models/feed'
 
 import { AudioPlayerComponent } from '../media-player/audio-player'
 import { VideoPlayback } from '../media-player/video-playback'
 import { InlineVideoPanel } from './inline-video-panel'
-import { buildMediaRegionModel, type MediaAsset, type MediaGalleryItem } from './media-region-model'
+import { buildMediaRegionModel, type MediaAsset } from './media-region-model'
 
 type MediaRegionItem = FeedItem | NonNullable<FeedItem['retweetedStatus']>
+type VideoCollectionItem = Extract<MediaCollectionItem, { kind: 'video' }>
 
 function StandaloneMedia({
   item,
@@ -122,11 +123,11 @@ export function MediaRegion({
     () => buildMediaRegionModel(item, { singleImageMaxWidth, singleVideoMaxWidth }),
     [item, singleImageMaxWidth, singleVideoMaxWidth],
   )
-  const [activeVideo, setActiveVideo] = useState<FeedMixMediaItem | null>(null)
+  const [activeVideo, setActiveVideo] = useState<VideoCollectionItem | null>(null)
   const [focusedViewVisible, setFocusedViewVisible] = useState(false)
   const focusedViewVisibleRef = useRef(false)
   const pictureInPictureActiveRef = useRef(false)
-  const stripIndexRef = useRef(0)
+  const visibleItemIdRef = useRef<string | undefined>(undefined)
   const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -134,16 +135,17 @@ export function MediaRegion({
     setFocusedViewVisible(false)
     focusedViewVisibleRef.current = false
     pictureInPictureActiveRef.current = false
-    stripIndexRef.current = 0
+    visibleItemIdRef.current = undefined
   }, [region?.key])
 
-  const handleStripIndexChange = useCallback((index: number) => {
-    stripIndexRef.current = index
+  const handleVisibleItemChange = useCallback((itemId: string) => {
+    visibleItemIdRef.current = itemId
   }, [])
 
-  const handleVideoActivate = useCallback((video: FeedMixMediaItem, index: number) => {
-    stripIndexRef.current = index
-    setActiveVideo(video)
+  const handleItemActivate = useCallback((mediaItem: MediaCollectionItem) => {
+    if (mediaItem.kind !== 'video' || !mediaItem.playable) return
+    visibleItemIdRef.current = mediaItem.id
+    setActiveVideo(mediaItem)
     focusedViewVisibleRef.current = true
     setFocusedViewVisible(true)
   }, [])
@@ -171,7 +173,7 @@ export function MediaRegion({
   if (!region) return null
 
   const galleryItems = region.assets.filter(
-    (asset): asset is MediaGalleryItem => asset.kind === 'image' || asset.kind === 'video',
+    (asset): asset is MediaCollectionItem => asset.kind === 'image' || asset.kind === 'video',
   )
   const standaloneAssets = region.assets.filter(
     (asset): asset is Extract<MediaAsset, { kind: 'standalone' }> => asset.kind === 'standalone',
@@ -203,7 +205,7 @@ export function MediaRegion({
                 data-media-playback-retained={focusedViewVisible ? undefined : ''}
               >
                 <InlineVideoPanel
-                  video={activeVideo}
+                  video={activeVideo.video}
                   sessionId={`${item.id}:${activeVideo.id}:video`}
                   downloadFilename={downloadFilename}
                   maxWidth={region.singleMediaMaxWidth}
@@ -225,19 +227,14 @@ export function MediaRegion({
                   />
                 ))}
                 {galleryItems.length > 0 ? (
-                  <ImageCarousel
-                    images={[]}
+                  <MediaCollection
                     items={galleryItems}
-                    downloadFilename={downloadFilename}
                     onOpen={onOpen}
                     singleMediaMaxWidth={region.singleMediaMaxWidth}
-                    variant="card"
-                    initialStripIndex={Math.min(
-                      stripIndexRef.current,
-                      Math.max(galleryItems.length - 1, 0),
-                    )}
-                    onStripIndexChange={handleStripIndexChange}
-                    onVideoActivate={handleVideoActivate}
+                    presentation="card"
+                    initialItemId={visibleItemIdRef.current}
+                    onVisibleItemChange={handleVisibleItemChange}
+                    onItemActivate={handleItemActivate}
                   />
                 ) : null}
               </div>
