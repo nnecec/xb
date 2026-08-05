@@ -41,6 +41,11 @@ import type { WeiboPageDescriptor } from '@/lib/weibo/route/page-descriptor'
 import type { ProfileSearchParams } from '@/lib/weibo/route/profile-search-params'
 import { PROFILE_SEARCH_FILTER_KEYS } from '@/lib/weibo/route/profile-search-params'
 
+export {
+  getMweiboTopicRecoveryState,
+  type MweiboTopicRecoveryState,
+} from '@/lib/weibo/data/io/topic'
+
 // ─── Public re-exports of load* / mutations / IO types (implementation: weibo-io) ───
 
 export type {

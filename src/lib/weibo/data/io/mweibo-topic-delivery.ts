@@ -1,5 +1,10 @@
 import type { TimelinePage, TopicChannel, TopicHeadData } from '@/lib/weibo/models/feed'
-import { MweiboUnavailableError } from '@/lib/weibo/services/mweibo-errors'
+import { mweiboFetch } from '@/lib/weibo/services/m-weibo-client'
+import {
+  MweiboCaptchaError,
+  MweiboUnavailableError,
+  type MweiboUnavailableReason,
+} from '@/lib/weibo/services/mweibo-errors'
 import {
   type WeiboPicInfo,
   type WeiboPageInfo,
@@ -120,7 +125,7 @@ interface MweiboTopicData {
   cards: MweiboCard[]
 }
 
-export interface MweiboTopicPayload {
+interface MweiboTopicPayload {
   ok?: number
   data?: MweiboTopicData
 }
@@ -226,17 +231,17 @@ function mweiboMblogToWeiboStatus(mblog: MweiboMblog): WeiboStatus {
 
 // ─── Adapter ─────────────────────────────────────────────────────────────────────
 
-export function adaptMweiboTopicResponse(
+function adaptMweiboTopicPayload(
   payload: MweiboTopicPayload | null | undefined,
   page: number = 1,
-): TimelinePage {
+): TimelinePage | null {
   if (
     payload?.ok !== 1 ||
     !payload.data ||
     !Array.isArray(payload.data.cards) ||
     !payload.data.cardlistInfo
   ) {
-    throw new MweiboUnavailableError('business')
+    return null
   }
 
   const { cards, cardlistInfo } = payload.data
@@ -296,5 +301,92 @@ export function adaptMweiboTopicResponse(
     nextCursor: hasMore ? String(currentPage + 1) : null,
     ...(channels && channels.length > 0 ? { channels } : {}),
     ...(headData !== undefined ? { headData } : {}),
+  }
+}
+
+export interface MweiboTopicRecoveryState {
+  kind: 'captcha' | 'unavailable'
+  originalTopicUrl: string
+  reason?: MweiboUnavailableReason
+}
+
+class MweiboTopicDeliveryError extends Error {
+  readonly kind = 'mweibo-topic-recovery' as const
+
+  constructor(readonly recovery: MweiboTopicRecoveryState) {
+    super('m.weibo.cn 暂时没有返回可用的话题内容')
+    this.name = 'MweiboTopicDeliveryError'
+  }
+}
+
+function buildTopicContainerId(topic: string, channelType?: string) {
+  return `231522type=${channelType ?? '1'}&q=#${topic}#`
+}
+
+function buildTopicSearchUrl(topic: string, page: number, channelType?: string) {
+  const params = new URLSearchParams({
+    containerid: buildTopicContainerId(topic, channelType),
+    page_type: 'searchall',
+    v_p: '42',
+    page: String(page),
+  })
+  return `https://m.weibo.cn/api/container/getIndex?${params}`
+}
+
+function buildMweiboTopicPageUrl(topic: string, channelType?: string) {
+  const params = new URLSearchParams({
+    containerid: buildTopicContainerId(topic, channelType),
+    v_p: '42',
+  })
+  return `https://m.weibo.cn/search?${params}`
+}
+
+function recoveryError(
+  topic: string,
+  channelType: string | undefined,
+  recovery: Omit<MweiboTopicRecoveryState, 'originalTopicUrl'>,
+) {
+  return new MweiboTopicDeliveryError({
+    ...recovery,
+    originalTopicUrl: buildMweiboTopicPageUrl(topic, channelType),
+  })
+}
+
+export function getMweiboTopicRecoveryState(error: unknown): MweiboTopicRecoveryState | null {
+  if (!error || typeof error !== 'object') return null
+  const candidate = error as Record<string, unknown>
+  if (candidate.kind !== 'mweibo-topic-recovery') return null
+  const recovery = candidate.recovery
+  if (!recovery || typeof recovery !== 'object') return null
+  const state = recovery as Record<string, unknown>
+  if (state.kind !== 'captcha' && state.kind !== 'unavailable') return null
+  if (typeof state.originalTopicUrl !== 'string') return null
+  return recovery as MweiboTopicRecoveryState
+}
+
+export async function deliverMweiboTopicPage(
+  topic: string,
+  page: number,
+  channelType?: string,
+): Promise<TimelinePage> {
+  try {
+    const payload = await mweiboFetch<MweiboTopicPayload>(
+      buildTopicSearchUrl(topic, page, channelType),
+    )
+    const timelinePage = adaptMweiboTopicPayload(payload, page)
+    if (timelinePage) return timelinePage
+    throw recoveryError(topic, channelType, { kind: 'unavailable', reason: 'business' })
+  } catch (error) {
+    if (getMweiboTopicRecoveryState(error)) throw error
+    if (error instanceof MweiboCaptchaError) {
+      throw recoveryError(topic, channelType, { kind: 'captcha' })
+    }
+    if (error instanceof MweiboUnavailableError) {
+      throw recoveryError(topic, channelType, {
+        kind: 'unavailable',
+        reason: error.reason,
+      })
+    }
+    throw error
   }
 }

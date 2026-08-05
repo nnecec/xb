@@ -79,25 +79,3 @@ export async function mweiboFetch<T>(url: string): Promise<T> {
 
   throw lastError ?? new Error('mweibo-fetch-no-response')
 }
-
-function buildTopicContainerId(topic: string, channelType?: string): string {
-  return `231522type=${channelType ?? '1'}&q=#${topic}#`
-}
-
-export function buildTopicSearchUrl(topic: string, page: number, channelType?: string): string {
-  const params = new URLSearchParams({
-    containerid: buildTopicContainerId(topic, channelType),
-    page_type: 'searchall',
-    v_p: '42',
-    page: String(page),
-  })
-  return `https://m.weibo.cn/api/container/getIndex?${params}`
-}
-
-export function buildMweiboTopicPageUrl(topic: string, channelType?: string): string {
-  const params = new URLSearchParams({
-    containerid: buildTopicContainerId(topic, channelType),
-    v_p: '42',
-  })
-  return `https://m.weibo.cn/search?${params}`
-}

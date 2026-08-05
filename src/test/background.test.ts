@@ -9,7 +9,10 @@ import {
   handleMweiboFetch,
   maxBackgroundMediaBytes,
 } from '@/entrypoints/background'
-import { buildTopicSearchUrl } from '@/lib/weibo/services/m-weibo-client'
+
+function topicSearchUrl() {
+  return 'https://m.weibo.cn/api/container/getIndex?containerid=231522type%3D1%26q%3D%23%E6%B5%8B%E8%AF%95%23&page_type=searchall&v_p=42&page=1'
+}
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -205,9 +208,9 @@ describe('m.weibo fetch allowlist', () => {
     }).not.toThrow()
   })
 
-  it('allows topic search URLs built by the m.weibo client', () => {
+  it('allows topic search URLs used by the topic delivery module', () => {
     expect(() => {
-      assertAllowedMweiboFetchUrl(buildTopicSearchUrl('测试', 1))
+      assertAllowedMweiboFetchUrl(topicSearchUrl())
     }).not.toThrow()
   })
 
@@ -257,7 +260,7 @@ describe('m.weibo fetch responses', () => {
     await expect(
       handleMweiboFetch({
         type: 'mweibo-fetch',
-        url: buildTopicSearchUrl('测试', 1),
+        url: topicSearchUrl(),
       }),
     ).resolves.toEqual({
       ok: true,
@@ -282,7 +285,7 @@ describe('m.weibo fetch responses', () => {
     await expect(
       handleMweiboFetch({
         type: 'mweibo-fetch',
-        url: buildTopicSearchUrl('测试', 1),
+        url: topicSearchUrl(),
       }),
     ).resolves.toEqual({
       ok: false,
@@ -307,7 +310,7 @@ describe('m.weibo fetch responses', () => {
     await expect(
       handleMweiboFetch({
         type: 'mweibo-fetch',
-        url: buildTopicSearchUrl('测试', 1),
+        url: topicSearchUrl(),
       }),
     ).resolves.toEqual({
       ok: true,
@@ -332,7 +335,7 @@ describe('m.weibo fetch responses', () => {
     await expect(
       handleMweiboFetch({
         type: 'mweibo-fetch',
-        url: buildTopicSearchUrl('测试', 1),
+        url: topicSearchUrl(),
       }),
     ).resolves.toEqual({
       ok: false,

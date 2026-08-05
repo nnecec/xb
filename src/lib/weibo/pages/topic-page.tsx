@@ -6,19 +6,16 @@ import { cn } from '@/lib/utils'
 import { useAppShellContext } from '@/lib/weibo/app/app-shell-layout'
 import { useImmersiveHeaderClassName } from '@/lib/weibo/app/immersive-header'
 import { InfiniteFeedList } from '@/lib/weibo/components/infinite-feed-list'
-import {
-  MweiboCaptchaPrompt,
-  MweiboUnavailablePrompt,
-} from '@/lib/weibo/components/mweibo-captcha-prompt'
+import { MweiboTopicRecoveryPrompt } from '@/lib/weibo/components/mweibo-topic-recovery-prompt'
 import {
   extractTopicChannels,
   extractTopicHeadData,
+  getMweiboTopicRecoveryState,
   topicSearchInfiniteOptions,
 } from '@/lib/weibo/data/weibo-data'
 import { composeTargetFromFeedItem } from '@/lib/weibo/models/compose'
 import type { TimelinePage, TopicChannel } from '@/lib/weibo/models/feed'
 import { useWeiboPage } from '@/lib/weibo/route/use-weibo-page'
-import { MweiboCaptchaError, MweiboUnavailableError } from '@/lib/weibo/services/mweibo-errors'
 
 function TopicChannelBar({
   channels,
@@ -111,29 +108,12 @@ export function TopicPage() {
   const isFetchingNextPage = topicQuery.isFetchingNextPage
   const isLoading = topicQuery.isLoading
 
-  const captchaError = isInitialError && topicQuery.error instanceof MweiboCaptchaError
-  const unavailableError = isInitialError && topicQuery.error instanceof MweiboUnavailableError
+  const recovery = isInitialError ? getMweiboTopicRecoveryState(topicQuery.error) : null
 
-  if (captchaError) {
+  if (recovery) {
     return (
       <div className="flex flex-col gap-3">
-        <MweiboCaptchaPrompt
-          topic={topic}
-          channelType={selectedChannelId}
-          onRetry={() => void topicQuery.refetch()}
-        />
-      </div>
-    )
-  }
-
-  if (unavailableError) {
-    return (
-      <div className="flex flex-col gap-3">
-        <MweiboUnavailablePrompt
-          topic={topic}
-          channelType={selectedChannelId}
-          onRetry={() => void topicQuery.refetch()}
-        />
+        <MweiboTopicRecoveryPrompt recovery={recovery} onRetry={() => void topicQuery.refetch()} />
       </div>
     )
   }

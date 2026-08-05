@@ -2,32 +2,37 @@ import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import {
-  MweiboCaptchaPrompt,
-  MweiboUnavailablePrompt,
-} from '@/lib/weibo/components/mweibo-captcha-prompt'
+import { MweiboTopicRecoveryPrompt } from '@/lib/weibo/components/mweibo-topic-recovery-prompt'
 
-describe('MweiboCaptchaPrompt', () => {
+const originalTopicUrl =
+  'https://m.weibo.cn/search?containerid=231522type%3D60%26q%3D%23%E6%B5%8B%E8%AF%95%E8%AF%9D%E9%A2%98%23&v_p=42'
+
+describe('MweiboTopicRecoveryPrompt', () => {
   afterEach(cleanup)
 
-  it('renders an explanation and a link to m.weibo.cn', () => {
-    render(<MweiboCaptchaPrompt topic="测试话题" channelType="60" onRetry={vi.fn()} />)
+  it('renders the captcha recovery state without knowing transport errors or URL builders', () => {
+    render(
+      <MweiboTopicRecoveryPrompt
+        recovery={{ kind: 'captcha', originalTopicUrl }}
+        onRetry={vi.fn()}
+      />,
+    )
 
     expect(screen.getByText('需要人机验证')).toBeInTheDocument()
     expect(screen.getByText(/微博移动端要求验证/)).toBeInTheDocument()
-    expect(screen.queryByText(/网络面板/)).not.toBeInTheDocument()
-
     const link = screen.getByRole('link', { name: /打开微博原话题页/ })
-    const url = new URL(link.getAttribute('href') ?? '')
-    expect(url.origin).toBe('https://m.weibo.cn')
-    expect(url.pathname).toBe('/search')
-    expect(url.searchParams.get('containerid')).toBe('231522type=60&q=#测试话题#')
+    expect(link).toHaveAttribute('href', originalTopicUrl)
     expect(link).toHaveAttribute('target', '_blank')
     expect(link).toHaveAttribute('rel', 'noopener noreferrer')
   })
 
-  it('renders a recovery explanation for non-success topic responses', () => {
-    render(<MweiboUnavailablePrompt topic="测试话题" onRetry={vi.fn()} />)
+  it('renders the unavailable recovery state', () => {
+    render(
+      <MweiboTopicRecoveryPrompt
+        recovery={{ kind: 'unavailable', originalTopicUrl, reason: 'business' }}
+        onRetry={vi.fn()}
+      />,
+    )
 
     expect(screen.getByText('话题内容暂时不可用')).toBeInTheDocument()
     expect(screen.getByText(/访问限制或登录状态失效/)).toBeInTheDocument()
@@ -37,8 +42,12 @@ describe('MweiboCaptchaPrompt', () => {
   it('calls onRetry when the retry button is clicked', async () => {
     const user = userEvent.setup()
     const onRetry = vi.fn()
-
-    render(<MweiboCaptchaPrompt topic="测试话题" onRetry={onRetry} />)
+    render(
+      <MweiboTopicRecoveryPrompt
+        recovery={{ kind: 'captcha', originalTopicUrl }}
+        onRetry={onRetry}
+      />,
+    )
 
     await user.click(screen.getByRole('button', { name: '重新加载' }))
     expect(onRetry).toHaveBeenCalledTimes(1)

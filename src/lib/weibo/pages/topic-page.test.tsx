@@ -8,7 +8,6 @@ import { getAppSettingsStore, resetAppSettingsStoreForTest } from '@/lib/app-set
 import { AppShell } from '@/lib/weibo/app/app-shell'
 import { loadTopicSearch } from '@/lib/weibo/data/weibo-io'
 import { TopicPage } from '@/lib/weibo/pages/topic-page'
-import { MweiboCaptchaError, MweiboUnavailableError } from '@/lib/weibo/services/mweibo-errors'
 
 vi.mock('@/lib/weibo/data/weibo-io', async () => {
   const actual = await vi.importActual<typeof import('@/lib/weibo/data/weibo-io')>(
@@ -39,6 +38,17 @@ function renderTopicPage() {
       </MemoryRouter>
     </QueryClientProvider>,
   )
+}
+
+function topicRecoveryError(kind: 'captcha' | 'unavailable') {
+  return Object.assign(new Error('topic recovery required'), {
+    kind: 'mweibo-topic-recovery',
+    recovery: {
+      kind,
+      originalTopicUrl:
+        'https://m.weibo.cn/search?containerid=231522type%3D1%26q%3D%23%E6%B5%8B%E8%AF%95%E8%AF%9D%E9%A2%98%23&v_p=42',
+    },
+  })
 }
 
 describe('TopicPage', () => {
@@ -78,7 +88,7 @@ describe('TopicPage', () => {
   })
 
   it('shows the recovery prompt for non-success topic responses', async () => {
-    vi.mocked(loadTopicSearch).mockRejectedValue(new MweiboUnavailableError('business'))
+    vi.mocked(loadTopicSearch).mockRejectedValue(topicRecoveryError('unavailable'))
 
     renderTopicPage()
 
@@ -90,9 +100,7 @@ describe('TopicPage', () => {
   })
 
   it('keeps the dedicated captcha recovery prompt', async () => {
-    vi.mocked(loadTopicSearch).mockRejectedValue(
-      new MweiboCaptchaError('https://m.weibo.cn/captcha/show?backUrl='),
-    )
+    vi.mocked(loadTopicSearch).mockRejectedValue(topicRecoveryError('captcha'))
 
     renderTopicPage()
 

@@ -1,16 +1,18 @@
 import type { TimelinePage } from '@/lib/weibo/models/feed'
+
 import {
-  adaptMweiboTopicResponse,
-  type MweiboTopicPayload,
-} from '@/lib/weibo/services/adapters/m-weibo-topic'
-import { buildTopicSearchUrl, mweiboFetch } from '@/lib/weibo/services/m-weibo-client'
+  deliverMweiboTopicPage,
+  getMweiboTopicRecoveryState,
+  type MweiboTopicRecoveryState,
+} from './mweibo-topic-delivery'
 
 export async function loadTopicSearch(
   topic: string,
   page: number,
   channelType?: string,
 ): Promise<TimelinePage> {
-  const url = buildTopicSearchUrl(topic, page, channelType)
-  const payload = await mweiboFetch<MweiboTopicPayload>(url)
-  return adaptMweiboTopicResponse(payload, page)
+  return deliverMweiboTopicPage(topic, page, channelType)
 }
+
+export { getMweiboTopicRecoveryState }
+export type { MweiboTopicRecoveryState }

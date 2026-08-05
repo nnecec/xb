@@ -1,11 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import {
-  buildMweiboTopicPageUrl,
-  buildTopicSearchUrl,
-  detectMweiboCaptcha,
-  mweiboFetch,
-} from '@/lib/weibo/services/m-weibo-client'
+import { detectMweiboCaptcha, mweiboFetch } from '@/lib/weibo/services/m-weibo-client'
 import { MweiboCaptchaError, MweiboUnavailableError } from '@/lib/weibo/services/mweibo-errors'
 
 afterEach(() => {
@@ -54,21 +49,6 @@ describe('MweiboCaptchaError', () => {
     expect(err.kind).toBe('mweibo-captcha')
     expect(err.captchaUrl).toBe('https://m.weibo.cn/captcha/show?x=1')
     expect(err.name).toBe('MweiboCaptchaError')
-  })
-})
-
-describe('m.weibo topic URLs', () => {
-  it('builds the API and original topic page URLs from the same container id', () => {
-    const apiUrl = new URL(buildTopicSearchUrl('测试话题', 2, '60'))
-    const pageUrl = new URL(buildMweiboTopicPageUrl('测试话题', '60'))
-
-    expect(apiUrl.pathname).toBe('/api/container/getIndex')
-    expect(apiUrl.searchParams.get('containerid')).toBe('231522type=60&q=#测试话题#')
-    expect(apiUrl.searchParams.get('page_type')).toBe('searchall')
-    expect(apiUrl.searchParams.get('page')).toBe('2')
-    expect(pageUrl.pathname).toBe('/search')
-    expect(pageUrl.searchParams.get('containerid')).toBe('231522type=60&q=#测试话题#')
-    expect(pageUrl.searchParams.get('v_p')).toBe('42')
   })
 })
 
