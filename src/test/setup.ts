@@ -1,5 +1,19 @@
 import { notifyManager } from '@tanstack/query-core'
 import '@testing-library/jest-dom/vitest'
+
+if (!globalThis.IntersectionObserver) {
+  globalThis.IntersectionObserver = class {
+    readonly root = null
+    readonly rootMargin = ''
+    readonly thresholds = []
+    disconnect() {}
+    observe() {}
+    unobserve() {}
+    takeRecords() {
+      return []
+    }
+  } as unknown as typeof IntersectionObserver
+}
 import { cleanup } from '@testing-library/react'
 import { afterEach, vi } from 'vitest'
 

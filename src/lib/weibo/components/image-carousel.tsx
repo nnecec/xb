@@ -1,4 +1,7 @@
+import useEmblaCarousel from 'embla-carousel-react'
+import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures'
 import { PlayIcon, SquarePlay } from 'lucide-react'
+import { motion, useReducedMotion } from 'motion/react'
 import React, { memo } from 'react'
 import { PhotoProvider, PhotoView } from 'react-photo-view'
 import type { PhotoRenderParams } from 'react-photo-view/dist/types'
@@ -37,15 +40,6 @@ type GridItem =
     }
 
 const LONG_IMAGE_RATIO = 2.6
-const STRIP_DRAG_THRESHOLD_PX = 5
-
-interface StripDragState {
-  pointerId: number
-  startX: number
-  startScrollLeft: number
-  moved: boolean
-  element: HTMLDivElement
-}
 
 function isLongImage(image: FeedImage) {
   return Boolean(image.width && image.height && image.height / image.width >= LONG_IMAGE_RATIO)
@@ -84,29 +78,6 @@ function cardGridClassName(count: number) {
   if (count === 4) return 'grid-cols-2'
   if (count <= 9) return 'grid-cols-2 sm:grid-cols-3'
   return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4'
-}
-
-function closestStripItemIndex(element: HTMLElement) {
-  const items = Array.from(element.querySelectorAll<HTMLElement>('[data-media-strip-item]'))
-  if (items.length === 0) return 0
-
-  let closestIndex = 0
-  let closestDistance = Number.POSITIVE_INFINITY
-  for (const [index, item] of items.entries()) {
-    const distance = Math.abs(item.offsetLeft - element.scrollLeft)
-    if (distance < closestDistance) {
-      closestDistance = distance
-      closestIndex = index
-    }
-  }
-  return closestIndex
-}
-
-function scrollToStripItem(element: HTMLElement, index: number) {
-  const items = Array.from(element.querySelectorAll<HTMLElement>('[data-media-strip-item]'))
-  const target = items[Math.min(Math.max(index, 0), items.length - 1)]
-  if (!target) return
-  element.scrollLeft = target.offsetLeft
 }
 
 /** Inset media outline: pure black/white only (never tinted neutrals). */
@@ -276,8 +247,9 @@ export const ImageCarousel = memo(function ImageCarousel({
   const cardStripHeight = useAppSettings((s) => s.weiboCardMultiMediaStripHeight)
   const [activeStripIndex, setActiveStripIndex] = React.useState(0)
   const [isStripDragging, setIsStripDragging] = React.useState(false)
-  const stripDragRef = React.useRef<StripDragState | null>(null)
   const suppressNextStripClickRef = React.useRef(false)
+  const pointerStartXRef = React.useRef<number | null>(null)
+  const reducedMotion = useReducedMotion()
 
   const gridItems = React.useMemo<GridItem[]>(() => {
     const items: GridItem[] = images.map((image) => ({
@@ -300,42 +272,45 @@ export const ImageCarousel = memo(function ImageCarousel({
 
   const usesCardLayout = variant === 'card' && gridItems.length > 1
   const horizontal = usesCardLayout && cardLayout === 'horizontal'
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    {
+      axis: 'x',
+      align: 'start',
+      dragFree: !reducedMotion,
+      containScroll: 'trimSnaps',
+      loop: false,
+      watchDrag: reducedMotion ? false : undefined,
+      watchSlides: false,
+      watchResize: false,
+    },
+    [WheelGesturesPlugin({ wheelDraggingClass: '' })],
+  )
   const visibleCount =
     usesCardLayout && cardLayout === 'grid'
       ? Math.min(gridItems.length, cardGridLimit)
       : gridItems.length
   const remainingCount = gridItems.length - visibleCount
 
-  function clearStripDrag(resetClickSuppression: boolean) {
-    const drag = stripDragRef.current
-    if (!drag) return
-
-    stripDragRef.current = null
-    if (resetClickSuppression) suppressNextStripClickRef.current = false
-    setIsStripDragging(false)
-    if (drag?.element.hasPointerCapture?.(drag.pointerId)) {
-      drag.element.releasePointerCapture?.(drag.pointerId)
-    }
-  }
-
   React.useEffect(() => {
-    if (!horizontal) {
-      clearStripDrag(true)
-      suppressNextStripClickRef.current = false
-      return
+    if (!emblaApi || !horizontal) return
+    const updateIndex = () => setActiveStripIndex(emblaApi.selectedScrollSnap())
+    const handlePointerDown = () => setIsStripDragging(true)
+    const handlePointerUp = () => {
+      setIsStripDragging(false)
+      pointerStartXRef.current = null
     }
-
-    const handleWindowPointerUp = () => clearStripDrag(true)
-    const handleWindowBlur = () => clearStripDrag(true)
-    window.addEventListener('pointerup', handleWindowPointerUp)
-    window.addEventListener('pointercancel', handleWindowPointerUp)
-    window.addEventListener('blur', handleWindowBlur)
+    emblaApi.on('select', updateIndex)
+    emblaApi.on('reInit', updateIndex)
+    emblaApi.on('pointerDown', handlePointerDown)
+    emblaApi.on('pointerUp', handlePointerUp)
+    updateIndex()
     return () => {
-      window.removeEventListener('pointerup', handleWindowPointerUp)
-      window.removeEventListener('pointercancel', handleWindowPointerUp)
-      window.removeEventListener('blur', handleWindowBlur)
+      emblaApi.off('select', updateIndex)
+      emblaApi.off('reInit', updateIndex)
+      emblaApi.off('pointerDown', handlePointerDown)
+      emblaApi.off('pointerUp', handlePointerUp)
     }
-  }, [horizontal])
+  }, [emblaApi, horizontal])
 
   if (gridItems.length === 0) {
     return null
@@ -352,43 +327,21 @@ export const ImageCarousel = memo(function ImageCarousel({
     event.preventDefault()
     const clampedIndex = Math.min(Math.max(nextIndex, 0), gridItems.length - 1)
     setActiveStripIndex(clampedIndex)
-    scrollToStripItem(event.currentTarget, clampedIndex)
+    emblaApi?.scrollTo(clampedIndex)
   }
 
   function handleStripPointerDown(event: React.PointerEvent<HTMLDivElement>) {
-    if (event.pointerType !== 'mouse' || event.button !== 0) return
-
-    stripDragRef.current = {
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startScrollLeft: event.currentTarget.scrollLeft,
-      moved: false,
-      element: event.currentTarget,
-    }
+    pointerStartXRef.current = event.clientX
     suppressNextStripClickRef.current = false
   }
 
   function handleStripPointerMove(event: React.PointerEvent<HTMLDivElement>) {
-    const drag = stripDragRef.current
-    if (!drag || drag.pointerId !== event.pointerId) return
-
-    const deltaX = event.clientX - drag.startX
-    if (!drag.moved && Math.abs(deltaX) > STRIP_DRAG_THRESHOLD_PX) {
-      drag.moved = true
+    if (
+      pointerStartXRef.current !== null &&
+      Math.abs(event.clientX - pointerStartXRef.current) > 5
+    ) {
       suppressNextStripClickRef.current = true
-      event.currentTarget.setPointerCapture?.(event.pointerId)
-      setIsStripDragging(true)
     }
-    if (!drag.moved) return
-
-    event.preventDefault()
-    event.currentTarget.scrollLeft = drag.startScrollLeft - deltaX
-  }
-
-  function finishStripDrag(event: React.PointerEvent<HTMLDivElement>, cancelled = false) {
-    const drag = stripDragRef.current
-    if (!drag || drag.pointerId !== event.pointerId) return
-    clearStripDrag(cancelled)
   }
 
   function handleStripClickCapture(event: React.MouseEvent<HTMLDivElement>) {
@@ -416,11 +369,11 @@ export const ImageCarousel = memo(function ImageCarousel({
           tabIndex={horizontal ? 0 : undefined}
           className={cn(
             horizontal
-              ? 'scrollbar-none flex max-h-[60vh] gap-2 overflow-x-auto overscroll-x-contain md:max-h-none'
+              ? 'scrollbar-none max-h-[60vh] overflow-hidden overscroll-x-contain md:max-h-none'
               : 'grid w-full gap-2',
             horizontal && (isStripDragging ? 'cursor-grabbing' : 'cursor-grab'),
             horizontal &&
-              'select-none outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+              'select-none outline-none focus-visible:ring-2 focus-visible:ring-ring/50 [touch-action:pan-y]',
             !horizontal &&
               (usesCardLayout
                 ? cardGridClassName(visibleCount)
@@ -437,144 +390,153 @@ export const ImageCarousel = memo(function ImageCarousel({
                   ? { maxWidth: `${singleMediaMaxWidth}px` }
                   : undefined
           }
+          ref={horizontal ? emblaRef : undefined}
           onClickCapture={horizontal ? handleStripClickCapture : undefined}
           onDragStart={horizontal ? (event) => event.preventDefault() : undefined}
           onKeyDown={horizontal ? handleStripKeyDown : undefined}
-          onLostPointerCapture={horizontal ? (event) => finishStripDrag(event, true) : undefined}
-          onPointerCancel={horizontal ? (event) => finishStripDrag(event, true) : undefined}
           onPointerDown={horizontal ? handleStripPointerDown : undefined}
           onPointerMove={horizontal ? handleStripPointerMove : undefined}
-          onPointerUp={horizontal ? finishStripDrag : undefined}
-          onScroll={
-            horizontal
-              ? (event) => setActiveStripIndex(closestStripItemIndex(event.currentTarget))
-              : undefined
-          }
         >
-          {gridItems.map((item, index) => {
-            const ratio = mediaRatio(item, gridItems.length, horizontal)
-            const roundedClassName = gridItems.length === 1 ? 'rounded-xl' : 'rounded-lg'
-            const hiddenByGridLimit = !horizontal && index >= visibleCount
-            const itemRemainingCount = index === visibleCount - 1 ? remainingCount : 0
+          <div className={cn(horizontal ? 'flex h-full gap-2' : 'contents')}>
+            {gridItems.map((item, index) => {
+              const ratio = mediaRatio(item, gridItems.length, horizontal)
+              const roundedClassName = gridItems.length === 1 ? 'rounded-xl' : 'rounded-lg'
+              const hiddenByGridLimit = !horizontal && index >= visibleCount
+              const itemRemainingCount = index === visibleCount - 1 ? remainingCount : 0
 
-            return (
-              <div
-                key={`${item.kind}:${item.id}`}
-                data-media-strip-item={horizontal ? '' : undefined}
-                role={horizontal ? 'group' : undefined}
-                aria-label={
-                  horizontal ? `第 ${index + 1} 项，共 ${gridItems.length} 项` : undefined
-                }
-                aria-hidden={hiddenByGridLimit || undefined}
-                className={cn(horizontal && 'h-full shrink-0', hiddenByGridLimit && 'hidden')}
-                style={horizontal ? { aspectRatio: ratio } : undefined}
-                onClick={(event) => {
-                  event.preventDefault()
-                  event.stopPropagation()
-                }}
-              >
-                {item.kind === 'image' ? (
-                  <ImagePhotoView image={item.image}>
-                    <AspectRatio
-                      ratio={ratio}
-                      className={cn(
-                        'bg-muted relative overflow-hidden',
-                        horizontal && 'h-full w-full',
-                        mediaOutlineClassName,
-                        roundedClassName,
-                      )}
-                    >
-                      <ImageOverlay
-                        image={item.image}
-                        dim={darkModeImageDim}
-                        square={!horizontal}
-                      />
-                      {itemRemainingCount > 0 ? (
-                        <RemainingMediaOverlay count={itemRemainingCount} />
-                      ) : null}
-                    </AspectRatio>
-                  </ImagePhotoView>
-                ) : (
-                  <PhotoView
-                    width={item.video.videoOrientation === 'vertical' ? 600 : 960}
-                    height={item.video.videoOrientation === 'vertical' ? 800 : 540}
-                    render={({ attrs }) => (
-                      <div
-                        {...attrs}
-                        className="flex h-full w-full items-center justify-center px-4"
-                        onMouseDown={(event) => {
-                          event.preventDefault()
-                          event.stopPropagation()
-                        }}
-                        onClick={(event) => {
-                          event.preventDefault()
-                          event.stopPropagation()
-                        }}
-                        onPointerDown={(event) => {
-                          event.preventDefault()
-                          event.stopPropagation()
-                        }}
+              return (
+                <div
+                  key={`${item.kind}:${item.id}`}
+                  data-media-strip-item={horizontal ? '' : undefined}
+                  role={horizontal ? 'group' : undefined}
+                  aria-label={
+                    horizontal ? `第 ${index + 1} 项，共 ${gridItems.length} 项` : undefined
+                  }
+                  aria-hidden={hiddenByGridLimit || undefined}
+                  className={cn(horizontal && 'h-full shrink-0', hiddenByGridLimit && 'hidden')}
+                  style={
+                    horizontal
+                      ? { width: `${cardStripHeight * ratio}px`, aspectRatio: ratio }
+                      : undefined
+                  }
+                  onClick={(event) => {
+                    event.preventDefault()
+                    event.stopPropagation()
+                  }}
+                >
+                  {item.kind === 'image' ? (
+                    <ImagePhotoView image={item.image}>
+                      <motion.div
+                        whileTap={reducedMotion ? undefined : { scale: 0.98 }}
+                        className={cn(
+                          'bg-muted relative overflow-hidden',
+                          horizontal && 'h-full w-full',
+                          mediaOutlineClassName,
+                          roundedClassName,
+                        )}
                       >
-                        <div
+                        <AspectRatio
+                          ratio={ratio}
                           className={cn(
-                            'bg-background w-full overflow-hidden rounded-xl',
-                            item.video.videoOrientation === 'vertical'
-                              ? 'max-w-[560px]'
-                              : 'max-w-[860px]',
+                            'bg-muted relative overflow-hidden',
+                            horizontal && 'h-full w-full',
+                            mediaOutlineClassName,
+                            roundedClassName,
                           )}
                         >
-                          <AspectRatio
-                            ratio={item.video.videoOrientation === 'vertical' ? 4 / 5 : 16 / 9}
+                          <ImageOverlay
+                            image={item.image}
+                            dim={darkModeImageDim}
+                            square={!horizontal}
+                          />
+                          {itemRemainingCount > 0 ? (
+                            <RemainingMediaOverlay count={itemRemainingCount} />
+                          ) : null}
+                        </AspectRatio>
+                      </motion.div>
+                    </ImagePhotoView>
+                  ) : (
+                    <PhotoView
+                      width={item.video.videoOrientation === 'vertical' ? 600 : 960}
+                      height={item.video.videoOrientation === 'vertical' ? 800 : 540}
+                      render={({ attrs }) => (
+                        <div
+                          {...attrs}
+                          className="flex h-full w-full items-center justify-center px-4"
+                          onMouseDown={(event) => {
+                            event.preventDefault()
+                            event.stopPropagation()
+                          }}
+                          onClick={(event) => {
+                            event.preventDefault()
+                            event.stopPropagation()
+                          }}
+                          onPointerDown={(event) => {
+                            event.preventDefault()
+                            event.stopPropagation()
+                          }}
+                        >
+                          <div
+                            className={cn(
+                              'bg-background w-full overflow-hidden rounded-xl',
+                              item.video.videoOrientation === 'vertical'
+                                ? 'max-w-[560px]'
+                                : 'max-w-[860px]',
+                            )}
                           >
-                            <VideoPlayer
-                              progressiveSrc={item.video.videoStreamUrl ?? ''}
-                              poster={item.video.videoCoverUrl}
-                              dash={item.video.videoDash}
-                              videoOrientation={item.video.videoOrientation}
-                              hideInlineFullScreen={true}
-                              downloadUrl={item.video.videoDownloadUrl}
-                              downloadFilename={downloadFilename ?? item.video.videoTitle}
-                            />
-                          </AspectRatio>
+                            <AspectRatio
+                              ratio={item.video.videoOrientation === 'vertical' ? 4 / 5 : 16 / 9}
+                            >
+                              <VideoPlayer
+                                progressiveSrc={item.video.videoStreamUrl ?? ''}
+                                poster={item.video.videoCoverUrl}
+                                dash={item.video.videoDash}
+                                videoOrientation={item.video.videoOrientation}
+                                hideInlineFullScreen={true}
+                                downloadUrl={item.video.videoDownloadUrl}
+                                downloadFilename={downloadFilename ?? item.video.videoTitle}
+                              />
+                            </AspectRatio>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  >
-                    <AspectRatio
-                      ratio={ratio}
-                      className={cn(
-                        'bg-muted relative overflow-hidden',
-                        horizontal && 'h-full w-full',
-                        mediaOutlineClassName,
-                        roundedClassName,
                       )}
                     >
-                      {item.video.videoCoverUrl ? (
-                        <img
-                          src={item.video.videoCoverUrl}
-                          className="h-full w-full object-cover object-center"
-                          alt=""
-                          width={item.video.videoOrientation === 'vertical' ? 600 : 960}
-                          height={item.video.videoOrientation === 'vertical' ? 800 : 540}
-                          loading="lazy"
-                          decoding="async"
-                        />
-                      ) : null}
-                      <div className="absolute inset-0 bg-black/20" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="flex size-12 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm">
-                          <PlayIcon className="ml-0.5 size-6 fill-current" />
-                        </span>
-                      </div>
-                      {itemRemainingCount > 0 ? (
-                        <RemainingMediaOverlay count={itemRemainingCount} />
-                      ) : null}
-                    </AspectRatio>
-                  </PhotoView>
-                )}
-              </div>
-            )
-          })}
+                      <AspectRatio
+                        ratio={ratio}
+                        className={cn(
+                          'bg-muted relative overflow-hidden',
+                          horizontal && 'h-full w-full',
+                          mediaOutlineClassName,
+                          roundedClassName,
+                        )}
+                      >
+                        {item.video.videoCoverUrl ? (
+                          <img
+                            src={item.video.videoCoverUrl}
+                            className="h-full w-full object-cover object-center"
+                            alt=""
+                            width={item.video.videoOrientation === 'vertical' ? 600 : 960}
+                            height={item.video.videoOrientation === 'vertical' ? 800 : 540}
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        ) : null}
+                        <div className="absolute inset-0 bg-black/20" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="flex size-12 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm">
+                            <PlayIcon className="ml-0.5 size-6 fill-current" />
+                          </span>
+                        </div>
+                        {itemRemainingCount > 0 ? (
+                          <RemainingMediaOverlay count={itemRemainingCount} />
+                        ) : null}
+                      </AspectRatio>
+                    </PhotoView>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         </div>
         {horizontal ? (
           <span className="sr-only" aria-live="polite">

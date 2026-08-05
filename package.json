@@ -54,6 +54,8 @@
     "clsx": "^2.1.1",
     "dashjs": "^5.2.0",
     "date-fns": "^4.4.0",
+    "embla-carousel-react": "^8.6.0",
+    "embla-carousel-wheel-gestures": "^8.1.0",
     "html-to-image": "^1.11.13",
     "jszip": "^3.10.1",
     "lucide-react": "^1.28.0",
