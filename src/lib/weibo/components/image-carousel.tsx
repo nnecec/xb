@@ -306,6 +306,37 @@ export const ImageCarousel = memo(function ImageCarousel({
       : gridItems.length
   const remainingCount = gridItems.length - visibleCount
 
+  function clearStripDrag(resetClickSuppression: boolean) {
+    const drag = stripDragRef.current
+    if (!drag) return
+
+    stripDragRef.current = null
+    if (resetClickSuppression) suppressNextStripClickRef.current = false
+    setIsStripDragging(false)
+    if (drag?.element.hasPointerCapture?.(drag.pointerId)) {
+      drag.element.releasePointerCapture?.(drag.pointerId)
+    }
+  }
+
+  React.useEffect(() => {
+    if (!horizontal) {
+      clearStripDrag(true)
+      suppressNextStripClickRef.current = false
+      return
+    }
+
+    const handleWindowPointerUp = () => clearStripDrag(true)
+    const handleWindowBlur = () => clearStripDrag(true)
+    window.addEventListener('pointerup', handleWindowPointerUp)
+    window.addEventListener('pointercancel', handleWindowPointerUp)
+    window.addEventListener('blur', handleWindowBlur)
+    return () => {
+      window.removeEventListener('pointerup', handleWindowPointerUp)
+      window.removeEventListener('pointercancel', handleWindowPointerUp)
+      window.removeEventListener('blur', handleWindowBlur)
+    }
+  }, [horizontal])
+
   if (gridItems.length === 0) {
     return null
   }
@@ -354,38 +385,11 @@ export const ImageCarousel = memo(function ImageCarousel({
     event.currentTarget.scrollLeft = drag.startScrollLeft - deltaX
   }
 
-  function clearStripDrag(resetClickSuppression: boolean) {
-    const drag = stripDragRef.current
-    if (!drag) return
-
-    stripDragRef.current = null
-    if (resetClickSuppression) suppressNextStripClickRef.current = false
-    setIsStripDragging(false)
-    if (drag.element.hasPointerCapture?.(drag.pointerId)) {
-      drag.element.releasePointerCapture?.(drag.pointerId)
-    }
-  }
-
   function finishStripDrag(event: React.PointerEvent<HTMLDivElement>, cancelled = false) {
     const drag = stripDragRef.current
     if (!drag || drag.pointerId !== event.pointerId) return
     clearStripDrag(cancelled)
   }
-
-  React.useEffect(() => {
-    if (!horizontal) return
-
-    const handleWindowPointerUp = () => clearStripDrag(true)
-    const handleWindowBlur = () => clearStripDrag(true)
-    window.addEventListener('pointerup', handleWindowPointerUp)
-    window.addEventListener('pointercancel', handleWindowPointerUp)
-    window.addEventListener('blur', handleWindowBlur)
-    return () => {
-      window.removeEventListener('pointerup', handleWindowPointerUp)
-      window.removeEventListener('pointercancel', handleWindowPointerUp)
-      window.removeEventListener('blur', handleWindowBlur)
-    }
-  }, [horizontal])
 
   function handleStripClickCapture(event: React.MouseEvent<HTMLDivElement>) {
     if (!suppressNextStripClickRef.current) return

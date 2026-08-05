@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -380,6 +380,41 @@ describe('ImageCarousel', () => {
     fireEvent.pointerMove(photoView, { pointerId: 32, pointerType: 'mouse', clientX: 200 })
     fireEvent.blur(window)
     expect(strip).toHaveClass('cursor-grab')
+  })
+
+  it('resets drag and click suppression when horizontal layout is disabled', () => {
+    const store = getAppSettingsStore()
+    store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
+    render(<ImageCarousel variant="card" images={createImages(2)} />)
+
+    const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
+    const photoView = screen.getAllByTestId('photo-view')[0]!
+    Object.defineProperties(strip, {
+      setPointerCapture: { configurable: true, value: vi.fn() },
+      hasPointerCapture: { configurable: true, value: () => true },
+      releasePointerCapture: { configurable: true, value: vi.fn() },
+    })
+    fireEvent.pointerDown(photoView, {
+      pointerId: 51,
+      pointerType: 'mouse',
+      button: 0,
+      clientX: 300,
+    })
+    fireEvent.pointerMove(photoView, { pointerId: 51, pointerType: 'mouse', clientX: 200 })
+    expect(strip).toHaveClass('cursor-grabbing')
+
+    act(() => {
+      store.setState({ weiboCardMultiMediaLayout: 'grid' })
+    })
+    expect(screen.queryByRole('region', { name: /横向媒体画廊/ })).not.toBeInTheDocument()
+
+    act(() => {
+      store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
+    })
+    const nextPhotoView = screen.getAllByTestId('photo-view')[0]!
+    expect(screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })).toHaveClass('cursor-grab')
+    fireEvent.click(nextPhotoView)
+    expect(photoViewClickSpy).toHaveBeenCalledTimes(1)
   })
 
   it('does not suppress a click after a below-threshold release', () => {

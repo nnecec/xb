@@ -30,3 +30,14 @@
 - window 监听仅在 horizontal layout 启用，卸载时移除；正常容器内 pointerup 保留一次 click 抑制，取消/容器外结束清除抑制。
 - 依赖浏览器 `focus-visible` 伪类实现鼠标/键盘 focus 区分；测试核验 class 契约，未在 jsdom 模拟浏览器原生 focus-visible 算法。
 
+## 第 1 次修复（2026-08-05）
+
+- 将横向拖拽生命周期的 `React.useEffect` 移到 `gridItems.length === 0` 提前返回之前，保证媒体从空/非空切换时 Hook 调用顺序稳定。
+- horizontal 从 true 切换为 false 时，清理 pointer capture、拖拽状态和 click 抑制 ref；新增回归测试覆盖切换后重新启用横向布局及点击行为。
+
+### 验证
+
+- `bun run test:unit -- src/lib/weibo/components/image-carousel.test.tsx`：14 passed。
+- `bun run compile`：通过。
+- `bun run test:unit`：70 files passed，442 passed，1 skipped（443 total）。
+- `bun run lint`：通过。
