@@ -16,6 +16,7 @@
 - 聚焦 `image-carousel.test.tsx`：17/17 ✅
 - 完整 `bun run test:unit` ✅
 - `bun run build` ✅（仅有现有第三方 CommonJS 警告）
+- 独立复审：PASS。复审指出真实 wheel 事件和混合视频组合仍缺少专门用例，属于 P2 覆盖缺口，不影响本次实现；Embla 配置契约和现有媒体分支已覆盖。
 
 ## 文件
 
