@@ -412,7 +412,7 @@ export const ImageCarousel = memo(function ImageCarousel({
               : 'grid w-full gap-2',
             horizontal && (isStripDragging ? 'cursor-grabbing' : 'cursor-grab'),
             horizontal &&
-              'select-none outline-none focus-visible:ring-2 focus-visible:ring-ring/50 [touch-action:pan-y]',
+              'select-none outline-none focus:outline-none focus:ring-0 [touch-action:pan-y]',
             !horizontal &&
               (usesCardLayout
                 ? cardGridClassName(visibleCount)
@@ -526,13 +526,22 @@ export const ImageCarousel = memo(function ImageCarousel({
                     <button
                       type="button"
                       data-media-video-id={item.id}
+                      disabled={item.playable === false}
                       aria-label={
-                        item.video.videoTitle ? `播放视频：${item.video.videoTitle}` : '播放视频'
+                        item.playable === false
+                          ? '视频暂不可播放'
+                          : item.video.videoTitle
+                            ? `播放视频：${item.video.videoTitle}`
+                            : '播放视频'
                       }
-                      className="block h-full w-full text-left"
+                      className={cn(
+                        'block h-full w-full text-left',
+                        item.playable === false && 'cursor-not-allowed opacity-80',
+                      )}
                       onClick={(event) => {
                         event.preventDefault()
                         event.stopPropagation()
+                        if (item.playable === false) return
                         onOpen?.()
                         onVideoActivate?.(item.video, index)
                       }}

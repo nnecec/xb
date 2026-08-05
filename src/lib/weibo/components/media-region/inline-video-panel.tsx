@@ -16,7 +16,7 @@ export function InlineVideoPanel({
   video: FeedMixMediaItem
   downloadFilename?: string
   maxWidth?: number
-  onBack: () => void
+  onBack?: () => void
 }) {
   const vertical = video.videoOrientation === 'vertical'
   const resolvedMaxWidth = maxWidth ?? (vertical ? 560 : 860)
@@ -44,19 +44,21 @@ export function InlineVideoPanel({
           downloadFilename={downloadFilename ?? video.videoTitle}
         />
       </AspectRatio>
-      <Button
-        type="button"
-        variant="secondary"
-        size="sm"
-        className="bg-background/80 absolute top-2 left-2 z-40 shadow-sm backdrop-blur"
-        onClick={(event) => {
-          event.stopPropagation()
-          onBack()
-        }}
-      >
-        <ArrowLeft data-icon="inline-start" />
-        返回媒体画廊
-      </Button>
+      {onBack ? (
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          className="bg-background/80 absolute top-2 left-2 z-40 shadow-sm backdrop-blur"
+          onClick={(event) => {
+            event.stopPropagation()
+            onBack()
+          }}
+        >
+          <ArrowLeft data-icon="inline-start" />
+          返回媒体区域
+        </Button>
+      ) : null}
     </section>
   )
 }

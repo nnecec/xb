@@ -47,7 +47,6 @@ import {
 
 import { FeedActions } from './feed-card/feed-card-actions'
 import { FeedAuthorHeader } from './feed-card/feed-card-author'
-import { FeedCardMediaContent } from './feed-card/feed-card-media-content'
 import { RetweetedFeedBlock } from './feed-card/feed-card-retweeted'
 import { FeedTextBlock } from './feed-card/feed-card-text'
 import {
@@ -57,6 +56,7 @@ import {
   hasTextSelectionWithin,
   openStatusDetailInNewTab,
 } from './feed-card/feed-card-utils'
+import { MediaRegion } from './media-region/media-region'
 
 export const FeedCard = memo(function FeedCard({
   item,
@@ -89,8 +89,6 @@ export const FeedCard = memo(function FeedCard({
     weiboCardShowTitleBadge,
     weiboCardShowInteractionCounts,
     weiboCardMediaDisplay,
-    weiboCardSingleImageMaxWidth,
-    weiboCardSingleVideoMaxWidth,
   } = useAppSettings(
     useShallow((s) => ({
       feedInteractionMode: s.feedInteractionMode,
@@ -105,8 +103,6 @@ export const FeedCard = memo(function FeedCard({
       weiboCardShowTitleBadge: s.weiboCardShowTitleBadge,
       weiboCardShowInteractionCounts: s.weiboCardShowInteractionCounts,
       weiboCardMediaDisplay: s.weiboCardMediaDisplay,
-      weiboCardSingleImageMaxWidth: s.weiboCardSingleImageMaxWidth,
-      weiboCardSingleVideoMaxWidth: s.weiboCardSingleVideoMaxWidth,
     })),
   )
   const [commentsExpanded, setCommentsExpanded] = useState(false)
@@ -454,13 +450,8 @@ export const FeedCard = memo(function FeedCard({
             imageDisplay={weiboCardMediaDisplay}
           />
 
-          <FeedCardMediaContent
+          <MediaRegion
             item={resolvedItem}
-            imageDisplay={weiboCardMediaDisplay}
-            videoDisplay={weiboCardMediaDisplay}
-            audioDisplay={weiboCardMediaDisplay}
-            singleImageMaxWidth={weiboCardSingleImageMaxWidth}
-            singleVideoMaxWidth={weiboCardSingleVideoMaxWidth}
             downloadFilename={getMediaDownloadFilename(resolvedItem)}
             onOpen={addEntry}
           />
@@ -490,10 +481,6 @@ export const FeedCard = memo(function FeedCard({
               showPublishInfo={weiboCardShowPublishInfo}
               showInteractionCounts={weiboCardShowInteractionCounts}
               imageDisplay={weiboCardMediaDisplay}
-              videoDisplay={weiboCardMediaDisplay}
-              audioDisplay={weiboCardMediaDisplay}
-              singleImageMaxWidth={weiboCardSingleImageMaxWidth}
-              singleVideoMaxWidth={weiboCardSingleVideoMaxWidth}
             />
           ) : null}
         </CardContent>

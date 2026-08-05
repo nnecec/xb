@@ -1,7 +1,6 @@
-import type { ContentDisplay } from '@/lib/app-settings'
-import type { FeedImage, FeedItem, FeedMixMediaItem } from '@/lib/weibo/models/feed'
+import type { FeedImage, FeedItem, FeedMedia, FeedMixMediaItem } from '@/lib/weibo/models/feed'
 
-export type MediaGalleryItem =
+export type MediaAsset =
   | {
       kind: 'image'
       id: string
@@ -11,139 +10,136 @@ export type MediaGalleryItem =
       kind: 'video'
       id: string
       video: FeedMixMediaItem
+      playable: boolean
     }
-
-export type MediaGroup =
   | {
       kind: 'standalone'
-      key: string
-      display: ContentDisplay
-      summary: string
-      maxWidth?: number
+      id: string
+      media: FeedMedia
     }
-  | {
-      kind: 'gallery'
-      key: string
-      display: ContentDisplay
-      summary: string
-      items: MediaGalleryItem[]
-      singleMediaMaxWidth?: number
-    }
+
+export type MediaGalleryItem = Extract<MediaAsset, { kind: 'image' | 'video' }>
+
+export interface MediaRegionModel {
+  key: string
+  summary: string
+  assets: MediaAsset[]
+  singleMediaMaxWidth?: number
+}
 
 function itemLabel(count: number, label: string) {
   return `此微博包含 ${count} ${label}`
 }
 
-function combinedSummary(imageCount: number, videoCount: number) {
-  if (imageCount > 0 && videoCount === 0) return itemLabel(imageCount, '张图片')
-  if (videoCount > 0 && imageCount === 0) return itemLabel(videoCount, '个视频')
-  return itemLabel(imageCount + videoCount, '项媒体')
+function mediaSummary(assets: MediaAsset[]) {
+  const counts = new Map<string, number>()
+  for (const asset of assets) {
+    const label =
+      asset.kind === 'image'
+        ? '张图片'
+        : asset.kind === 'video'
+          ? '个视频'
+          : asset.media.type === 'live'
+            ? '个直播或回放'
+            : '个音频'
+    counts.set(label, (counts.get(label) ?? 0) + 1)
+  }
+  if (counts.size === 1) {
+    const [label, count] = counts.entries().next().value as [string, number]
+    return itemLabel(count, label)
+  }
+  return itemLabel(assets.length, '项媒体')
 }
 
 export function buildMediaGalleryItems(
   images: FeedImage[],
   mixMediaItems: FeedMixMediaItem[] = [],
 ): MediaGalleryItem[] {
-  const items: MediaGalleryItem[] = images.map((image) => ({
-    kind: 'image',
-    id: image.id,
-    image,
-  }))
+  if (mixMediaItems.length === 0) {
+    return images.map((image) => ({ kind: 'image', id: image.id, image }))
+  }
 
+  const items: MediaGalleryItem[] = []
   for (const item of mixMediaItems) {
     if (item.type === 'pic' && item.image) {
       items.push({ kind: 'image', id: item.id, image: item.image })
-    } else if (item.type === 'video') {
-      items.push({ kind: 'video', id: item.id, video: item })
+    } else if (
+      item.type === 'video' &&
+      (item.videoCoverUrl || item.videoStreamUrl || item.videoDash)
+    ) {
+      items.push({
+        kind: 'video',
+        id: item.id,
+        video: item,
+        playable: Boolean(item.videoStreamUrl || item.videoDash),
+      })
     }
   }
-
   return items
 }
 
-export function mediaGroupKey(items: MediaGalleryItem[]) {
-  return items.map((item) => `${item.kind}:${item.id}`).join('|')
+function mediaAssetKey(asset: MediaAsset) {
+  return `${asset.kind}:${asset.id}`
 }
 
-export function buildMediaGroups(
+export function buildMediaAssets(
   item: FeedItem | NonNullable<FeedItem['retweetedStatus']>,
-  options: {
-    imageDisplay: ContentDisplay
-    videoDisplay: ContentDisplay
-    audioDisplay: ContentDisplay
-    singleImageMaxWidth: number
-    singleVideoMaxWidth: number
-  },
-): MediaGroup[] {
-  const mixPictures = item.mixMediaInfo?.filter((media) => media.type === 'pic') ?? []
-  const mixVideos = item.mixMediaInfo?.filter((media) => media.type === 'video') ?? []
-  const imageItems = buildMediaGalleryItems(item.images, mixPictures)
-  const videoItems = buildMediaGalleryItems([], mixVideos)
-  const combinedItems = buildMediaGalleryItems(item.images, item.mixMediaInfo)
-  const imageCount = imageItems.length
-  const videoCount = videoItems.length
-  const combinedCount = imageCount + videoCount
-  const totalMediaCount = combinedCount + (item.media ? 1 : 0)
-  const groups: MediaGroup[] = []
+): MediaAsset[] {
+  const source: MediaAsset[] =
+    item.mixMediaInfo && item.mixMediaInfo.length > 0
+      ? item.mixMediaInfo.flatMap((media): MediaAsset[] => {
+          if (media.type === 'pic' && media.image) {
+            return [{ kind: 'image', id: media.id, image: media.image }]
+          }
+          if (
+            media.type === 'video' &&
+            (media.videoCoverUrl || media.videoStreamUrl || media.videoDash)
+          ) {
+            return [
+              {
+                kind: 'video',
+                id: media.id,
+                video: media,
+                playable: Boolean(media.videoStreamUrl || media.videoDash),
+              },
+            ]
+          }
+          return []
+        })
+      : [
+          ...(item.media
+            ? [{ kind: 'standalone' as const, id: `${item.id}:media`, media: item.media }]
+            : []),
+          ...item.images.map((image) => ({ kind: 'image' as const, id: image.id, image })),
+        ]
 
-  if (item.media) {
-    const standaloneDisplay =
-      item.media.type === 'audio' || item.media.type === 'podcast_audio'
-        ? options.audioDisplay
-        : options.videoDisplay
-    groups.push({
-      kind: 'standalone',
-      key: `${item.id}:standalone:${item.media.type}`,
-      display: standaloneDisplay,
-      summary:
-        item.media.type === 'audio' || item.media.type === 'podcast_audio'
-          ? '此微博包含音频或播客'
-          : item.media.type === 'live'
-            ? '此微博包含直播或回放'
-            : '此微博包含视频',
-      maxWidth:
-        item.media.type === 'video' && combinedCount === 0
+  const seen = new Set<string>()
+  return source.filter((asset) => {
+    const key = mediaAssetKey(asset)
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
+export function buildMediaRegionModel(
+  item: FeedItem | NonNullable<FeedItem['retweetedStatus']>,
+  options: { singleImageMaxWidth: number; singleVideoMaxWidth: number },
+): MediaRegionModel | null {
+  const assets = buildMediaAssets(item)
+  if (assets.length === 0) return null
+  const singleAsset = assets.length === 1 ? assets[0] : undefined
+  return {
+    key: `${item.id}:${assets.map(mediaAssetKey).join('|')}`,
+    summary: mediaSummary(assets),
+    assets,
+    singleMediaMaxWidth:
+      singleAsset?.kind === 'image'
+        ? options.singleImageMaxWidth
+        : singleAsset?.kind === 'video'
           ? options.singleVideoMaxWidth
-          : undefined,
-    })
+          : singleAsset?.kind === 'standalone' && singleAsset.media.type === 'video'
+            ? options.singleVideoMaxWidth
+            : undefined,
   }
-
-  if (combinedCount > 0 && options.imageDisplay === options.videoDisplay) {
-    groups.push({
-      kind: 'gallery',
-      key: `${item.id}:gallery:${mediaGroupKey(combinedItems)}`,
-      display: options.imageDisplay,
-      summary: combinedSummary(imageCount, videoCount),
-      items: combinedItems,
-      singleMediaMaxWidth:
-        totalMediaCount === 1
-          ? imageCount === 1
-            ? options.singleImageMaxWidth
-            : options.singleVideoMaxWidth
-          : undefined,
-    })
-  }
-
-  if (options.imageDisplay !== options.videoDisplay) {
-    if (imageCount > 0) {
-      groups.push({
-        kind: 'gallery',
-        key: `${item.id}:images:${mediaGroupKey(imageItems)}`,
-        display: options.imageDisplay,
-        summary: itemLabel(imageCount, '张图片'),
-        items: imageItems,
-      })
-    }
-    if (videoCount > 0) {
-      groups.push({
-        kind: 'gallery',
-        key: `${item.id}:videos:${mediaGroupKey(videoItems)}`,
-        display: options.videoDisplay,
-        summary: itemLabel(videoCount, '个视频'),
-        items: videoItems,
-      })
-    }
-  }
-
-  return groups
 }

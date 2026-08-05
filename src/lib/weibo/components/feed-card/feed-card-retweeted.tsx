@@ -19,9 +19,9 @@ import { useHasEnteredViewport } from '@/lib/weibo/hooks/use-has-entered-viewpor
 import type { FeedItem } from '@/lib/weibo/models/feed'
 import { getCurrentUserUid } from '@/lib/weibo/platform/current-user'
 
+import { MediaRegion } from '../media-region/media-region'
 import { FeedActions } from './feed-card-actions'
 import { RetweetedAuthorHeader } from './feed-card-author'
-import { FeedCardMediaContent } from './feed-card-media-content'
 import { FeedTextBlock } from './feed-card-text'
 import {
   getMediaDownloadFilename,
@@ -55,10 +55,6 @@ export function RetweetedFeedBlock({
   showPublishInfo,
   showInteractionCounts,
   imageDisplay,
-  videoDisplay,
-  audioDisplay,
-  singleImageMaxWidth,
-  singleVideoMaxWidth,
 }: {
   item: NonNullable<FeedItem['retweetedStatus']>
   onNavigate?: (item: FeedItem) => void
@@ -80,10 +76,6 @@ export function RetweetedFeedBlock({
   showPublishInfo: boolean
   showInteractionCounts: boolean
   imageDisplay: ContentDisplay
-  videoDisplay: ContentDisplay
-  audioDisplay: ContentDisplay
-  singleImageMaxWidth: number
-  singleVideoMaxWidth: number
 }) {
   const retweetedCardRef = useRef<HTMLDivElement>(null)
   const hasEnteredViewport = useHasEnteredViewport(retweetedCardRef)
@@ -301,13 +293,8 @@ export function RetweetedFeedBlock({
             imageDisplay={imageDisplay}
           />
 
-          <FeedCardMediaContent
+          <MediaRegion
             item={resolvedItem}
-            imageDisplay={imageDisplay}
-            videoDisplay={videoDisplay}
-            audioDisplay={audioDisplay}
-            singleImageMaxWidth={singleImageMaxWidth}
-            singleVideoMaxWidth={singleVideoMaxWidth}
             downloadFilename={getMediaDownloadFilename(resolvedItem)}
             onOpen={addEntry}
           />

@@ -257,7 +257,7 @@ describe('FeedCard', () => {
     expect(document.querySelector('img[src="https://example.com/inline-thumbnail.jpg"]')).toBeNull()
     expect(screen.getByText('preview content')).toBeInTheDocument()
     expect(
-      screen.getByRole('button', { name: '此微博包含 2 项媒体，点击显示' }),
+      screen.getByRole('button', { name: '此微博包含 1 个视频，点击显示' }),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: '此微博包含 1 张图片，点击显示' }),

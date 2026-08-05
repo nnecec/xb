@@ -391,14 +391,15 @@ describe('ImageCarousel', () => {
     expect(screen.getByText('当前第 1 项，共 2 项')).toBeInTheDocument()
   })
 
-  it('shows focus treatment only for keyboard focus', () => {
+  it('does not draw a focus border around the gallery container', () => {
     const store = getAppSettingsStore()
     store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
 
     render(<ImageCarousel variant="card" images={createImages(2)} />)
 
     const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
-    expect(strip).toHaveClass('outline-none', 'focus-visible:ring-2')
+    expect(strip).toHaveClass('outline-none', 'focus:outline-none', 'focus:ring-0')
+    expect(strip).not.toHaveClass('focus-visible:ring-2')
   })
 
   it.each([
@@ -548,6 +549,28 @@ describe('ImageCarousel', () => {
     fireEvent.click(screen.getByRole('button', { name: '播放视频：示例视频' }))
     expect(onOpen).toHaveBeenCalledTimes(1)
     expect(onVideoActivate).toHaveBeenCalledWith(expect.objectContaining({ id: 'video-1' }), 0)
+  })
+
+  it('keeps a preview-only mixed video visible but non-interactive', () => {
+    const onVideoActivate = vi.fn()
+    render(
+      <ImageCarousel
+        images={[]}
+        mixMediaItems={[
+          {
+            type: 'video',
+            id: 'video-1',
+            videoCoverUrl: 'https://example.com/video.jpg',
+          },
+        ]}
+        onVideoActivate={onVideoActivate}
+      />,
+    )
+
+    const trigger = screen.getByRole('button', { name: '视频暂不可播放' })
+    expect(trigger).toBeDisabled()
+    fireEvent.click(trigger)
+    expect(onVideoActivate).not.toHaveBeenCalled()
   })
 
   it('keeps Embla drag enabled but disables drag-free motion when reduced motion is requested', () => {

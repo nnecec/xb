@@ -60,7 +60,7 @@ export interface FeedPlaybackSource {
 /** DASH manifest + representation ids (aligned with `playback_list` / MPD `Representation@id`). */
 export type FeedDashSource = FeedMpdSource | FeedPlaybackSource
 
-interface FeedMedia {
+export interface FeedMedia {
   type: 'video' | 'audio' | 'podcast_audio' | 'live'
   streamUrl: string
   title: string
