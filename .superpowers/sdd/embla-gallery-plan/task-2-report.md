@@ -10,11 +10,12 @@
 
 ## TDD / 测试
 
-- 先运行现有行为测试确认迁移后 RED；随后完成 Embla 代码并补齐 IntersectionObserver 测试桩。
+- 先运行现有行为测试确认迁移后 RED，再将断言迁移为 Embla API 契约，并补充拖拽释放、点击保护、布局切换和 reduced-motion 回归覆盖。
 - `bun run compile` ✅
 - `bun run lint` ✅
-- 聚焦 `image-carousel.test.tsx`：8/14 通过；6 个旧测试仍断言已删除的原生 scrollLeft/pointer-capture 行为，需改写为 Embla API 契约（键盘/选中索引/drag click guard）。
-- 完整单元测试、build 尚未运行（聚焦测试中的旧断言需先更新）。
+- 聚焦 `image-carousel.test.tsx`：17/17 ✅
+- 完整 `bun run test:unit` ✅
+- `bun run build` ✅（仅有现有第三方 CommonJS 警告）
 
 ## 文件
 
@@ -25,5 +26,5 @@
 ## 自审 / 疑虑
 
 - Embla Hook 始终按稳定顺序初始化，仅在 horizontal 元素挂载 `emblaRef`；非 horizontal 不激活实例。
-- 由于 jsdom 无布局，Embla 实际 `scrollTo` 的 scrollLeft 无法由旧测试验证；新测试应 mock/use Embla API 观察调用和 `select` 状态。
+- 由于 jsdom 无布局，测试通过 mock Embla API 观察 `scrollTo` 调用和 `select` 状态；浏览器中的真实惯性与回弹由 Embla/插件负责。
 - wheel 插件不强制轴向，普通垂直滚动由主轴判定保留；横向/Shift/触控板横向手势交给 Embla。

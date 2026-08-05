@@ -16,9 +16,101 @@ function createImages(count: number) {
   }))
 }
 
+function firePointerEvent(
+  target: HTMLElement | Window,
+  type: string,
+  {
+    button = 0,
+    clientX = 0,
+    pointerId,
+    pointerType = 'mouse',
+  }: {
+    button?: number
+    clientX?: number
+    pointerId: number
+    pointerType?: string
+  },
+) {
+  const event = new Event(type, { bubbles: true, cancelable: true })
+  Object.defineProperties(event, {
+    button: { value: button },
+    clientX: { value: clientX },
+    pointerId: { value: pointerId },
+    pointerType: { value: pointerType },
+  })
+  fireEvent(target, event)
+}
+
 const { photoViewClickSpy } = vi.hoisted(() => ({
   photoViewClickSpy: vi.fn(),
 }))
+
+const { reducedMotionState } = vi.hoisted(() => ({
+  reducedMotionState: { current: false },
+}))
+
+const {
+  emblaApi,
+  emitEmblaEvent,
+  resetEmblaMock,
+  setEmblaSelectedIndex,
+  useEmblaCarouselMock,
+  wheelGesturesPluginMock,
+} = vi.hoisted(() => {
+  let selectedIndex = 0
+  const listeners = new Map<string, Set<() => void>>()
+  const emitEmblaEvent = (eventName: string) => {
+    for (const listener of listeners.get(eventName) ?? []) listener()
+  }
+  const emblaApi = {
+    off: vi.fn((eventName: string, listener: () => void) => {
+      listeners.get(eventName)?.delete(listener)
+    }),
+    on: vi.fn((eventName: string, listener: () => void) => {
+      const eventListeners = listeners.get(eventName) ?? new Set<() => void>()
+      eventListeners.add(listener)
+      listeners.set(eventName, eventListeners)
+    }),
+    scrollTo: vi.fn((index: number) => {
+      selectedIndex = index
+      emitEmblaEvent('select')
+    }),
+    selectedScrollSnap: vi.fn(() => selectedIndex),
+  }
+  const emblaRef = vi.fn()
+  const resetEmblaMock = () => {
+    selectedIndex = 0
+    listeners.clear()
+  }
+  const setEmblaSelectedIndex = (index: number) => {
+    selectedIndex = index
+  }
+  const useEmblaCarouselMock = vi.fn(() => [emblaRef, emblaApi])
+  const wheelGesturesPluginMock = vi.fn(() => ({ name: 'wheelGestures' }))
+
+  return {
+    emblaApi,
+    emblaRef,
+    emitEmblaEvent,
+    resetEmblaMock,
+    setEmblaSelectedIndex,
+    useEmblaCarouselMock,
+    wheelGesturesPluginMock,
+  }
+})
+
+vi.mock('embla-carousel-react', () => ({
+  default: useEmblaCarouselMock,
+}))
+
+vi.mock('embla-carousel-wheel-gestures', () => ({
+  WheelGesturesPlugin: wheelGesturesPluginMock,
+}))
+
+vi.mock('motion/react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('motion/react')>()
+  return { ...actual, useReducedMotion: () => reducedMotionState.current }
+})
 
 vi.mock('react-photo-view', () => ({
   PhotoProvider: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -57,6 +149,8 @@ vi.mock('react-photo-view', () => ({
 describe('ImageCarousel', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    resetEmblaMock()
+    reducedMotionState.current = false
     Object.defineProperty(globalThis, 'browser', {
       writable: true,
       value: {
@@ -186,7 +280,7 @@ describe('ImageCarousel', () => {
     expect(screen.getAllByTestId('photo-view')).toHaveLength(10)
   })
 
-  it('renders a keyboard-accessible horizontal strip with clamped media ratios', () => {
+  it('configures Embla for a keyboard-accessible, variable-width horizontal strip', () => {
     const store = getAppSettingsStore()
     store.setState({
       weiboCardMultiMediaLayout: 'horizontal',
@@ -217,25 +311,31 @@ describe('ImageCarousel', () => {
 
     const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
     expect(strip).toHaveStyle({ height: '480px' })
+    expect(strip).toHaveClass('[touch-action:pan-y]')
 
     const items = strip.querySelectorAll<HTMLElement>('[data-media-strip-item]')
     expect(items).toHaveLength(2)
-    expect(items[0]).toHaveStyle({ aspectRatio: '0.75' })
-    expect(items[1]).toHaveStyle({ aspectRatio: String(16 / 9) })
-
-    Object.defineProperty(items[0], 'offsetLeft', { configurable: true, value: 0 })
-    Object.defineProperty(items[1], 'offsetLeft', { configurable: true, value: 400 })
-
-    fireEvent.wheel(strip, { deltaY: 120 })
-    expect(strip.scrollLeft).toBe(0)
+    expect(items[0]).toHaveStyle({ width: '360px', aspectRatio: '0.75' })
+    expect(items[1]).toHaveStyle({ width: '853.333px', aspectRatio: String(16 / 9) })
+    expect(useEmblaCarouselMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        align: 'start',
+        axis: 'x',
+        containScroll: 'trimSnaps',
+        dragFree: true,
+        loop: false,
+      }),
+      expect.any(Array),
+    )
+    expect(wheelGesturesPluginMock).toHaveBeenCalledWith({ wheelDraggingClass: '' })
 
     fireEvent.keyDown(strip, { key: 'Home' })
-    expect(strip.scrollLeft).toBe(0)
     fireEvent.keyDown(strip, { key: 'End' })
-    expect(strip.scrollLeft).toBe(400)
+    expect(emblaApi.scrollTo).toHaveBeenNthCalledWith(1, 0)
+    expect(emblaApi.scrollTo).toHaveBeenNthCalledWith(2, 1)
   })
 
-  it('supports free-position left-button drag scrolling without opening the lightbox', () => {
+  it('suppresses the lightbox click after an Embla drag, then resets on the next click', () => {
     const store = getAppSettingsStore()
     store.setState({
       weiboCardMultiMediaLayout: 'horizontal',
@@ -245,66 +345,48 @@ describe('ImageCarousel', () => {
 
     const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
     const photoView = screen.getAllByTestId('photo-view')[0]!
-    const setPointerCapture = vi.fn()
-    const releasePointerCapture = vi.fn()
-    Object.defineProperties(strip, {
-      setPointerCapture: { configurable: true, value: setPointerCapture },
-      hasPointerCapture: { configurable: true, value: () => true },
-      releasePointerCapture: { configurable: true, value: releasePointerCapture },
-    })
-    strip.scrollLeft = 120
 
-    fireEvent.pointerDown(photoView, {
+    firePointerEvent(strip, 'pointerdown', {
       pointerId: 7,
       pointerType: 'mouse',
       button: 0,
       clientX: 300,
     })
-    expect(setPointerCapture).not.toHaveBeenCalled()
     expect(strip).toHaveClass('cursor-grab')
-    expect(strip).not.toHaveClass('snap-x', 'snap-proximity')
-    expect(strip.style.scrollSnapType).toBe('')
 
-    fireEvent.pointerMove(photoView, {
+    firePointerEvent(strip, 'pointermove', {
       pointerId: 7,
       pointerType: 'mouse',
       clientX: 220,
     })
-    expect(setPointerCapture).toHaveBeenCalledWith(7)
     expect(strip).toHaveClass('cursor-grabbing')
-    expect(strip.style.scrollSnapType).toBe('')
-    expect(strip.scrollLeft).toBe(200)
 
-    fireEvent.pointerUp(photoView, {
-      pointerId: 7,
-      pointerType: 'mouse',
-      button: 0,
-      clientX: 220,
-    })
-    expect(releasePointerCapture).toHaveBeenCalledWith(7)
+    act(() => emitEmblaEvent('pointerUp'))
     expect(strip).toHaveClass('cursor-grab')
-    expect(strip.style.scrollSnapType).toBe('')
-    expect(strip.scrollLeft).toBe(200)
 
     fireEvent.click(photoView)
     expect(photoViewClickSpy).not.toHaveBeenCalled()
 
-    setPointerCapture.mockClear()
-    fireEvent.pointerDown(photoView, {
-      pointerId: 8,
-      pointerType: 'mouse',
-      button: 0,
-      clientX: 220,
-    })
-    fireEvent.pointerUp(photoView, {
-      pointerId: 8,
-      pointerType: 'mouse',
-      button: 0,
-      clientX: 220,
-    })
-    expect(setPointerCapture).not.toHaveBeenCalled()
     fireEvent.click(photoView)
     expect(photoViewClickSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('announces the Embla-selected media item after select and reInit', () => {
+    const store = getAppSettingsStore()
+    store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
+    render(<ImageCarousel variant="card" images={createImages(2)} />)
+
+    act(() => {
+      setEmblaSelectedIndex(1)
+      emitEmblaEvent('select')
+    })
+    expect(screen.getByText('当前第 2 项，共 2 项')).toBeInTheDocument()
+
+    act(() => {
+      setEmblaSelectedIndex(0)
+      emitEmblaEvent('reInit')
+    })
+    expect(screen.getByText('当前第 1 项，共 2 项')).toBeInTheDocument()
   })
 
   it('shows focus treatment only for keyboard focus', () => {
@@ -321,12 +403,14 @@ describe('ImageCarousel', () => {
     [
       'pointercancel',
       21,
-      (strip: HTMLElement, pointerId: number) => fireEvent.pointerCancel(strip, { pointerId }),
+      (strip: HTMLElement, pointerId: number) =>
+        firePointerEvent(strip, 'pointercancel', { pointerId }),
     ],
     [
       'lostpointercapture',
       22,
-      (strip: HTMLElement, pointerId: number) => fireEvent.lostPointerCapture(strip, { pointerId }),
+      (strip: HTMLElement, pointerId: number) =>
+        firePointerEvent(strip, 'lostpointercapture', { pointerId }),
     ],
   ])('clears dragging state on %s', (_name, pointerId, finish) => {
     const store = getAppSettingsStore()
@@ -334,14 +418,13 @@ describe('ImageCarousel', () => {
     render(<ImageCarousel variant="card" images={createImages(2)} />)
 
     const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
-    const photoView = screen.getAllByTestId('photo-view')[0]!
-    Object.defineProperties(strip, {
-      setPointerCapture: { configurable: true, value: vi.fn() },
-      hasPointerCapture: { configurable: true, value: () => true },
-      releasePointerCapture: { configurable: true, value: vi.fn() },
+    firePointerEvent(strip, 'pointerdown', {
+      pointerId,
+      pointerType: 'mouse',
+      button: 0,
+      clientX: 300,
     })
-    fireEvent.pointerDown(photoView, { pointerId, pointerType: 'mouse', button: 0, clientX: 300 })
-    fireEvent.pointerMove(photoView, { pointerId, pointerType: 'mouse', clientX: 200 })
+    firePointerEvent(strip, 'pointermove', { pointerId, pointerType: 'mouse', clientX: 200 })
     expect(strip).toHaveClass('cursor-grabbing')
     finish(strip, pointerId)
     expect(strip).toHaveClass('cursor-grab')
@@ -354,30 +437,25 @@ describe('ImageCarousel', () => {
 
     const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
     const photoView = screen.getAllByTestId('photo-view')[0]!
-    Object.defineProperties(strip, {
-      setPointerCapture: { configurable: true, value: vi.fn() },
-      hasPointerCapture: { configurable: true, value: () => true },
-      releasePointerCapture: { configurable: true, value: vi.fn() },
-    })
-    fireEvent.pointerDown(photoView, {
+    firePointerEvent(strip, 'pointerdown', {
       pointerId: 31,
       pointerType: 'mouse',
       button: 0,
       clientX: 300,
     })
-    fireEvent.pointerMove(photoView, { pointerId: 31, pointerType: 'mouse', clientX: 200 })
-    fireEvent.pointerUp(window, { pointerId: 31 })
+    firePointerEvent(strip, 'pointermove', { pointerId: 31, pointerType: 'mouse', clientX: 200 })
+    firePointerEvent(window, 'pointerup', { pointerId: 31 })
     expect(strip).toHaveClass('cursor-grab')
     fireEvent.click(photoView)
     expect(photoViewClickSpy).toHaveBeenCalledTimes(1)
 
-    fireEvent.pointerDown(photoView, {
+    firePointerEvent(strip, 'pointerdown', {
       pointerId: 32,
       pointerType: 'mouse',
       button: 0,
       clientX: 300,
     })
-    fireEvent.pointerMove(photoView, { pointerId: 32, pointerType: 'mouse', clientX: 200 })
+    firePointerEvent(strip, 'pointermove', { pointerId: 32, pointerType: 'mouse', clientX: 200 })
     fireEvent.blur(window)
     expect(strip).toHaveClass('cursor-grab')
   })
@@ -388,19 +466,13 @@ describe('ImageCarousel', () => {
     render(<ImageCarousel variant="card" images={createImages(2)} />)
 
     const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
-    const photoView = screen.getAllByTestId('photo-view')[0]!
-    Object.defineProperties(strip, {
-      setPointerCapture: { configurable: true, value: vi.fn() },
-      hasPointerCapture: { configurable: true, value: () => true },
-      releasePointerCapture: { configurable: true, value: vi.fn() },
-    })
-    fireEvent.pointerDown(photoView, {
+    firePointerEvent(strip, 'pointerdown', {
       pointerId: 51,
       pointerType: 'mouse',
       button: 0,
       clientX: 300,
     })
-    fireEvent.pointerMove(photoView, { pointerId: 51, pointerType: 'mouse', clientX: 200 })
+    firePointerEvent(strip, 'pointermove', { pointerId: 51, pointerType: 'mouse', clientX: 200 })
     expect(strip).toHaveClass('cursor-grabbing')
 
     act(() => {
@@ -422,17 +494,43 @@ describe('ImageCarousel', () => {
     store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
     render(<ImageCarousel variant="card" images={createImages(2)} />)
 
+    const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
     const photoView = screen.getAllByTestId('photo-view')[0]!
-    fireEvent.pointerDown(photoView, {
+    firePointerEvent(strip, 'pointerdown', {
       pointerId: 41,
       pointerType: 'mouse',
       button: 0,
       clientX: 300,
     })
-    fireEvent.pointerMove(photoView, { pointerId: 41, pointerType: 'mouse', clientX: 297 })
-    fireEvent.pointerUp(photoView, { pointerId: 41, pointerType: 'mouse', button: 0, clientX: 297 })
+    firePointerEvent(strip, 'pointermove', {
+      pointerId: 41,
+      pointerType: 'mouse',
+      clientX: 297,
+    })
+    firePointerEvent(window, 'pointerup', { pointerId: 41 })
     fireEvent.click(photoView)
     expect(photoViewClickSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps the legacy grid image structure free of horizontal press feedback', () => {
+    const store = getAppSettingsStore()
+    store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
+    render(<ImageCarousel images={createImages(2)} />)
+
+    expect(screen.queryByTestId('media-strip-pressable')).not.toBeInTheDocument()
+  })
+
+  it('disables Embla drag-free motion when reduced motion is requested', () => {
+    reducedMotionState.current = true
+    const store = getAppSettingsStore()
+    store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
+
+    render(<ImageCarousel variant="card" images={createImages(2)} />)
+
+    expect(useEmblaCarouselMock).toHaveBeenCalledWith(
+      expect.objectContaining({ dragFree: false, watchDrag: false }),
+      expect.any(Array),
+    )
   })
 
   it('ignores non-primary mouse buttons when dragging the strip', () => {
@@ -445,27 +543,19 @@ describe('ImageCarousel', () => {
 
     const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
     const photoView = screen.getAllByTestId('photo-view')[0]!
-    const setPointerCapture = vi.fn()
-    Object.defineProperty(strip, 'setPointerCapture', {
-      configurable: true,
-      value: setPointerCapture,
-    })
-    strip.scrollLeft = 120
 
-    fireEvent.pointerDown(photoView, {
+    firePointerEvent(photoView, 'pointerdown', {
       pointerId: 9,
       pointerType: 'mouse',
       button: 1,
       clientX: 300,
     })
-    fireEvent.pointerMove(photoView, {
+    firePointerEvent(photoView, 'pointermove', {
       pointerId: 9,
       pointerType: 'mouse',
       clientX: 220,
     })
 
-    expect(setPointerCapture).not.toHaveBeenCalled()
-    expect(strip.scrollLeft).toBe(120)
     expect(strip).toHaveClass('cursor-grab')
   })
 })

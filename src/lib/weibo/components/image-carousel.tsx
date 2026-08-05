@@ -249,7 +249,16 @@ export const ImageCarousel = memo(function ImageCarousel({
   const [isStripDragging, setIsStripDragging] = React.useState(false)
   const suppressNextStripClickRef = React.useRef(false)
   const pointerStartXRef = React.useRef<number | null>(null)
+  const activePointerIdRef = React.useRef<number | null>(null)
   const reducedMotion = useReducedMotion()
+  const motionEnabled = reducedMotion === false
+
+  const clearStripDrag = React.useCallback((clearClickGuard = true) => {
+    setIsStripDragging(false)
+    pointerStartXRef.current = null
+    activePointerIdRef.current = null
+    if (clearClickGuard) suppressNextStripClickRef.current = false
+  }, [])
 
   const gridItems = React.useMemo<GridItem[]>(() => {
     const items: GridItem[] = images.map((image) => ({
@@ -276,12 +285,10 @@ export const ImageCarousel = memo(function ImageCarousel({
     {
       axis: 'x',
       align: 'start',
-      dragFree: !reducedMotion,
+      dragFree: motionEnabled,
       containScroll: 'trimSnaps',
       loop: false,
-      watchDrag: reducedMotion ? false : undefined,
-      watchSlides: false,
-      watchResize: false,
+      watchDrag: motionEnabled ? undefined : false,
     },
     [WheelGesturesPlugin({ wheelDraggingClass: '' })],
   )
@@ -292,25 +299,40 @@ export const ImageCarousel = memo(function ImageCarousel({
   const remainingCount = gridItems.length - visibleCount
 
   React.useEffect(() => {
-    if (!emblaApi || !horizontal) return
-    const updateIndex = () => setActiveStripIndex(emblaApi.selectedScrollSnap())
-    const handlePointerDown = () => setIsStripDragging(true)
-    const handlePointerUp = () => {
-      setIsStripDragging(false)
-      pointerStartXRef.current = null
+    if (!emblaApi || !horizontal) {
+      clearStripDrag()
+      return
     }
+    const updateIndex = () => setActiveStripIndex(emblaApi.selectedScrollSnap())
+    const handleWindowRelease = (event: PointerEvent) => {
+      if (event.pointerId !== activePointerIdRef.current) return
+      clearStripDrag()
+    }
+    const handleEmblaPointerUp = () => clearStripDrag(false)
+    const handleWindowBlur = () => clearStripDrag()
     emblaApi.on('select', updateIndex)
     emblaApi.on('reInit', updateIndex)
-    emblaApi.on('pointerDown', handlePointerDown)
-    emblaApi.on('pointerUp', handlePointerUp)
+    emblaApi.on('pointerUp', handleEmblaPointerUp)
+    window.addEventListener('pointerup', handleWindowRelease)
+    window.addEventListener('pointercancel', handleWindowRelease)
+    window.addEventListener('blur', handleWindowBlur)
     updateIndex()
     return () => {
       emblaApi.off('select', updateIndex)
       emblaApi.off('reInit', updateIndex)
-      emblaApi.off('pointerDown', handlePointerDown)
-      emblaApi.off('pointerUp', handlePointerUp)
+      emblaApi.off('pointerUp', handleEmblaPointerUp)
+      window.removeEventListener('pointerup', handleWindowRelease)
+      window.removeEventListener('pointercancel', handleWindowRelease)
+      window.removeEventListener('blur', handleWindowBlur)
+      clearStripDrag()
     }
-  }, [emblaApi, horizontal])
+  }, [clearStripDrag, emblaApi, horizontal])
+
+  React.useEffect(() => {
+    if (horizontal && gridItems.length > 0) return
+    clearStripDrag()
+    setActiveStripIndex(0)
+  }, [clearStripDrag, gridItems.length, horizontal])
 
   if (gridItems.length === 0) {
     return null
@@ -331,16 +353,21 @@ export const ImageCarousel = memo(function ImageCarousel({
   }
 
   function handleStripPointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    if (event.pointerType === 'mouse' && event.button !== 0) return
+
     pointerStartXRef.current = event.clientX
+    activePointerIdRef.current = event.pointerId
     suppressNextStripClickRef.current = false
   }
 
   function handleStripPointerMove(event: React.PointerEvent<HTMLDivElement>) {
     if (
+      event.pointerId === activePointerIdRef.current &&
       pointerStartXRef.current !== null &&
       Math.abs(event.clientX - pointerStartXRef.current) > 5
     ) {
       suppressNextStripClickRef.current = true
+      setIsStripDragging(true)
     }
   }
 
@@ -396,6 +423,22 @@ export const ImageCarousel = memo(function ImageCarousel({
           onKeyDown={horizontal ? handleStripKeyDown : undefined}
           onPointerDown={horizontal ? handleStripPointerDown : undefined}
           onPointerMove={horizontal ? handleStripPointerMove : undefined}
+          onPointerCancel={
+            horizontal
+              ? (event) => {
+                  if (event.pointerId !== activePointerIdRef.current) return
+                  clearStripDrag()
+                }
+              : undefined
+          }
+          onLostPointerCapture={
+            horizontal
+              ? (event) => {
+                  if (event.pointerId !== activePointerIdRef.current) return
+                  clearStripDrag()
+                }
+              : undefined
+          }
         >
           <div className={cn(horizontal ? 'flex h-full gap-2' : 'contents')}>
             {gridItems.map((item, index) => {
@@ -426,34 +469,46 @@ export const ImageCarousel = memo(function ImageCarousel({
                 >
                   {item.kind === 'image' ? (
                     <ImagePhotoView image={item.image}>
-                      <motion.div
-                        whileTap={reducedMotion ? undefined : { scale: 0.98 }}
-                        className={cn(
-                          'bg-muted relative overflow-hidden',
-                          horizontal && 'h-full w-full',
-                          mediaOutlineClassName,
-                          roundedClassName,
-                        )}
-                      >
-                        <AspectRatio
-                          ratio={ratio}
+                      {horizontal ? (
+                        <motion.div
+                          data-testid="media-strip-pressable"
+                          whileTap={motionEnabled ? { scale: 0.98 } : undefined}
+                          transition={{ type: 'spring', bounce: 0 }}
                           className={cn(
-                            'bg-muted relative overflow-hidden',
-                            horizontal && 'h-full w-full',
+                            'bg-muted relative h-full w-full overflow-hidden',
                             mediaOutlineClassName,
                             roundedClassName,
                           )}
                         >
-                          <ImageOverlay
-                            image={item.image}
-                            dim={darkModeImageDim}
-                            square={!horizontal}
-                          />
+                          <AspectRatio
+                            ratio={ratio}
+                            className="relative h-full w-full overflow-hidden"
+                          >
+                            <ImageOverlay
+                              image={item.image}
+                              dim={darkModeImageDim}
+                              square={false}
+                            />
+                            {itemRemainingCount > 0 ? (
+                              <RemainingMediaOverlay count={itemRemainingCount} />
+                            ) : null}
+                          </AspectRatio>
+                        </motion.div>
+                      ) : (
+                        <AspectRatio
+                          ratio={ratio}
+                          className={cn(
+                            'bg-muted relative overflow-hidden',
+                            mediaOutlineClassName,
+                            roundedClassName,
+                          )}
+                        >
+                          <ImageOverlay image={item.image} dim={darkModeImageDim} square={true} />
                           {itemRemainingCount > 0 ? (
                             <RemainingMediaOverlay count={itemRemainingCount} />
                           ) : null}
                         </AspectRatio>
-                      </motion.div>
+                      )}
                     </ImagePhotoView>
                   ) : (
                     <PhotoView
