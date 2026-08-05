@@ -373,6 +373,27 @@ describe('toFeedItem media images', () => {
     ])
   })
 
+  it('ignores unsupported mixed-media types instead of treating them as pictures', () => {
+    const result = toFeedItem({
+      idstr: 'mixed-live-1',
+      text_raw: 'mixed live media',
+      user: { idstr: '1', screen_name: 'Alice' },
+      mix_media_info: {
+        items: [
+          {
+            type: 'live',
+            id: 'live-1',
+            data: {
+              page_pic: 'https://example.com/live.jpg',
+            },
+          },
+        ],
+      },
+    } as any)
+
+    expect(result.mixMediaInfo).toBeUndefined()
+  })
+
   it('keeps a mixed-media Live Photo video in the batch download queue', () => {
     const result = toFeedItem({
       idstr: 'mixed-live-photo',

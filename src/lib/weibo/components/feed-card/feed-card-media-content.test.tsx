@@ -77,8 +77,10 @@ describe('FeedCardMediaContent', () => {
     expect(screen.getAllByTestId('image-carousel')).toHaveLength(1)
     expect(imageCarouselMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        images: item.images,
-        mixMediaItems: item.mixMediaInfo,
+        items: [
+          expect.objectContaining({ kind: 'image', id: 'image-1' }),
+          expect.objectContaining({ kind: 'video', id: 'video-1' }),
+        ],
         variant: 'card',
         singleMediaMaxWidth: undefined,
       }),
@@ -101,7 +103,7 @@ describe('FeedCardMediaContent', () => {
     expect(screen.getAllByTestId('image-carousel')).toHaveLength(1)
     expect(imageCarouselMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        images: item.images,
+        items: [expect.objectContaining({ kind: 'image', id: 'image-1' })],
         variant: 'card',
       }),
     )

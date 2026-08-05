@@ -62,17 +62,15 @@
    Controls Visibility
    ============================================ */
 
-/* Show controls only when user is actively hovering/interacting,
-   regardless of paused/playing state. Overrides the library default
-   where controls are always shown when paused. */
-.media-default-skin--video .media-controls:not([data-user-active]) {
+/* Follow the visibility state emitted by @videojs/react. */
+.media-default-skin--video .media-controls--root:not([data-visible]) {
   opacity: 0 !important;
   pointer-events: none !important;
   scale: 0.9 !important;
 }
 
 /* Also hide the overlay scrim when user is not active */
-.media-default-skin--video .media-controls:not([data-user-active]) ~ .media-overlay {
+.media-default-skin--video .media-controls--root:not([data-visible]) ~ .media-overlay {
   opacity: 0 !important;
 }
 

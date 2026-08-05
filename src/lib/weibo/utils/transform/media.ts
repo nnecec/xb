@@ -228,8 +228,7 @@ export function toMixMediaInfo(mixMediaInfo: any): FeedMixMediaItem[] | undefine
         videoDownloadUrl: downloadUrlFromMediaInfo(mediaInfo),
         videoTitle: mediaInfo.video_title ?? item.data.content1 ?? item.data.content2 ?? '',
       })
-    } else {
-      // type === 'pic'
+    } else if (item.type === 'pic') {
       const imageFromPicInfo = toImagesFromParts(
         item.data.pic_id ? [item.data.pic_id] : Object.keys(item.data.pic_infos ?? {}),
         item.data.pic_infos,

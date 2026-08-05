@@ -522,6 +522,34 @@ describe('ImageCarousel', () => {
     expect(screen.queryByTestId('media-strip-pressable')).not.toBeInTheDocument()
   })
 
+  it('activates mixed video inline without registering it as a lightbox item', () => {
+    const onOpen = vi.fn()
+    const onVideoActivate = vi.fn()
+    render(
+      <ImageCarousel
+        images={[]}
+        mixMediaItems={[
+          {
+            type: 'video',
+            id: 'video-1',
+            videoTitle: '示例视频',
+            videoCoverUrl: 'https://example.com/video.jpg',
+            videoStreamUrl: 'https://example.com/video.mp4',
+          },
+        ]}
+        onOpen={onOpen}
+        onVideoActivate={onVideoActivate}
+      />,
+    )
+
+    expect(screen.queryByTestId('photo-view')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('photo-render')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '播放视频：示例视频' }))
+    expect(onOpen).toHaveBeenCalledTimes(1)
+    expect(onVideoActivate).toHaveBeenCalledWith(expect.objectContaining({ id: 'video-1' }), 0)
+  })
+
   it('keeps Embla drag enabled but disables drag-free motion when reduced motion is requested', () => {
     reducedMotionState.current = true
     const store = getAppSettingsStore()

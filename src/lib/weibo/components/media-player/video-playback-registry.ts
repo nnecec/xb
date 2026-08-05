@@ -13,7 +13,7 @@ export function registerPlayingVideo(video: HTMLVideoElement): void {
   playingVideo = video
 
   if (previous) {
-    exitPictureInPicture(previous)
+    void exitVideoPictureInPicture(previous)
     previous.pause()
   }
 }
@@ -24,9 +24,18 @@ export function unregisterPlayingVideo(video: HTMLVideoElement): void {
   }
 }
 
-async function exitPictureInPicture(video: HTMLVideoElement): Promise<void> {
+export async function exitVideoPictureInPicture(video: HTMLVideoElement): Promise<void> {
   try {
-    if (document.pictureInPictureElement === video) {
+    const root = video.getRootNode() as
+      | Document
+      | (ShadowRoot & {
+          pictureInPictureElement?: Element | null
+        })
+    const rootPictureInPictureElement =
+      'pictureInPictureElement' in root ? root.pictureInPictureElement : null
+    const pictureInPictureElement = rootPictureInPictureElement ?? document.pictureInPictureElement
+
+    if (pictureInPictureElement === video && typeof document.exitPictureInPicture === 'function') {
       await document.exitPictureInPicture()
     }
   } catch {

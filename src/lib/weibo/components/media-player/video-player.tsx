@@ -40,7 +40,11 @@ import { sanitizeFilename } from '@/lib/weibo/utils/filename'
 
 import { useInlineFullscreen } from './inline-fullscreen'
 import { getPlaybackPositionStore } from './video-playback-position-store'
-import { registerPlayingVideo, unregisterPlayingVideo } from './video-playback-registry'
+import {
+  exitVideoPictureInPicture,
+  registerPlayingVideo,
+  unregisterPlayingVideo,
+} from './video-playback-registry'
 import {
   CenterPlayButton,
   IconButton,
@@ -98,6 +102,15 @@ export function VideoPlayer({
   const qualityRef = useRef(AUTO_QUALITY_ID)
 
   const isInPiPRef = useRef(false)
+
+  useEffect(() => {
+    const video = videoRef.current
+    return () => {
+      if (!video) return
+      if (!video.paused) video.pause()
+      void exitVideoPictureInPicture(video)
+    }
+  }, [])
 
   const { rememberPlaybackRate, savedPlaybackRate, updateSettings } = useAppSettings(
     useShallow((s) => ({
@@ -560,146 +573,148 @@ export function VideoPlayer({
 
         <CenterPlayButton />
 
-        <Controls.Root className="media-surface media-controls">
+        <Controls.Root className="media-surface media-controls media-controls--root">
           <Tooltip.Provider>
-            <div className="media-button-group">
-              <Tooltip.Root side="top">
-                <Tooltip.Trigger
-                  render={
-                    <PlayButton
-                      className="media-button--play"
-                      render={(props, state) => (
-                        <IconButton {...props}>
-                          <RotateCcw className="media-icon media-icon--restart size-[18px]" />
-                          {state.paused || state.ended ? (
-                            <Play className="media-icon media-icon--play size-[18px]" />
-                          ) : (
-                            <Pause className="media-icon media-icon--pause size-[18px]" />
-                          )}
-                        </IconButton>
-                      )}
-                    />
-                  }
-                />
-                <Tooltip.Popup className="media-surface media-tooltip">播放/暂停</Tooltip.Popup>
-              </Tooltip.Root>
-
-              {qualities.length > 0 ? (
-                <QualityControl
-                  value={qualityId}
-                  qualities={qualities}
-                  disabled={!shouldLoad}
-                  onValueChange={handleQualityChange}
-                />
-              ) : null}
-
-              {downloadUrl ? (
+            <div className="media-surface media-controls media-controls--primary">
+              <div className="media-button-group">
                 <Tooltip.Root side="top">
                   <Tooltip.Trigger
                     render={
-                      <IconButton
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          void handleDownload()
-                        }}
-                        aria-label="下载视频"
-                        disabled={downloading}
-                      >
-                        <Download className="media-icon size-[18px]" />
-                      </IconButton>
-                    }
-                  />
-                  <Tooltip.Popup className="media-surface media-tooltip">
-                    {downloading ? '下载中…' : '下载视频'}
-                  </Tooltip.Popup>
-                </Tooltip.Root>
-              ) : null}
-            </div>
-
-            <div className="media-time-controls">
-              <Time.Value type="current" className="media-time" />
-              <TimeSlider.Root className="media-slider">
-                <TimeSlider.Track className="media-slider__track">
-                  <TimeSlider.Fill className="media-slider__fill" />
-                  <TimeSlider.Buffer className="media-slider__buffer" />
-                </TimeSlider.Track>
-                <TimeSlider.Thumb className="media-slider__thumb" />
-              </TimeSlider.Root>
-              <Time.Value type="duration" className="media-time" />
-            </div>
-
-            <div className="media-button-group">
-              <Tooltip.Root side="top">
-                <Tooltip.Trigger render={<PlaybackRateControl />} />
-                <Tooltip.Popup className="media-surface media-tooltip">播放速度</Tooltip.Popup>
-              </Tooltip.Root>
-
-              <VolumeControl />
-
-              <Tooltip.Root side="top">
-                <Tooltip.Trigger
-                  render={
-                    <PiPButton
-                      className="media-button--pip"
-                      render={(props, state) => (
-                        <IconButton
-                          {...props}
-                          aria-label={state.pip ? '退出画中画' : '进入画中画'}
-                          disabled={state.availability !== 'available'}
-                        >
-                          {state.pip ? (
-                            <PictureInPicture className="media-icon size-[18px]" />
-                          ) : (
-                            <PictureInPicture2 className="media-icon size-[18px]" />
-                          )}
-                        </IconButton>
-                      )}
-                    />
-                  }
-                />
-
-                <Tooltip.Popup className="media-surface media-tooltip">画中画</Tooltip.Popup>
-              </Tooltip.Root>
-
-              {!hideInlineFullScreen && (
-                <Tooltip.Root side="top">
-                  <Tooltip.Trigger
-                    render={
-                      <IconButton
-                        onClick={() => setInlineFullscreen(!inlineFullscreen)}
-                        aria-label={inlineFullscreen ? '退出网页内全屏' : '网页内全屏'}
-                      >
-                        {inlineFullscreen ? (
-                          <Shrink className="media-icon size-[18px]" />
-                        ) : (
-                          <Expand className="media-icon size-[18px]" />
+                      <PlayButton
+                        className="media-button--play"
+                        render={(props, state) => (
+                          <IconButton {...props}>
+                            <RotateCcw className="media-icon media-icon--restart size-[18px]" />
+                            {state.paused || state.ended ? (
+                              <Play className="media-icon media-icon--play size-[18px]" />
+                            ) : (
+                              <Pause className="media-icon media-icon--pause size-[18px]" />
+                            )}
+                          </IconButton>
                         )}
-                      </IconButton>
+                      />
                     }
                   />
-                  <Tooltip.Popup className="media-surface media-tooltip">网页全屏</Tooltip.Popup>
+                  <Tooltip.Popup className="media-surface media-tooltip">播放/暂停</Tooltip.Popup>
                 </Tooltip.Root>
-              )}
 
-              <Tooltip.Root side="top">
-                <Tooltip.Trigger
-                  render={
-                    <FullscreenButton
-                      className="media-button--fullscreen"
-                      render={(props, state) => (
-                        <IconButton {...props}>
-                          {state.fullscreen ? (
-                            <Minimize className="media-icon size-[18px]" />
+                {qualities.length > 0 ? (
+                  <QualityControl
+                    value={qualityId}
+                    qualities={qualities}
+                    disabled={!shouldLoad}
+                    onValueChange={handleQualityChange}
+                  />
+                ) : null}
+
+                {downloadUrl ? (
+                  <Tooltip.Root side="top">
+                    <Tooltip.Trigger
+                      render={
+                        <IconButton
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            void handleDownload()
+                          }}
+                          aria-label="下载视频"
+                          disabled={downloading}
+                        >
+                          <Download className="media-icon size-[18px]" />
+                        </IconButton>
+                      }
+                    />
+                    <Tooltip.Popup className="media-surface media-tooltip">
+                      {downloading ? '下载中…' : '下载视频'}
+                    </Tooltip.Popup>
+                  </Tooltip.Root>
+                ) : null}
+              </div>
+
+              <div className="media-time-controls">
+                <Time.Value type="current" className="media-time" />
+                <TimeSlider.Root className="media-slider">
+                  <TimeSlider.Track className="media-slider__track">
+                    <TimeSlider.Fill className="media-slider__fill" />
+                    <TimeSlider.Buffer className="media-slider__buffer" />
+                  </TimeSlider.Track>
+                  <TimeSlider.Thumb className="media-slider__thumb" />
+                </TimeSlider.Root>
+                <Time.Value type="duration" className="media-time" />
+              </div>
+
+              <div className="media-button-group">
+                <Tooltip.Root side="top">
+                  <Tooltip.Trigger render={<PlaybackRateControl />} />
+                  <Tooltip.Popup className="media-surface media-tooltip">播放速度</Tooltip.Popup>
+                </Tooltip.Root>
+
+                <VolumeControl />
+
+                <Tooltip.Root side="top">
+                  <Tooltip.Trigger
+                    render={
+                      <PiPButton
+                        className="media-button--pip"
+                        render={(props, state) => (
+                          <IconButton
+                            {...props}
+                            aria-label={state.pip ? '退出画中画' : '进入画中画'}
+                            disabled={state.availability !== 'available'}
+                          >
+                            {state.pip ? (
+                              <PictureInPicture className="media-icon size-[18px]" />
+                            ) : (
+                              <PictureInPicture2 className="media-icon size-[18px]" />
+                            )}
+                          </IconButton>
+                        )}
+                      />
+                    }
+                  />
+
+                  <Tooltip.Popup className="media-surface media-tooltip">画中画</Tooltip.Popup>
+                </Tooltip.Root>
+
+                {!hideInlineFullScreen && (
+                  <Tooltip.Root side="top">
+                    <Tooltip.Trigger
+                      render={
+                        <IconButton
+                          onClick={() => setInlineFullscreen(!inlineFullscreen)}
+                          aria-label={inlineFullscreen ? '退出网页内全屏' : '网页内全屏'}
+                        >
+                          {inlineFullscreen ? (
+                            <Shrink className="media-icon size-[18px]" />
                           ) : (
-                            <Maximize className="media-icon size-[18px]" />
+                            <Expand className="media-icon size-[18px]" />
                           )}
                         </IconButton>
-                      )}
+                      }
                     />
-                  }
-                />
-                <Tooltip.Popup className="media-surface media-tooltip">全屏</Tooltip.Popup>
-              </Tooltip.Root>
+                    <Tooltip.Popup className="media-surface media-tooltip">网页全屏</Tooltip.Popup>
+                  </Tooltip.Root>
+                )}
+
+                <Tooltip.Root side="top">
+                  <Tooltip.Trigger
+                    render={
+                      <FullscreenButton
+                        className="media-button--fullscreen"
+                        render={(props, state) => (
+                          <IconButton {...props}>
+                            {state.fullscreen ? (
+                              <Minimize className="media-icon size-[18px]" />
+                            ) : (
+                              <Maximize className="media-icon size-[18px]" />
+                            )}
+                          </IconButton>
+                        )}
+                      />
+                    }
+                  />
+                  <Tooltip.Popup className="media-surface media-tooltip">全屏</Tooltip.Popup>
+                </Tooltip.Root>
+              </div>
             </div>
           </Tooltip.Provider>
         </Controls.Root>

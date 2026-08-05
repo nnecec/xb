@@ -15,7 +15,7 @@ import { useAppSettings } from '@/lib/app-settings-store'
 import { cn } from '@/lib/utils'
 import type { FeedImage, FeedMixMediaItem } from '@/lib/weibo/models/feed'
 
-import { VideoPlayer } from './media-player/video-player'
+import { buildMediaGalleryItems, type MediaGalleryItem } from './media-region/media-region-model'
 import { PhotoToolbar } from './photo-toolbar'
 
 interface ImageCarouselProps {
@@ -25,19 +25,11 @@ interface ImageCarouselProps {
   onOpen?: () => void
   singleMediaMaxWidth?: number
   variant?: 'inline' | 'card'
+  items?: MediaGalleryItem[]
+  initialStripIndex?: number
+  onStripIndexChange?: (index: number) => void
+  onVideoActivate?: (video: FeedMixMediaItem, index: number) => void
 }
-
-type GridItem =
-  | {
-      kind: 'image'
-      id: string
-      image: FeedImage
-    }
-  | {
-      kind: 'video'
-      id: string
-      video: FeedMixMediaItem
-    }
 
 const LONG_IMAGE_RATIO = 2.6
 
@@ -54,7 +46,7 @@ function legacyGridClassName(count: number) {
   return 'grid-cols-3 max-w-[650px]'
 }
 
-function intrinsicMediaRatio(item: GridItem) {
+function intrinsicMediaRatio(item: MediaGalleryItem) {
   if (item.kind === 'video') {
     return item.video.videoOrientation === 'vertical' ? 4 / 5 : 16 / 9
   }
@@ -67,7 +59,7 @@ function intrinsicMediaRatio(item: GridItem) {
   return 1
 }
 
-function mediaRatio(item: GridItem, total: number, horizontal: boolean) {
+function mediaRatio(item: MediaGalleryItem, total: number, horizontal: boolean) {
   if (horizontal || total === 1) return intrinsicMediaRatio(item)
   return 1
 }
@@ -233,10 +225,13 @@ function ImagePhotoView({ image, children }: { image: FeedImage; children: React
 export const ImageCarousel = memo(function ImageCarousel({
   images,
   mixMediaItems,
-  downloadFilename,
   onOpen,
   singleMediaMaxWidth,
   variant = 'inline',
+  items,
+  initialStripIndex = 0,
+  onStripIndexChange,
+  onVideoActivate,
 }: ImageCarouselProps) {
   const container = React.useMemo(() => getUiPortalContainer(), [])
   const darkModeImageDim = useAppSettings((s) => s.darkModeImageDim)
@@ -245,7 +240,7 @@ export const ImageCarousel = memo(function ImageCarousel({
   const cardGridLimit = useAppSettings((s) => s.weiboCardMultiMediaGridLimit)
   const cardGridMaxWidth = useAppSettings((s) => s.weiboCardMultiMediaGridMaxWidth)
   const cardStripHeight = useAppSettings((s) => s.weiboCardMultiMediaStripHeight)
-  const [activeStripIndex, setActiveStripIndex] = React.useState(0)
+  const [activeStripIndex, setActiveStripIndex] = React.useState(initialStripIndex)
   const [isStripDragging, setIsStripDragging] = React.useState(false)
   const suppressNextStripClickRef = React.useRef(false)
   const pointerStartXRef = React.useRef<number | null>(null)
@@ -261,24 +256,10 @@ export const ImageCarousel = memo(function ImageCarousel({
     if (clearClickGuard) suppressNextStripClickRef.current = false
   }, [])
 
-  const gridItems = React.useMemo<GridItem[]>(() => {
-    const items: GridItem[] = images.map((image) => ({
-      kind: 'image',
-      id: image.id,
-      image,
-    }))
-
-    for (const item of mixMediaItems ?? []) {
-      if (item.type === 'pic' && item.image) {
-        items.push({ kind: 'image', id: item.id, image: item.image })
-      }
-      if (item.type === 'video') {
-        items.push({ kind: 'video', id: item.id, video: item })
-      }
-    }
-
-    return items
-  }, [images, mixMediaItems])
+  const gridItems = React.useMemo(
+    () => items ?? buildMediaGalleryItems(images, mixMediaItems),
+    [images, items, mixMediaItems],
+  )
 
   const usesCardLayout = variant === 'card' && gridItems.length > 1
   const horizontal = usesCardLayout && cardLayout === 'horizontal'
@@ -289,6 +270,7 @@ export const ImageCarousel = memo(function ImageCarousel({
       dragFree: motionEnabled,
       containScroll: 'trimSnaps',
       loop: false,
+      startIndex: initialStripIndex,
     },
     [WheelGesturesPlugin({ wheelDraggingClass: '' })],
   )
@@ -310,7 +292,11 @@ export const ImageCarousel = memo(function ImageCarousel({
       clearStripDrag()
       return
     }
-    const updateIndex = () => setActiveStripIndex(emblaApi.selectedScrollSnap())
+    const updateIndex = () => {
+      const index = emblaApi.selectedScrollSnap()
+      setActiveStripIndex(index)
+      onStripIndexChange?.(index)
+    }
     const handleWindowRelease = (event: PointerEvent) => {
       if (event.pointerId !== activePointerIdRef.current) return
       clearStripDrag()
@@ -333,13 +319,14 @@ export const ImageCarousel = memo(function ImageCarousel({
       window.removeEventListener('blur', handleWindowBlur)
       clearStripDrag()
     }
-  }, [clearStripDrag, emblaApi, horizontal])
+  }, [clearStripDrag, emblaApi, horizontal, onStripIndexChange])
 
   React.useEffect(() => {
     if (horizontal && gridItems.length > 0) return
     clearStripDrag()
     setActiveStripIndex(0)
-  }, [clearStripDrag, gridItems.length, horizontal])
+    onStripIndexChange?.(0)
+  }, [clearStripDrag, gridItems.length, horizontal, onStripIndexChange])
 
   React.useEffect(() => {
     const root = emblaRootRef.current
@@ -373,6 +360,7 @@ export const ImageCarousel = memo(function ImageCarousel({
     event.preventDefault()
     const clampedIndex = Math.min(Math.max(nextIndex, 0), gridItems.length - 1)
     setActiveStripIndex(clampedIndex)
+    onStripIndexChange?.(clampedIndex)
     emblaApi?.scrollTo(clampedIndex)
   }
 
@@ -535,50 +523,19 @@ export const ImageCarousel = memo(function ImageCarousel({
                       )}
                     </ImagePhotoView>
                   ) : (
-                    <PhotoView
-                      width={item.video.videoOrientation === 'vertical' ? 600 : 960}
-                      height={item.video.videoOrientation === 'vertical' ? 800 : 540}
-                      render={({ attrs }) => (
-                        <div
-                          {...attrs}
-                          className="flex h-full w-full items-center justify-center px-4"
-                          onMouseDown={(event) => {
-                            event.preventDefault()
-                            event.stopPropagation()
-                          }}
-                          onClick={(event) => {
-                            event.preventDefault()
-                            event.stopPropagation()
-                          }}
-                          onPointerDown={(event) => {
-                            event.preventDefault()
-                            event.stopPropagation()
-                          }}
-                        >
-                          <div
-                            className={cn(
-                              'bg-background w-full overflow-hidden rounded-xl',
-                              item.video.videoOrientation === 'vertical'
-                                ? 'max-w-[560px]'
-                                : 'max-w-[860px]',
-                            )}
-                          >
-                            <AspectRatio
-                              ratio={item.video.videoOrientation === 'vertical' ? 4 / 5 : 16 / 9}
-                            >
-                              <VideoPlayer
-                                progressiveSrc={item.video.videoStreamUrl ?? ''}
-                                poster={item.video.videoCoverUrl}
-                                dash={item.video.videoDash}
-                                videoOrientation={item.video.videoOrientation}
-                                hideInlineFullScreen={true}
-                                downloadUrl={item.video.videoDownloadUrl}
-                                downloadFilename={downloadFilename ?? item.video.videoTitle}
-                              />
-                            </AspectRatio>
-                          </div>
-                        </div>
-                      )}
+                    <button
+                      type="button"
+                      data-media-video-id={item.id}
+                      aria-label={
+                        item.video.videoTitle ? `播放视频：${item.video.videoTitle}` : '播放视频'
+                      }
+                      className="block h-full w-full text-left"
+                      onClick={(event) => {
+                        event.preventDefault()
+                        event.stopPropagation()
+                        onOpen?.()
+                        onVideoActivate?.(item.video, index)
+                      }}
                     >
                       <AspectRatio
                         ratio={ratio}
@@ -610,7 +567,7 @@ export const ImageCarousel = memo(function ImageCarousel({
                           <RemainingMediaOverlay count={itemRemainingCount} />
                         ) : null}
                       </AspectRatio>
-                    </PhotoView>
+                    </button>
                   )}
                 </div>
               )

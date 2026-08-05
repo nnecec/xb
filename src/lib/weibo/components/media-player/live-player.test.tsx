@@ -1,4 +1,4 @@
-import { cleanup, render } from '@testing-library/react'
+import { cleanup, fireEvent, render } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import { LivePlayer } from './live-player'
@@ -72,6 +72,22 @@ describe('LivePlayer', () => {
   })
 
   describe('rendering', () => {
+    it('uses the Video.js skin control hierarchy after loading', () => {
+      render(
+        <LivePlayer
+          streamUrl="https://example.com/live.m3u8"
+          coverUrl="https://example.com/cover.jpg"
+          liveStatus={1}
+        />,
+      )
+
+      fireEvent.pointerDown(document.querySelector('video')!)
+
+      const controlsRoot = document.querySelector('.media-controls--root')
+      expect(controlsRoot).toBeInTheDocument()
+      expect(controlsRoot?.querySelector('.media-controls--primary')).toBeInTheDocument()
+    })
+
     it('renders with coverUrl as poster', () => {
       render(
         <LivePlayer

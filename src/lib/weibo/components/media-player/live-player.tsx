@@ -213,144 +213,148 @@ export function LivePlayer({ streamUrl, coverUrl, liveStatus, replayUrl = '' }: 
           />
           {isLive && !shouldLoad && <LiveOverlay isPlaying={false} onPlay={handlePlay} />}
           {shouldLoad && (
-            <Controls.Root className="media-surface media-controls">
-              <div className="media-button-group">
-                <PlayButton
-                  className="media-button--play"
-                  render={(props, state) => (
-                    <IconButton {...props}>
-                      {state.paused || state.ended ? (
-                        <Play className="media-icon size-[18px] fill-current" />
-                      ) : (
-                        <Pause className="media-icon size-[18px] fill-current" />
-                      )}
-                    </IconButton>
-                  )}
-                />
-              </div>
+            <Controls.Root className="media-surface media-controls media-controls--root">
+              <div className="media-surface media-controls media-controls--primary">
+                <div className="media-button-group">
+                  <PlayButton
+                    className="media-button--play"
+                    render={(props, state) => (
+                      <IconButton {...props}>
+                        {state.paused || state.ended ? (
+                          <Play className="media-icon size-[18px] fill-current" />
+                        ) : (
+                          <Pause className="media-icon size-[18px] fill-current" />
+                        )}
+                      </IconButton>
+                    )}
+                  />
+                </div>
 
-              <div className="media-time-controls">
-                <span className="media-time">LIVE</span>
-              </div>
+                <div className="media-time-controls">
+                  <span className="media-time">LIVE</span>
+                </div>
 
-              <div className="media-button-group">
-                <VolumeControl />
+                <div className="media-button-group">
+                  <VolumeControl />
 
-                <PiPButton
-                  className="media-button--pip"
-                  render={(props, state) => (
-                    <IconButton
-                      {...props}
-                      aria-label={state.pip ? '退出画中画' : '进入画中画'}
-                      disabled={state.availability !== 'available'}
-                    >
-                      {state.pip ? (
-                        <PictureInPicture className="media-icon size-[18px]" />
-                      ) : (
-                        <PictureInPicture2 className="media-icon size-[18px]" />
-                      )}
-                    </IconButton>
-                  )}
-                />
+                  <PiPButton
+                    className="media-button--pip"
+                    render={(props, state) => (
+                      <IconButton
+                        {...props}
+                        aria-label={state.pip ? '退出画中画' : '进入画中画'}
+                        disabled={state.availability !== 'available'}
+                      >
+                        {state.pip ? (
+                          <PictureInPicture className="media-icon size-[18px]" />
+                        ) : (
+                          <PictureInPicture2 className="media-icon size-[18px]" />
+                        )}
+                      </IconButton>
+                    )}
+                  />
 
-                <IconButton
-                  onClick={() => setInlineFullscreen(!inlineFullscreen)}
-                  aria-label={inlineFullscreen ? '退出网页内全屏' : '网页内全屏'}
-                >
-                  {inlineFullscreen ? (
-                    <Shrink className="media-icon size-[18px]" />
-                  ) : (
-                    <Expand className="media-icon size-[18px]" />
-                  )}
-                </IconButton>
+                  <IconButton
+                    onClick={() => setInlineFullscreen(!inlineFullscreen)}
+                    aria-label={inlineFullscreen ? '退出网页内全屏' : '网页内全屏'}
+                  >
+                    {inlineFullscreen ? (
+                      <Shrink className="media-icon size-[18px]" />
+                    ) : (
+                      <Expand className="media-icon size-[18px]" />
+                    )}
+                  </IconButton>
 
-                <FullscreenButton
-                  className="media-button--fullscreen"
-                  render={(props, state) => (
-                    <IconButton {...props}>
-                      {state.fullscreen ? (
-                        <Minimize className="media-icon size-[18px]" />
-                      ) : (
-                        <Maximize className="media-icon size-[18px]" />
-                      )}
-                    </IconButton>
-                  )}
-                />
+                  <FullscreenButton
+                    className="media-button--fullscreen"
+                    render={(props, state) => (
+                      <IconButton {...props}>
+                        {state.fullscreen ? (
+                          <Minimize className="media-icon size-[18px]" />
+                        ) : (
+                          <Maximize className="media-icon size-[18px]" />
+                        )}
+                      </IconButton>
+                    )}
+                  />
+                </div>
               </div>
             </Controls.Root>
           )}
           {isReplay && (
-            <Controls.Root className="media-surface media-controls">
-              <div className="media-button-group">
-                <PlayButton
-                  className="media-button--play"
-                  render={(props, state) => (
-                    <IconButton {...props}>
-                      {state.paused || state.ended ? (
-                        <Play className="media-icon size-[18px] fill-current" />
-                      ) : (
-                        <Pause className="media-icon size-[18px] fill-current" />
-                      )}
-                    </IconButton>
-                  )}
-                />
-              </div>
+            <Controls.Root className="media-surface media-controls media-controls--root">
+              <div className="media-surface media-controls media-controls--primary">
+                <div className="media-button-group">
+                  <PlayButton
+                    className="media-button--play"
+                    render={(props, state) => (
+                      <IconButton {...props}>
+                        {state.paused || state.ended ? (
+                          <Play className="media-icon size-[18px] fill-current" />
+                        ) : (
+                          <Pause className="media-icon size-[18px] fill-current" />
+                        )}
+                      </IconButton>
+                    )}
+                  />
+                </div>
 
-              <div className="media-time-controls">
-                <Time.Value type="current" className="media-time" />
-                <TimeSlider.Root className="media-slider">
-                  <TimeSlider.Track className="media-slider__track">
-                    <TimeSlider.Fill className="media-slider__fill" />
-                    <TimeSlider.Buffer className="media-slider__buffer" />
-                  </TimeSlider.Track>
-                  <TimeSlider.Thumb className="media-slider__thumb" />
-                </TimeSlider.Root>
-                <Time.Value type="duration" className="media-time" />
-              </div>
+                <div className="media-time-controls">
+                  <Time.Value type="current" className="media-time" />
+                  <TimeSlider.Root className="media-slider">
+                    <TimeSlider.Track className="media-slider__track">
+                      <TimeSlider.Fill className="media-slider__fill" />
+                      <TimeSlider.Buffer className="media-slider__buffer" />
+                    </TimeSlider.Track>
+                    <TimeSlider.Thumb className="media-slider__thumb" />
+                  </TimeSlider.Root>
+                  <Time.Value type="duration" className="media-time" />
+                </div>
 
-              <div className="media-button-group">
-                <VolumeControl />
+                <div className="media-button-group">
+                  <VolumeControl />
 
-                <PiPButton
-                  className="media-button--pip"
-                  render={(props, state) => (
-                    <IconButton
-                      {...props}
-                      aria-label={state.pip ? '退出画中画' : '进入画中画'}
-                      disabled={state.availability !== 'available'}
-                    >
-                      {state.pip ? (
-                        <PictureInPicture className="media-icon size-[18px]" />
-                      ) : (
-                        <PictureInPicture2 className="media-icon size-[18px]" />
-                      )}
-                    </IconButton>
-                  )}
-                />
+                  <PiPButton
+                    className="media-button--pip"
+                    render={(props, state) => (
+                      <IconButton
+                        {...props}
+                        aria-label={state.pip ? '退出画中画' : '进入画中画'}
+                        disabled={state.availability !== 'available'}
+                      >
+                        {state.pip ? (
+                          <PictureInPicture className="media-icon size-[18px]" />
+                        ) : (
+                          <PictureInPicture2 className="media-icon size-[18px]" />
+                        )}
+                      </IconButton>
+                    )}
+                  />
 
-                <IconButton
-                  onClick={() => setInlineFullscreen(!inlineFullscreen)}
-                  aria-label={inlineFullscreen ? '退出网页内全屏' : '网页内全屏'}
-                >
-                  {inlineFullscreen ? (
-                    <Shrink className="media-icon size-[18px]" />
-                  ) : (
-                    <Expand className="media-icon size-[18px]" />
-                  )}
-                </IconButton>
+                  <IconButton
+                    onClick={() => setInlineFullscreen(!inlineFullscreen)}
+                    aria-label={inlineFullscreen ? '退出网页内全屏' : '网页内全屏'}
+                  >
+                    {inlineFullscreen ? (
+                      <Shrink className="media-icon size-[18px]" />
+                    ) : (
+                      <Expand className="media-icon size-[18px]" />
+                    )}
+                  </IconButton>
 
-                <FullscreenButton
-                  className="media-button--fullscreen"
-                  render={(props, state) => (
-                    <IconButton {...props}>
-                      {state.fullscreen ? (
-                        <Minimize className="media-icon size-[18px]" />
-                      ) : (
-                        <Maximize className="media-icon size-[18px]" />
-                      )}
-                    </IconButton>
-                  )}
-                />
+                  <FullscreenButton
+                    className="media-button--fullscreen"
+                    render={(props, state) => (
+                      <IconButton {...props}>
+                        {state.fullscreen ? (
+                          <Minimize className="media-icon size-[18px]" />
+                        ) : (
+                          <Maximize className="media-icon size-[18px]" />
+                        )}
+                      </IconButton>
+                    )}
+                  />
+                </div>
               </div>
             </Controls.Root>
           )}
