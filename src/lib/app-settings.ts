@@ -192,9 +192,7 @@ export interface AppSettings {
   weiboCardShowPublishInfo: boolean
   weiboCardShowTitleBadge: boolean
   weiboCardShowInteractionCounts: boolean
-  weiboCardImageDisplay: ContentDisplay
-  weiboCardVideoDisplay: ContentDisplay
-  weiboCardAudioDisplay: ContentDisplay
+  weiboCardMediaDisplay: ContentDisplay
   weiboCardSingleImageMaxWidth: number
   weiboCardSingleVideoMaxWidth: number
   weiboCardMultiMediaLayout: WeiboCardMultiMediaLayout
@@ -294,9 +292,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   weiboCardShowPublishInfo: true,
   weiboCardShowTitleBadge: true,
   weiboCardShowInteractionCounts: true,
-  weiboCardImageDisplay: 'expanded',
-  weiboCardVideoDisplay: 'expanded',
-  weiboCardAudioDisplay: 'expanded',
+  weiboCardMediaDisplay: 'expanded',
   weiboCardSingleImageMaxWidth: DEFAULT_WEIBO_CARD_SINGLE_IMAGE_MAX_WIDTH,
   weiboCardSingleVideoMaxWidth: DEFAULT_WEIBO_CARD_SINGLE_VIDEO_MAX_WIDTH,
   weiboCardMultiMediaLayout: 'grid',
@@ -726,15 +722,9 @@ export function normalizeAppSettings(value: unknown): AppSettings {
       typeof candidate.weiboCardShowInteractionCounts === 'boolean'
         ? candidate.weiboCardShowInteractionCounts
         : DEFAULT_APP_SETTINGS.weiboCardShowInteractionCounts,
-    weiboCardImageDisplay: isContentDisplay(candidate.weiboCardImageDisplay)
-      ? candidate.weiboCardImageDisplay
-      : DEFAULT_APP_SETTINGS.weiboCardImageDisplay,
-    weiboCardVideoDisplay: isContentDisplay(candidate.weiboCardVideoDisplay)
-      ? candidate.weiboCardVideoDisplay
-      : DEFAULT_APP_SETTINGS.weiboCardVideoDisplay,
-    weiboCardAudioDisplay: isContentDisplay(candidate.weiboCardAudioDisplay)
-      ? candidate.weiboCardAudioDisplay
-      : DEFAULT_APP_SETTINGS.weiboCardAudioDisplay,
+    weiboCardMediaDisplay: isContentDisplay(candidate.weiboCardMediaDisplay)
+      ? candidate.weiboCardMediaDisplay
+      : DEFAULT_APP_SETTINGS.weiboCardMediaDisplay,
     weiboCardSingleImageMaxWidth: normalizeSteppedNumber(
       candidate.weiboCardSingleImageMaxWidth,
       WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_MIN,

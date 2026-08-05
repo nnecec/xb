@@ -218,8 +218,7 @@ describe('FeedCard', () => {
     const store = getAppSettingsStore()
     store.setState({
       weiboCardShowAvatar: false,
-      weiboCardImageDisplay: 'collapsed',
-      weiboCardVideoDisplay: 'collapsed',
+      weiboCardMediaDisplay: 'collapsed',
     })
 
     renderCard({

@@ -88,9 +88,7 @@ export const FeedCard = memo(function FeedCard({
     weiboCardShowPublishInfo,
     weiboCardShowTitleBadge,
     weiboCardShowInteractionCounts,
-    weiboCardImageDisplay,
-    weiboCardVideoDisplay,
-    weiboCardAudioDisplay,
+    weiboCardMediaDisplay,
     weiboCardSingleImageMaxWidth,
     weiboCardSingleVideoMaxWidth,
   } = useAppSettings(
@@ -106,9 +104,7 @@ export const FeedCard = memo(function FeedCard({
       weiboCardShowPublishInfo: s.weiboCardShowPublishInfo,
       weiboCardShowTitleBadge: s.weiboCardShowTitleBadge,
       weiboCardShowInteractionCounts: s.weiboCardShowInteractionCounts,
-      weiboCardImageDisplay: s.weiboCardImageDisplay,
-      weiboCardVideoDisplay: s.weiboCardVideoDisplay,
-      weiboCardAudioDisplay: s.weiboCardAudioDisplay,
+      weiboCardMediaDisplay: s.weiboCardMediaDisplay,
       weiboCardSingleImageMaxWidth: s.weiboCardSingleImageMaxWidth,
       weiboCardSingleVideoMaxWidth: s.weiboCardSingleVideoMaxWidth,
     })),
@@ -455,14 +451,14 @@ export const FeedCard = memo(function FeedCard({
             isLongTextLoading={isLongTextLoading}
             hasLongTextError={hasLongTextError}
             onLoadLongText={onLoadLongText}
-            imageDisplay={weiboCardImageDisplay}
+            imageDisplay={weiboCardMediaDisplay}
           />
 
           <FeedCardMediaContent
             item={resolvedItem}
-            imageDisplay={weiboCardImageDisplay}
-            videoDisplay={weiboCardVideoDisplay}
-            audioDisplay={weiboCardAudioDisplay}
+            imageDisplay={weiboCardMediaDisplay}
+            videoDisplay={weiboCardMediaDisplay}
+            audioDisplay={weiboCardMediaDisplay}
             singleImageMaxWidth={weiboCardSingleImageMaxWidth}
             singleVideoMaxWidth={weiboCardSingleVideoMaxWidth}
             downloadFilename={getMediaDownloadFilename(resolvedItem)}
@@ -493,9 +489,9 @@ export const FeedCard = memo(function FeedCard({
               showTimestamp={weiboCardShowTimestamp}
               showPublishInfo={weiboCardShowPublishInfo}
               showInteractionCounts={weiboCardShowInteractionCounts}
-              imageDisplay={weiboCardImageDisplay}
-              videoDisplay={weiboCardVideoDisplay}
-              audioDisplay={weiboCardAudioDisplay}
+              imageDisplay={weiboCardMediaDisplay}
+              videoDisplay={weiboCardMediaDisplay}
+              audioDisplay={weiboCardMediaDisplay}
               singleImageMaxWidth={weiboCardSingleImageMaxWidth}
               singleVideoMaxWidth={weiboCardSingleVideoMaxWidth}
             />
