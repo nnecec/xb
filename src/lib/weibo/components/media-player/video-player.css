@@ -59,22 +59,6 @@
 }
 
 /* ============================================
-   Controls Visibility
-   ============================================ */
-
-/* Follow the visibility state emitted by @videojs/react. */
-.media-default-skin--video .media-controls--root:not([data-visible]) {
-  opacity: 0 !important;
-  pointer-events: none !important;
-  scale: 0.9 !important;
-}
-
-/* Also hide the overlay scrim when user is not active */
-.media-default-skin--video .media-controls--root:not([data-visible]) ~ .media-overlay {
-  opacity: 0 !important;
-}
-
-/* ============================================
    Progress Bar Hover Expand
    ============================================ */
 

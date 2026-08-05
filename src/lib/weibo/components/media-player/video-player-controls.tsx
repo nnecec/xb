@@ -1,11 +1,9 @@
-import { selectPlaybackRate, selectPlayback } from '@videojs/core/dom'
+import { selectPlayback } from '@videojs/core/dom'
 import { MuteButton, Popover, usePlayer, VolumeSlider } from '@videojs/react'
 import { Play, Volume1, Volume2, VolumeX } from 'lucide-react'
-import { forwardRef, type ComponentPropsWithoutRef, useMemo, useState } from 'react'
+import { forwardRef, type ComponentPropsWithoutRef } from 'react'
 
 import { cn } from '@/lib/utils'
-
-import { AUTO_QUALITY_ID, formatPlaybackRate, type QualityOption } from './video-player-dash'
 
 const PlayerButton = forwardRef<
   HTMLButtonElement,
@@ -64,13 +62,6 @@ export function VolumeControl() {
   )
 }
 
-interface QualityControlProps {
-  value: string
-  qualities: QualityOption[]
-  disabled?: boolean
-  onValueChange: (value: string) => void
-}
-
 export function CenterPlayButton() {
   const playback = usePlayer(selectPlayback)
 
@@ -85,106 +76,5 @@ export function CenterPlayButton() {
         <Play className="ml-0.5 size-7 fill-current" />
       </button>
     </div>
-  )
-}
-
-export function QualityControl({
-  value,
-  qualities,
-  disabled = false,
-  onValueChange,
-}: QualityControlProps) {
-  const [open, setOpen] = useState(false)
-  const options = useMemo(() => [{ id: AUTO_QUALITY_ID, label: '自动' }, ...qualities], [qualities])
-
-  const currentLabel = options.find((option) => option.id === value)?.label ?? '自动'
-
-  return (
-    <Popover.Root open={open} onOpenChange={setOpen} side="top" align="start">
-      <Popover.Trigger
-        disabled={disabled}
-        render={(props) => (
-          <PlayerButton
-            {...props}
-            className="font-medium tracking-[0.01em]"
-            aria-label="选择清晰度"
-          >
-            {currentLabel}
-          </PlayerButton>
-        )}
-      />
-      <Popover.Popup className="media-surface media-popover rounded-2xl p-1.5">
-        <div className="flex min-w-24 flex-col gap-1">
-          {options.map((option) => {
-            const active = option.id === value
-
-            return (
-              <button
-                key={option.id}
-                type="button"
-                className={cn(
-                  'rounded-lg px-3 py-1.5 text-left text-xs transition-colors',
-                  active ? 'bg-white/18 text-white' : 'hover:bg-white/10',
-                )}
-                onClick={() => {
-                  onValueChange(option.id)
-                  setOpen(false)
-                }}
-              >
-                {option.label}
-              </button>
-            )
-          })}
-        </div>
-      </Popover.Popup>
-    </Popover.Root>
-  )
-}
-
-export function PlaybackRateControl() {
-  const playbackRateState = usePlayer(selectPlaybackRate)
-
-  if (!playbackRateState) {
-    return null
-  }
-
-  const { playbackRate, playbackRates, setPlaybackRate } = playbackRateState
-  const currentLabel = formatPlaybackRate(playbackRate)
-  const disabled = playbackRates.length === 0
-
-  return (
-    <Popover.Root side="top" align="end">
-      <Popover.Trigger
-        disabled={disabled}
-        render={(props) => (
-          <IconButton {...props} aria-label="选择播放速率">
-            {currentLabel}
-          </IconButton>
-        )}
-      />
-      <Popover.Popup className="media-surface media-popover rounded-2xl p-1.5">
-        <div className="flex min-w-24 flex-col gap-1">
-          {playbackRates.map((rate) => {
-            const active = rate === playbackRate
-
-            return (
-              <button
-                key={rate}
-                type="button"
-                className={cn(
-                  'rounded-lg px-3 py-1.5 text-left text-xs transition-colors',
-                  active ? 'bg-white/18 text-white' : 'hover:bg-white/10',
-                )}
-                onClick={() => {
-                  setPlaybackRate(rate)
-                }}
-              >
-                {formatPlaybackRate(rate)}
-              </button>
-            )
-          })}
-        </div>
-      </Popover.Popup>
-    </Popover.Root>
   )
 }
