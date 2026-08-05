@@ -307,6 +307,99 @@ describe('ImageCarousel', () => {
     expect(photoViewClickSpy).toHaveBeenCalledTimes(1)
   })
 
+  it('shows focus treatment only for keyboard focus', () => {
+    const store = getAppSettingsStore()
+    store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
+
+    render(<ImageCarousel variant="card" images={createImages(2)} />)
+
+    const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
+    expect(strip).toHaveClass('outline-none', 'focus-visible:ring-2')
+  })
+
+  it.each([
+    [
+      'pointercancel',
+      21,
+      (strip: HTMLElement, pointerId: number) => fireEvent.pointerCancel(strip, { pointerId }),
+    ],
+    [
+      'lostpointercapture',
+      22,
+      (strip: HTMLElement, pointerId: number) => fireEvent.lostPointerCapture(strip, { pointerId }),
+    ],
+  ])('clears dragging state on %s', (_name, pointerId, finish) => {
+    const store = getAppSettingsStore()
+    store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
+    render(<ImageCarousel variant="card" images={createImages(2)} />)
+
+    const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
+    const photoView = screen.getAllByTestId('photo-view')[0]!
+    Object.defineProperties(strip, {
+      setPointerCapture: { configurable: true, value: vi.fn() },
+      hasPointerCapture: { configurable: true, value: () => true },
+      releasePointerCapture: { configurable: true, value: vi.fn() },
+    })
+    fireEvent.pointerDown(photoView, { pointerId, pointerType: 'mouse', button: 0, clientX: 300 })
+    fireEvent.pointerMove(photoView, { pointerId, pointerType: 'mouse', clientX: 200 })
+    expect(strip).toHaveClass('cursor-grabbing')
+    finish(strip, pointerId)
+    expect(strip).toHaveClass('cursor-grab')
+  })
+
+  it('clears dragging state when the window blurs or pointer releases outside', () => {
+    const store = getAppSettingsStore()
+    store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
+    render(<ImageCarousel variant="card" images={createImages(2)} />)
+
+    const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
+    const photoView = screen.getAllByTestId('photo-view')[0]!
+    Object.defineProperties(strip, {
+      setPointerCapture: { configurable: true, value: vi.fn() },
+      hasPointerCapture: { configurable: true, value: () => true },
+      releasePointerCapture: { configurable: true, value: vi.fn() },
+    })
+    fireEvent.pointerDown(photoView, {
+      pointerId: 31,
+      pointerType: 'mouse',
+      button: 0,
+      clientX: 300,
+    })
+    fireEvent.pointerMove(photoView, { pointerId: 31, pointerType: 'mouse', clientX: 200 })
+    fireEvent.pointerUp(window, { pointerId: 31 })
+    expect(strip).toHaveClass('cursor-grab')
+    fireEvent.click(photoView)
+    expect(photoViewClickSpy).toHaveBeenCalledTimes(1)
+
+    fireEvent.pointerDown(photoView, {
+      pointerId: 32,
+      pointerType: 'mouse',
+      button: 0,
+      clientX: 300,
+    })
+    fireEvent.pointerMove(photoView, { pointerId: 32, pointerType: 'mouse', clientX: 200 })
+    fireEvent.blur(window)
+    expect(strip).toHaveClass('cursor-grab')
+  })
+
+  it('does not suppress a click after a below-threshold release', () => {
+    const store = getAppSettingsStore()
+    store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
+    render(<ImageCarousel variant="card" images={createImages(2)} />)
+
+    const photoView = screen.getAllByTestId('photo-view')[0]!
+    fireEvent.pointerDown(photoView, {
+      pointerId: 41,
+      pointerType: 'mouse',
+      button: 0,
+      clientX: 300,
+    })
+    fireEvent.pointerMove(photoView, { pointerId: 41, pointerType: 'mouse', clientX: 297 })
+    fireEvent.pointerUp(photoView, { pointerId: 41, pointerType: 'mouse', button: 0, clientX: 297 })
+    fireEvent.click(photoView)
+    expect(photoViewClickSpy).toHaveBeenCalledTimes(1)
+  })
+
   it('ignores non-primary mouse buttons when dragging the strip', () => {
     const store = getAppSettingsStore()
     store.setState({

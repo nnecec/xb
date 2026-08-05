@@ -44,6 +44,7 @@ interface StripDragState {
   startX: number
   startScrollLeft: number
   moved: boolean
+  element: HTMLDivElement
 }
 
 function isLongImage(image: FeedImage) {
@@ -331,6 +332,7 @@ export const ImageCarousel = memo(function ImageCarousel({
       startX: event.clientX,
       startScrollLeft: event.currentTarget.scrollLeft,
       moved: false,
+      element: event.currentTarget,
     }
     suppressNextStripClickRef.current = false
   }
@@ -352,17 +354,38 @@ export const ImageCarousel = memo(function ImageCarousel({
     event.currentTarget.scrollLeft = drag.startScrollLeft - deltaX
   }
 
+  function clearStripDrag(resetClickSuppression: boolean) {
+    const drag = stripDragRef.current
+    if (!drag) return
+
+    stripDragRef.current = null
+    if (resetClickSuppression) suppressNextStripClickRef.current = false
+    setIsStripDragging(false)
+    if (drag.element.hasPointerCapture?.(drag.pointerId)) {
+      drag.element.releasePointerCapture?.(drag.pointerId)
+    }
+  }
+
   function finishStripDrag(event: React.PointerEvent<HTMLDivElement>, cancelled = false) {
     const drag = stripDragRef.current
     if (!drag || drag.pointerId !== event.pointerId) return
-
-    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
-      event.currentTarget.releasePointerCapture?.(event.pointerId)
-    }
-    stripDragRef.current = null
-    if (cancelled) suppressNextStripClickRef.current = false
-    setIsStripDragging(false)
+    clearStripDrag(cancelled)
   }
+
+  React.useEffect(() => {
+    if (!horizontal) return
+
+    const handleWindowPointerUp = () => clearStripDrag(true)
+    const handleWindowBlur = () => clearStripDrag(true)
+    window.addEventListener('pointerup', handleWindowPointerUp)
+    window.addEventListener('pointercancel', handleWindowPointerUp)
+    window.addEventListener('blur', handleWindowBlur)
+    return () => {
+      window.removeEventListener('pointerup', handleWindowPointerUp)
+      window.removeEventListener('pointercancel', handleWindowPointerUp)
+      window.removeEventListener('blur', handleWindowBlur)
+    }
+  }, [horizontal])
 
   function handleStripClickCapture(event: React.MouseEvent<HTMLDivElement>) {
     if (!suppressNextStripClickRef.current) return
@@ -391,8 +414,9 @@ export const ImageCarousel = memo(function ImageCarousel({
             horizontal
               ? 'scrollbar-none flex max-h-[60vh] gap-2 overflow-x-auto overscroll-x-contain md:max-h-none'
               : 'grid w-full gap-2',
+            horizontal && (isStripDragging ? 'cursor-grabbing' : 'cursor-grab'),
             horizontal &&
-              (isStripDragging ? 'cursor-grabbing select-none' : 'cursor-grab select-none'),
+              'select-none outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
             !horizontal &&
               (usesCardLayout
                 ? cardGridClassName(visibleCount)
@@ -412,6 +436,7 @@ export const ImageCarousel = memo(function ImageCarousel({
           onClickCapture={horizontal ? handleStripClickCapture : undefined}
           onDragStart={horizontal ? (event) => event.preventDefault() : undefined}
           onKeyDown={horizontal ? handleStripKeyDown : undefined}
+          onLostPointerCapture={horizontal ? (event) => finishStripDrag(event, true) : undefined}
           onPointerCancel={horizontal ? (event) => finishStripDrag(event, true) : undefined}
           onPointerDown={horizontal ? handleStripPointerDown : undefined}
           onPointerMove={horizontal ? handleStripPointerMove : undefined}
