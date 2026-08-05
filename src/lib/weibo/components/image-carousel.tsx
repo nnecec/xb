@@ -250,6 +250,7 @@ export const ImageCarousel = memo(function ImageCarousel({
   const suppressNextStripClickRef = React.useRef(false)
   const pointerStartXRef = React.useRef<number | null>(null)
   const activePointerIdRef = React.useRef<number | null>(null)
+  const emblaRootRef = React.useRef<HTMLDivElement>(null)
   const reducedMotion = useReducedMotion()
   const motionEnabled = reducedMotion === false
 
@@ -288,9 +289,15 @@ export const ImageCarousel = memo(function ImageCarousel({
       dragFree: motionEnabled,
       containScroll: 'trimSnaps',
       loop: false,
-      watchDrag: motionEnabled ? undefined : false,
     },
     [WheelGesturesPlugin({ wheelDraggingClass: '' })],
+  )
+  const setEmblaRootRef = React.useCallback(
+    (node: HTMLDivElement | null) => {
+      emblaRootRef.current = node
+      emblaRef(node)
+    },
+    [emblaRef],
   )
   const visibleCount =
     usesCardLayout && cardLayout === 'grid'
@@ -333,6 +340,23 @@ export const ImageCarousel = memo(function ImageCarousel({
     clearStripDrag()
     setActiveStripIndex(0)
   }, [clearStripDrag, gridItems.length, horizontal])
+
+  React.useEffect(() => {
+    const root = emblaRootRef.current
+    if (!emblaApi || !horizontal || !root) return
+
+    const handleShiftWheel = (event: WheelEvent) => {
+      const horizontalDeltaIsDominant = Math.abs(event.deltaX) > Math.abs(event.deltaY)
+      if (!event.shiftKey || event.deltaY === 0 || horizontalDeltaIsDominant) return
+
+      event.preventDefault()
+      if (event.deltaY > 0) emblaApi.scrollNext()
+      else emblaApi.scrollPrev()
+    }
+
+    root.addEventListener('wheel', handleShiftWheel, { passive: false })
+    return () => root.removeEventListener('wheel', handleShiftWheel)
+  }, [emblaApi, horizontal])
 
   if (gridItems.length === 0) {
     return null
@@ -417,7 +441,7 @@ export const ImageCarousel = memo(function ImageCarousel({
                   ? { maxWidth: `${singleMediaMaxWidth}px` }
                   : undefined
           }
-          ref={horizontal ? emblaRef : undefined}
+          ref={horizontal ? setEmblaRootRef : undefined}
           onClickCapture={horizontal ? handleStripClickCapture : undefined}
           onDragStart={horizontal ? (event) => event.preventDefault() : undefined}
           onKeyDown={horizontal ? handleStripKeyDown : undefined}

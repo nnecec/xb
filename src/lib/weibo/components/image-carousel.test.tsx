@@ -75,6 +75,8 @@ const {
       selectedIndex = index
       emitEmblaEvent('select')
     }),
+    scrollNext: vi.fn(),
+    scrollPrev: vi.fn(),
     selectedScrollSnap: vi.fn(() => selectedIndex),
   }
   const emblaRef = vi.fn()
@@ -520,7 +522,7 @@ describe('ImageCarousel', () => {
     expect(screen.queryByTestId('media-strip-pressable')).not.toBeInTheDocument()
   })
 
-  it('disables Embla drag-free motion when reduced motion is requested', () => {
+  it('keeps Embla drag enabled but disables drag-free motion when reduced motion is requested', () => {
     reducedMotionState.current = true
     const store = getAppSettingsStore()
     store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
@@ -528,9 +530,29 @@ describe('ImageCarousel', () => {
     render(<ImageCarousel variant="card" images={createImages(2)} />)
 
     expect(useEmblaCarouselMock).toHaveBeenCalledWith(
-      expect.objectContaining({ dragFree: false, watchDrag: false }),
+      expect.not.objectContaining({ watchDrag: false }),
       expect.any(Array),
     )
+    expect(useEmblaCarouselMock).toHaveBeenCalledWith(
+      expect.objectContaining({ dragFree: false }),
+      expect.any(Array),
+    )
+  })
+
+  it('maps Shift plus vertical wheel input to horizontal Embla navigation', () => {
+    const store = getAppSettingsStore()
+    store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
+    render(<ImageCarousel variant="card" images={createImages(2)} />)
+
+    const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
+    fireEvent.wheel(strip, { deltaY: 120, shiftKey: true })
+    expect(emblaApi.scrollNext).toHaveBeenCalledTimes(1)
+
+    fireEvent.wheel(strip, { deltaX: 120, deltaY: 120, shiftKey: true })
+    expect(emblaApi.scrollNext).toHaveBeenCalledTimes(2)
+
+    fireEvent.wheel(strip, { deltaY: -120, shiftKey: true })
+    expect(emblaApi.scrollPrev).toHaveBeenCalledTimes(1)
   })
 
   it('ignores non-primary mouse buttons when dragging the strip', () => {
