@@ -245,6 +245,7 @@ export const ImageCarousel = memo(function ImageCarousel({
   const suppressNextStripClickRef = React.useRef(false)
   const pointerStartXRef = React.useRef<number | null>(null)
   const activePointerIdRef = React.useRef<number | null>(null)
+  const activePointerTypeRef = React.useRef<string | null>(null)
   const emblaRootRef = React.useRef<HTMLDivElement>(null)
   const reducedMotion = useReducedMotion()
   const motionEnabled = reducedMotion === false
@@ -253,7 +254,22 @@ export const ImageCarousel = memo(function ImageCarousel({
     setIsStripDragging(false)
     pointerStartXRef.current = null
     activePointerIdRef.current = null
+    activePointerTypeRef.current = null
     if (clearClickGuard) suppressNextStripClickRef.current = false
+  }, [])
+
+  const releaseEmblaDrag = React.useCallback(() => {
+    const root = emblaRootRef.current
+    if (!root || activePointerIdRef.current === null || activePointerTypeRef.current !== 'mouse') {
+      return
+    }
+
+    root.ownerDocument.dispatchEvent(
+      new MouseEvent('mouseup', {
+        bubbles: true,
+        cancelable: true,
+      }),
+    )
   }, [])
 
   const gridItems = React.useMemo(
@@ -299,10 +315,16 @@ export const ImageCarousel = memo(function ImageCarousel({
     }
     const handleWindowRelease = (event: PointerEvent) => {
       if (event.pointerId !== activePointerIdRef.current) return
-      clearStripDrag()
+      if (event.type === 'pointercancel') releaseEmblaDrag()
+      const target = event.target
+      const releasedInside = target instanceof Node && emblaRootRef.current?.contains(target)
+      clearStripDrag(!releasedInside)
     }
     const handleEmblaPointerUp = () => clearStripDrag(false)
-    const handleWindowBlur = () => clearStripDrag()
+    const handleWindowBlur = () => {
+      releaseEmblaDrag()
+      clearStripDrag()
+    }
     emblaApi.on('select', updateIndex)
     emblaApi.on('reInit', updateIndex)
     emblaApi.on('pointerUp', handleEmblaPointerUp)
@@ -319,7 +341,7 @@ export const ImageCarousel = memo(function ImageCarousel({
       window.removeEventListener('blur', handleWindowBlur)
       clearStripDrag()
     }
-  }, [clearStripDrag, emblaApi, horizontal, onStripIndexChange])
+  }, [clearStripDrag, emblaApi, horizontal, onStripIndexChange, releaseEmblaDrag])
 
   React.useEffect(() => {
     if (horizontal && gridItems.length > 0) return
@@ -333,16 +355,30 @@ export const ImageCarousel = memo(function ImageCarousel({
     if (!emblaApi || !horizontal || !root) return
 
     const handleShiftWheel = (event: WheelEvent) => {
-      const horizontalDeltaIsDominant = Math.abs(event.deltaX) > Math.abs(event.deltaY)
-      if (!event.shiftKey || event.deltaY === 0 || horizontalDeltaIsDominant) return
+      const verticalDeltaIsDominant = Math.abs(event.deltaY) > Math.abs(event.deltaX)
+      if (!event.shiftKey || event.deltaY === 0 || !verticalDeltaIsDominant) return
 
       event.preventDefault()
-      if (event.deltaY > 0) emblaApi.scrollNext()
-      else emblaApi.scrollPrev()
+      event.stopImmediatePropagation()
+      root.dispatchEvent(
+        new WheelEvent('wheel', {
+          bubbles: true,
+          cancelable: true,
+          composed: true,
+          deltaMode: event.deltaMode,
+          deltaX: event.deltaY,
+          deltaY: 0,
+          clientX: event.clientX,
+          clientY: event.clientY,
+          altKey: event.altKey,
+          ctrlKey: event.ctrlKey,
+          metaKey: event.metaKey,
+        }),
+      )
     }
 
-    root.addEventListener('wheel', handleShiftWheel, { passive: false })
-    return () => root.removeEventListener('wheel', handleShiftWheel)
+    root.addEventListener('wheel', handleShiftWheel, { capture: true, passive: false })
+    return () => root.removeEventListener('wheel', handleShiftWheel, true)
   }, [emblaApi, horizontal])
 
   if (gridItems.length === 0) {
@@ -369,6 +405,7 @@ export const ImageCarousel = memo(function ImageCarousel({
 
     pointerStartXRef.current = event.clientX
     activePointerIdRef.current = event.pointerId
+    activePointerTypeRef.current = event.pointerType
     suppressNextStripClickRef.current = false
   }
 
@@ -439,6 +476,7 @@ export const ImageCarousel = memo(function ImageCarousel({
             horizontal
               ? (event) => {
                   if (event.pointerId !== activePointerIdRef.current) return
+                  releaseEmblaDrag()
                   clearStripDrag()
                 }
               : undefined
@@ -447,6 +485,7 @@ export const ImageCarousel = memo(function ImageCarousel({
             horizontal
               ? (event) => {
                   if (event.pointerId !== activePointerIdRef.current) return
+                  releaseEmblaDrag()
                   clearStripDrag()
                 }
               : undefined

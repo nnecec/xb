@@ -363,6 +363,11 @@ describe('ImageCarousel', () => {
     })
     expect(strip).toHaveClass('cursor-grabbing')
 
+    firePointerEvent(strip, 'pointerup', {
+      pointerId: 7,
+      pointerType: 'mouse',
+      clientX: 220,
+    })
     act(() => emitEmblaEvent('pointerUp'))
     expect(strip).toHaveClass('cursor-grab')
 
@@ -452,6 +457,8 @@ describe('ImageCarousel', () => {
     fireEvent.click(photoView)
     expect(photoViewClickSpy).toHaveBeenCalledTimes(1)
 
+    const forcedMouseUp = vi.fn()
+    document.addEventListener('mouseup', forcedMouseUp)
     firePointerEvent(strip, 'pointerdown', {
       pointerId: 32,
       pointerType: 'mouse',
@@ -461,6 +468,8 @@ describe('ImageCarousel', () => {
     firePointerEvent(strip, 'pointermove', { pointerId: 32, pointerType: 'mouse', clientX: 200 })
     fireEvent.blur(window)
     expect(strip).toHaveClass('cursor-grab')
+    expect(forcedMouseUp).toHaveBeenCalledTimes(1)
+    document.removeEventListener('mouseup', forcedMouseUp)
   })
 
   it('resets drag and click suppression when horizontal layout is disabled', () => {
@@ -590,26 +599,31 @@ describe('ImageCarousel', () => {
     )
   })
 
-  it('maps Shift plus vertical wheel input to horizontal Embla navigation', () => {
+  it('normalizes Shift plus vertical wheel input for the Embla wheel gesture plugin', () => {
     const store = getAppSettingsStore()
     store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
     render(<ImageCarousel variant="card" images={createImages(2)} />)
 
     const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
-    fireEvent.wheel(strip, { deltaY: 120, shiftKey: true })
-    expect(emblaApi.scrollNext).toHaveBeenCalledTimes(1)
+    const normalizedEvents: WheelEvent[] = []
+    strip.addEventListener('wheel', (event) => {
+      if (!event.shiftKey) normalizedEvents.push(event)
+    })
 
-    fireEvent.wheel(strip, { deltaX: 120, deltaY: 120, shiftKey: true })
-    expect(emblaApi.scrollNext).toHaveBeenCalledTimes(2)
+    expect(fireEvent.wheel(strip, { deltaY: 120, shiftKey: true })).toBe(false)
+    expect(normalizedEvents).toHaveLength(1)
+    expect(normalizedEvents[0]).toMatchObject({ deltaX: 120, deltaY: 0, shiftKey: false })
+    expect(emblaApi.scrollNext).not.toHaveBeenCalled()
+    expect(emblaApi.scrollPrev).not.toHaveBeenCalled()
 
-    fireEvent.wheel(strip, { deltaY: -120, shiftKey: true })
-    expect(emblaApi.scrollPrev).toHaveBeenCalledTimes(1)
+    expect(fireEvent.wheel(strip, { deltaX: 120, deltaY: 0, shiftKey: true })).toBe(true)
+    expect(normalizedEvents).toHaveLength(1)
 
     expect(fireEvent.wheel(strip, { deltaY: 120 })).toBe(true)
-    expect(emblaApi.scrollNext).toHaveBeenCalledTimes(2)
+    expect(normalizedEvents).toHaveLength(2)
 
     expect(fireEvent.wheel(strip, { deltaX: 120, deltaY: 20, shiftKey: true })).toBe(true)
-    expect(emblaApi.scrollNext).toHaveBeenCalledTimes(2)
+    expect(normalizedEvents).toHaveLength(2)
   })
 
   it('ignores non-primary mouse buttons when dragging the strip', () => {
