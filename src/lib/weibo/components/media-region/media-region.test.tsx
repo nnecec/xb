@@ -7,7 +7,10 @@ import type { FeedItem } from '@/lib/weibo/models/feed'
 import { MediaRegion } from './media-region'
 import type { MediaGalleryItem } from './media-region-model'
 
-const { imageCarouselMock } = vi.hoisted(() => ({ imageCarouselMock: vi.fn() }))
+const { imageCarouselMock, inlineVideoPanelMock } = vi.hoisted(() => ({
+  imageCarouselMock: vi.fn(),
+  inlineVideoPanelMock: vi.fn(),
+}))
 
 vi.mock('@/lib/weibo/components/image-carousel', () => ({
   ImageCarousel: (props: {
@@ -44,31 +47,41 @@ vi.mock('./inline-video-panel', () => ({
   InlineVideoPanel: ({
     video,
     onBack,
+    onPlay,
     onPictureInPictureChange,
   }: {
     video: { id: string }
     onBack?: () => void
+    onPlay?: () => void
     onPictureInPictureChange?: (active: boolean) => void
-  }) => (
-    <div data-testid="inline-video">
-      {video.id}
-      {onPictureInPictureChange ? (
-        <button type="button" onClick={() => onPictureInPictureChange(true)}>
-          进入画中画
-        </button>
-      ) : null}
-      {onPictureInPictureChange ? (
-        <button type="button" onClick={() => onPictureInPictureChange(false)}>
-          退出画中画
-        </button>
-      ) : null}
-      {onBack ? (
-        <button type="button" onClick={onBack}>
-          返回媒体区域
-        </button>
-      ) : null}
-    </div>
-  ),
+  }) => {
+    inlineVideoPanelMock({ video, onBack, onPlay, onPictureInPictureChange })
+    return (
+      <div data-testid="inline-video">
+        {video.id}
+        {onPlay ? (
+          <button type="button" onClick={onPlay}>
+            播放视频
+          </button>
+        ) : null}
+        {onPictureInPictureChange ? (
+          <button type="button" onClick={() => onPictureInPictureChange(true)}>
+            进入画中画
+          </button>
+        ) : null}
+        {onPictureInPictureChange ? (
+          <button type="button" onClick={() => onPictureInPictureChange(false)}>
+            退出画中画
+          </button>
+        ) : null}
+        {onBack ? (
+          <button type="button" onClick={onBack}>
+            返回媒体区域
+          </button>
+        ) : null}
+      </div>
+    )
+  },
 }))
 
 const item = {
@@ -122,6 +135,7 @@ describe('MediaRegion', () => {
     })
     resetAppSettingsStoreForTest()
     imageCarouselMock.mockClear()
+    inlineVideoPanelMock.mockClear()
   })
 
   it('uses one collapsed media region for the complete ordered sequence', () => {
@@ -176,5 +190,29 @@ describe('MediaRegion', () => {
 
     fireEvent.click(screen.getByText('退出画中画'))
     expect(screen.queryByTestId('inline-video')).not.toBeInTheDocument()
+  })
+
+  it('renders a single playable video directly and reports its first play', () => {
+    const onOpen = vi.fn()
+    render(
+      <MediaRegion
+        item={{
+          ...item,
+          mixMediaInfo: [
+            {
+              type: 'video',
+              id: 'single-video',
+              videoStreamUrl: 'https://example.com/single.mp4',
+            },
+          ],
+        }}
+        onOpen={onOpen}
+      />,
+    )
+
+    expect(screen.getByTestId('inline-video')).toHaveTextContent('single-video')
+    expect(screen.queryByRole('button', { name: '返回媒体区域' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '播放视频' }))
+    expect(onOpen).toHaveBeenCalledTimes(1)
   })
 })

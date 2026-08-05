@@ -12,12 +12,14 @@ export function InlineVideoPanel({
   downloadFilename,
   maxWidth,
   onBack,
+  onPlay,
   onPictureInPictureChange,
 }: {
   video: FeedMixMediaItem
   downloadFilename?: string
   maxWidth?: number
   onBack?: () => void
+  onPlay?: () => void
   onPictureInPictureChange?: (active: boolean) => void
 }) {
   const vertical = video.videoOrientation === 'vertical'
@@ -44,6 +46,7 @@ export function InlineVideoPanel({
           videoOrientation={video.videoOrientation}
           downloadUrl={video.videoDownloadUrl}
           downloadFilename={downloadFilename ?? video.videoTitle}
+          onPlay={onPlay}
           onPictureInPictureChange={onPictureInPictureChange}
         />
       </AspectRatio>

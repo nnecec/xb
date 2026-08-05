@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { AspectRatio } from '@/components/ui/aspect-ratio'
 import { useAppSettings, useShallow } from '@/lib/app-settings-store'
@@ -109,6 +109,14 @@ export function MediaRegion({
   const stripIndexRef = useRef(0)
   const rootRef = useRef<HTMLDivElement>(null)
 
+  useEffect(() => {
+    setActiveVideo(null)
+    setFocusedViewVisible(false)
+    focusedViewVisibleRef.current = false
+    pictureInPictureActiveRef.current = false
+    stripIndexRef.current = 0
+  }, [region?.key])
+
   const handleStripIndexChange = useCallback((index: number) => {
     stripIndexRef.current = index
   }, [])
@@ -159,6 +167,7 @@ export function MediaRegion({
             video={singleVideo.video}
             downloadFilename={downloadFilename}
             maxWidth={region.singleMediaMaxWidth}
+            onPlay={onOpen}
           />
         ) : (
           <>
