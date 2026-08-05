@@ -8,8 +8,7 @@ import { browsingHistoryStore } from '@/lib/weibo/hooks/use-browsing-history'
 import type { FeedItem, FeedMedia, FeedMixMediaItem } from '@/lib/weibo/models/feed'
 
 import { AudioPlayerComponent } from '../media-player/audio-player'
-import { LivePlayer } from '../media-player/live-player'
-import { VideoPlayer } from '../media-player/video-player'
+import { VideoPlayback } from '../media-player/video-playback'
 import { InlineVideoPanel } from './inline-video-panel'
 import { buildMediaRegionModel, type MediaAsset, type MediaGalleryItem } from './media-region-model'
 
@@ -42,18 +41,34 @@ function StandaloneMedia({
   }
 
   if (media.type === 'live') {
+    const playbackMedia =
+      media.liveStatus === 1
+        ? {
+            kind: 'live' as const,
+            sessionId: `${item.id}:live`,
+            src: media.streamUrl,
+            poster: media.coverUrl ?? undefined,
+          }
+        : media.liveStatus === 3
+          ? {
+              kind: 'replay' as const,
+              sessionId: `${item.id}:replay`,
+              src: media.replayUrl ?? '',
+              poster: media.coverUrl ?? undefined,
+            }
+          : {
+              kind: 'unavailable' as const,
+              sessionId: `${item.id}:live-unavailable`,
+              poster: media.coverUrl ?? undefined,
+            }
+
     return (
       <div onClick={(event) => event.stopPropagation()}>
         <AspectRatio
           ratio={16 / 9}
           className="overflow-hidden rounded-xl outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
         >
-          <LivePlayer
-            streamUrl={media.streamUrl}
-            coverUrl={media.coverUrl ?? ''}
-            liveStatus={media.liveStatus ?? 0}
-            replayUrl={media.replayUrl}
-          />
+          <VideoPlayback media={playbackMedia} onPlay={handlePlay} />
         </AspectRatio>
       </div>
     )
@@ -69,12 +84,17 @@ function StandaloneMedia({
         ratio={media.videoOrientation === 'vertical' ? 4 / 3 : 16 / 9}
         className="overflow-hidden rounded-xl outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
       >
-        <VideoPlayer
-          progressiveSrc={media.streamUrl}
-          poster={media.coverUrl ?? undefined}
-          dash={media.dash}
-          downloadUrl={media.downloadUrl}
-          downloadFilename={downloadFilename}
+        <VideoPlayback
+          media={{
+            kind: 'video',
+            sessionId: `${item.id}:video`,
+            src: media.streamUrl,
+            poster: media.coverUrl ?? undefined,
+            dash: media.dash,
+          }}
+          download={
+            media.downloadUrl ? { url: media.downloadUrl, filename: downloadFilename } : undefined
+          }
           onPlay={handlePlay}
         />
       </AspectRatio>
@@ -165,6 +185,7 @@ export function MediaRegion({
         {singleVideo?.playable ? (
           <InlineVideoPanel
             video={singleVideo.video}
+            sessionId={`${item.id}:${singleVideo.id}:video`}
             downloadFilename={downloadFilename}
             maxWidth={region.singleMediaMaxWidth}
             onPlay={onOpen}
@@ -183,6 +204,7 @@ export function MediaRegion({
               >
                 <InlineVideoPanel
                   video={activeVideo}
+                  sessionId={`${item.id}:${activeVideo.id}:video`}
                   downloadFilename={downloadFilename}
                   maxWidth={region.singleMediaMaxWidth}
                   onBack={handleBack}

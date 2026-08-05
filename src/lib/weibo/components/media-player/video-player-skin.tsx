@@ -39,6 +39,7 @@ interface VideoPlayerSkinProps {
   mode?: VideoPlayerSkinMode
   controlsVisible?: boolean
   centerPlayVisible?: boolean
+  interactive?: boolean
   quality?: VideoQualitySettings
   download?: {
     loading: boolean
@@ -56,6 +57,7 @@ export function VideoPlayerSkin({
   mode = 'video',
   controlsVisible = true,
   centerPlayVisible = true,
+  interactive = true,
   quality,
   download,
   inlineFullscreen,
@@ -245,37 +247,41 @@ export function VideoPlayerSkin({
 
       <div className="media-overlay" />
 
-      <Hotkey keys="Space" action="togglePaused" />
-      <Hotkey keys="k" action="togglePaused" />
-      <Hotkey keys="m" action="toggleMuted" />
-      <Hotkey keys="f" action="toggleFullscreen" />
-      <Hotkey keys="i" action="togglePictureInPicture" />
-      {!isLive ? (
+      {interactive ? (
         <>
-          <Hotkey keys="c" action="toggleSubtitles" />
-          <Hotkey keys="ArrowRight" action="seekStep" value={5} />
-          <Hotkey keys="ArrowLeft" action="seekStep" value={-5} />
-          <Hotkey keys="l" action="seekStep" value={10} />
-          <Hotkey keys="j" action="seekStep" value={-10} />
-          <Hotkey keys="0-9" action="seekToPercent" />
-          <Hotkey keys="Home" action="seekToPercent" value={0} />
-          <Hotkey keys="End" action="seekToPercent" value={100} />
-          <Hotkey keys=">" action="speedUp" />
-          <Hotkey keys="<" action="speedDown" />
-        </>
-      ) : null}
-      <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
-      <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+          <Hotkey keys="Space" action="togglePaused" />
+          <Hotkey keys="k" action="togglePaused" />
+          <Hotkey keys="m" action="toggleMuted" />
+          <Hotkey keys="f" action="toggleFullscreen" />
+          <Hotkey keys="i" action="togglePictureInPicture" />
+          {!isLive ? (
+            <>
+              <Hotkey keys="c" action="toggleSubtitles" />
+              <Hotkey keys="ArrowRight" action="seekStep" value={5} />
+              <Hotkey keys="ArrowLeft" action="seekStep" value={-5} />
+              <Hotkey keys="l" action="seekStep" value={10} />
+              <Hotkey keys="j" action="seekStep" value={-10} />
+              <Hotkey keys="0-9" action="seekToPercent" />
+              <Hotkey keys="Home" action="seekToPercent" value={0} />
+              <Hotkey keys="End" action="seekToPercent" value={100} />
+              <Hotkey keys=">" action="speedUp" />
+              <Hotkey keys="<" action="speedDown" />
+            </>
+          ) : null}
+          <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
+          <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
 
-      <Gesture type="tap" action="togglePaused" pointer="mouse" region="center" />
-      <Gesture type="tap" action="toggleControls" pointer="touch" />
-      {!isLive ? (
-        <>
-          <Gesture type="doubletap" action="seekStep" value={-10} region="left" />
-          <Gesture type="doubletap" action="seekStep" value={10} region="right" />
+          <Gesture type="tap" action="togglePaused" pointer="mouse" region="center" />
+          <Gesture type="tap" action="toggleControls" pointer="touch" />
+          {!isLive ? (
+            <>
+              <Gesture type="doubletap" action="seekStep" value={-10} region="left" />
+              <Gesture type="doubletap" action="seekStep" value={10} region="right" />
+            </>
+          ) : null}
+          <Gesture type="doubletap" action="toggleFullscreen" region="center" />
         </>
       ) : null}
-      <Gesture type="doubletap" action="toggleFullscreen" region="center" />
     </Container>
   )
 }

@@ -5,10 +5,11 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { FeedMixMediaItem } from '@/lib/weibo/models/feed'
 
-import { VideoPlayer } from '../media-player/video-player'
+import { VideoPlayback } from '../media-player/video-playback'
 
 export function InlineVideoPanel({
   video,
+  sessionId,
   downloadFilename,
   maxWidth,
   onBack,
@@ -16,6 +17,7 @@ export function InlineVideoPanel({
   onPictureInPictureChange,
 }: {
   video: FeedMixMediaItem
+  sessionId: string
   downloadFilename?: string
   maxWidth?: number
   onBack?: () => void
@@ -39,13 +41,22 @@ export function InlineVideoPanel({
           'outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10',
         )}
       >
-        <VideoPlayer
-          progressiveSrc={video.videoStreamUrl ?? ''}
-          poster={video.videoCoverUrl}
-          dash={video.videoDash}
-          videoOrientation={video.videoOrientation}
-          downloadUrl={video.videoDownloadUrl}
-          downloadFilename={downloadFilename ?? video.videoTitle}
+        <VideoPlayback
+          media={{
+            kind: 'video',
+            sessionId,
+            src: video.videoStreamUrl ?? '',
+            poster: video.videoCoverUrl,
+            dash: video.videoDash,
+          }}
+          download={
+            video.videoDownloadUrl
+              ? {
+                  url: video.videoDownloadUrl,
+                  filename: downloadFilename ?? video.videoTitle,
+                }
+              : undefined
+          }
           onPlay={onPlay}
           onPictureInPictureChange={onPictureInPictureChange}
         />

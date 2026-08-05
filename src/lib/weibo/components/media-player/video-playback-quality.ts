@@ -1,5 +1,4 @@
 import type { MediaPlayerClass } from 'dashjs'
-import type { RefObject } from 'react'
 
 import type { FeedPlaybackSource } from '@/lib/weibo/models/feed'
 
@@ -10,18 +9,8 @@ export interface QualityOption {
   label: string
 }
 
-export interface PlaybackResumeState {
-  currentTime: number
-  playbackRate: number
-  shouldResume: boolean
-}
-
-export function formatPlaybackRate(rate: number) {
-  return `${rate}x`
-}
-
-export function applyVideoQuality(player: MediaPlayerClass, mode: string) {
-  if (mode === AUTO_QUALITY_ID) {
+export function applyDashQuality(player: MediaPlayerClass, qualityId: string) {
+  if (qualityId === AUTO_QUALITY_ID) {
     player.updateSettings({
       streaming: {
         abr: { autoSwitchBitrate: { video: true, audio: true } },
@@ -32,7 +21,7 @@ export function applyVideoQuality(player: MediaPlayerClass, mode: string) {
 
   const hasTarget = player
     .getRepresentationsByType('video')
-    .some((item) => String((item as { id?: string }).id ?? '') === mode)
+    .some((item) => String((item as { id?: string }).id ?? '') === qualityId)
 
   if (!hasTarget) {
     player.updateSettings({
@@ -49,7 +38,7 @@ export function applyVideoQuality(player: MediaPlayerClass, mode: string) {
         abr: { autoSwitchBitrate: { video: false, audio: true } },
       },
     })
-    player.setRepresentationForTypeById('video', mode, true)
+    player.setRepresentationForTypeById('video', qualityId, true)
   } catch {
     player.updateSettings({
       streaming: {
@@ -59,39 +48,19 @@ export function applyVideoQuality(player: MediaPlayerClass, mode: string) {
   }
 }
 
-export function destroyDashPlayer(
-  playerRef: RefObject<MediaPlayerClass | null>,
-  blobUrlRef: RefObject<string | null>,
-) {
-  if (playerRef.current) {
-    try {
-      playerRef.current.reset()
-      playerRef.current.destroy()
-    } catch {
-      // ignore destroy failures from dash internals
-    }
-    playerRef.current = null
-  }
-
-  if (blobUrlRef.current) {
-    URL.revokeObjectURL(blobUrlRef.current)
-    blobUrlRef.current = null
-  }
-}
-
-export function getPlaybackSrc({
-  progressiveSrc,
+export function getVariantSource({
+  fallbackSrc,
   qualityId,
   selectedIndex,
   sources,
 }: {
-  progressiveSrc: string
+  fallbackSrc: string
   qualityId: string
   selectedIndex: number
   sources: FeedPlaybackSource['sources']
 }) {
   if (sources.length === 0) {
-    return progressiveSrc
+    return fallbackSrc
   }
 
   if (qualityId !== AUTO_QUALITY_ID) {
@@ -101,5 +70,5 @@ export function getPlaybackSrc({
     }
   }
 
-  return sources[selectedIndex]?.url ?? sources[0]?.url ?? progressiveSrc
+  return sources[selectedIndex]?.url ?? sources[0]?.url ?? fallbackSrc
 }

@@ -46,16 +46,18 @@ vi.mock('@/lib/weibo/components/image-carousel', () => ({
 vi.mock('./inline-video-panel', () => ({
   InlineVideoPanel: ({
     video,
+    sessionId,
     onBack,
     onPlay,
     onPictureInPictureChange,
   }: {
     video: { id: string }
+    sessionId: string
     onBack?: () => void
     onPlay?: () => void
     onPictureInPictureChange?: (active: boolean) => void
   }) => {
-    inlineVideoPanelMock({ video, onBack, onPlay, onPictureInPictureChange })
+    inlineVideoPanelMock({ video, sessionId, onBack, onPlay, onPictureInPictureChange })
     return (
       <div data-testid="inline-video">
         {video.id}
@@ -211,6 +213,9 @@ describe('MediaRegion', () => {
     )
 
     expect(screen.getByTestId('inline-video')).toHaveTextContent('single-video')
+    expect(inlineVideoPanelMock).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionId: 'status-1:single-video:video' }),
+    )
     expect(screen.queryByRole('button', { name: '返回媒体区域' })).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: '播放视频' }))
     expect(onOpen).toHaveBeenCalledTimes(1)

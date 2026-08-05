@@ -1,9 +1,9 @@
-import { Menu, usePlaybackRateOptions } from '@videojs/react'
+import { Menu, usePlaybackRateOptions, useQualityOptions } from '@videojs/react'
 import type { PlaybackRateOptionsResult } from '@videojs/react'
 import { Check, ChevronLeft, ChevronRight, Gauge, Settings2 } from 'lucide-react'
 
+import { AUTO_QUALITY_ID, type QualityOption } from './video-playback-quality'
 import { IconButton } from './video-player-controls'
-import { AUTO_QUALITY_ID, type QualityOption } from './video-player-dash'
 
 export interface VideoQualitySettings {
   value: string
@@ -32,7 +32,19 @@ export function VideoSettingsMenu({ quality, allowPlaybackRate = true }: VideoSe
 
 function VideoSettingsMenuWithPlaybackRate({ quality }: Pick<VideoSettingsMenuProps, 'quality'>) {
   const playbackRate = usePlaybackRateOptions()
-  return <VideoSettingsMenuContent quality={quality} playbackRate={playbackRate} />
+  const adaptiveQuality = useQualityOptions()
+  const resolvedQuality =
+    quality ??
+    (adaptiveQuality?.state.availability === 'available'
+      ? {
+          value: adaptiveQuality.value,
+          options: adaptiveQuality.options
+            .filter((option) => option.value !== AUTO_QUALITY_ID)
+            .map((option) => ({ id: option.value, label: option.label })),
+          onValueChange: adaptiveQuality.setValue,
+        }
+      : undefined)
+  return <VideoSettingsMenuContent quality={resolvedQuality} playbackRate={playbackRate} />
 }
 
 function VideoSettingsMenuContent({
