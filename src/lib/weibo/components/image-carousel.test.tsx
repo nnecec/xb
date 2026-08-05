@@ -553,6 +553,12 @@ describe('ImageCarousel', () => {
 
     fireEvent.wheel(strip, { deltaY: -120, shiftKey: true })
     expect(emblaApi.scrollPrev).toHaveBeenCalledTimes(1)
+
+    expect(fireEvent.wheel(strip, { deltaY: 120 })).toBe(true)
+    expect(emblaApi.scrollNext).toHaveBeenCalledTimes(2)
+
+    expect(fireEvent.wheel(strip, { deltaX: 120, deltaY: 20, shiftKey: true })).toBe(true)
+    expect(emblaApi.scrollNext).toHaveBeenCalledTimes(2)
   })
 
   it('ignores non-primary mouse buttons when dragging the strip', () => {
