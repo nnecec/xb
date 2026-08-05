@@ -1,4 +1,5 @@
 import type { TimelinePage, TopicChannel, TopicHeadData } from '@/lib/weibo/models/feed'
+import { MweiboUnavailableError } from '@/lib/weibo/services/mweibo-errors'
 import {
   type WeiboPicInfo,
   type WeiboPageInfo,
@@ -120,7 +121,7 @@ interface MweiboTopicData {
 }
 
 export interface MweiboTopicPayload {
-  ok: number
+  ok?: number
   data?: MweiboTopicData
 }
 
@@ -226,11 +227,16 @@ function mweiboMblogToWeiboStatus(mblog: MweiboMblog): WeiboStatus {
 // ─── Adapter ─────────────────────────────────────────────────────────────────────
 
 export function adaptMweiboTopicResponse(
-  payload: MweiboTopicPayload,
+  payload: MweiboTopicPayload | null | undefined,
   page: number = 1,
 ): TimelinePage {
-  if (payload.ok !== 1 || !payload.data) {
-    return { items: [], nextCursor: null }
+  if (
+    payload?.ok !== 1 ||
+    !payload.data ||
+    !Array.isArray(payload.data.cards) ||
+    !payload.data.cardlistInfo
+  ) {
+    throw new MweiboUnavailableError('business')
   }
 
   const { cards, cardlistInfo } = payload.data

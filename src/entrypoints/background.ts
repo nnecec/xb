@@ -1,5 +1,7 @@
 import { defineBackground } from 'wxt/utils/define-background'
 
+import type { MweiboFetchResponse } from '@/lib/weibo/platform/messages'
+
 export default defineBackground(() => {
   void ensureMediaRequestHeaderRules()
 
@@ -49,12 +51,6 @@ interface MweiboFetchMessage {
   url: string
 }
 
-interface MweiboFetchResponse {
-  ok: boolean
-  data?: unknown
-  error?: string
-}
-
 export function assertAllowedMweiboFetchUrl(url: string): void {
   const parsed = new URL(url)
   if (parsed.protocol !== 'https:' || parsed.hostname !== 'm.weibo.cn') {
@@ -71,7 +67,11 @@ export function assertAllowedMweiboFetchUrl(url: string): void {
   }
 }
 
-async function handleMweiboFetch(message: MweiboFetchMessage): Promise<MweiboFetchResponse> {
+function getResponseContentType(response: Response): string | undefined {
+  return response.headers.get('content-type')?.split(';', 1)[0]?.trim().toLowerCase() || undefined
+}
+
+export async function handleMweiboFetch(message: MweiboFetchMessage): Promise<MweiboFetchResponse> {
   assertAllowedMweiboFetchUrl(message.url)
 
   const xsrfCookie = await browser.cookies.get({
@@ -89,16 +89,37 @@ async function handleMweiboFetch(message: MweiboFetchMessage): Promise<MweiboFet
     credentials: 'include',
     headers,
   })
+  const contentType = getResponseContentType(response)
 
   if (!response.ok) {
     return {
       ok: false,
       error: `mweibo-fetch-failed:${response.status}`,
+      status: response.status,
+      contentType,
     }
   }
 
-  const data = await response.json()
-  return { ok: true, data }
+  if (contentType === 'text/html' || contentType === 'application/xhtml+xml') {
+    return {
+      ok: false,
+      error: 'mweibo-fetch-unexpected-content',
+      status: response.status,
+      contentType,
+    }
+  }
+
+  try {
+    const data = await response.json()
+    return { ok: true, data, status: response.status, contentType }
+  } catch {
+    return {
+      ok: false,
+      error: 'mweibo-fetch-unexpected-content',
+      status: response.status,
+      contentType,
+    }
+  }
 }
 
 // ─── media fetch proxy ───

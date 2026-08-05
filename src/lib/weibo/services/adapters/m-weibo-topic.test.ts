@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { adaptMweiboTopicResponse } from '@/lib/weibo/services/adapters/m-weibo-topic'
+import { MweiboUnavailableError } from '@/lib/weibo/services/mweibo-errors'
 
 describe('adaptMweiboTopicResponse', () => {
   it('strips trailing full-text label from topic long text previews', () => {
@@ -66,4 +67,27 @@ describe('adaptMweiboTopicResponse', () => {
     expect(result.items[0]?.text).toBe('话题页长文预览 ...')
     expect(result.items[0]?.isLongText).toBe(true)
   })
+
+  it('keeps a valid empty topic response as an empty feed', () => {
+    expect(
+      adaptMweiboTopicResponse({
+        ok: 1,
+        data: {
+          cardlistInfo: {
+            total: 0,
+            page: 1,
+            page_size: 10,
+          },
+          cards: [],
+        },
+      }),
+    ).toEqual({ items: [], nextCursor: null })
+  })
+
+  it.each([{ ok: 0 }, { ok: -100 }, { ok: 1 }, null])(
+    'rejects non-success payloads instead of presenting them as empty feeds',
+    (payload) => {
+      expect(() => adaptMweiboTopicResponse(payload)).toThrowError(MweiboUnavailableError)
+    },
+  )
 })

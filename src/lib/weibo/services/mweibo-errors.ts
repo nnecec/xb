@@ -19,3 +19,27 @@ export class MweiboCaptchaError extends Error {
     this.captchaUrl = captchaUrl
   }
 }
+
+export type MweiboUnavailableReason = 'business' | 'http' | 'unexpected-content'
+
+/**
+ * Thrown when m.weibo.cn returns a response that cannot be used as topic data.
+ * The reason is intentionally small and safe to surface in diagnostics.
+ */
+export class MweiboUnavailableError extends Error {
+  readonly kind = 'mweibo-unavailable' as const
+  readonly reason: MweiboUnavailableReason
+  readonly status?: number
+  readonly contentType?: string
+
+  constructor(
+    reason: MweiboUnavailableReason,
+    details: { status?: number; contentType?: string } = {},
+  ) {
+    super('m.weibo.cn 暂时没有返回可用的话题内容')
+    this.name = 'MweiboUnavailableError'
+    this.reason = reason
+    this.status = details.status
+    this.contentType = details.contentType
+  }
+}

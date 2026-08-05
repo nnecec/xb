@@ -30,6 +30,8 @@ export interface MweiboFetchResponse {
   ok: boolean
   data?: unknown
   error?: string
+  status?: number
+  contentType?: string
 }
 
 export function isApiRequestMessage(value: unknown): value is ApiRequestMessage {

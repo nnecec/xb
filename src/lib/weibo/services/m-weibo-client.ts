@@ -1,5 +1,5 @@
 import type { MweiboFetchResponse } from '@/lib/weibo/platform/messages'
-import { MweiboCaptchaError } from '@/lib/weibo/services/mweibo-errors'
+import { MweiboCaptchaError, MweiboUnavailableError } from '@/lib/weibo/services/mweibo-errors'
 
 const SEND_MESSAGE_RETRIES = 3
 const RETRY_DELAY_MS = 300
@@ -52,6 +52,12 @@ export async function mweiboFetch<T>(url: string): Promise<T> {
       }
 
       if (!response.ok || response.error) {
+        if (response.error === 'mweibo-fetch-unexpected-content') {
+          throw new MweiboUnavailableError('unexpected-content', response)
+        }
+        if (response.error?.startsWith('mweibo-fetch-failed:')) {
+          throw new MweiboUnavailableError('http', response)
+        }
         throw new Error(response.error ?? 'mweibo-fetch-failed')
       }
 
@@ -63,6 +69,7 @@ export async function mweiboFetch<T>(url: string): Promise<T> {
       return response.data as T
     } catch (error) {
       if (error instanceof MweiboCaptchaError) throw error
+      if (error instanceof MweiboUnavailableError) throw error
       if (error instanceof Error && error.message.startsWith('mweibo-fetch-failed')) {
         throw error
       }
@@ -73,14 +80,24 @@ export async function mweiboFetch<T>(url: string): Promise<T> {
   throw lastError ?? new Error('mweibo-fetch-no-response')
 }
 
+function buildTopicContainerId(topic: string, channelType?: string): string {
+  return `231522type=${channelType ?? '1'}&q=#${topic}#`
+}
+
 export function buildTopicSearchUrl(topic: string, page: number, channelType?: string): string {
-  const type = channelType ?? '1'
-  const containerid = `231522type=${type}&q=#${topic}#`
   const params = new URLSearchParams({
-    containerid,
+    containerid: buildTopicContainerId(topic, channelType),
     page_type: 'searchall',
     v_p: '42',
     page: String(page),
   })
   return `https://m.weibo.cn/api/container/getIndex?${params}`
+}
+
+export function buildMweiboTopicPageUrl(topic: string, channelType?: string): string {
+  const params = new URLSearchParams({
+    containerid: buildTopicContainerId(topic, channelType),
+    v_p: '42',
+  })
+  return `https://m.weibo.cn/search?${params}`
 }
