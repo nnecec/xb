@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { buildMediaAssets } from '@/lib/weibo/components/media-region/media-region-model'
 import type { FeedItem } from '@/lib/weibo/models/feed'
 import {
   downloadAsZip,
@@ -124,7 +125,10 @@ export function useFeedCardMediaDownload(item?: FeedItem) {
     setDownloadLoading(true)
 
     try {
-      const urls = extractMediaUrls(item)
+      const urls = extractMediaUrls(buildMediaAssets(item), {
+        author: item.author.name,
+        text: item.text,
+      })
 
       if (urls.length === 0) {
         toast.error('这条微博没有可下载的媒体')

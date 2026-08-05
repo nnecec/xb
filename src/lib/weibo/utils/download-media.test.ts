@@ -1,13 +1,24 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import {
+  buildMediaAssets,
+  type MediaAsset,
+} from '@/lib/weibo/components/media-region/media-region-model'
 import type { FeedItem } from '@/lib/weibo/models/feed'
 
 import {
   downloadAsZip,
   estimateTotalSize,
-  extractMediaUrls,
+  extractMediaUrls as extractMediaUrlsFromAssets,
   inferExtension,
 } from './download-media'
+
+function extractMediaUrls(item: FeedItem) {
+  return extractMediaUrlsFromAssets(buildMediaAssets(item), {
+    author: item.author.name,
+    text: item.text,
+  })
+}
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -65,6 +76,78 @@ describe('extractMediaUrls', () => {
     images: [],
     media: null,
     ...overrides,
+  })
+
+  it('按传入素材顺序导出、保持 Live Photo 相邻并按 URL 去重', () => {
+    const assets: MediaAsset[] = [
+      {
+        kind: 'video',
+        id: 'video-1',
+        playable: true,
+        video: {
+          type: 'video',
+          id: 'video-1',
+          videoStreamUrl: 'https://example.com/video.mp4',
+        },
+      },
+      {
+        kind: 'image',
+        id: 'live-photo-1',
+        image: {
+          id: 'live-photo-1',
+          thumbnailUrl: 'https://example.com/live-thumb.jpg',
+          largeUrl: 'https://example.com/live.jpg',
+          livePhotoVideoUrl: 'https://example.com/live.mov',
+        },
+      },
+      {
+        kind: 'video',
+        id: 'duplicate-video-url',
+        playable: true,
+        video: {
+          type: 'video',
+          id: 'duplicate-video-url',
+          videoStreamUrl: 'https://example.com/video.mp4',
+        },
+      },
+      {
+        kind: 'standalone',
+        id: 'audio-1',
+        media: {
+          type: 'audio',
+          title: '音频',
+          streamUrl: 'https://example.com/audio',
+          coverUrl: null,
+        },
+      },
+    ]
+
+    expect(
+      extractMediaUrlsFromAssets(assets, { author: 'Alice', text: 'post' }).map(
+        ({ url, type, filename }) => ({ url, type, filename }),
+      ),
+    ).toEqual([
+      {
+        url: 'https://example.com/video.mp4',
+        type: 'video',
+        filename: 'Alice_post_1.mp4',
+      },
+      {
+        url: 'https://example.com/live.jpg',
+        type: 'image',
+        filename: 'Alice_post_2.jpg',
+      },
+      {
+        url: 'https://example.com/live.mov',
+        type: 'video',
+        filename: 'Alice_post_3.mov',
+      },
+      {
+        url: 'https://example.com/audio',
+        type: 'audio',
+        filename: 'Alice_post_4.m4a',
+      },
+    ])
   })
 
   it('应该提取纯图片微博的所有图片', () => {

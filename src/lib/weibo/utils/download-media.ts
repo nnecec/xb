@@ -1,12 +1,12 @@
 import JSZip from 'jszip'
 
-import type { FeedItem } from '@/lib/weibo/models/feed'
+import type { MediaAsset } from '@/lib/weibo/components/media-region/media-region-model'
 
 export interface MediaUrl {
   url: string
   fallbackUrls?: string[]
   filename: string
-  type: 'image' | 'video'
+  type: 'image' | 'video' | 'audio'
 }
 
 export interface DownloadZipResult {
@@ -233,13 +233,14 @@ function triggerBlobDownload(blob: Blob, filename: string): void {
 /**
  * 从 URL 推断文件扩展名
  */
-export function inferExtension(url: string): string {
-  const match = url.match(/\.(jpg|jpeg|png|gif|webp|mp4|mov)(\?|$)/i)
+export function inferExtension(url: string, type: MediaUrl['type'] = 'image'): string {
+  const match = url.match(/\.(jpg|jpeg|png|gif|webp|mp4|mov|mp3|m4a|aac|wav|ogg)(\?|$)/i)
   const extension = match?.[1]
   if (extension) {
     return extension.toLowerCase()
   }
   // 默认根据类型推断
+  if (type === 'audio') return 'm4a'
   return url.includes('video') || url.includes('.mp4') ? 'mp4' : 'jpg'
 }
 
@@ -257,96 +258,60 @@ function sanitizeFilename(text: string): string {
 /**
  * 生成文件名：{作者名}_{微博前10字}_{序号}.{扩展名}
  */
-function generateFilename(author: string, text: string, index: number, url: string): string {
+function generateFilename(
+  author: string,
+  text: string,
+  index: number,
+  url: string,
+  type: MediaUrl['type'] = 'image',
+): string {
   const cleanAuthor = sanitizeFilename(author)
   const cleanText = sanitizeFilename(text)
   const truncated = cleanText.slice(0, 10) || 'untitled'
-  const ext = inferExtension(url)
+  const ext = inferExtension(url, type)
   return `${cleanAuthor}_${truncated}_${index}.${ext}`
 }
 
-/**
- * 从 FeedItem 提取所有媒体 URL（仅当前层级）
- */
-export function extractMediaUrls(item: FeedItem): MediaUrl[] {
+/** 将媒体呈现 module 已经规范化的素材转换为下载候选。 */
+export function extractMediaUrls(
+  assets: readonly MediaAsset[],
+  context: { author: string; text: string },
+): MediaUrl[] {
   const urls: MediaUrl[] = []
-  const author = item.author.name
-  const text = item.text
+  const seen = new Set<string>()
   let index = 1
 
-  // 1. 处理静态图片和 Live Photo
-  for (const image of item.images) {
-    // 静态图片
+  const add = (url: string | undefined, type: MediaUrl['type'], fallbackUrls?: string[]) => {
+    const normalized = normalizeDownloadUrl(url)
+    if (!normalized || seen.has(normalized)) return
+    seen.add(normalized)
     urls.push({
-      url: normalizeDownloadUrl(image.largeUrl) ?? image.largeUrl,
-      fallbackUrls: createMediaFallbackUrls(image.largeUrl, image.downloadUrls, 'image'),
-      filename: generateFilename(author, text, index++, image.largeUrl),
-      type: 'image',
+      url: normalized,
+      fallbackUrls:
+        type === 'image' ? createMediaFallbackUrls(normalized, fallbackUrls, type) : undefined,
+      filename: generateFilename(context.author, context.text, index++, normalized, type),
+      type,
     })
+  }
 
-    // Live Photo 视频
-    if (image.livePhotoVideoUrl) {
-      const videoUrl = normalizeDownloadUrl(image.livePhotoVideoUrl) ?? image.livePhotoVideoUrl
-      urls.push({
-        url: videoUrl,
-        filename: generateFilename(author, text, index++, videoUrl),
-        type: 'video',
-      })
+  for (const asset of assets) {
+    if (asset.kind === 'image') {
+      add(asset.image.largeUrl, 'image', asset.image.downloadUrls)
+      add(asset.image.livePhotoVideoUrl, 'video')
+      continue
     }
-  }
 
-  // 2. 处理单视频
-  if (item.media) {
-    const videoUrl =
-      normalizeDownloadUrl(item.media.downloadUrl || item.media.streamUrl) ??
-      (item.media.downloadUrl || item.media.streamUrl)
-    urls.push({
-      url: videoUrl,
-      filename: generateFilename(author, text, index++, videoUrl),
-      type: 'video',
-    })
-  }
+    if (asset.kind === 'video') {
+      add(asset.video.videoDownloadUrl || asset.video.videoStreamUrl, 'video')
+      continue
+    }
 
-  // 3. 处理混合媒体
-  if (item.mixMediaInfo) {
-    for (const mixItem of item.mixMediaInfo) {
-      if (mixItem.type === 'pic' && mixItem.image) {
-        urls.push({
-          url: normalizeDownloadUrl(mixItem.image.largeUrl) ?? mixItem.image.largeUrl,
-          fallbackUrls: createMediaFallbackUrls(
-            mixItem.image.largeUrl,
-            mixItem.image.downloadUrls,
-            'image',
-          ),
-          filename: generateFilename(author, text, index++, mixItem.image.largeUrl),
-          type: 'image',
-        })
-
-        // 混合媒体中的 Live Photo
-        if (mixItem.image.livePhotoVideoUrl) {
-          const videoUrl =
-            normalizeDownloadUrl(mixItem.image.livePhotoVideoUrl) ?? mixItem.image.livePhotoVideoUrl
-          urls.push({
-            url: videoUrl,
-            filename: generateFilename(author, text, index++, videoUrl),
-            type: 'video',
-          })
-        }
-      } else if (mixItem.type === 'video') {
-        const videoUrl =
-          normalizeDownloadUrl(mixItem.videoDownloadUrl || mixItem.videoStreamUrl) ??
-          (mixItem.videoDownloadUrl || mixItem.videoStreamUrl)
-
-        if (videoUrl) {
-          urls.push({
-            url: videoUrl,
-            filename: generateFilename(author, text, index++, videoUrl),
-            type: 'video',
-          })
-        } else {
-          // do nothing
-        }
-      }
+    if (asset.media.type === 'audio' || asset.media.type === 'podcast_audio') {
+      add(asset.media.streamUrl, 'audio')
+    } else if (asset.media.type === 'live') {
+      add(asset.media.replayUrl || asset.media.downloadUrl, 'video')
+    } else {
+      add(asset.media.downloadUrl || asset.media.streamUrl, 'video')
     }
   }
 

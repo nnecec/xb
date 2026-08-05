@@ -26,7 +26,18 @@ vi.mock('@/lib/weibo/utils/download-media', () => ({
   extractMediaUrls,
 }))
 
-const item = { author: { name: 'Alice' }, text: 'post' } as FeedItem
+const item = {
+  id: 'status-1',
+  mblogId: 'status-1',
+  isLongText: false,
+  author: { id: 'author-1', name: 'Alice', avatarUrl: null },
+  text: 'post',
+  createdAt: '2026-08-01T00:00:00.000Z',
+  createdAtLabel: '刚刚',
+  stats: { likes: 0, comments: 0, reposts: 0 },
+  images: [],
+  media: null,
+} satisfies FeedItem
 const urls = [
   { url: 'https://example.test/1.jpg', filename: '1.jpg', type: 'image' },
   { url: 'https://example.test/2.jpg', filename: '2.jpg', type: 'image' },
@@ -52,6 +63,7 @@ describe('useFeedCardMediaDownload', () => {
       await result.current.handleDownload()
     })
 
+    expect(extractMediaUrls).toHaveBeenCalledWith([], { author: 'Alice', text: 'post' })
     const { toast } = await import('sonner')
     expect(toast.loading).toHaveBeenCalledWith('正在准备媒体', { duration: Infinity })
     const toastId = vi.mocked(toast.loading).mock.results[0]?.value

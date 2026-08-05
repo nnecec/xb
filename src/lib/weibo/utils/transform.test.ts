@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { buildMediaAssets } from '@/lib/weibo/components/media-region/media-region-model'
 import { extractMediaUrls } from '@/lib/weibo/utils/download-media'
 import { normalizeSafeExternalUrl } from '@/lib/weibo/utils/safe-url'
 
@@ -419,7 +420,12 @@ describe('toFeedItem media images', () => {
       },
     } as any)
 
-    expect(extractMediaUrls(result).map(({ url }) => url)).toEqual([
+    expect(
+      extractMediaUrls(buildMediaAssets(result), {
+        author: result.author.name,
+        text: result.text,
+      }).map(({ url }) => url),
+    ).toEqual([
       'https://wx3.sinaimg.cn/large/live-pic.jpg',
       'https://livephoto.us.sinaimg.cn/live-pic.mp4',
     ])
