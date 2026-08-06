@@ -1,3 +1,4 @@
+import { selectPlayback } from '@videojs/core/dom'
 import {
   AlertDialog,
   BufferingIndicator,
@@ -13,6 +14,7 @@ import {
   Time,
   TimeSlider,
   Tooltip,
+  usePlayer,
 } from '@videojs/react'
 import {
   Download,
@@ -52,6 +54,16 @@ interface VideoPlayerSkinProps {
   onRetry?: () => void
 }
 
+interface VideoPlaybackState {
+  started: boolean
+  paused: boolean
+  ended: boolean
+}
+
+export function isVideoPlaybackActive(playback: VideoPlaybackState | null | undefined) {
+  return playback?.started === true && playback.paused === false && playback.ended === false
+}
+
 export function VideoPlayerSkin({
   children,
   mode = 'video',
@@ -64,6 +76,8 @@ export function VideoPlayerSkin({
   onRetry,
 }: VideoPlayerSkinProps) {
   const isLive = mode === 'live'
+  const playback = usePlayer(selectPlayback)
+  const playbackActive = isVideoPlaybackActive(playback)
 
   return (
     <Container className="media-default-skin media-default-skin--video relative h-full w-full overflow-hidden rounded-[inherit]">
@@ -95,9 +109,9 @@ export function VideoPlayerSkin({
         </AlertDialog.Popup>
       </ErrorDialog.Root>
 
-      {centerPlayVisible ? <CenterPlayButton /> : null}
+      {centerPlayVisible && !playbackActive ? <CenterPlayButton /> : null}
 
-      {controlsVisible ? (
+      {controlsVisible && playbackActive ? (
         <Controls.Root className="media-surface media-controls media-controls--root">
           <Tooltip.Provider>
             <div className="media-surface media-controls media-controls--primary">

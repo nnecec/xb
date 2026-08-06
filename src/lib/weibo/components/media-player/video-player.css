@@ -52,12 +52,6 @@
   pointer-events: none;
 }
 
-/* Hide center play button when video ended (restart state handled by bottom bar) */
-.media-default-skin--video:has(.media-button--play[data-ended]) .video-center-play {
-  opacity: 0;
-  pointer-events: none;
-}
-
 /* ============================================
    Progress Bar Hover Expand
    ============================================ */

@@ -6,6 +6,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { VideoPlayback } from './video-playback'
 import { resetPlaybackPositionStoreForTest } from './video-playback-position-store'
+import { isVideoPlaybackActive } from './video-player-skin'
+import { VideoSettingsMenu } from './video-settings-menu'
 
 const videoPlayerCss = readFileSync(
   join(process.cwd(), 'src/lib/weibo/components/media-player/video-player.css'),
@@ -42,8 +44,9 @@ describe('VideoPlayback', () => {
     cleanup()
   })
 
-  it('uses the official skin control hierarchy for on-demand video', () => {
+  it('hides controls before on-demand playback starts', () => {
     expect(videoPlayerCss).not.toContain('.media-controls--root:not([data-visible])')
+    expect(videoPlayerCss).not.toContain('restart state handled by bottom bar')
 
     render(
       <VideoPlayback
@@ -56,15 +59,14 @@ describe('VideoPlayback', () => {
       />,
     )
 
-    const controlsRoot = document.querySelector('.media-controls--root')
-    expect(controlsRoot).toBeInTheDocument()
-    expect(controlsRoot?.querySelector('.media-controls--primary')).toBeInTheDocument()
-    expect(controlsRoot?.querySelector('.media-controls--secondary')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '下载视频' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '播放设置' })).toBeInTheDocument()
+    const video = document.querySelector('video')
+    expect(video).toBeInTheDocument()
+    expect(document.querySelector('.media-controls--root')).not.toBeInTheDocument()
+
+    expect(screen.getByRole('button', { name: '播放' })).toBeInTheDocument()
   })
 
-  it('loads live controls only after an explicit play gesture', () => {
+  it('keeps live controls hidden until playback starts', () => {
     render(
       <VideoPlayback
         media={{
@@ -82,7 +84,33 @@ describe('VideoPlayback', () => {
     expect(document.querySelector('.media-controls--root')).not.toBeInTheDocument()
 
     fireEvent.pointerDown(video!)
-    expect(document.querySelector('.media-controls--root')).toBeInTheDocument()
+    expect(document.querySelector('.media-controls--root')).not.toBeInTheDocument()
+  })
+
+  it('shows controls only while playback is active', () => {
+    expect(isVideoPlaybackActive(null)).toBe(false)
+    expect(isVideoPlaybackActive({ started: false, paused: true, ended: false })).toBe(false)
+    expect(isVideoPlaybackActive({ started: true, paused: true, ended: false })).toBe(false)
+    expect(isVideoPlaybackActive({ started: true, paused: false, ended: true })).toBe(false)
+    expect(isVideoPlaybackActive({ started: true, paused: false, ended: false })).toBe(true)
+  })
+
+  it('keeps quality selection in the settings menu when alternatives are available', () => {
+    render(
+      <VideoSettingsMenu
+        allowPlaybackRate={false}
+        quality={{
+          value: '360p',
+          options: [
+            { id: '360p', label: '流畅' },
+            { id: '720p', label: '高清' },
+          ],
+          onValueChange: vi.fn(),
+        }}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: '播放设置' })).toBeInTheDocument()
   })
 
   it('renders an unavailable live asset without interactive controls', () => {
