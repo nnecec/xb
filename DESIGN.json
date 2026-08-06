@@ -216,6 +216,14 @@
       "css": ".ds-card { background: oklch(1 0 0); border-radius: 6.25px; border: 1px solid oklch(0.922 0 0 / 70%); padding: 16px; display: flex; flex-direction: column; gap: 16px; } .ds-card-header { display: flex; gap: 12px; align-items: flex-start; } .ds-card-avatar { width: 48px; height: 48px; border-radius: 9999px; background: oklch(0.922 0 0); flex-shrink: 0; } .ds-card-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; } .ds-card-author { font-size: 16px; font-weight: 600; color: oklch(0.205 0 0); line-height: 1.4; } .ds-card-time { font-size: 12px; color: oklch(0.556 0 0); line-height: 1.4; } .ds-card-body { font-size: 16px; line-height: 1.5; color: oklch(0.205 0 0); white-space: pre-wrap; } .ds-card-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; } .ds-action-btn { display: inline-flex; align-items: center; gap: 4px; justify-content: center; border-radius: 9999px; font-size: 12px; padding: 8px 16px; background: transparent; color: oklch(0.556 0 0); border: none; cursor: pointer; transition: background 0.15s, color 0.15s; } .ds-action-btn:hover { background: oklch(0.97 0 0); color: oklch(0.637 0.151 230); } .ds-action-btn:active { transform: scale(0.96); }"
     },
     {
+      "name": "Status Card",
+      "kind": "card-variant",
+      "refersTo": "card",
+      "description": "微博卡片的 root 与 quoted 角色共用同一阅读骨架。root 使用细边框；quoted 使用中性内嵌 surface，紧一级间距，窄屏取消嵌套水平缩进。两者共用三列操作栏，quoted 不增加专属动效、阴影或彩色侧线。",
+      "html": "<article class=\"ds-status-card ds-status-card-root\"><header>Author</header><div>Post content</div><footer class=\"ds-card-actions\">Reply · Repost · Like</footer></article>",
+      "css": ".ds-status-card { display: flex; flex-direction: column; gap: 16px; border-radius: 6.25px; background: oklch(1 0 0); border: 1px solid oklch(0.922 0 0 / 70%); box-shadow: none; } .ds-status-card-quoted { gap: 12px; background: oklch(0.97 0 0 / 55%); border: none; box-shadow: none; } .ds-status-card-quoted .ds-card-actions { grid-template-columns: repeat(3, 1fr); } @media (max-width: 767px) { .ds-status-card-quoted { margin-inline: -16px; border-radius: 0; } }"
+    },
+    {
       "name": "Input",
       "kind": "input",
       "refersTo": "input",

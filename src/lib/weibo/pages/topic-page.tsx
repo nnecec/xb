@@ -3,7 +3,6 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { useAppSettings } from '@/lib/app-settings-store'
 import { cn } from '@/lib/utils'
-import { useAppShellContext } from '@/lib/weibo/app/app-shell-layout'
 import { useImmersiveHeaderClassName } from '@/lib/weibo/app/immersive-header'
 import { InfiniteFeedList } from '@/lib/weibo/components/infinite-feed-list'
 import { MweiboTopicRecoveryPrompt } from '@/lib/weibo/components/mweibo-topic-recovery-prompt'
@@ -13,7 +12,6 @@ import {
   getMweiboTopicRecoveryState,
   topicSearchInfiniteOptions,
 } from '@/lib/weibo/data/weibo-data'
-import { composeTargetFromFeedItem } from '@/lib/weibo/models/compose'
 import type { TimelinePage, TopicChannel } from '@/lib/weibo/models/feed'
 import { useWeiboPage } from '@/lib/weibo/route/use-weibo-page'
 
@@ -71,7 +69,6 @@ function TopicChannelPill({
 }
 
 export function TopicPage() {
-  const ctx = useAppShellContext()
   const page = useWeiboPage()
   const rewriteEnabled = useAppSettings((s) => s.rewriteEnabled)
   const headerClassName = useImmersiveHeaderClassName('bg-muted/80 sticky top-0 z-10 backdrop-blur')
@@ -152,9 +149,6 @@ export function TopicPage() {
         isFetchingNextPage={isFetchingNextPage}
         fetchNextPage={topicQuery.fetchNextPage}
         onRetry={() => void topicQuery.refetch()}
-        onNavigate={ctx.navigateToStatusDetail}
-        onCommentClick={(item) => ctx.setComposeTarget(composeTargetFromFeedItem(item, 'comment'))}
-        onRepostClick={(item) => ctx.setComposeTarget(composeTargetFromFeedItem(item, 'repost'))}
       />
     </div>
   )

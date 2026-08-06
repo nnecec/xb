@@ -2,7 +2,6 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { ArrowLeft } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -19,15 +18,14 @@ import { useAppShellContext } from '@/lib/weibo/app/app-shell-layout'
 import { useImmersiveHeaderClassName } from '@/lib/weibo/app/immersive-header'
 import { CommentBox } from '@/lib/weibo/components/comment-box'
 import { CommentList } from '@/lib/weibo/components/comment-list'
-import { FeedCard } from '@/lib/weibo/components/feed-card'
 import { PageErrorState, PageLoadingState } from '@/lib/weibo/components/page-state'
+import { DetailStatusCard } from '@/lib/weibo/components/status-card'
 import {
   flattenInfiniteItems,
   statusCommentsInfiniteOptions,
   statusDetailQueryOptions,
 } from '@/lib/weibo/data/weibo-data'
 import { browsingHistoryStore } from '@/lib/weibo/hooks/use-browsing-history'
-import { composeTargetFromFeedItem } from '@/lib/weibo/models/compose'
 import type { CommentItem } from '@/lib/weibo/models/status'
 import { useWeiboPage } from '@/lib/weibo/route/use-weibo-page'
 import { formatWeiboCount } from '@/lib/weibo/utils/format-weibo-count'
@@ -234,7 +232,6 @@ function StatusDetailTopBar({
 
 export function StatusDetailPage() {
   const ctx = useAppShellContext()
-  const navigate = useNavigate()
   const page = useWeiboPage()
   const rewriteEnabled = useAppSettings((state) => state.rewriteEnabled)
   const statusArticleRef = useRef<HTMLElement | null>(null)
@@ -301,20 +298,7 @@ export function StatusDetailPage() {
       {detail ? (
         <div className="flex w-full flex-col gap-4">
           <article ref={statusArticleRef} className="relative">
-            <div className="bg-primary/70 absolute top-5 bottom-5 left-0 hidden w-px sm:block" />
-            <FeedCard
-              item={detail.status}
-              surface="detail"
-              className="border-border/55 bg-card/95 shadow-[0_16px_40px_rgb(0_0_0/0.08)] dark:shadow-black/20"
-              onNavigate={ctx.navigateToStatusDetail}
-              onCommentClick={(item) =>
-                ctx.setComposeTarget(composeTargetFromFeedItem(item, 'comment'))
-              }
-              onRepostClick={(item) =>
-                ctx.setComposeTarget(composeTargetFromFeedItem(item, 'repost'))
-              }
-              onStatusDeleted={() => navigate(-1)}
-            />
+            <DetailStatusCard status={detail.status} />
           </article>
           {authorId ? (
             <StatusCommentsSection

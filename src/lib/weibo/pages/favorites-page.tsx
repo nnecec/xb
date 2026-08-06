@@ -7,7 +7,6 @@ import { useAppShellContext } from '@/lib/weibo/app/app-shell-layout'
 import { InfiniteFeedList } from '@/lib/weibo/components/infinite-feed-list'
 import { TimelineTopBar } from '@/lib/weibo/components/timeline-top-bar'
 import { favoritesInfiniteOptions } from '@/lib/weibo/data/weibo-data'
-import { composeTargetFromFeedItem } from '@/lib/weibo/models/compose'
 import type { TimelinePage } from '@/lib/weibo/models/feed'
 import { useWeiboPage } from '@/lib/weibo/route/use-weibo-page'
 
@@ -79,9 +78,6 @@ export function FavoritesPage() {
         isFetchingNextPage={isFetchingNextPage}
         fetchNextPage={favoritesQuery.fetchNextPage}
         onRetry={() => void favoritesQuery.refetch()}
-        onNavigate={ctx.navigateToStatusDetail}
-        onCommentClick={(item) => ctx.setComposeTarget(composeTargetFromFeedItem(item, 'comment'))}
-        onRepostClick={(item) => ctx.setComposeTarget(composeTargetFromFeedItem(item, 'repost'))}
       />
     </div>
   )

@@ -30,32 +30,22 @@ vi.mock('@/lib/weibo/data/weibo-io', async () => {
   }
 })
 
-vi.mock('@/lib/weibo/components/feed-card', () => ({
-  FeedCard: ({
-    item,
-    onCommentClick,
-    onRepostClick,
+vi.mock('@/lib/weibo/components/status-card', () => ({
+  DetailStatusCard: ({
+    status,
   }: {
-    item: {
+    status: {
       text: string
       images: Array<{ id: string }>
       retweetedStatus: { text: string } | null
     }
-    onCommentClick?: (item: { text: string }) => void
-    onRepostClick?: (item: { text: string }) => void
   }) => {
-    feedCardMock(item)
+    feedCardMock(status)
 
     return (
       <div>
-        <p>{item.text}</p>
-        {item.retweetedStatus ? <p>{item.retweetedStatus.text}</p> : null}
-        <button type="button" aria-label="回复微博" onClick={() => onCommentClick?.(item)}>
-          1
-        </button>
-        <button type="button" aria-label="转发微博" onClick={() => onRepostClick?.(item)}>
-          2
-        </button>
+        <p>{status.text}</p>
+        {status.retweetedStatus ? <p>{status.retweetedStatus.text}</p> : null}
       </div>
     )
   },
@@ -220,7 +210,7 @@ describe('StatusDetailPage', () => {
     expect(await screen.findByText('third level reply')).toBeInTheDocument()
   })
 
-  it('passes detail media through the shared FeedCard path', async () => {
+  it('passes the status to the detail StatusCard adapter', async () => {
     const queryClient = new QueryClient()
     render(
       <QueryClientProvider client={queryClient}>
@@ -269,7 +259,7 @@ describe('StatusDetailPage', () => {
     expect(summaryHeading.parentElement).toHaveTextContent('main post')
   })
 
-  it('supports reply/repost for status and reply entry for nested comments', async () => {
+  it('supports inline reply entry for nested comments', async () => {
     vi.mocked(loadStatusDetail).mockResolvedValue({
       status: {
         id: '501',
@@ -340,26 +330,6 @@ describe('StatusDetailPage', () => {
     await screen.findByText('main post')
     await screen.findByText('reply level 1')
 
-    fireEvent.click(screen.getByRole('button', { name: '回复微博' }))
-    expect(setComposeTarget).toHaveBeenCalledWith({
-      kind: 'status',
-      mode: 'comment',
-      statusId: '501',
-      targetCommentId: null,
-      authorName: 'Alice',
-      excerpt: 'main post',
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: '转发微博' }))
-    expect(setComposeTarget).toHaveBeenCalledWith({
-      kind: 'status',
-      mode: 'repost',
-      statusId: '501',
-      targetCommentId: null,
-      authorName: 'Alice',
-      excerpt: 'main post',
-    })
-
     // Nested comment replies are inline CommentBox (not global compose modal).
     const replyButtons = screen.getAllByRole('button', { name: '回复评论' })
     expect(replyButtons.length).toBeGreaterThanOrEqual(3)
@@ -373,8 +343,7 @@ describe('StatusDetailPage', () => {
     fireEvent.click(replyButtons[2]!)
     expect(await screen.findByPlaceholderText('回复 @Dave')).toBeInTheDocument()
 
-    // Status-level reply/repost still go through global compose; comment replies do not.
-    expect(setComposeTarget).toHaveBeenCalledTimes(2)
+    expect(setComposeTarget).not.toHaveBeenCalled()
   })
 
   it('lets the detail column fill the available content width', async () => {

@@ -5,8 +5,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { InfiniteFeedList } from '@/lib/weibo/components/infinite-feed-list'
 import type { FeedItem } from '@/lib/weibo/models/feed'
 
-vi.mock('@/lib/weibo/components/feed-card', () => ({
-  FeedCard: ({ item }: { item: FeedItem }) => <article>{item.text}</article>,
+vi.mock('@/lib/weibo/components/status-card', () => ({
+  StatusCard: ({ status }: { status: FeedItem }) => <article>{status.text}</article>,
 }))
 
 vi.mock('@/lib/weibo/rating/xb-rating', () => ({

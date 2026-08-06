@@ -17,7 +17,6 @@ import {
   followGroupsQueryOptions,
   homeTimelineInfiniteOptions,
 } from '@/lib/weibo/data/weibo-data'
-import { composeTargetFromFeedItem } from '@/lib/weibo/models/compose'
 import {
   getDefaultFollowGroupForHomeTab,
   getHomeTabForDefaultFollowGroupId,
@@ -214,11 +213,6 @@ export function HomeTimelinePage() {
           isFetchingNextPage={isFetchingNextPage}
           fetchNextPage={timelineQuery.fetchNextPage}
           onRetry={() => void timelineQuery.refetch()}
-          onNavigate={ctx.navigateToStatusDetail}
-          onCommentClick={(item) =>
-            ctx.setComposeTarget(composeTargetFromFeedItem(item, 'comment'))
-          }
-          onRepostClick={(item) => ctx.setComposeTarget(composeTargetFromFeedItem(item, 'repost'))}
         />
       </div>
     </div>

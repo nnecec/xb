@@ -14,7 +14,6 @@ import {
   profileSearchInfiniteOptions,
 } from '@/lib/weibo/data/weibo-data'
 import { loadProfileHoverCard } from '@/lib/weibo/data/weibo-data'
-import { composeTargetFromFeedItem } from '@/lib/weibo/models/compose'
 import type { TimelinePage } from '@/lib/weibo/models/feed'
 import {
   parseProfileSearchUrlState,
@@ -29,18 +28,12 @@ function ProfilePostsFeed({
   searchBarKey,
   searchParams,
   setSearchParams,
-  onNavigate,
-  onCommentClick,
-  onRepostClick,
 }: {
   profileId: string
   searchState: ReturnType<typeof parseProfileSearchUrlState>
   searchBarKey: string
   searchParams: URLSearchParams
   setSearchParams: ReturnType<typeof useSearchParams>[1]
-  onNavigate: ReturnType<typeof useAppShellContext>['navigateToStatusDetail']
-  onCommentClick: (item: Parameters<typeof composeTargetFromFeedItem>[0]) => void
-  onRepostClick: (item: Parameters<typeof composeTargetFromFeedItem>[0]) => void
 }) {
   const postsQuery = useInfiniteQuery({
     ...profilePostsInfiniteOptions(profileId),
@@ -91,9 +84,6 @@ function ProfilePostsFeed({
         isFetchingNextPage={isFetchingNextPage}
         fetchNextPage={activeQuery.fetchNextPage}
         onRetry={() => void activeQuery.refetch()}
-        onNavigate={onNavigate}
-        onCommentClick={onCommentClick}
-        onRepostClick={onRepostClick}
         className="flex flex-col gap-4"
       />
     </div>
@@ -149,13 +139,6 @@ export function ProfilePage() {
             searchBarKey={searchBarKey}
             searchParams={searchParams}
             setSearchParams={setSearchParams}
-            onNavigate={ctx.navigateToStatusDetail}
-            onCommentClick={(item) =>
-              ctx.setComposeTarget(composeTargetFromFeedItem(item, 'comment'))
-            }
-            onRepostClick={(item) =>
-              ctx.setComposeTarget(composeTargetFromFeedItem(item, 'repost'))
-            }
           />
         </div>
       ) : null}

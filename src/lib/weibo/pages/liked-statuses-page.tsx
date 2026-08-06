@@ -2,11 +2,9 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
 
 import { useAppSettings } from '@/lib/app-settings-store'
-import { useAppShellContext } from '@/lib/weibo/app/app-shell-layout'
 import { InfiniteFeedList } from '@/lib/weibo/components/infinite-feed-list'
 import { TimelineTopBar } from '@/lib/weibo/components/timeline-top-bar'
 import { likedStatusesInfiniteOptions } from '@/lib/weibo/data/weibo-data'
-import { composeTargetFromFeedItem } from '@/lib/weibo/models/compose'
 import type { TimelinePage } from '@/lib/weibo/models/feed'
 import { useWeiboPage } from '@/lib/weibo/route/use-weibo-page'
 
@@ -16,7 +14,6 @@ const SAVED_LIST_OPTIONS = [
 ]
 
 export function LikedStatusesPage() {
-  const ctx = useAppShellContext()
   const page = useWeiboPage()
   const navigate = useNavigate()
   const rewriteEnabled = useAppSettings((s) => s.rewriteEnabled)
@@ -69,9 +66,6 @@ export function LikedStatusesPage() {
         isFetchingNextPage={isFetchingNextPage}
         fetchNextPage={likedStatusesQuery.fetchNextPage}
         onRetry={() => void likedStatusesQuery.refetch()}
-        onNavigate={ctx.navigateToStatusDetail}
-        onCommentClick={(item) => ctx.setComposeTarget(composeTargetFromFeedItem(item, 'comment'))}
-        onRepostClick={(item) => ctx.setComposeTarget(composeTargetFromFeedItem(item, 'repost'))}
       />
     </div>
   )

@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
-import { FeedList } from '@/lib/weibo/components/feed-list'
-import { PageErrorState, PageLoadingState } from '@/lib/weibo/components/page-state'
+import { PageEmptyState, PageErrorState, PageLoadingState } from '@/lib/weibo/components/page-state'
+import { StatusCard } from '@/lib/weibo/components/status-card'
 import { flattenInfiniteItems } from '@/lib/weibo/data/weibo-data'
 import type { FeedItem } from '@/lib/weibo/models/feed'
 import { useFeedRatingBatchSync } from '@/lib/weibo/rating/xb-rating'
@@ -19,9 +19,6 @@ interface InfiniteFeedListProps {
   isFetchingNextPage: boolean
   fetchNextPage: () => void | Promise<unknown>
   onRetry?: () => void
-  onNavigate?: (item: FeedItem) => void
-  onCommentClick?: (item: FeedItem) => void
-  onRepostClick?: (item: FeedItem) => void
   className?: string
 }
 
@@ -36,9 +33,6 @@ export function InfiniteFeedList({
   isFetchingNextPage,
   fetchNextPage,
   onRetry,
-  onNavigate,
-  onCommentClick,
-  onRepostClick,
   className = 'flex flex-col gap-3',
 }: InfiniteFeedListProps) {
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
@@ -82,13 +76,17 @@ export function InfiniteFeedList({
         <PageErrorState description={errorMessage!} onRetry={onRetry} />
       ) : null}
       {!isLoading && showFeed ? (
-        <FeedList
-          items={items}
-          emptyLabel={emptyLabel}
-          onNavigate={onNavigate}
-          onCommentClick={onCommentClick}
-          onRepostClick={onRepostClick}
-        />
+        items.length > 0 ? (
+          <div className="flex flex-col gap-3">
+            {items.map((item) => (
+              <div key={item.id} data-feed-id={item.id}>
+                <StatusCard status={item} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <PageEmptyState label={emptyLabel} />
+        )
       ) : null}
       {!isLoading && loadMoreErrorMessage ? (
         <div className="flex flex-col items-center gap-2 py-3">

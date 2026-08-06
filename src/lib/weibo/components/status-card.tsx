@@ -1,20 +1,32 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Bookmark } from 'lucide-react'
 import {
+  createContext,
   useCallback,
+  useContext,
   memo,
   useId,
+  useMemo,
   useRef,
   useState,
+  type ReactNode,
   type KeyboardEvent,
   type MouseEvent,
 } from 'react'
+import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
-import { FEED_TOOLBAR_BUTTON_IDS } from '@/lib/app-settings'
+import {
+  FEED_TOOLBAR_BUTTON_IDS,
+  type ContentDensity,
+  type ContentDisplay,
+  type FeedInteractionMode,
+  type FeedPrimaryActionId,
+  type FeedToolbarButtonId,
+} from '@/lib/app-settings'
 import { useAppSettings, useShallow } from '@/lib/app-settings-store'
 import { cn } from '@/lib/utils'
 import { FeedCardMoreMenu } from '@/lib/weibo/components/feed-card-more-menu'
@@ -33,10 +45,7 @@ import { browsingHistoryStore } from '@/lib/weibo/hooks/use-browsing-history'
 import { useFeedLongText } from '@/lib/weibo/hooks/use-feed-long-text'
 import { useHasEnteredViewport } from '@/lib/weibo/hooks/use-has-entered-viewport'
 import type { FeedItem } from '@/lib/weibo/models/feed'
-import {
-  type StatusFeedSurface,
-  statusAllowsCardNavigate,
-} from '@/lib/weibo/models/status-presentation'
+import type { StatusCardRole, StatusFeedSurface } from '@/lib/weibo/models/status-presentation'
 import { getCurrentUserUid } from '@/lib/weibo/platform/current-user'
 import {
   optimisticallyRemoveStatusFromFavorites,
@@ -46,8 +55,7 @@ import {
 } from '@/lib/weibo/queries/status-cache'
 
 import { FeedActions } from './feed-card/feed-card-actions'
-import { FeedAuthorHeader } from './feed-card/feed-card-author'
-import { RetweetedFeedBlock } from './feed-card/feed-card-retweeted'
+import { StatusCardAuthor } from './feed-card/feed-card-author'
 import { FeedTextBlock } from './feed-card/feed-card-text'
 import {
   getMediaDownloadFilename,
@@ -58,24 +66,90 @@ import {
 } from './feed-card/feed-card-utils'
 import { MediaRegion } from './media-region/media-region'
 
-export const FeedCard = memo(function FeedCard({
-  item,
-  surface: surfaceProp = 'timeline',
-  onNavigate,
-  onCommentClick,
-  onRepostClick,
-  onStatusDeleted,
-  className,
+type ComposeStatusMode = 'comment' | 'repost'
+
+export interface StatusCardHost {
+  openStatus: (status: FeedItem) => void
+  composeStatus: (status: FeedItem, mode: ComposeStatusMode) => void
+}
+
+const StatusCardHostContext = createContext<StatusCardHost | null>(null)
+
+export function StatusCardHostProvider({
+  host,
+  children,
 }: {
-  item: FeedItem
-  surface?: StatusFeedSurface
-  onNavigate?: (item: FeedItem) => void
-  onCommentClick?: (item: FeedItem) => void
-  onRepostClick?: (item: FeedItem) => void
-  /** After deleting this status (owner only), e.g. navigate back from detail. */
-  onStatusDeleted?: () => void
-  className?: string
+  host: StatusCardHost
+  children: ReactNode
 }) {
+  return <StatusCardHostContext value={host}>{children}</StatusCardHostContext>
+}
+
+function useStatusCardHost() {
+  const host = useContext(StatusCardHostContext)
+  if (!host) {
+    throw new Error('StatusCard 必须渲染在 StatusCardHostProvider 内')
+  }
+  return host
+}
+
+interface StatusCardController {
+  surface: StatusFeedSurface
+  onRootDeleted?: () => void
+  host: StatusCardHost
+  feedInteractionMode: FeedInteractionMode
+  feedPrimaryActionOrder: FeedPrimaryActionId[]
+  feedToolbarButtonIds: FeedToolbarButtonId[]
+  moreMenuActionIds: FeedToolbarButtonId[]
+  ratingEnabled: boolean
+  autoLoadLongText: boolean
+  feedDensity: ContentDensity
+  showAvatar: boolean
+  showTimestamp: boolean
+  showPublishInfo: boolean
+  showTitleBadge: boolean
+  showInteractionCounts: boolean
+  imageDisplay: ContentDisplay
+  like: (status: FeedItem) => void
+  likePendingId: string | null
+  favorite: (status: FeedItem) => Promise<void>
+  favoritePendingId: string | null
+  deleteStatus: (status: FeedItem) => Promise<void>
+  deletePendingId: string | null
+  unfavorite: (statusId: string) => Promise<void>
+  unfavoritePending: boolean
+}
+
+const StatusCardControllerContext = createContext<StatusCardController | null>(null)
+
+function useStatusCardController() {
+  const controller = useContext(StatusCardControllerContext)
+  if (!controller) {
+    throw new Error('StatusCardView 缺少内部 controller')
+  }
+  return controller
+}
+
+export const StatusCard = memo(function StatusCard({ status }: { status: FeedItem }) {
+  return <StatusCardRoot status={status} surface="timeline" />
+})
+
+export const DetailStatusCard = memo(function DetailStatusCard({ status }: { status: FeedItem }) {
+  const navigate = useNavigate()
+  const handleRootDeleted = useCallback(() => navigate(-1), [navigate])
+  return <StatusCardRoot status={status} surface="detail" onRootDeleted={handleRootDeleted} />
+})
+
+function StatusCardRoot({
+  status,
+  surface,
+  onRootDeleted,
+}: {
+  status: FeedItem
+  surface: StatusFeedSurface
+  onRootDeleted?: () => void
+}) {
+  const host = useStatusCardHost()
   const {
     feedInteractionMode,
     feedPrimaryActionOrder,
@@ -105,32 +179,7 @@ export const FeedCard = memo(function FeedCard({
       weiboCardMediaDisplay: s.weiboCardMediaDisplay,
     })),
   )
-  const [commentsExpanded, setCommentsExpanded] = useState(false)
-  const commentsPanelId = useId()
-  const pointerDownPositionRef = useRef<{ x: number; y: number } | null>(null)
-  const suppressNextClickRef = useRef(false)
-  const feedCardRef = useRef<HTMLDivElement>(null)
-  const hasEnteredViewport = useHasEnteredViewport(feedCardRef)
-  const isTimeline = surfaceProp === 'timeline'
-  const shouldAutoLoadLongText = isTimeline && autoLoadLongText && hasEnteredViewport
-  const effectiveDensity = isTimeline ? feedDensity : 'standard'
-  const {
-    resolvedItem,
-    shouldShowLoadLongText,
-    isLongTextLoading,
-    hasLongTextError,
-    onLoadLongText,
-  } = useFeedLongText(item, shouldAutoLoadLongText)
-
-  const addEntry = useCallback(() => {
-    browsingHistoryStore.getState().addEntry(resolvedItem)
-  }, [resolvedItem])
-
-  const uid = getCurrentUserUid()
-  const showOwnerMenu = uid !== null && uid === resolvedItem.author.id
   const queryClient = useQueryClient()
-  const { openGenImage } = useGenImageDialog()
-  const { downloadDialog, downloadLoading, handleDownload } = useFeedCardMediaDownload(resolvedItem)
   const moreMenuActionIds = FEED_TOOLBAR_BUTTON_IDS.filter(
     (id) => !feedToolbarButtonIds.includes(id),
   )
@@ -160,8 +209,8 @@ export const FeedCard = memo(function FeedCard({
     },
     onSuccess: (_data, target) => {
       toast.success('已删除')
-      if (target.id === item.id) {
-        onStatusDeleted?.()
+      if (target.id === status.id) {
+        onRootDeleted?.()
       }
     },
     onError: (error) => {
@@ -202,6 +251,136 @@ export const FeedCard = memo(function FeedCard({
   const likePendingId =
     likeMutation.isPending && likeMutation.variables ? likeMutation.variables.id : null
 
+  const controller = useMemo<StatusCardController>(
+    () => ({
+      surface,
+      onRootDeleted,
+      host,
+      feedInteractionMode,
+      feedPrimaryActionOrder,
+      feedToolbarButtonIds,
+      moreMenuActionIds,
+      ratingEnabled,
+      autoLoadLongText,
+      feedDensity,
+      showAvatar: weiboCardShowAvatar,
+      showTimestamp: weiboCardShowTimestamp,
+      showPublishInfo: weiboCardShowPublishInfo,
+      showTitleBadge: weiboCardShowTitleBadge,
+      showInteractionCounts: weiboCardShowInteractionCounts,
+      imageDisplay: weiboCardMediaDisplay,
+      like: (target) => likeMutation.mutate(target),
+      likePendingId,
+      favorite: async (target) => {
+        await favoriteMutation.mutateAsync(target)
+      },
+      favoritePendingId:
+        favoriteMutation.isPending && favoriteMutation.variables
+          ? favoriteMutation.variables.id
+          : null,
+      deleteStatus: async (target) => {
+        await deleteMutation.mutateAsync(target)
+      },
+      deletePendingId:
+        deleteMutation.isPending && deleteMutation.variables ? deleteMutation.variables.id : null,
+      unfavorite: async (targetId) => {
+        await unfavoriteMutation.mutateAsync(targetId)
+      },
+      unfavoritePending: unfavoriteMutation.isPending,
+    }),
+    [
+      surface,
+      onRootDeleted,
+      host,
+      feedInteractionMode,
+      feedPrimaryActionOrder,
+      feedToolbarButtonIds,
+      moreMenuActionIds,
+      ratingEnabled,
+      autoLoadLongText,
+      feedDensity,
+      weiboCardShowAvatar,
+      weiboCardShowTimestamp,
+      weiboCardShowPublishInfo,
+      weiboCardShowTitleBadge,
+      weiboCardShowInteractionCounts,
+      weiboCardMediaDisplay,
+      likeMutation,
+      likePendingId,
+      favoriteMutation,
+      deleteMutation,
+      unfavoriteMutation,
+    ],
+  )
+
+  return (
+    <StatusCardControllerContext value={controller}>
+      <StatusCardView status={status} role="root" />
+    </StatusCardControllerContext>
+  )
+}
+
+const ROLE_POLICY = {
+  root: {
+    canNavigate: (surface: StatusFeedSurface) => surface === 'timeline',
+    density: (density: StatusCardController['feedDensity']) => density,
+  },
+  quoted: {
+    canNavigate: () => true,
+    density: (density: StatusCardController['feedDensity']) =>
+      density === 'relaxed' ? 'standard' : 'compact',
+  },
+} satisfies Record<
+  StatusCardRole,
+  {
+    canNavigate: (surface: StatusFeedSurface) => boolean
+    density: (density: StatusCardController['feedDensity']) => StatusCardController['feedDensity']
+  }
+>
+
+function StatusCardView({ status, role }: { status: FeedItem; role: StatusCardRole }) {
+  const controller = useStatusCardController()
+  const {
+    surface,
+    host,
+    feedInteractionMode,
+    feedPrimaryActionOrder,
+    feedToolbarButtonIds,
+    moreMenuActionIds,
+    ratingEnabled,
+    autoLoadLongText,
+    feedDensity,
+    showAvatar,
+    showTimestamp,
+    showPublishInfo,
+    showTitleBadge,
+    showInteractionCounts,
+    imageDisplay,
+  } = controller
+  const [commentsExpanded, setCommentsExpanded] = useState(false)
+  const commentsPanelId = useId()
+  const pointerDownPositionRef = useRef<{ x: number; y: number } | null>(null)
+  const suppressNextClickRef = useRef(false)
+  const cardRef = useRef<HTMLDivElement>(null)
+  const hasEnteredViewport = useHasEnteredViewport(cardRef)
+  const isTimeline = surface === 'timeline'
+  const shouldAutoLoadLongText = isTimeline && autoLoadLongText && hasEnteredViewport
+  const effectiveDensity = isTimeline ? ROLE_POLICY[role].density(feedDensity) : 'standard'
+  const {
+    resolvedItem,
+    shouldShowLoadLongText,
+    isLongTextLoading,
+    hasLongTextError,
+    onLoadLongText,
+  } = useFeedLongText(status, shouldAutoLoadLongText)
+  const { openGenImage } = useGenImageDialog()
+  const { downloadDialog, downloadLoading, handleDownload } = useFeedCardMediaDownload(resolvedItem)
+  const addEntry = useCallback(() => {
+    browsingHistoryStore.getState().addEntry(resolvedItem)
+  }, [resolvedItem])
+  const uid = getCurrentUserUid()
+  const showOwnerMenu = uid !== null && uid === resolvedItem.author.id
+
   const handleCardMouseDown = (event: MouseEvent<HTMLElement>) => {
     if (event.button !== 0) {
       pointerDownPositionRef.current = null
@@ -225,10 +404,7 @@ export const FeedCard = memo(function FeedCard({
 
   const detailPath = getStatusDetailPath(resolvedItem)
   const canNavigate =
-    feedInteractionMode === 'x' &&
-    onNavigate !== undefined &&
-    statusAllowsCardNavigate(surfaceProp, 'root') &&
-    detailPath !== null
+    feedInteractionMode === 'x' && ROLE_POLICY[role].canNavigate(surface) && detailPath !== null
   const navigationProps = canNavigate
     ? ({
         role: 'link',
@@ -278,7 +454,7 @@ export const FeedCard = memo(function FeedCard({
       return
     }
 
-    onNavigate?.(resolvedItem)
+    host.openStatus(resolvedItem)
   }
 
   const handleCardAuxClick = (event: MouseEvent<HTMLElement>) => {
@@ -317,13 +493,25 @@ export const FeedCard = memo(function FeedCard({
     }
 
     event.preventDefault()
-    onNavigate?.(resolvedItem)
+    host.openStatus(resolvedItem)
   }
 
   const handleCommentExpand = useCallback(() => {
     setCommentsExpanded((prev) => !prev)
   }, [])
-  const canExpandInlineComments = feedInteractionMode === 'weibo'
+  const canExpandInlineComments =
+    role === 'root' && surface === 'timeline' && feedInteractionMode === 'weibo'
+
+  const handleCommentClick = useCallback(
+    (target: FeedItem) => {
+      if (role === 'quoted' && feedInteractionMode === 'weibo') {
+        host.openStatus(target)
+        return
+      }
+      host.composeStatus(target, 'comment')
+    },
+    [feedInteractionMode, host, role],
+  )
 
   const handleCopyLink = useCallback((target: FeedItem) => {
     const weiboUrl = `https://weibo.com/${target.author.id}/${target.mblogId}`
@@ -356,18 +544,25 @@ export const FeedCard = memo(function FeedCard({
 
   if (resolvedItem.deleted) {
     return (
-      <Card className={cn('xb-feed-card xb-feed-card--compact gap-4 py-4 relative', className)}>
+      <Card
+        className={cn(
+          'xb-feed-card xb-feed-card--compact relative gap-4 py-4',
+          role === 'quoted' &&
+            '-mx-4 rounded-none border-0 bg-muted/55 shadow-none sm:mx-0 sm:rounded-xl',
+        )}
+        data-status-card-role={role}
+      >
         <CardContent className="flex flex-col items-center gap-3 py-8">
           <p className="text-muted-foreground text-sm">此微博已被删除</p>
           {resolvedItem.favorited ? (
             <Button
               variant="outline"
               size="sm"
-              disabled={unfavoriteMutation.isPending}
-              aria-busy={unfavoriteMutation.isPending || undefined}
+              disabled={controller.unfavoritePending}
+              aria-busy={controller.unfavoritePending || undefined}
               onClick={(event) => {
                 event.stopPropagation()
-                void unfavoriteMutation.mutateAsync(resolvedItem.id)
+                void controller.unfavorite(resolvedItem.id)
               }}
             >
               <Bookmark className="mr-1 size-3" />
@@ -379,57 +574,68 @@ export const FeedCard = memo(function FeedCard({
     )
   }
 
+  const isDeletedAuthor = !resolvedItem.author.id
+
   return (
-    <div ref={feedCardRef}>
+    <div ref={cardRef}>
       <Card
         className={cn(
           'xb-feed-card group/card relative',
+          surface === 'detail' && role === 'root' && 'border-border/55 bg-card/95',
+          role === 'quoted' &&
+            '-mx-4 rounded-none border-0 bg-muted/55 shadow-none sm:mx-0 sm:rounded-xl',
           effectiveDensity === 'compact' && 'gap-3 py-3',
           effectiveDensity === 'standard' && 'gap-4 py-4',
           effectiveDensity === 'relaxed' && 'gap-5 py-5',
           canNavigate &&
             'cursor-pointer focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none',
-          className,
         )}
-        data-testid="feed-card-body"
+        data-testid="status-card-body"
+        data-status-card-role={role}
+        onMouseDown={handleCardMouseDown}
+        onMouseUp={handleCardMouseUp}
         onClick={handleCardClick}
         onAuxClick={handleCardAuxClick}
         onKeyDown={handleCardKeyDown}
         {...navigationProps}
       >
-        {weiboCardShowTitleBadge && resolvedItem.title ? (
+        {showTitleBadge && resolvedItem.title ? (
           <div className="px-4">
             <Badge variant="secondary">{resolvedItem.title.text}</Badge>
           </div>
         ) : null}
         <div className="relative flex items-start gap-2 pr-2 pl-0">
           <div className="min-w-0 flex-1">
-            <FeedAuthorHeader
+            <StatusCardAuthor
               item={resolvedItem}
-              hideAvatar={!weiboCardShowAvatar}
-              showTimestamp={weiboCardShowTimestamp}
-              showPublishInfo={weiboCardShowPublishInfo}
+              role={role}
+              hideAvatar={!showAvatar}
+              showTimestamp={showTimestamp}
+              showPublishInfo={showPublishInfo}
               trailing={
-                ratingEnabled ? (
+                role === 'root' && ratingEnabled ? (
                   <RatingSummaryBadge targetUid={resolvedItem.author.id} size="sm" useBatchCache />
                 ) : null
               }
             />
           </div>
-          <div className="shrink-0 pt-1 pr-2">
-            <FeedCardMoreMenu
-              type="status"
-              isOwner={showOwnerMenu}
-              item={resolvedItem}
-              favorited={resolvedItem.favorited}
-              onFavorite={() => favoriteMutation.mutateAsync(resolvedItem)}
-              contentLabel="这条微博"
-              isDeleting={deleteMutation.isPending}
-              onDelete={() => deleteMutation.mutateAsync(resolvedItem)}
-              visibleActionIds={moreMenuActionIds}
-              onCopyText={() => handleCopyText(resolvedItem)}
-            />
-          </div>
+          {!isDeletedAuthor ? (
+            <div className="shrink-0 pt-1 pr-2">
+              <FeedCardMoreMenu
+                type="status"
+                isOwner={showOwnerMenu}
+                item={resolvedItem}
+                favorited={resolvedItem.favorited}
+                onFavorite={() => controller.favorite(resolvedItem)}
+                contentLabel="这条微博"
+                isDeleting={controller.deletePendingId === resolvedItem.id}
+                onDelete={() => controller.deleteStatus(resolvedItem)}
+                visibleActionIds={moreMenuActionIds}
+                onCopyText={() => handleCopyText(resolvedItem)}
+                className={role === 'quoted' ? '-mt-1' : undefined}
+              />
+            </div>
+          ) : null}
         </div>
         <CardContent
           className={cn(
@@ -438,8 +644,6 @@ export const FeedCard = memo(function FeedCard({
             effectiveDensity === 'standard' && 'gap-4',
             effectiveDensity === 'relaxed' && 'gap-5',
           )}
-          onMouseDown={handleCardMouseDown}
-          onMouseUp={handleCardMouseUp}
         >
           <FeedTextBlock
             item={resolvedItem}
@@ -447,7 +651,7 @@ export const FeedCard = memo(function FeedCard({
             isLongTextLoading={isLongTextLoading}
             hasLongTextError={hasLongTextError}
             onLoadLongText={onLoadLongText}
-            imageDisplay={weiboCardMediaDisplay}
+            imageDisplay={imageDisplay}
           />
 
           <MediaRegion
@@ -457,58 +661,36 @@ export const FeedCard = memo(function FeedCard({
           />
 
           {resolvedItem.retweetedStatus ? (
-            <RetweetedFeedBlock
-              item={resolvedItem.retweetedStatus}
-              onNavigate={onNavigate}
-              onCommentClick={onCommentClick}
-              onRepostClick={onRepostClick}
-              onLikeClick={(target) => likeMutation.mutate(target)}
-              likePending={likePendingId === resolvedItem.retweetedStatus.id}
-              onFavorite={(target) => favoriteMutation.mutateAsync(target)}
-              favoritePending={
-                favoriteMutation.isPending &&
-                favoriteMutation.variables?.id === resolvedItem.retweetedStatus.id
-              }
-              onDelete={(target) => deleteMutation.mutateAsync(target)}
+            <StatusCardView status={resolvedItem.retweetedStatus} role="quoted" />
+          ) : null}
+        </CardContent>
+        {!isDeletedAuthor ? (
+          <CardFooter className="px-4">
+            <FeedActions
+              item={resolvedItem}
+              surface={surface}
+              onCommentClick={handleCommentClick}
+              onCommentExpand={handleCommentExpand}
+              commentsExpanded={commentsExpanded}
+              commentsPanelId={canExpandInlineComments ? commentsPanelId : undefined}
+              onRepostClick={(target) => host.composeStatus(target, 'repost')}
+              onLikeClick={controller.like}
+              likePending={controller.likePendingId === resolvedItem.id}
               feedInteractionMode={feedInteractionMode}
               primaryActionOrder={feedPrimaryActionOrder}
               toolbarButtonIds={feedToolbarButtonIds}
-              moreMenuActionIds={moreMenuActionIds}
-              autoLoadLongText={shouldAutoLoadLongText}
-              density={effectiveDensity}
-              showAvatar={weiboCardShowAvatar}
-              showTimestamp={weiboCardShowTimestamp}
-              showPublishInfo={weiboCardShowPublishInfo}
-              showInteractionCounts={weiboCardShowInteractionCounts}
-              imageDisplay={weiboCardMediaDisplay}
+              favorited={resolvedItem.favorited}
+              onFavorite={() => controller.favorite(resolvedItem)}
+              favoritePending={controller.favoritePendingId === resolvedItem.id}
+              onCopyLink={() => handleCopyLink(resolvedItem)}
+              onCopyText={() => handleCopyText(resolvedItem)}
+              onGenImage={() => openGenImage(resolvedItem)}
+              onDownload={() => void handleDownload()}
+              downloadPending={downloadLoading}
+              showInteractionCounts={showInteractionCounts}
             />
-          ) : null}
-        </CardContent>
-        <CardFooter className="px-4">
-          <FeedActions
-            item={resolvedItem}
-            surface={surfaceProp}
-            onCommentClick={onCommentClick}
-            onCommentExpand={handleCommentExpand}
-            commentsExpanded={commentsExpanded}
-            commentsPanelId={canExpandInlineComments ? commentsPanelId : undefined}
-            onRepostClick={onRepostClick}
-            onLikeClick={(target) => likeMutation.mutate(target)}
-            likePending={likePendingId === resolvedItem.id}
-            feedInteractionMode={feedInteractionMode}
-            primaryActionOrder={feedPrimaryActionOrder}
-            toolbarButtonIds={feedToolbarButtonIds}
-            favorited={resolvedItem.favorited}
-            onFavorite={() => favoriteMutation.mutateAsync(resolvedItem)}
-            favoritePending={favoriteMutation.isPending}
-            onCopyLink={() => handleCopyLink(resolvedItem)}
-            onCopyText={() => handleCopyText(resolvedItem)}
-            onGenImage={() => openGenImage(resolvedItem)}
-            onDownload={() => void handleDownload()}
-            downloadPending={downloadLoading}
-            showInteractionCounts={weiboCardShowInteractionCounts}
-          />
-        </CardFooter>
+          </CardFooter>
+        ) : null}
         {commentsExpanded && canExpandInlineComments ? (
           <FeedCommentsExpanded
             id={commentsPanelId}
@@ -520,4 +702,4 @@ export const FeedCard = memo(function FeedCard({
       </Card>
     </div>
   )
-})
+}

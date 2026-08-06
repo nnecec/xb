@@ -12,7 +12,6 @@ import {
   exploreGroupsQueryOptions,
   exploreTimelineInfiniteOptions,
 } from '@/lib/weibo/data/weibo-data'
-import { composeTargetFromFeedItem } from '@/lib/weibo/models/compose'
 import type { ExploreGroup } from '@/lib/weibo/models/explore'
 import type { TimelinePage } from '@/lib/weibo/models/feed'
 import { useWeiboPage } from '@/lib/weibo/route/use-weibo-page'
@@ -116,11 +115,6 @@ export function ExplorePage() {
           isFetchingNextPage={isFetchingNextPage}
           fetchNextPage={timelineQuery.fetchNextPage}
           onRetry={() => void timelineQuery.refetch()}
-          onNavigate={ctx.navigateToStatusDetail}
-          onCommentClick={(item) =>
-            ctx.setComposeTarget(composeTargetFromFeedItem(item, 'comment'))
-          }
-          onRepostClick={(item) => ctx.setComposeTarget(composeTargetFromFeedItem(item, 'repost'))}
         />
       </div>
     </div>
