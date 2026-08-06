@@ -202,7 +202,19 @@ describe('MediaCollection', () => {
     expect(screen.queryByTestId('photo-render')).not.toBeInTheDocument()
   })
 
-  it('limits a single card media item to its configured maximum width', () => {
+  it('uses the configured single image maximum width for inline media', () => {
+    const store = getAppSettingsStore()
+    store.setState({ weiboCardSingleImageMaxWidth: 720 })
+
+    const { container } = render(<MediaCollection items={createItems(1)} />)
+
+    expect(container.querySelector('.grid')).toHaveStyle({ maxWidth: '720px' })
+  })
+
+  it('prefers an explicitly provided single media maximum width', () => {
+    const store = getAppSettingsStore()
+    store.setState({ weiboCardSingleImageMaxWidth: 640 })
+
     const { container } = render(
       <MediaCollection items={createItems(1)} presentation="card" singleMediaMaxWidth={720} />,
     )

@@ -575,7 +575,10 @@ function WeiboCardSettingsPanel({ settings }: { settings: AppSettingsStoreState 
           value={settings.weiboCardMediaDisplay}
           onChange={(value) => void settings.updateSettings({ weiboCardMediaDisplay: value })}
         />
-        <StackedField label="单图最大宽度" description="实际宽度不会超过中间列可用宽度">
+        <StackedField
+          label="单图最大宽度"
+          description="适用于微博媒体、正文引用图和评论图片，不会超过中间列可用宽度"
+        >
           <div className="flex items-center gap-3 pt-1">
             <Slider
               min={WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_MIN}

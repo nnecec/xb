@@ -105,6 +105,31 @@ describe('CommentCard', () => {
     expect(container.querySelectorAll('img.aspect-square')).toHaveLength(2)
   })
 
+  it('uses the configured single image maximum width for one comment image', () => {
+    getAppSettingsStore().setState({ weiboCardSingleImageMaxWidth: 620 })
+    const queryClient = new QueryClient()
+    const item: CommentItem = {
+      id: 'c1',
+      text: 'hi',
+      createdAtLabel: 'now',
+      author: { id: '1', name: 'A', avatarUrl: null },
+      likeCount: 0,
+      images: [{ id: 'i1', thumbnailUrl: thumb, largeUrl: large }],
+      replyComment: null,
+      comments: [],
+    }
+
+    const { container } = render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <CommentCard item={item} rootStatusId="s1" authorUid="u1" />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    expect(container.querySelector('.grid')).toHaveStyle({ maxWidth: '620px' })
+  })
+
   it('shows reply-to context when replyComment is present', () => {
     const queryClient = new QueryClient()
     const item: CommentItem = {

@@ -69,6 +69,7 @@ export const MediaCollection = memo(function MediaCollection({
   const container = useMemo(() => getUiPortalContainer(), [])
   const darkModeImageDim = useAppSettings((s) => s.darkModeImageDim)
   const photoLoopEnabled = useAppSettings((s) => s.photoLoopEnabled)
+  const defaultSingleImageMaxWidth = useAppSettings((s) => s.weiboCardSingleImageMaxWidth)
   const cardLayout = useAppSettings((s) => s.weiboCardMultiMediaLayout)
   const cardGridLimit = useAppSettings((s) => s.weiboCardMultiMediaGridLimit)
   const cardGridMaxWidth = useAppSettings((s) => s.weiboCardMultiMediaGridMaxWidth)
@@ -123,8 +124,8 @@ export const MediaCollection = memo(function MediaCollection({
               ? { height: `${cardStripHeight}px` }
               : usesCardLayout
                 ? { maxWidth: `${cardGridMaxWidth}px` }
-                : singleMediaMaxWidth !== undefined && items.length === 1
-                  ? { maxWidth: `${singleMediaMaxWidth}px` }
+                : items.length === 1
+                  ? { maxWidth: `${singleMediaMaxWidth ?? defaultSingleImageMaxWidth}px` }
                   : undefined
           }
           ref={horizontal ? strip.setRootRef : undefined}

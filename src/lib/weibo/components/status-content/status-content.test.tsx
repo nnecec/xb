@@ -354,6 +354,8 @@ describe('StatusText', () => {
   })
 
   it('renders an inline image carousel after the text when the short_url lives outside any reply chain', () => {
+    getAppSettingsStore().setState({ weiboCardSingleImageMaxWidth: 620 })
+
     const { container } = renderWithProviders(
       <StatusText
         item={{
@@ -376,6 +378,7 @@ describe('StatusText', () => {
     const img = container.querySelector('img')
     expect(img).not.toBeNull()
     expect(img).toHaveAttribute('src', 'https://img/p2-thumb.jpg')
+    expect(container.querySelector('.grid')).toHaveStyle({ maxWidth: '620px' })
     expect(container).not.toHaveTextContent('http://t.cn/PIC')
     expect(container).toHaveTextContent('这是正文')
   })
