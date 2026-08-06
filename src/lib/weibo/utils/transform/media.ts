@@ -34,6 +34,20 @@ function isPlaybackDashItem(item: NonNullable<WeiboMediaInfo['playback_list']>[n
 }
 
 /**
+ * Gets video representation ids declared by an MPD manifest.
+ */
+function mpdRepresentationIds(xml: string): ReadonlySet<string> {
+  const ids = new Set<string>()
+
+  for (const match of xml.matchAll(/<Representation\b[^>]*\bid=(?:"([^"]+)"|'([^']+)')/gi)) {
+    const id = match[1] ?? match[2]
+    if (id) ids.add(id)
+  }
+
+  return ids
+}
+
+/**
  * Gets best progressive URL from playback list.
  */
 function bestProgressiveFromPlaybackList(mediaInfo: WeiboMediaInfo): string | undefined {
@@ -61,7 +75,10 @@ function bestProgressiveFromPlaybackList(mediaInfo: WeiboMediaInfo): string | un
 /**
  * Gets DASH qualities from playback list.
  */
-function dashQualitiesFromPlaybackList(mediaInfo: WeiboMediaInfo): FeedDashQuality[] {
+function dashQualitiesFromPlaybackList(
+  mediaInfo: WeiboMediaInfo,
+  representationIds?: ReadonlySet<string>,
+): FeedDashQuality[] {
   if (!Array.isArray(mediaInfo.playback_list)) {
     return []
   }
@@ -70,12 +87,13 @@ function dashQualitiesFromPlaybackList(mediaInfo: WeiboMediaInfo): FeedDashQuali
   const rows: Row[] = []
 
   for (const item of mediaInfo.playback_list) {
-    if (isPlaybackAudioItem(item) || !isPlaybackDashItem(item) || item.meta?.is_hidden) {
+    if (isPlaybackAudioItem(item) || item.meta?.is_hidden) {
       continue
     }
     const id = (item.meta?.label ?? item.play_info?.label)?.trim()
     const url = pickNonEmptyUrl(item.play_info?.url)
-    if (!id || !url) {
+    const matchesRepresentation = representationIds?.has(id ?? '')
+    if (!id || (!matchesRepresentation && !isPlaybackDashItem(item)) || !url) {
       continue
     }
     const label = (item.meta?.quality_label ?? id).trim()
@@ -203,7 +221,7 @@ export function toMixMediaInfo(mixMediaInfo: any): FeedMixMediaItem[] | undefine
         dash = {
           type: 'mpd',
           manifestXml: rawMpdXml.trim(),
-          qualities: dashQualitiesFromPlaybackList(mediaInfo),
+          qualities: dashQualitiesFromPlaybackList(mediaInfo, mpdRepresentationIds(rawMpdXml)),
         }
       } else if (sources.length > 0) {
         dash = {
@@ -340,7 +358,7 @@ export function toMedia(status: WeiboStatus) {
 
   if (rawMpdXml) {
     if (hasAudioAdaptationInMpd(rawMpdXml)) {
-      const qualities = dashQualitiesFromPlaybackList(mediaInfo)
+      const qualities = dashQualitiesFromPlaybackList(mediaInfo, mpdRepresentationIds(rawMpdXml))
       if (qualities.length > 0) {
         return {
           type: 'video' as const,

@@ -119,6 +119,42 @@ describe('adaptStatusDetailResponse', () => {
     }
   })
 
+  it('keeps MPD quality options when playback rows omit their protocol marker', () => {
+    const mpd = `<?xml version="1.0"?><MPD><Period><AdaptationSet mimeType="video/mp4"><Representation id="dash_1080p" bandwidth="1"/></AdaptationSet><AdaptationSet mimeType="audio/mp4"><Representation id="dash_audio" bandwidth="1"/></AdaptationSet></Period></MPD>`
+    const result = adaptStatusDetailResponse({
+      idstr: '602',
+      text_raw: 'dash protocol omitted',
+      user: { idstr: '1', screen_name: 'Alice' },
+      page_info: {
+        object_type: 'video',
+        media_info: {
+          mp4_720p_mp4: 'https://example.com/fallback-720.mp4',
+          mpdInfo: { mpdcontent: mpd },
+          playback_list: [
+            {
+              meta: {
+                type: 1,
+                label: 'dash_1080p',
+                quality_index: 1080,
+                quality_label: '1080p',
+              },
+              play_info: {
+                type: 1,
+                label: 'dash_1080p',
+                url: 'https://example.com/dash-1080.mp4',
+              },
+            },
+          ],
+        },
+      },
+    })
+
+    expect(result.status.media?.dash?.type).toBe('mpd')
+    if (result.status.media?.dash?.type === 'mpd') {
+      expect(result.status.media.dash.qualities).toEqual([{ id: 'dash_1080p', label: '1080p' }])
+    }
+  })
+
   it('builds DASH manifest from playback_list when mpdInfo is missing', () => {
     const result = adaptStatusDetailResponse({
       idstr: '701',
