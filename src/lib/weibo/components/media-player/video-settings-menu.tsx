@@ -1,6 +1,6 @@
 import { Menu, usePlaybackRateOptions, useQualityOptions } from '@videojs/react'
 import type { PlaybackRateOptionsResult } from '@videojs/react'
-import { Check, ChevronLeft, ChevronRight, Gauge, Settings2 } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Gauge, Settings } from 'lucide-react'
 
 import { AUTO_QUALITY_ID, type QualityOption } from './video-playback-quality'
 import { IconButton } from './video-player-controls'
@@ -72,7 +72,7 @@ function VideoSettingsMenuContent({
         className="media-button--settings"
         render={<IconButton />}
       >
-        <Settings2 className="media-icon media-icon--settings size-[18px]" />
+        <Settings className="media-icon media-icon--settings size-[18px]" />
       </Menu.Trigger>
 
       <Menu.Content className="media-surface media-popover media-menu media-menu--settings">
