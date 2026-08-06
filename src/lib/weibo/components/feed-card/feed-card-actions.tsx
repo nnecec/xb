@@ -37,6 +37,7 @@ const FEED_ACTION_ICON_TINT = {
 } as const
 
 function FeedActionButton({
+  prominent = false,
   tint,
   iconTint,
   icon,
@@ -50,6 +51,7 @@ function FeedActionButton({
   disabled,
   onClick,
 }: {
+  prominent?: boolean
   tint: string
   iconTint: string
   icon: ReactNode
@@ -73,7 +75,7 @@ function FeedActionButton({
       aria-expanded={ariaExpanded}
       aria-busy={ariaBusy || undefined}
       disabled={disabled}
-      className={cn('group rounded-full py-2 font-normal', tint)}
+      className={cn('group rounded-full py-2 font-normal', prominent && 'h-10', tint)}
       onClick={onClick}
     >
       {icon}
@@ -147,6 +149,7 @@ export function FeedActions({
       return (
         <FeedActionButton
           key={id}
+          prominent
           tint={FEED_ACTION_TINT.comment}
           iconTint={FEED_ACTION_ICON_TINT.comment}
           ariaControls={controlsInlineComments ? commentsPanelId : undefined}
@@ -180,6 +183,7 @@ export function FeedActions({
       return (
         <FeedActionButton
           key={id}
+          prominent
           tint={FEED_ACTION_TINT.repost}
           iconTint={FEED_ACTION_ICON_TINT.repost}
           ariaLabel="转发微博"
@@ -198,6 +202,7 @@ export function FeedActions({
     return (
       <FeedActionButton
         key={id}
+        prominent
         tint={FEED_ACTION_TINT.like}
         iconTint={FEED_ACTION_ICON_TINT.like}
         ariaLabel={liked ? '取消点赞' : '点赞微博'}

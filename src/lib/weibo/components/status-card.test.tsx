@@ -173,6 +173,14 @@ describe('StatusCard module', () => {
     )
   })
 
+  it('gives the primary action buttons a larger touch target', () => {
+    renderCard(createStatus('root'))
+
+    for (const label of ['回复微博', '转发微博', '点赞微博']) {
+      expect(screen.getByRole('button', { name: label })).toHaveClass('h-10')
+    }
+  })
+
   it('opens a quoted comment in Weibo mode without changing the root target', () => {
     getAppSettingsStore().setState({ feedInteractionMode: 'weibo' })
     const host = { openStatus: vi.fn(), composeStatus: vi.fn() }
