@@ -36,29 +36,6 @@ import {
 const HIT_TARGET =
   'relative after:absolute after:top-1/2 after:left-1/2 after:size-10 after:-translate-x-1/2 after:-translate-y-1/2'
 
-function ReplyCommentPreview({ reply }: { reply: NonNullable<CommentItem['replyComment']> }) {
-  return (
-    <p className="text-muted-foreground truncate text-xs">
-      回复{' '}
-      <UserHoverCard uid={reply.author.id}>
-        <Link
-          to={`/n/${encodeURIComponent(reply.author.name)}`}
-          className="text-foreground/80 font-medium hover:underline"
-          onClick={(event) => event.stopPropagation()}
-        >
-          @{reply.author.name}
-        </Link>
-      </UserHoverCard>
-      {reply.text ? (
-        <>
-          <span className="text-muted-foreground/80">：</span>
-          <span className="text-muted-foreground">{reply.text}</span>
-        </>
-      ) : null}
-    </p>
-  )
-}
-
 export const CommentCard = memo(function CommentCard({
   item,
   rootStatusId,
@@ -216,8 +193,6 @@ export const CommentCard = memo(function CommentCard({
         {commentCardShowPublishInfo && item.source ? (
           <p className="text-muted-foreground text-xs">{item.source}</p>
         ) : null}
-
-        {item.replyComment ? <ReplyCommentPreview reply={item.replyComment} /> : null}
 
         <div className={cn('whitespace-pre-wrap text-foreground', textClassName)}>
           <StatusText

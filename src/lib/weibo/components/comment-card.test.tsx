@@ -130,12 +130,14 @@ describe('CommentCard', () => {
     expect(container.querySelector('.grid')).toHaveStyle({ maxWidth: '620px' })
   })
 
-  it('shows reply-to context when replyComment is present', () => {
+  it('hides reply-to preview and keeps publish info for replies', () => {
+    getAppSettingsStore().setState({ commentCardShowPublishInfo: true })
     const queryClient = new QueryClient()
     const item: CommentItem = {
       id: 'c1',
       text: 'my reply',
       createdAtLabel: 'now',
+      source: '来自 iPhone 客户端',
       author: { id: '1', name: 'A', avatarUrl: null },
       likeCount: 0,
       images: [],
@@ -156,9 +158,11 @@ describe('CommentCard', () => {
       </QueryClientProvider>,
     )
 
-    expect(screen.getByText('回复')).toBeInTheDocument()
-    expect(screen.getByText('@Orig')).toBeInTheDocument()
-    expect(screen.getByText('original thought')).toBeInTheDocument()
+    expect(screen.getByText('my reply')).toBeInTheDocument()
+    expect(screen.getByText('来自 iPhone 客户端')).toBeInTheDocument()
+    expect(screen.queryByText('回复')).not.toBeInTheDocument()
+    expect(screen.queryByText('@Orig')).not.toBeInTheDocument()
+    expect(screen.queryByText('original thought')).not.toBeInTheDocument()
   })
 
   it('loads more nested replies in a dialog and opens inline reply for child', async () => {

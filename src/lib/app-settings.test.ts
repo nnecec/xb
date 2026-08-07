@@ -155,7 +155,7 @@ describe('app-settings', () => {
       commentDensity: 'standard',
       commentCardShowAvatar: true,
       commentCardShowTimestamp: true,
-      commentCardShowPublishInfo: false,
+      commentCardShowPublishInfo: true,
       commentCardShowAuthorBadge: true,
       commentCardShowLikeCount: true,
       commentCardShowThreadLine: true,

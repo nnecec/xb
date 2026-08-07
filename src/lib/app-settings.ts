@@ -302,7 +302,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   commentDensity: 'standard',
   commentCardShowAvatar: true,
   commentCardShowTimestamp: true,
-  commentCardShowPublishInfo: false,
+  commentCardShowPublishInfo: true,
   commentCardShowAuthorBadge: true,
   commentCardShowLikeCount: true,
   commentCardShowThreadLine: true,
