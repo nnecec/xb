@@ -1,13 +1,13 @@
-name: Bug Report
-description: Report a bug
-title: '[Bug]: '
+name: 问题反馈
+description: 报告问题
+title: '[Bug]：'
 labels: [Bug]
 
 body:
   - type: markdown
     attributes:
       value: |
-        标题不填或随便写类似「bug」「错误」「有问题」的 issue 将直接关闭。
+        标题不填或仅填写「错误」「有问题」等内容的问题反馈将直接关闭。
 
         功能请求请不要在这里提交，请使用[功能请求模板](https://github.com/nnecec/xb/issues/new?template=feature_request_template.yaml)。
 
@@ -18,12 +18,12 @@ body:
       label: 环境信息
       description: 请填写扩展版本、浏览器版本等信息。
       placeholder: |
-        - 浏览器（如 Google Chrome）：
+        - 浏览器（如谷歌浏览器）：
         - xb 版本（如 0.1.0）：
 
         如果你修改了 xb 的设置，请写在下面以方便排查问题（可粗略写成类似「设置了 ×× 后出现这个问题」）：
       value: |
-        - 浏览器（如 Google Chrome）：
+        - 浏览器（如谷歌浏览器）：
         - xb 版本（如 0.1.0）：
 
         如果你修改了 xb 的设置，请写在下面以方便排查问题（可粗略写成类似「设置了 ×× 后出现这个问题」）：
@@ -34,10 +34,10 @@ body:
     attributes:
       label: 安装来源
       options:
-        - Chrome Web Store
-        - Firefox Add-ons
-        - Edge Add-ons
-        - GitHub Release
+        - Chrome 网上应用店
+        - Firefox 附加组件商店
+        - Edge 加载项商店
+        - GitHub 发布页
         - 自行编译
     validations:
       required: true
@@ -51,9 +51,9 @@ body:
   - type: textarea
     attributes:
       label: 问题描述
-      description: 请详细描述你遇到的问题，与UI相关时最好附带截图。
+      description: 请详细描述你遇到的问题，与界面相关时最好附带截图。
       placeholder: |
-        请预先搜索此问题是否在其他 issue 中出现过
+        请先搜索其他问题反馈中是否已出现过此问题
     validations:
       required: true
 
@@ -78,5 +78,5 @@ body:
     attributes:
       label: 参与贡献
       options:
-        - label: 我将自行创建 PR 进行修复
+        - label: 我将自行创建拉取请求（PR）进行修复
           required: false

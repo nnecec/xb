@@ -1,5 +1,5 @@
-name: Feature Request
-description: Submit a new feature request
+name: 功能请求
+description: 提交功能请求
 title: '[Feature] '
 labels: [Feature]
 
@@ -15,7 +15,7 @@ body:
   - type: textarea
     attributes:
       label: 需求描述
-      description: 描述你希望添加的功能，与UI相关的最好能附图说明
+      description: 描述你希望添加的功能，与界面相关的最好能附图说明
       placeholder: 请描述你的功能需求，包括期望的行为、使用场景等，如果有参考的插件或脚本，请提供链接
     validations:
       required: true
@@ -24,5 +24,5 @@ body:
     attributes:
       label: 参与贡献
       options:
-        - label: 我将自行创建 PR 实现此功能
+        - label: 我将自行创建拉取请求（PR）实现此功能
           required: false
