@@ -20,12 +20,12 @@ vi.mock('@/lib/weibo/data/weibo-io', () => ({
 
 vi.mock('@/lib/weibo/hooks/use-font-settings', () => ({
   useFontSettings: () => ({
-    fontSizeClass: 'text-sm',
+    contentFontSize: 14,
     fontWeightClass: 'font-normal',
     letterSpacingClass: 'tracking-normal',
     lineHeightClass: 'leading-relaxed',
     fontFamilyClass: 'font-sans',
-    textClassName: 'xb-status-text text-sm font-normal tracking-normal leading-relaxed font-sans',
+    textClassName: 'xb-status-text font-normal tracking-normal leading-relaxed font-sans',
     loadStatus: 'idle' as const,
     isRemote: false,
   }),

@@ -39,7 +39,7 @@ vi.mock('@/lib/weibo/data/weibo-data', async () => {
 
 vi.mock('@/lib/weibo/hooks/use-font-settings', () => ({
   useFontSettings: () => ({
-    textClassName: 'xb-status-text text-sm font-normal tracking-normal leading-relaxed font-sans',
+    textClassName: 'xb-status-text font-normal tracking-normal leading-relaxed font-sans',
   }),
 }))
 

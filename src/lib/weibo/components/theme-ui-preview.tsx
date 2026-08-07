@@ -65,7 +65,7 @@ export function ThemeUiPreview({
         </div>
       </div>
       {showLabels && (
-        <div className="text-muted-foreground grid grid-cols-2 gap-px text-center text-[10px]">
+        <div className="text-muted-foreground grid grid-cols-2 gap-px text-center text-xs">
           <span>浅色</span>
           <span>深色</span>
         </div>

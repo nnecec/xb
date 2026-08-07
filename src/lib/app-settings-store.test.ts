@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { APP_SETTINGS_STORAGE_KEY, DEFAULT_APP_SETTINGS } from '@/lib/app-settings'
-import { createAppSettingsStore } from '@/lib/app-settings-store'
+import { bindAppSettingsStorageSync, createAppSettingsStore } from '@/lib/app-settings-store'
 
 interface Deferred<T = void> {
   promise: Promise<T>
@@ -60,6 +60,24 @@ function createDelayedStorageArea(initialValue?: unknown) {
   }
 }
 
+function createStorageChanges() {
+  let listener:
+    | ((changes: Record<string, { newValue?: unknown }>, areaName: string) => void)
+    | null = null
+
+  return {
+    addListener: vi.fn((nextListener) => {
+      listener = nextListener
+    }),
+    removeListener: vi.fn((nextListener) => {
+      if (listener === nextListener) listener = null
+    }),
+    emit(changes: Record<string, { newValue?: unknown }>, areaName = 'local') {
+      listener?.(changes, areaName)
+    },
+  }
+}
+
 describe('app-settings-store', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
@@ -99,16 +117,14 @@ describe('app-settings-store', () => {
     const store = createAppSettingsStore(storage)
 
     const first = store.getState().updateSettings({ theme: 'dark' })
-    await Promise.resolve()
-    expect(storage.pendingSets).toHaveLength(1)
+    await vi.waitFor(() => expect(storage.pendingSets).toHaveLength(1))
 
     const second = store.getState().updateSettings({ rewriteEnabled: false })
     expect(storage.pendingSets).toHaveLength(1)
 
     storage.pendingSets[0]!.deferred.resolve()
     await first
-    await Promise.resolve()
-    expect(storage.pendingSets).toHaveLength(2)
+    await vi.waitFor(() => expect(storage.pendingSets).toHaveLength(2))
 
     storage.pendingSets[1]!.deferred.resolve()
     await second
@@ -131,16 +147,14 @@ describe('app-settings-store', () => {
     }
 
     const first = store.getState().addUserTheme(theme)
-    await Promise.resolve()
-    expect(storage.pendingSets).toHaveLength(1)
+    await vi.waitFor(() => expect(storage.pendingSets).toHaveLength(1))
 
     const second = store.getState().updateSettings({ theme: 'dark' })
     expect(storage.pendingSets).toHaveLength(1)
 
     storage.pendingSets[0]!.deferred.resolve()
     await first
-    await Promise.resolve()
-    expect(storage.pendingSets).toHaveLength(2)
+    await vi.waitFor(() => expect(storage.pendingSets).toHaveLength(2))
 
     storage.pendingSets[1]!.deferred.resolve()
     await second
@@ -150,5 +164,53 @@ describe('app-settings-store', () => {
       theme: 'dark',
       userThemes: [theme],
     })
+  })
+
+  it('merges a stale tab patch into the latest persisted snapshot', async () => {
+    const storage = createStorageArea()
+    const firstStore = createAppSettingsStore(storage)
+    const staleStore = createAppSettingsStore(storage)
+
+    await Promise.all([firstStore.getState().hydrate(), staleStore.getState().hydrate()])
+    await firstStore.getState().updateSettings({ uiFontSize: 20 })
+    await staleStore.getState().updateSettings({ theme: 'dark' })
+
+    expect(storage.read()).toEqual({
+      ...DEFAULT_APP_SETTINGS,
+      uiFontSize: 20,
+      theme: 'dark',
+    })
+  })
+
+  it('syncs external local storage changes and removes the listener', () => {
+    const storage = createStorageArea()
+    const storageChanges = createStorageChanges()
+    const store = createAppSettingsStore(storage)
+    const cleanup = bindAppSettingsStorageSync(store, storageChanges)
+
+    storageChanges.emit({
+      [APP_SETTINGS_STORAGE_KEY]: {
+        newValue: {
+          uiFontSize: 20,
+          contentFontSize: 32,
+        },
+      },
+    })
+    expect(store.getState()).toMatchObject({ uiFontSize: 20, contentFontSize: 32 })
+
+    storageChanges.emit(
+      {
+        [APP_SETTINGS_STORAGE_KEY]: { newValue: { uiFontSize: 12 } },
+      },
+      'sync',
+    )
+    expect(store.getState().uiFontSize).toBe(20)
+
+    cleanup()
+    expect(storageChanges.removeListener).toHaveBeenCalledTimes(1)
+    storageChanges.emit({
+      [APP_SETTINGS_STORAGE_KEY]: { newValue: { uiFontSize: 12 } },
+    })
+    expect(store.getState().uiFontSize).toBe(20)
   })
 })

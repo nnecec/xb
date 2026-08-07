@@ -3,16 +3,16 @@ import { useShallow } from 'zustand/react/shallow'
 import { createStore, type StoreApi } from 'zustand/vanilla'
 
 import {
+  APP_SETTINGS_STORAGE_KEY,
   DEFAULT_APP_SETTINGS,
   loadAppSettings,
+  normalizeAppSettings,
   persistAppSettings,
   type AppSettings,
   type AppSettingsStorageArea,
   type UserTheme,
 } from '@/lib/app-settings'
 import { CUSTOM_THEME_PRESETS } from '@/lib/custom-theme'
-
-const PERSISTED_KEYS = Object.keys(DEFAULT_APP_SETTINGS) as (keyof AppSettings)[]
 
 export interface AppSettingsStoreState extends AppSettings {
   isHydrated: boolean
@@ -28,11 +28,10 @@ export interface AppSettingsStoreState extends AppSettings {
 
 export type AppSettingsStore = StoreApi<AppSettingsStoreState>
 
-function toPersistedSettings(state: AppSettingsStoreState): AppSettings {
-  return Object.fromEntries(
-    PERSISTED_KEYS.map((key) => [key, state[key]]),
-  ) as unknown as AppSettings
-}
+type AppSettingsStorageChangeEvent = Pick<
+  typeof browser.storage.onChanged,
+  'addListener' | 'removeListener'
+>
 
 export function createAppSettingsStore(
   storageArea: AppSettingsStorageArea = browser.storage.local,
@@ -42,9 +41,11 @@ export function createAppSettingsStore(
 
     async function updateAndPersist(patch: Partial<AppSettings>) {
       set(patch)
-      const persistTask = persistQueue.then(() =>
-        persistAppSettings(toPersistedSettings(get()), storageArea),
-      )
+      const persistTask = persistQueue.then(async () => {
+        // 读取最新快照后只合并本次 patch，避免旧标签页覆盖其他标签页刚保存的字段。
+        const latest = await loadAppSettings(storageArea)
+        return persistAppSettings({ ...latest, ...patch }, storageArea)
+      })
       persistQueue = persistTask.catch(() => {})
       await persistTask
     }
@@ -93,6 +94,24 @@ export function createAppSettingsStore(
       },
     }
   })
+}
+
+export function bindAppSettingsStorageSync(
+  store: AppSettingsStore,
+  storageChanges: AppSettingsStorageChangeEvent = browser.storage.onChanged,
+) {
+  const onStorageChanged: Parameters<AppSettingsStorageChangeEvent['addListener']>[0] = (
+    changes,
+    areaName,
+  ) => {
+    if (areaName !== 'local' || !(APP_SETTINGS_STORAGE_KEY in changes)) return
+
+    const nextSettings = normalizeAppSettings(changes[APP_SETTINGS_STORAGE_KEY]?.newValue)
+    store.setState(nextSettings)
+  }
+
+  storageChanges.addListener(onStorageChanged)
+  return () => storageChanges.removeListener(onStorageChanged)
 }
 
 let appSettingsStore: AppSettingsStore | null = null

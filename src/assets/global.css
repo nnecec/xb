@@ -186,6 +186,53 @@
   /* 正文自定义字体：允许字重合成（远程多为单字重），禁止假斜体 */
   .xb-status-text {
     font-synthesis: weight;
+    font-size: var(--xb-content-font-size, 1rem);
+    --text-xs: max(11px, calc(var(--xb-content-font-size, 16px) - 4px));
+    --text-sm: calc(var(--xb-content-font-size, 16px) - 2px);
+    --text-base: var(--xb-content-font-size, 16px);
+    --text-lg: calc(var(--xb-content-font-size, 16px) + 2px);
+    --text-xl: calc(var(--xb-content-font-size, 16px) + 4px);
+    --text-2xl: calc(var(--xb-content-font-size, 16px) + 8px);
+    --text-3xl: calc(var(--xb-content-font-size, 16px) + 14px);
+    --text-4xl: calc(var(--xb-content-font-size, 16px) + 20px);
+    --text-xs--line-height: calc(1 / 0.75);
+    --text-sm--line-height: calc(1.25 / 0.875);
+    --text-base--line-height: calc(1.5 / 1);
+    --text-lg--line-height: calc(1.75 / 1.125);
+    --text-xl--line-height: calc(1.75 / 1.25);
+    --text-2xl--line-height: calc(2 / 1.5);
+    --text-3xl--line-height: calc(2.25 / 1.875);
+    --text-4xl--line-height: calc(2.5 / 2.25);
+  }
+
+  /* 导出的生图保持固定版式，不跟随应用界面字号。 */
+  .xb-generated-image {
+    --text-xs: 0.75rem;
+    --text-xs--line-height: calc(1 / 0.75);
+    --text-sm: 0.875rem;
+    --text-sm--line-height: calc(1.25 / 0.875);
+    --text-base: 1rem;
+    --text-base--line-height: calc(1.5 / 1);
+    --text-lg: 1.125rem;
+    --text-lg--line-height: calc(1.75 / 1.125);
+    --text-xl: 1.25rem;
+    --text-xl--line-height: calc(1.75 / 1.25);
+    --text-2xl: 1.5rem;
+    --text-2xl--line-height: calc(2 / 1.5);
+    --text-3xl: 1.875rem;
+    --text-3xl--line-height: calc(2.25 / 1.875);
+    --text-4xl: 2.25rem;
+    --text-4xl--line-height: calc(2.5 / 2.25);
+    --text-5xl: 3rem;
+    --text-5xl--line-height: 1;
+    --text-6xl: 3.75rem;
+    --text-6xl--line-height: 1;
+    --text-7xl: 4.5rem;
+    --text-7xl--line-height: 1;
+    --text-8xl: 6rem;
+    --text-8xl--line-height: 1;
+    --text-9xl: 8rem;
+    --text-9xl--line-height: 1;
   }
 
   .xb-feed-card--compact {

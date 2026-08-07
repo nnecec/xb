@@ -48,6 +48,44 @@ describe('bindShellState', () => {
     cleanup()
   })
 
+  it('projects independent UI and content font sizes onto the shadow container', async () => {
+    const container = document.createElement('div')
+    const appRoot = document.createElement('div')
+    const store = createAppSettingsStore({
+      get: async () => ({ [APP_SETTINGS_STORAGE_KEY]: undefined }),
+      set: async () => {},
+    })
+
+    Object.defineProperty(window, 'matchMedia', {
+      value: () => ({
+        matches: false,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+      }),
+      configurable: true,
+    })
+
+    const cleanup = bindShellState({ container, appRoot, settingsStore: store })
+
+    expect(container.style.getPropertyValue('--text-sm')).toBe('14px')
+    expect(container.style.getPropertyValue('--text-xs')).toBe('12px')
+    expect(container.style.getPropertyValue('--xb-content-font-size')).toBe('16px')
+
+    await store.getState().updateSettings({ uiFontSize: 20, contentFontSize: 32 })
+
+    expect(container.style.getPropertyValue('--text-xs')).toBe('18px')
+    expect(container.style.getPropertyValue('--text-sm')).toBe('20px')
+    expect(container.style.getPropertyValue('--text-base')).toBe('22px')
+    expect(container.style.getPropertyValue('--xb-content-font-size')).toBe('32px')
+    expect(container.getAttribute('data-xb-ui-font-size')).toBe('20')
+
+    cleanup()
+
+    expect(container.style.getPropertyValue('--text-sm')).toBe('')
+    expect(container.style.getPropertyValue('--xb-content-font-size')).toBe('')
+    expect(container.hasAttribute('data-xb-ui-font-size')).toBe(false)
+  })
+
   it('cleans up takeover and dark mode classes on unbind', async () => {
     const container = document.createElement('div')
     const appRoot = document.createElement('div')

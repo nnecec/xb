@@ -41,8 +41,8 @@ function formatRatingScore(score: number | null | undefined): string {
 
 function getRatingSizes(size: 'sm' | 'md') {
   return {
-    scoreTextClassName: size === 'sm' ? 'text-[11px]' : 'text-xs',
-    labelTextClassName: size === 'sm' ? 'text-[11px]' : 'text-xs',
+    scoreTextClassName: 'text-xs',
+    labelTextClassName: 'text-xs',
     starSize: size === 'sm' ? 13 : 15,
     starSlotClassName: size === 'sm' ? 'w-18' : 'w-20',
   }

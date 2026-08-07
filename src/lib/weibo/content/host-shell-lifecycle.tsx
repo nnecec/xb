@@ -2,7 +2,7 @@ import { createRoot, type Root } from 'react-dom/client'
 
 import { setUiPortalContainer } from '@/components/ui/portal'
 import type { HomeTab } from '@/lib/app-settings'
-import { getAppSettingsStore } from '@/lib/app-settings-store'
+import { bindAppSettingsStorageSync, getAppSettingsStore } from '@/lib/app-settings-store'
 import { AppRoot } from '@/lib/weibo/app/app-root'
 import { waitForWeiboHostRegions } from '@/lib/weibo/content/host-selectors'
 import { markWeiboPageReady } from '@/lib/weibo/content/page-takeover'
@@ -55,6 +55,7 @@ export async function mountWeiboHostShell({
   }
 
   const settingsStore = getAppSettingsStore()
+  const cleanupStorageSync = bindAppSettingsStorageSync(settingsStore)
   await settingsStore.getState().hydrate()
 
   // 首次加载跳转：当 window.history.length <= 2 且当前在首页时，重定向到用户选择的页面
@@ -75,6 +76,7 @@ export async function mountWeiboHostShell({
         redirectPath = homeTimelinePathFromTab(firstLoadRedirect)
       }
     }
+    cleanupStorageSync()
     window.location.replace(redirectPath)
     return null
   }
@@ -87,14 +89,20 @@ export async function mountWeiboHostShell({
     onMount(container, shadow) {
       injectSonnerStyles(shadow, sonnerStyles)
       setUiPortalContainer(container)
-      const cleanup = bindShellState({
+      const cleanupShellState = bindShellState({
         container: container as unknown as HTMLElement,
         appRoot: regions.appRoot,
         settingsStore,
       })
       const root = createRoot(container)
       root.render(<AppRoot />)
-      return { cleanup, root }
+      return {
+        cleanup() {
+          cleanupStorageSync()
+          cleanupShellState()
+        },
+        root,
+      }
     },
     onRemove(mounted?: MountedWeiboUi) {
       setUiPortalContainer(null)

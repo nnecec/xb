@@ -50,7 +50,7 @@ function ProfileIdentity({ profile }: { profile: UserProfile }) {
       </div>
 
       {profile.bio ? (
-        <p className="mt-4 max-w-2xl text-[15px] leading-7 text-pretty">{profile.bio}</p>
+        <p className="mt-4 max-w-2xl text-base leading-7 text-pretty">{profile.bio}</p>
       ) : null}
       {profile.descText ? (
         <p className="text-muted-foreground mt-2 text-xs leading-relaxed">{profile.descText}</p>

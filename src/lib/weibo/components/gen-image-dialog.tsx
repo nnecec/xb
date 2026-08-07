@@ -358,7 +358,7 @@ export function GenImageDialog() {
               </div>
             ) : cardData && CardComponent ? (
               <div className="no-scrollbar flex h-[60vh] w-[640px] flex-col overflow-y-auto">
-                <div ref={cardRef} style={sharedStyle}>
+                <div ref={cardRef} className="xb-generated-image" style={sharedStyle}>
                   <CardComponent
                     data={cardData}
                     theme={imageGenTheme}

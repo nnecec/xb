@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 
 import type {
+  ContentFontSize,
   FontFamilyClass,
-  FontSizeClass,
   FontWeightClass,
   LetterSpacingClass,
   LineHeightClass,
@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils'
 export type FontLoadStatus = 'idle' | 'loading' | 'ready' | 'error'
 
 export function useFontSettings() {
-  const fontSizeClass = useAppSettings((s) => s.fontSizeClass) as FontSizeClass
+  const contentFontSize = useAppSettings((s) => s.contentFontSize) as ContentFontSize
   const fontWeightClass = useAppSettings((s) => s.fontWeightClass) as FontWeightClass
   const letterSpacingClass = useAppSettings((s) => s.letterSpacingClass) as LetterSpacingClass
   const lineHeightClass = useAppSettings((s) => s.lineHeightClass) as LineHeightClass
@@ -45,7 +45,6 @@ export function useFontSettings() {
 
   const textClassName = cn(
     'xb-status-text',
-    fontSizeClass,
     fontWeightClass,
     letterSpacingClass,
     lineHeightClass,
@@ -53,7 +52,7 @@ export function useFontSettings() {
   )
 
   return {
-    fontSizeClass,
+    contentFontSize,
     fontWeightClass,
     letterSpacingClass,
     lineHeightClass,

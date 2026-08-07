@@ -44,7 +44,8 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
   const settingsMainRef = useRef<HTMLElement>(null)
 
   const {
-    fontSizeClass,
+    uiFontSize,
+    contentFontSize,
     fontWeightClass,
     letterSpacingClass,
     lineHeightClass,
@@ -65,7 +66,8 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
     updateUserTheme,
   } = useAppSettings(
     useShallow((s) => ({
-      fontSizeClass: s.fontSizeClass,
+      uiFontSize: s.uiFontSize,
+      contentFontSize: s.contentFontSize,
       fontWeightClass: s.fontWeightClass,
       letterSpacingClass: s.letterSpacingClass,
       lineHeightClass: s.lineHeightClass,
@@ -96,7 +98,8 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
 
   function resetFontSettings() {
     void updateSettings({
-      fontSizeClass: DEFAULT_APP_SETTINGS.fontSizeClass,
+      uiFontSize: DEFAULT_APP_SETTINGS.uiFontSize,
+      contentFontSize: DEFAULT_APP_SETTINGS.contentFontSize,
       fontWeightClass: DEFAULT_APP_SETTINGS.fontWeightClass,
       letterSpacingClass: DEFAULT_APP_SETTINGS.letterSpacingClass,
       lineHeightClass: DEFAULT_APP_SETTINGS.lineHeightClass,
@@ -263,7 +266,8 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
 
             {activeGroup === 'font' && (
               <SettingsFontSection
-                fontSizeClass={fontSizeClass}
+                uiFontSize={uiFontSize}
+                contentFontSize={contentFontSize}
                 fontWeightClass={fontWeightClass}
                 letterSpacingClass={letterSpacingClass}
                 lineHeightClass={lineHeightClass}
@@ -314,7 +318,7 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
               href="https://xb-extension.vercel.app/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-foreground font-mono text-[11px] transition-colors"
+              className="text-muted-foreground hover:text-foreground font-mono text-xs transition-colors"
             >
               xb v{version}
             </a>
@@ -323,7 +327,7 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
                 href="https://github.com/nnecec"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground text-[11px] transition-colors"
+                className="text-muted-foreground hover:text-foreground text-xs transition-colors"
               >
                 @nnecec
               </a>
@@ -331,7 +335,7 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
                 href="https://github.com/nnecec/xb"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground text-[11px] transition-colors"
+                className="text-muted-foreground hover:text-foreground text-xs transition-colors"
               >
                 GitHub
               </a>

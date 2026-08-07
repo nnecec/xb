@@ -56,8 +56,15 @@ export type FontApplyScope = 'content' | 'app'
 
 export type HotSearchType = 'hot' | 'mine' | 'entertainment' | 'life' | 'social'
 
-/** 正文阅读尺度：最小 14px，最大 24px */
-export type FontSizeClass = 'text-sm' | 'text-base' | 'text-lg' | 'text-xl' | 'text-2xl'
+export const UI_FONT_SIZE_OPTIONS = [12, 14, 16, 18, 20] as const
+
+/** xb 界面常用字号（对应默认字阶的 text-sm） */
+export type UiFontSize = (typeof UI_FONT_SIZE_OPTIONS)[number]
+
+export const CONTENT_FONT_SIZE_OPTIONS = [14, 16, 18, 20, 24, 28, 32] as const
+
+/** 微博正文与评论正文的基础字号 */
+export type ContentFontSize = (typeof CONTENT_FONT_SIZE_OPTIONS)[number]
 
 /** 正文字重：本地与远程字体均可调节（远程多为合成字重） */
 export type FontWeightClass = 'font-normal' | 'font-medium' | 'font-semibold' | 'font-bold'
@@ -162,7 +169,8 @@ export interface AppSettings {
   customContentWidth: number
   theme: AppTheme
   rewriteEnabled: boolean
-  fontSizeClass: FontSizeClass
+  uiFontSize: UiFontSize
+  contentFontSize: ContentFontSize
   fontWeightClass: FontWeightClass
   letterSpacingClass: LetterSpacingClass
   lineHeightClass: LineHeightClass
@@ -262,7 +270,8 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   customContentWidth: DEFAULT_CUSTOM_CONTENT_WIDTH,
   theme: 'system',
   rewriteEnabled: true,
-  fontSizeClass: 'text-base',
+  uiFontSize: 14,
+  contentFontSize: 16,
   fontWeightClass: 'font-normal',
   letterSpacingClass: 'tracking-normal',
   lineHeightClass: 'leading-relaxed',
@@ -366,12 +375,31 @@ function normalizeFontFamilyClass(value: unknown): FontFamilyClass {
   return isFontFamilyClass(value) ? value : DEFAULT_APP_SETTINGS.fontFamilyClass
 }
 
-function normalizeFontSizeClass(value: unknown): FontSizeClass {
-  if (isFontSizeClass(value)) return value
-  // 旧版过大/过小字号钳制到阅读尺度
-  if (value === 'text-xs') return 'text-sm'
-  if (value === 'text-3xl' || value === 'text-4xl') return 'text-2xl'
-  return DEFAULT_APP_SETTINGS.fontSizeClass
+function normalizeUiFontSize(value: unknown): UiFontSize {
+  return UI_FONT_SIZE_OPTIONS.includes(value as UiFontSize)
+    ? (value as UiFontSize)
+    : DEFAULT_APP_SETTINGS.uiFontSize
+}
+
+function normalizeContentFontSize(value: unknown, legacyFontSizeClass: unknown): ContentFontSize {
+  if (CONTENT_FONT_SIZE_OPTIONS.includes(value as ContentFontSize)) {
+    return value as ContentFontSize
+  }
+
+  // 迁移旧版 Tailwind class 存储；过大/过小值继续钳制到原有阅读尺度。
+  if (legacyFontSizeClass === 'text-xs' || legacyFontSizeClass === 'text-sm') return 14
+  if (legacyFontSizeClass === 'text-base') return 16
+  if (legacyFontSizeClass === 'text-lg') return 18
+  if (legacyFontSizeClass === 'text-xl') return 20
+  if (
+    legacyFontSizeClass === 'text-2xl' ||
+    legacyFontSizeClass === 'text-3xl' ||
+    legacyFontSizeClass === 'text-4xl'
+  ) {
+    return 24
+  }
+
+  return DEFAULT_APP_SETTINGS.contentFontSize
 }
 
 function normalizeFontWeightClass(value: unknown): FontWeightClass {
@@ -488,16 +516,6 @@ function isLightBgColorPreset(value: unknown): value is LightBgColorPreset {
 function isDarkBgColorPreset(value: unknown): value is DarkBgColorPreset {
   return (
     value === 'near-black' || value === 'black' || value === 'dark-gray' || value === 'warm-dark'
-  )
-}
-
-function isFontSizeClass(value: unknown): value is FontSizeClass {
-  return (
-    value === 'text-sm' ||
-    value === 'text-base' ||
-    value === 'text-lg' ||
-    value === 'text-xl' ||
-    value === 'text-2xl'
   )
 }
 
@@ -624,7 +642,11 @@ export function normalizeAppSettings(value: unknown): AppSettings {
       typeof candidate.rewriteEnabled === 'boolean'
         ? candidate.rewriteEnabled
         : DEFAULT_APP_SETTINGS.rewriteEnabled,
-    fontSizeClass: normalizeFontSizeClass(candidate.fontSizeClass),
+    uiFontSize: normalizeUiFontSize(candidate.uiFontSize),
+    contentFontSize: normalizeContentFontSize(
+      candidate.contentFontSize,
+      legacyCandidate.fontSizeClass,
+    ),
     fontWeightClass: normalizeFontWeightClass(candidate.fontWeightClass),
     letterSpacingClass: normalizeLetterSpacingClass(candidate.letterSpacingClass),
     lineHeightClass: normalizeLineHeightClass(candidate.lineHeightClass),

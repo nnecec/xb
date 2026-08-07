@@ -50,12 +50,12 @@ describe('app-settings', () => {
   })
 
   it('migrates legacy font options to reading-scale defaults', () => {
-    expect(normalizeAppSettings({ fontSizeClass: 'text-xs' as never }).fontSizeClass).toBe(
-      'text-sm',
-    )
-    expect(normalizeAppSettings({ fontSizeClass: 'text-4xl' as never }).fontSizeClass).toBe(
-      'text-2xl',
-    )
+    expect(normalizeAppSettings({ fontSizeClass: 'text-xs' }).contentFontSize).toBe(14)
+    expect(normalizeAppSettings({ fontSizeClass: 'text-4xl' }).contentFontSize).toBe(24)
+    expect(normalizeAppSettings({ uiFontSize: 20 }).uiFontSize).toBe(20)
+    expect(normalizeAppSettings({ uiFontSize: 13 as never }).uiFontSize).toBe(14)
+    expect(normalizeAppSettings({ contentFontSize: 32 }).contentFontSize).toBe(32)
+    expect(normalizeAppSettings({ contentFontSize: 30 as never }).contentFontSize).toBe(16)
     expect(normalizeAppSettings({ fontWeightClass: 'font-thin' as never }).fontWeightClass).toBe(
       'font-normal',
     )
@@ -105,7 +105,8 @@ describe('app-settings', () => {
     const storage = createStorageArea({
       theme: 'dark',
       rewriteEnabled: false,
-      fontSizeClass: 'text-sm',
+      uiFontSize: 14,
+      contentFontSize: 14,
       fontFamilyClass: 'font-serif',
       showHotSearchCard: false,
     })
@@ -115,7 +116,8 @@ describe('app-settings', () => {
       customContentWidth: 1200,
       theme: 'dark',
       rewriteEnabled: false,
-      fontSizeClass: 'text-sm',
+      uiFontSize: 14,
+      contentFontSize: 14,
       fontWeightClass: 'font-normal',
       letterSpacingClass: 'tracking-normal',
       lineHeightClass: 'leading-relaxed',
@@ -196,7 +198,8 @@ describe('app-settings', () => {
         customContentWidth: 1200,
         theme: 'light',
         rewriteEnabled: true,
-        fontSizeClass: 'text-lg',
+        uiFontSize: 18,
+        contentFontSize: 28,
         fontWeightClass: 'font-medium',
         letterSpacingClass: 'tracking-wide',
         lineHeightClass: 'leading-loose',
@@ -278,7 +281,8 @@ describe('app-settings', () => {
       customContentWidth: 1200,
       theme: 'light',
       rewriteEnabled: true,
-      fontSizeClass: 'text-lg',
+      uiFontSize: 18,
+      contentFontSize: 28,
       fontWeightClass: 'font-medium',
       letterSpacingClass: 'tracking-wide',
       lineHeightClass: 'leading-loose',

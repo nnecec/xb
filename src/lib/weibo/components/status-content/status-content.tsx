@@ -175,7 +175,7 @@ function MarkdownText({ text }: { text: string }) {
         h3: ({ className, children, ...props }) => (
           <h3
             {...withoutMarkdownNode(props)}
-            className={cn('mt-4 scroll-m-20 text-[1.0625rem] font-semibold first:mt-0', className)}
+            className={cn('mt-4 scroll-m-20 text-lg font-semibold first:mt-0', className)}
           >
             {children}
           </h3>
@@ -208,7 +208,7 @@ function MarkdownText({ text }: { text: string }) {
         p: ({ className, children, ...props }) => (
           <p
             {...withoutMarkdownNode(props)}
-            className={cn('leading-7 [&:not(:first-child)]:mt-4', className)}
+            className={cn('leading-normal [&:not(:first-child)]:mt-4', className)}
           >
             {children}
           </p>

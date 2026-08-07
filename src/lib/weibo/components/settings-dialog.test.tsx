@@ -250,9 +250,35 @@ describe('SettingsDialog', () => {
 
     if (fontButton) {
       await user.click(fontButton)
-      // Should show font size section
-      expect(screen.getByText('字体大小')).toBeInTheDocument()
+      // Should show both independent font size controls
+      expect(screen.getByText('界面字号')).toBeInTheDocument()
+      expect(screen.getByText('正文字号')).toBeInTheDocument()
+      expect(screen.getByRole('combobox', { name: '界面字号' })).toHaveTextContent('14px')
+      expect(screen.getByRole('combobox', { name: '正文字号' })).toHaveTextContent('16px')
     }
+  })
+
+  it('updates and resets independent UI and content font sizes', async () => {
+    const user = userEvent.setup()
+    render(<SettingsDialog open={true} onOpenChange={() => {}} />)
+
+    await user.click(screen.getByRole('button', { name: /字体/ }))
+
+    await user.click(screen.getByRole('combobox', { name: '界面字号' }))
+    await user.click(screen.getByRole('option', { name: '20px' }))
+    expect(mockUpdateSettings).toHaveBeenCalledWith({ uiFontSize: 20 })
+
+    await user.click(screen.getByRole('combobox', { name: '正文字号' }))
+    await user.click(screen.getByRole('option', { name: '32px' }))
+    expect(mockUpdateSettings).toHaveBeenCalledWith({ contentFontSize: 32 })
+
+    await user.click(screen.getByRole('button', { name: '恢复默认' }))
+    expect(mockUpdateSettings).toHaveBeenCalledWith(
+      expect.objectContaining({
+        uiFontSize: DEFAULT_APP_SETTINGS.uiFontSize,
+        contentFontSize: DEFAULT_APP_SETTINGS.contentFontSize,
+      }),
+    )
   })
 
   it('shows theme picker in theme panel', async () => {

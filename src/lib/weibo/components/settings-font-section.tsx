@@ -9,20 +9,23 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import type {
+  ContentFontSize,
   FontApplyScope,
   FontFamilyClass,
-  FontSizeClass,
   FontWeightClass,
   LetterSpacingClass,
   LineHeightClass,
+  UiFontSize,
 } from '@/lib/app-settings'
+import { CONTENT_FONT_SIZE_OPTIONS, UI_FONT_SIZE_OPTIONS } from '@/lib/app-settings'
 import { REMOTE_FONT_OPTIONS } from '@/lib/font-loader'
 
 import { Field } from './settings-dialog-ui'
 import { FontPreviewCard } from './settings-font-preview'
 
 export function SettingsFontSection({
-  fontSizeClass,
+  uiFontSize,
+  contentFontSize,
   fontWeightClass,
   letterSpacingClass,
   lineHeightClass,
@@ -33,7 +36,8 @@ export function SettingsFontSection({
   resetFontSettings,
   updateSettings,
 }: {
-  fontSizeClass: FontSizeClass
+  uiFontSize: UiFontSize
+  contentFontSize: ContentFontSize
   fontWeightClass: FontWeightClass
   letterSpacingClass: LetterSpacingClass
   lineHeightClass: LineHeightClass
@@ -51,20 +55,45 @@ export function SettingsFontSection({
       </div>
 
       <div className="divide-border/40 divide-y px-6 py-4">
-        <Field label="字体大小" description="微博正文和评论的字体大小">
+        <Field label="界面字号" description="调整 xb 导航、按钮、菜单和设置等界面文字">
           <Select
-            value={fontSizeClass}
-            onValueChange={(v) => void updateSettings({ fontSizeClass: v as FontSizeClass })}
+            value={String(uiFontSize)}
+            onValueChange={(value) =>
+              void updateSettings({ uiFontSize: Number(value) as UiFontSize })
+            }
           >
-            <SelectTrigger className="w-[100px]">
+            <SelectTrigger className="w-[120px]" aria-label="界面字号">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="text-sm">14px</SelectItem>
-              <SelectItem value="text-base">16px</SelectItem>
-              <SelectItem value="text-lg">18px</SelectItem>
-              <SelectItem value="text-xl">20px</SelectItem>
-              <SelectItem value="text-2xl">24px</SelectItem>
+              <SelectGroup>
+                {UI_FONT_SIZE_OPTIONS.map((size) => (
+                  <SelectItem key={size} value={String(size)}>
+                    {size}px
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="正文字号" description="微博正文和评论的字体大小">
+          <Select
+            value={String(contentFontSize)}
+            onValueChange={(value) =>
+              void updateSettings({ contentFontSize: Number(value) as ContentFontSize })
+            }
+          >
+            <SelectTrigger className="w-[120px]" aria-label="正文字号">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {CONTENT_FONT_SIZE_OPTIONS.map((size) => (
+                  <SelectItem key={size} value={String(size)}>
+                    {size}px
+                  </SelectItem>
+                ))}
+              </SelectGroup>
             </SelectContent>
           </Select>
         </Field>
@@ -165,7 +194,7 @@ export function SettingsFontSection({
         </Field>
         <Field
           label="应用到"
-          description="正文：仅微博与评论。应用：界面 chrome 共用字族（字号/行高仍只作用于正文）"
+          description="正文：仅微博与评论。应用：界面共用字族；两种字号始终独立"
         >
           <Select
             value={fontApplyScope}
