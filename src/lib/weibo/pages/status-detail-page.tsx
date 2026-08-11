@@ -110,7 +110,7 @@ function StatusCommentsSection({
         />
 
         <div className="pt-4">
-          {commentsQuery.isLoading ? <PageLoadingState label="正在加载评论..." /> : null}
+          {commentsQuery.isLoading ? <PageLoadingState label="正在加载评论…" /> : null}
           {!commentsQuery.isLoading && errorMessage ? (
             <PageErrorState description={errorMessage} />
           ) : null}
@@ -132,7 +132,7 @@ function StatusCommentsSection({
             onClick={() => void commentsQuery.fetchNextPage()}
             disabled={commentsQuery.isFetchingNextPage}
           >
-            {commentsQuery.isFetchingNextPage ? '加载中...' : '加载更多评论'}
+            {commentsQuery.isFetchingNextPage ? '加载中…' : '加载更多评论'}
           </Button>
         ) : null}
       </div>
@@ -291,7 +291,7 @@ export function StatusDetailPage() {
         regionName={detail?.status.regionName}
       />
 
-      {detailQuery.isLoading ? <PageLoadingState label="正在加载此微博..." /> : null}
+      {detailQuery.isLoading ? <PageLoadingState label="正在加载此微博…" /> : null}
       {detailQuery.error instanceof Error ? (
         <PageErrorState description={detailQuery.error.message} />
       ) : null}

@@ -118,7 +118,7 @@ export function CommentBox({
           </div>
 
           <Button type="button" size="sm" disabled={isSubmitDisabled} onClick={handleSubmit}>
-            {mutation.isPending ? '发布中...' : submitLabel}
+            {mutation.isPending ? '发布中…' : submitLabel}
           </Button>
         </div>
       </div>

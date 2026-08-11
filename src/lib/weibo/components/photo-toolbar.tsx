@@ -47,6 +47,7 @@ export function PhotoToolbar({ overlayProps }: PhotoToolbarProps) {
   return (
     <div className="flex items-center gap-1">
       <Button
+        type="button"
         variant="ghost"
         size="icon"
         onClick={handleToggleLoop}
@@ -55,15 +56,28 @@ export function PhotoToolbar({ overlayProps }: PhotoToolbarProps) {
       >
         <Repeat className="size-4" />
       </Button>
-      <Button variant="ghost" size="icon" onClick={handleRotateCcw} aria-label="逆时针旋转">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        onClick={handleRotateCcw}
+        aria-label="逆时针旋转"
+      >
         <RotateCcw className="size-4" />
       </Button>
 
-      <Button variant="ghost" size="icon" onClick={handleRotateCw} aria-label="顺时针旋转">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        onClick={handleRotateCw}
+        aria-label="顺时针旋转"
+      >
         <RotateCw className="size-4" />
       </Button>
 
       <Button
+        type="button"
         variant="ghost"
         size="icon"
         onClick={handleZoomOut}
@@ -74,6 +88,7 @@ export function PhotoToolbar({ overlayProps }: PhotoToolbarProps) {
       </Button>
 
       <Button
+        type="button"
         variant="ghost"
         size="icon"
         onClick={handleZoomIn}

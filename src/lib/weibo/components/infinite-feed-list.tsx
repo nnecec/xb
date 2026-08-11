@@ -69,38 +69,50 @@ export function InfiniteFeedList({
     void fetchNextPage()
   }
 
+  const isBusy = isLoading || isFetchingNextPage
+  const loadingAnnouncement = isLoading
+    ? loadingLabel
+    : isFetchingNextPage
+      ? '正在加载更多微博…'
+      : ''
+
   return (
-    <div className={className}>
-      {isLoading ? <PageLoadingState label={loadingLabel} /> : null}
-      {!isLoading && showInitialError ? (
-        <PageErrorState description={errorMessage!} onRetry={onRetry} />
-      ) : null}
-      {!isLoading && showFeed ? (
-        items.length > 0 ? (
-          <div className="flex flex-col gap-3">
-            {items.map((item) => (
-              <div key={item.id} data-feed-id={item.id}>
-                <StatusCard status={item} />
-              </div>
-            ))}
+    <>
+      <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {loadingAnnouncement}
+      </span>
+      <div className={className} aria-busy={isBusy || undefined}>
+        {isLoading ? <PageLoadingState label={loadingLabel} isAnnouncedSeparately /> : null}
+        {!isLoading && showInitialError ? (
+          <PageErrorState description={errorMessage!} onRetry={onRetry} />
+        ) : null}
+        {!isLoading && showFeed ? (
+          items.length > 0 ? (
+            <div className="flex flex-col gap-3">
+              {items.map((item) => (
+                <div key={item.id} data-feed-id={item.id}>
+                  <StatusCard status={item} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <PageEmptyState label={emptyLabel} onRetry={onRetry} />
+          )
+        ) : null}
+        {!isLoading && loadMoreErrorMessage ? (
+          <div className="flex flex-col items-center gap-2 py-3">
+            <p className="text-destructive text-sm">{loadMoreErrorMessage}</p>
+            <Button size="sm" variant="outline" onClick={handleLoadMoreRetry}>
+              加载失败，点击重试
+            </Button>
           </div>
-        ) : (
-          <PageEmptyState label={emptyLabel} />
-        )
-      ) : null}
-      {!isLoading && loadMoreErrorMessage ? (
-        <div className="flex flex-col items-center gap-2 py-3">
-          <p className="text-destructive text-sm">{loadMoreErrorMessage}</p>
-          <Button size="sm" variant="outline" onClick={handleLoadMoreRetry}>
-            加载失败，点击重试
-          </Button>
-        </div>
-      ) : null}
-      {hasNextPage ? (
-        <div ref={loadMoreRef} className="flex justify-center py-3">
-          {isFetchingNextPage ? <Spinner size="sm" /> : null}
-        </div>
-      ) : null}
-    </div>
+        ) : null}
+        {hasNextPage ? (
+          <div ref={loadMoreRef} className="flex justify-center py-3">
+            {isFetchingNextPage ? <Spinner size="sm" aria-hidden="true" /> : null}
+          </div>
+        ) : null}
+      </div>
+    </>
   )
 }

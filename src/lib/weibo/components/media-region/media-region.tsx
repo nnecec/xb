@@ -10,7 +10,11 @@ import type { FeedItem, FeedMedia } from '@/lib/weibo/models/feed'
 import { AudioPlayerComponent } from '../media-player/audio-player'
 import { VideoPlayback } from '../media-player/video-playback'
 import { InlineVideoPanel } from './inline-video-panel'
-import { buildMediaRegionModel, type MediaAsset } from './media-region-model'
+import {
+  buildMediaRegionModel,
+  getMediaRegionCollapseType,
+  type MediaAsset,
+} from './media-region-model'
 
 type MediaRegionItem = FeedItem | NonNullable<FeedItem['retweetedStatus']>
 type VideoCollectionItem = Extract<MediaCollectionItem, { kind: 'video' }>
@@ -112,9 +116,9 @@ export function MediaRegion({
   downloadFilename?: string
   onOpen?: () => void
 }) {
-  const { display, singleImageMaxWidth, singleVideoMaxWidth } = useAppSettings(
+  const { collapsedMediaTypes, singleImageMaxWidth, singleVideoMaxWidth } = useAppSettings(
     useShallow((settings) => ({
-      display: settings.weiboCardMediaDisplay,
+      collapsedMediaTypes: settings.weiboCardCollapsedMediaTypes,
       singleImageMaxWidth: settings.weiboCardSingleImageMaxWidth,
       singleVideoMaxWidth: settings.weiboCardSingleVideoMaxWidth,
     })),
@@ -171,6 +175,10 @@ export function MediaRegion({
   }, [])
 
   if (!region) return null
+
+  const collapseType = getMediaRegionCollapseType(region)
+  const display =
+    collapseType && collapsedMediaTypes.includes(collapseType) ? 'collapsed' : 'expanded'
 
   const galleryItems = region.assets.filter(
     (asset): asset is MediaCollectionItem => asset.kind === 'image' || asset.kind === 'video',

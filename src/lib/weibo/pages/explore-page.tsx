@@ -107,7 +107,7 @@ export function ExplorePage() {
         <InfiniteFeedList
           pages={timelineQuery.data?.pages as TimelinePage[] | undefined}
           emptyLabel="暂无内容"
-          loadingLabel="正在加载探索内容..."
+          loadingLabel="正在加载探索内容…"
           errorMessage={errorMessage}
           loadMoreErrorMessage={loadMoreErrorMessage}
           isLoading={isLoading}

@@ -113,6 +113,7 @@ describe('HomeTimelinePage', () => {
     )
 
     expect(screen.getByRole('button', { name: '推荐' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: '推荐' })).toBeInTheDocument()
     expect(await screen.findByText('hello world')).toBeInTheDocument()
     expect(vi.mocked(loadHomeTimeline)).toHaveBeenCalled()
   })
@@ -139,6 +140,58 @@ describe('HomeTimelinePage', () => {
       })
     })
     expect(vi.mocked(loadFollowGroups)).toHaveBeenCalled()
+  })
+
+  it('keeps the group route in loading state until its group id is resolved', async () => {
+    let resolveGroups: ((value: Awaited<ReturnType<typeof loadFollowGroups>>) => void) | undefined
+    vi.mocked(loadFollowGroups).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveGroups = resolve
+        }),
+    )
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={['/mygroups?gid=custom-group']}>
+          <Routes>
+            <Route path="*" element={<AppShell />}>
+              <Route path="mygroups" element={<HomeTimelinePage />} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    expect(screen.getByRole('status')).toHaveTextContent('正在加载微博时间线…')
+    expect(screen.queryByText('此时间线暂无内容')).not.toBeInTheDocument()
+
+    resolveGroups?.({
+      groups: [{ gid: 'custom-group', title: '自定义组' }],
+      defaultGroups: { specialFollow: null, friendCircle: null },
+    })
+    await waitFor(() => {
+      expect(vi.mocked(loadGroupTimeline)).toHaveBeenCalledWith('custom-group', { cursor: null })
+    })
+  })
+
+  it('maps machine request errors to stable user-facing copy', async () => {
+    vi.mocked(loadHomeTimeline).mockRejectedValueOnce(new Error('weibo-request-timeout'))
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={['/']}>
+          <Routes>
+            <Route path="*" element={<AppShell />}>
+              <Route index element={<HomeTimelinePage />} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    expect(await screen.findByText('请求超时，请检查网络后重试。')).toBeInTheDocument()
+    expect(screen.queryByText('weibo-request-timeout')).not.toBeInTheDocument()
   })
 
   it('shows the new posts indicator and refreshes on refresh button click', async () => {

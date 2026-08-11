@@ -223,7 +223,11 @@ export async function loadFavorites(
     page,
     ...(page === 1 ? { with_total: 'true' } : {}),
   })
-  return adaptTimelineResponse(payload, page)
+  const pageData = adaptTimelineResponse(payload, page)
+  return {
+    ...pageData,
+    items: pageData.items.map((item) => ({ ...item, favorited: true })),
+  }
 }
 
 export async function loadLikedStatuses(

@@ -170,6 +170,12 @@ describe('ShellFrame', () => {
 
     expect(screen.getAllByRole('navigation', { name: '主导航' })).toHaveLength(1)
     expect(screen.getByText('center content')).toBeInTheDocument()
+    const skipLink = screen.getByRole('link', { name: '跳到主要内容' })
+    expect(skipLink).toHaveAttribute('href', '#xb-main-content')
+    fireEvent.click(skipLink)
+    const contentMain = document.getElementById('xb-main-content')
+    expect(contentMain).toHaveFocus()
+    expect(contentMain).toHaveAttribute('tabindex', '-1')
   })
 
   it('keeps one fixed back-to-top button when the right rail is hidden', () => {
@@ -246,16 +252,16 @@ describe('ShellFrame', () => {
     main.scrollTop = 40
     fireEvent.scroll(main)
 
-    expect(screen.getByText('推荐').closest('[class*="sticky"]')).toHaveClass(
-      '-translate-y-[calc(100%+1px)]',
-    )
+    expect(
+      screen.getByRole('heading', { level: 1, name: '推荐' }).closest('[class*="sticky"]'),
+    ).toHaveClass('-translate-y-[calc(100%+1px)]')
 
     main.scrollTop = 20
     fireEvent.scroll(main)
 
-    expect(screen.getByText('推荐').closest('[class*="sticky"]')).not.toHaveClass(
-      '-translate-y-[calc(100%+1px)]',
-    )
+    expect(
+      screen.getByRole('heading', { level: 1, name: '推荐' }).closest('[class*="sticky"]'),
+    ).not.toHaveClass('-translate-y-[calc(100%+1px)]')
   })
 
   it('preserves the measured reading-column width when entering immersive mode', () => {

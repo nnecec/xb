@@ -141,7 +141,7 @@ export function TopicPage() {
       <InfiniteFeedList
         pages={topicQuery.data?.pages as TimelinePage[] | undefined}
         emptyLabel="暂无话题内容"
-        loadingLabel="正在加载话题内容..."
+        loadingLabel="正在加载话题内容…"
         errorMessage={errorMessage}
         loadMoreErrorMessage={loadMoreErrorMessage}
         isLoading={isLoading}

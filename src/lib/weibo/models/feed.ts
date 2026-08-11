@@ -62,6 +62,8 @@ export type FeedDashSource = FeedMpdSource | FeedPlaybackSource
 
 export interface FeedMedia {
   type: 'video' | 'audio' | 'podcast_audio' | 'live'
+  /** 原始 page_info.object_type，供展示层排除未知外部媒体的自动折叠。 */
+  sourceObjectType?: string
   streamUrl: string
   title: string
   coverUrl: string | null

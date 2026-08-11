@@ -147,7 +147,7 @@ describe('app-settings', () => {
       weiboCardShowPublishInfo: true,
       weiboCardShowTitleBadge: true,
       weiboCardShowInteractionCounts: true,
-      weiboCardMediaDisplay: 'expanded',
+      weiboCardCollapsedMediaTypes: [],
       weiboCardSingleImageMaxWidth: 450,
       weiboCardSingleVideoMaxWidth: 650,
       weiboCardMultiMediaLayout: 'grid',
@@ -229,7 +229,7 @@ describe('app-settings', () => {
         weiboCardShowPublishInfo: false,
         weiboCardShowTitleBadge: true,
         weiboCardShowInteractionCounts: false,
-        weiboCardMediaDisplay: 'collapsed',
+        weiboCardCollapsedMediaTypes: ['image', 'multiple'],
         weiboCardSingleImageMaxWidth: 520,
         weiboCardSingleVideoMaxWidth: 760,
         weiboCardMultiMediaLayout: 'horizontal',
@@ -312,7 +312,7 @@ describe('app-settings', () => {
       weiboCardShowPublishInfo: false,
       weiboCardShowTitleBadge: true,
       weiboCardShowInteractionCounts: false,
-      weiboCardMediaDisplay: 'collapsed',
+      weiboCardCollapsedMediaTypes: ['image', 'multiple'],
       weiboCardSingleImageMaxWidth: 520,
       weiboCardSingleVideoMaxWidth: 760,
       weiboCardMultiMediaLayout: 'horizontal',
@@ -391,16 +391,15 @@ describe('app-settings', () => {
     )
     expect(normalizeAppSettings({ feedDensity: 'compact' }).feedDensity).toBe('compact')
     expect(normalizeAppSettings({ commentDensity: 'relaxed' }).commentDensity).toBe('relaxed')
-    expect(normalizeAppSettings({ weiboCardMediaDisplay: 'collapsed' }).weiboCardMediaDisplay).toBe(
-      'collapsed',
-    )
     expect(
       normalizeAppSettings({
-        weiboCardImageDisplay: 'collapsed',
-        weiboCardVideoDisplay: 'collapsed',
-        weiboCardAudioDisplay: 'collapsed',
-      }).weiboCardMediaDisplay,
-    ).toBe('expanded')
+        weiboCardCollapsedMediaTypes: ['audio', 'image', 'audio', 'unknown'],
+      }).weiboCardCollapsedMediaTypes,
+    ).toEqual(['image', 'audio'])
+    expect(
+      normalizeAppSettings({ weiboCardMediaDisplay: 'collapsed' } as never)
+        .weiboCardCollapsedMediaTypes,
+    ).toEqual([])
     expect(
       normalizeAppSettings({ weiboCardMultiMediaLayout: 'horizontal' }).weiboCardMultiMediaLayout,
     ).toBe('horizontal')

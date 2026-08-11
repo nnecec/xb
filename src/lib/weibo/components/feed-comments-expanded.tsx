@@ -45,7 +45,7 @@ export function FeedCommentsExpanded({ id, item, onCollapse }: FeedCommentsExpan
       />
 
       {commentsQuery.isLoading ? (
-        <PageLoadingState label="正在加载评论..." />
+        <PageLoadingState label="正在加载评论…" />
       ) : comments.length > 0 ? (
         <>
           <h4 className="text-muted-foreground text-xs font-medium">精选评论</h4>

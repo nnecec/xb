@@ -70,7 +70,7 @@ export function FavoritesPage() {
       <InfiniteFeedList
         pages={favoritesQuery.data?.pages as TimelinePage[] | undefined}
         emptyLabel="暂无收藏内容"
-        loadingLabel="正在加载收藏..."
+        loadingLabel="正在加载收藏…"
         errorMessage={errorMessage}
         loadMoreErrorMessage={loadMoreErrorMessage}
         isLoading={isLoading}

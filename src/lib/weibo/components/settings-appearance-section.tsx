@@ -55,6 +55,7 @@ import {
   CUSTOM_CONTENT_WIDTH_STEP,
   DEFAULT_APP_SETTINGS,
   FEED_TOOLBAR_BUTTON_IDS,
+  WEIBO_CARD_MEDIA_COLLAPSE_TYPES,
   WEIBO_CARD_MULTI_MEDIA_GRID_LIMIT_OPTIONS,
   WEIBO_CARD_MULTI_MEDIA_GRID_MAX_WIDTH_MAX,
   WEIBO_CARD_MULTI_MEDIA_GRID_MAX_WIDTH_MIN,
@@ -75,6 +76,7 @@ import {
   type HomeTab,
   type MotionPreference,
   type WeiboCardMultiMediaGridLimit,
+  type WeiboCardMediaCollapseType,
   type WeiboCardMultiMediaLayout,
 } from '@/lib/app-settings'
 import { type AppSettingsStoreState, useAppSettings, useShallow } from '@/lib/app-settings-store'
@@ -131,7 +133,7 @@ const WEIBO_CARD_SETTING_KEYS = [
   'weiboCardShowPublishInfo',
   'weiboCardShowTitleBadge',
   'weiboCardShowInteractionCounts',
-  'weiboCardMediaDisplay',
+  'weiboCardCollapsedMediaTypes',
   'weiboCardSingleImageMaxWidth',
   'weiboCardSingleVideoMaxWidth',
   'weiboCardMultiMediaLayout',
@@ -167,6 +169,17 @@ const PRIMARY_ACTION_OPTIONS: Array<{
   { id: 'comment', label: '评论', icon: MessageCircle },
   { id: 'repost', label: '转发', icon: Repeat2 },
   { id: 'like', label: '点赞', icon: Heart },
+]
+
+const MEDIA_COLLAPSE_OPTIONS: Array<{
+  id: WeiboCardMediaCollapseType
+  label: string
+}> = [
+  { id: 'image', label: '单一图片' },
+  { id: 'video', label: '单一视频' },
+  { id: 'multiple', label: '混合多图/视频' },
+  { id: 'live', label: '直播' },
+  { id: 'audio', label: '音频' },
 ]
 
 const TOOLBAR_BUTTON_OPTIONS: Array<{
@@ -531,6 +544,17 @@ function WeiboCardSettingsPanel({ settings }: { settings: AppSettingsStoreState 
     })
   }
 
+  function handleMediaCollapseTypeToggle(type: WeiboCardMediaCollapseType, checked: boolean) {
+    const selected = new Set(settings.weiboCardCollapsedMediaTypes)
+    if (checked) selected.add(type)
+    else selected.delete(type)
+    void settings.updateSettings({
+      weiboCardCollapsedMediaTypes: WEIBO_CARD_MEDIA_COLLAPSE_TYPES.filter((id) =>
+        selected.has(id),
+      ),
+    })
+  }
+
   return (
     <SettingsPanel>
       <>
@@ -569,12 +593,24 @@ function WeiboCardSettingsPanel({ settings }: { settings: AppSettingsStoreState 
       </>
 
       <>
-        <DisplayModeField
-          label="媒体区域"
-          description="统一控制图片、视频、直播、回放、音频与播客的默认展示状态"
-          value={settings.weiboCardMediaDisplay}
-          onChange={(value) => void settings.updateSettings({ weiboCardMediaDisplay: value })}
-        />
+        <StackedField label="默认折叠以下媒体" description="仅影响微博卡片，点击占位即可显示媒体">
+          <div className="grid grid-cols-2 gap-2">
+            {MEDIA_COLLAPSE_OPTIONS.map((option) => (
+              <label
+                key={option.id}
+                className="border-border hover:bg-accent/50 flex cursor-pointer items-center gap-2 rounded-md border px-2.5 py-2 text-sm"
+              >
+                <Checkbox
+                  checked={settings.weiboCardCollapsedMediaTypes.includes(option.id)}
+                  onCheckedChange={(checked) =>
+                    handleMediaCollapseTypeToggle(option.id, checked === true)
+                  }
+                />
+                <span>{option.label}</span>
+              </label>
+            ))}
+          </div>
+        </StackedField>
         <StackedField
           label="单图最大宽度"
           description="适用于微博媒体、正文引用图和评论图片，不会超过中间列可用宽度"

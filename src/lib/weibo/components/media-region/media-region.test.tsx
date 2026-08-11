@@ -138,7 +138,7 @@ describe('MediaRegion', () => {
   })
 
   it('uses one collapsed media region for the complete ordered sequence', () => {
-    getAppSettingsStore().setState({ weiboCardMediaDisplay: 'collapsed' })
+    getAppSettingsStore().setState({ weiboCardCollapsedMediaTypes: ['multiple'] })
     render(<MediaRegion item={item} />)
 
     expect(screen.getByRole('button', { name: /此微博包含 2 项媒体/ })).toBeInTheDocument()

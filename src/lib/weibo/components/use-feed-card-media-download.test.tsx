@@ -4,20 +4,29 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useFeedCardMediaDownload } from '@/lib/weibo/components/use-feed-card-media-download'
 import type { FeedItem } from '@/lib/weibo/models/feed'
 
-const { downloadAsZip, estimateTotalSize, extractMediaUrls, toastState } = vi.hoisted(() => ({
-  downloadAsZip: vi.fn(),
-  estimateTotalSize: vi.fn(),
-  extractMediaUrls: vi.fn(),
-  toastState: { nextId: 0 },
-}))
+const { downloadAsZip, estimateTotalSize, extractMediaUrls, toastMock, toastState } = vi.hoisted(
+  () => {
+    const toastState = { nextId: 0 }
+    const toastMock = Object.assign(
+      vi.fn(() => `download-toast-${++toastState.nextId}`),
+      {
+        success: vi.fn(),
+        warning: vi.fn(),
+        error: vi.fn(),
+      },
+    )
+    return {
+      downloadAsZip: vi.fn(),
+      estimateTotalSize: vi.fn(),
+      extractMediaUrls: vi.fn(),
+      toastMock,
+      toastState,
+    }
+  },
+)
 
 vi.mock('sonner', () => ({
-  toast: {
-    loading: vi.fn(() => `download-toast-${++toastState.nextId}`),
-    success: vi.fn(),
-    warning: vi.fn(),
-    error: vi.fn(),
-  },
+  toast: toastMock,
 }))
 
 vi.mock('@/lib/weibo/utils/download-media', () => ({
@@ -65,16 +74,10 @@ describe('useFeedCardMediaDownload', () => {
 
     expect(extractMediaUrls).toHaveBeenCalledWith([], { author: 'Alice', text: 'post' })
     const { toast } = await import('sonner')
-    expect(toast.loading).toHaveBeenCalledWith('正在准备媒体', { duration: Infinity })
-    const toastId = vi.mocked(toast.loading).mock.results[0]?.value
-    expect(toast.loading).toHaveBeenCalledWith('正在下载媒体（1/2）', {
-      id: toastId,
-      duration: Infinity,
-    })
-    expect(toast.loading).toHaveBeenCalledWith('正在生成 ZIP', {
-      id: toastId,
-      duration: Infinity,
-    })
+    expect(toast).toHaveBeenCalledWith('正在准备媒体')
+    const toastId = vi.mocked(toast).mock.results[0]?.value
+    expect(toast).toHaveBeenCalledWith('正在下载媒体（1/2）', { id: toastId })
+    expect(toast).toHaveBeenCalledWith('正在生成 ZIP', { id: toastId })
     expect(toast.success).toHaveBeenCalledWith('媒体已下载（2 个文件）', { id: toastId })
   })
 
@@ -104,21 +107,15 @@ describe('useFeedCardMediaDownload', () => {
     const secondDownload = second.result.current.handleDownload()
     const { toast } = await import('sonner')
 
-    await waitFor(() => expect(toast.loading).toHaveBeenCalledTimes(2))
-    const firstToastId = vi.mocked(toast.loading).mock.results[0]?.value
-    const secondToastId = vi.mocked(toast.loading).mock.results[1]?.value
+    await waitFor(() => expect(toast).toHaveBeenCalledTimes(2))
+    const firstToastId = vi.mocked(toast).mock.results[0]?.value
+    const secondToastId = vi.mocked(toast).mock.results[1]?.value
     expect(firstToastId).not.toBe(secondToastId)
 
     progressCallbacks[0]?.({ stage: 'downloading', completed: 1, total: 2 })
     progressCallbacks[1]?.({ stage: 'downloading', completed: 2, total: 2 })
-    expect(toast.loading).toHaveBeenCalledWith('正在下载媒体（1/2）', {
-      id: firstToastId,
-      duration: Infinity,
-    })
-    expect(toast.loading).toHaveBeenCalledWith('正在下载媒体（2/2）', {
-      id: secondToastId,
-      duration: Infinity,
-    })
+    expect(toast).toHaveBeenCalledWith('正在下载媒体（1/2）', { id: firstToastId })
+    expect(toast).toHaveBeenCalledWith('正在下载媒体（2/2）', { id: secondToastId })
 
     await act(async () => {
       resolveFirst({ successCount: 2, failCount: 0 })
@@ -138,7 +135,7 @@ describe('useFeedCardMediaDownload', () => {
     })
 
     const { toast } = await import('sonner')
-    const toastId = vi.mocked(toast.loading).mock.results[0]?.value
+    const toastId = vi.mocked(toast).mock.results[0]?.value
     expect(toast.error).toHaveBeenCalledWith('媒体下载失败，请稍后再试', { id: toastId })
   })
 
@@ -169,7 +166,7 @@ describe('useFeedCardMediaDownload', () => {
     })
 
     const { toast } = await import('sonner')
-    const initialToastId = vi.mocked(toast.loading).mock.results[0]?.value
+    const initialToastId = vi.mocked(toast).mock.results[0]?.value
     const warningCall = vi.mocked(toast.warning).mock.calls[0]
     const action = warningCall?.[1]?.action as
       | { label: string; onClick: (event: never) => void }
@@ -180,10 +177,7 @@ describe('useFeedCardMediaDownload', () => {
     await act(async () => {
       action?.onClick({} as never)
     })
-    expect(toast.loading).toHaveBeenCalledWith('正在准备媒体', {
-      id: initialToastId,
-      duration: Infinity,
-    })
+    expect(toast).toHaveBeenCalledWith('正在准备媒体', { id: initialToastId })
     await waitFor(() =>
       expect(downloadAsZip).toHaveBeenLastCalledWith(
         failed,

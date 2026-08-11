@@ -45,6 +45,17 @@ function resetMainScrollAfterRouteChange(resetMainScroll: () => void) {
   requestAnimationFrame(resetMainScroll)
 }
 
+function getTimelineErrorMessage(error: unknown, phase: 'initial' | 'load-more') {
+  if (!(error instanceof Error)) return null
+  if (error.message.includes('timeout')) return '请求超时，请检查网络后重试。'
+  if (/401|403|unauthorized/i.test(error.message)) {
+    return '登录状态可能已失效，请重新登录微博后重试。'
+  }
+  return phase === 'initial'
+    ? '微博时间线加载失败，请稍后重试。'
+    : '暂时无法加载更多微博，请稍后重试。'
+}
+
 export function HomeTimelinePage() {
   const ctx = useAppShellContext()
   const page = useWeiboPage()
@@ -87,17 +98,15 @@ export function HomeTimelinePage() {
     [timelineQuery.data?.pages],
   )
 
-  const errorMessage =
-    timelineQuery.error instanceof Error && !timelineQuery.isFetchNextPageError
-      ? timelineQuery.error.message
-      : null
-  const loadMoreErrorMessage =
-    timelineQuery.error instanceof Error && timelineQuery.isFetchNextPageError
-      ? timelineQuery.error.message
-      : null
+  const errorMessage = !timelineQuery.isFetchNextPageError
+    ? getTimelineErrorMessage(timelineQuery.error, 'initial')
+    : null
+  const loadMoreErrorMessage = timelineQuery.isFetchNextPageError
+    ? getTimelineErrorMessage(timelineQuery.error, 'load-more')
+    : null
   const hasNextPage = Boolean(timelineQuery.hasNextPage)
   const isFetchingNextPage = timelineQuery.isFetchingNextPage
-  const isLoading = timelineQuery.isLoading
+  const isLoading = timelineQuery.isLoading || isResolvingGroupIdFromUrl
   const isRefreshing = timelineQuery.isFetching && !isFetchingNextPage && !isLoading
 
   // ─── New posts check (following tab only) ───
@@ -205,7 +214,7 @@ export function HomeTimelinePage() {
         <InfiniteFeedList
           pages={timelineQuery.data?.pages as TimelinePage[] | undefined}
           emptyLabel="此时间线暂无内容"
-          loadingLabel="正在加载微博时间线..."
+          loadingLabel="正在加载微博时间线…"
           errorMessage={errorMessage}
           loadMoreErrorMessage={loadMoreErrorMessage}
           isLoading={isLoading}

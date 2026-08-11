@@ -58,7 +58,7 @@ export function LikedStatusesPage() {
       <InfiniteFeedList
         pages={likedStatusesQuery.data?.pages as TimelinePage[] | undefined}
         emptyLabel="暂无点赞内容"
-        loadingLabel="正在加载我的赞..."
+        loadingLabel="正在加载我的赞…"
         errorMessage={errorMessage}
         loadMoreErrorMessage={loadMoreErrorMessage}
         isLoading={isLoading}

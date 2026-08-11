@@ -156,7 +156,7 @@ function ProfileGroupForm({
                 disabled={isCreateDisabled}
                 onClick={() => createGroupMutation.mutate()}
               >
-                {createGroupMutation.isPending ? '创建中...' : '创建'}
+                {createGroupMutation.isPending ? '创建中…' : '创建'}
               </Button>
             </div>
             <Label
@@ -232,7 +232,7 @@ function ProfileGroupForm({
           取消
         </Button>
         <Button type="button" disabled={isBusy} onClick={() => mutation.mutate()}>
-          {mutation.isPending ? '保存中...' : '保存'}
+          {mutation.isPending ? '保存中…' : '保存'}
         </Button>
       </DialogFooter>
     </>

@@ -289,11 +289,12 @@ export function toMixMediaInfo(mixMediaInfo: any): FeedMixMediaItem[] | undefine
  */
 export function toMedia(status: WeiboStatus) {
   const mediaInfo = status.page_info?.media_info
+  const sourceObjectType = status.page_info?.object_type
   if (!mediaInfo) {
     return null
   }
 
-  if (status.page_info?.object_type === 'live') {
+  if (sourceObjectType === 'live') {
     const pagePicUrl =
       typeof status.page_info?.page_pic === 'string'
         ? status.page_info.page_pic
@@ -310,7 +311,7 @@ export function toMedia(status: WeiboStatus) {
     }
   }
 
-  const isAudio = status.page_info?.object_type !== 'video'
+  const isAudio = sourceObjectType !== 'video'
   const progressiveUrl = progressiveFallbackUrl(mediaInfo)
 
   if (isAudio) {
@@ -324,6 +325,7 @@ export function toMedia(status: WeiboStatus) {
 
     return {
       type: 'audio' as const,
+      sourceObjectType: typeof sourceObjectType === 'string' ? sourceObjectType : undefined,
       streamUrl: progressiveUrl,
       title: mediaInfo.video_title ?? '',
       coverUrl: pagePicUrl ?? mediaInfo.big_pic_info?.pic_big?.url ?? null,

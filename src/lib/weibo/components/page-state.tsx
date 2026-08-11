@@ -2,12 +2,27 @@ import { AlertCircle } from 'lucide-react'
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { Spinner } from '@/components/ui/spinner'
 
-export function PageLoadingState({ label }: { label: string }) {
+export function PageLoadingState({
+  label,
+  isAnnouncedSeparately = false,
+}: {
+  label: string
+  isAnnouncedSeparately?: boolean
+}) {
   return (
-    <div className="flex min-h-64 items-center justify-center">
+    <div
+      className="flex min-h-64 items-center justify-center"
+      aria-hidden={isAnnouncedSeparately || undefined}
+    >
       <div className="text-muted-foreground flex flex-col items-center gap-3 text-sm">
         <Spinner size="lg" />
         <p>{label}</p>
@@ -39,10 +54,30 @@ export function PageErrorState({
   )
 }
 
-export function PageEmptyState({ label }: { label: string }) {
+export function PageEmptyState({
+  label,
+  description = '可以稍后再来，或刷新看看。',
+  onRetry,
+}: {
+  label: string
+  description?: string
+  onRetry?: () => void
+}) {
   return (
-    <Card className="text-muted-foreground flex min-h-64 items-center justify-center text-sm">
-      {label}
-    </Card>
+    <Empty className="min-h-64 border">
+      <EmptyHeader>
+        <EmptyTitle>
+          <h2>{label}</h2>
+        </EmptyTitle>
+        <EmptyDescription>{description}</EmptyDescription>
+      </EmptyHeader>
+      {onRetry ? (
+        <EmptyContent>
+          <Button type="button" size="sm" variant="outline" onClick={onRetry}>
+            刷新
+          </Button>
+        </EmptyContent>
+      ) : null}
+    </Empty>
   )
 }

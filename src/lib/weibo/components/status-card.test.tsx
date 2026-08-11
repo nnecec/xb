@@ -11,7 +11,7 @@ import {
   StatusCard,
   StatusCardHostProvider,
 } from '@/lib/weibo/components/status-card'
-import { loadStatusLongText, setStatusLike } from '@/lib/weibo/data/weibo-data'
+import { destroyFavorite, loadStatusLongText, setStatusLike } from '@/lib/weibo/data/weibo-data'
 import type { FeedItem } from '@/lib/weibo/models/feed'
 
 const loadStatusLongTextMock = vi.hoisted(() => vi.fn())
@@ -158,8 +158,8 @@ describe('StatusCard module', () => {
     const status = createStatus('root')
     renderCard(status, host)
 
-    fireEvent.click(screen.getByRole('button', { name: '回复微博' }))
-    fireEvent.click(screen.getByRole('button', { name: '转发微博' }))
+    fireEvent.click(screen.getByRole('button', { name: '回复微博，2 条评论' }))
+    fireEvent.click(screen.getByRole('button', { name: '转发微博，3 次转发' }))
 
     expect(host.composeStatus).toHaveBeenNthCalledWith(
       1,
@@ -176,7 +176,7 @@ describe('StatusCard module', () => {
   it('gives the primary action buttons a larger touch target', () => {
     renderCard(createStatus('root'))
 
-    for (const label of ['回复微博', '转发微博', '点赞微博']) {
+    for (const label of ['回复微博，2 条评论', '转发微博，3 次转发', '点赞微博，1 次点赞']) {
       expect(screen.getByRole('button', { name: label })).toHaveClass('h-10')
     }
   })
@@ -188,7 +188,7 @@ describe('StatusCard module', () => {
     renderCard(createStatus('root', { retweetedStatus: quoted }), host)
 
     const quotedCard = screen.getAllByTestId('status-card-body')[1]!
-    fireEvent.click(within(quotedCard).getByRole('button', { name: '回复微博' }))
+    fireEvent.click(within(quotedCard).getByRole('button', { name: '回复微博，2 条评论' }))
 
     expect(host.openStatus).toHaveBeenCalledWith(expect.objectContaining({ id: 'quoted' }))
     expect(host.composeStatus).not.toHaveBeenCalled()
@@ -207,15 +207,24 @@ describe('StatusCard module', () => {
   it('uses the public mutation seam for likes', async () => {
     renderCard(createStatus('like', { liked: false }))
 
-    fireEvent.click(screen.getByRole('button', { name: '点赞微博' }))
+    fireEvent.click(screen.getByRole('button', { name: '点赞微博，1 次点赞' }))
     await waitFor(() => expect(setStatusLike).toHaveBeenCalledWith('like'))
+  })
+
+  it('allows a deleted favorite to be removed', async () => {
+    renderCard(createStatus('deleted-favorite', { deleted: true, favorited: true }))
+
+    expect(screen.getByText('此微博已被删除')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '取消收藏' }))
+
+    await waitFor(() => expect(destroyFavorite).toHaveBeenCalledWith('deleted-favorite'))
   })
 
   it('keeps inline comments local to root cards in Weibo mode', () => {
     getAppSettingsStore().setState({ feedInteractionMode: 'weibo' })
     renderCard(createStatus('root'))
 
-    const button = screen.getByRole('button', { name: '展开精选评论' })
+    const button = screen.getByRole('button', { name: '展开精选评论，2 条评论' })
     fireEvent.click(button)
     expect(button).toHaveAttribute('aria-expanded', 'true')
   })
@@ -225,7 +234,7 @@ describe('StatusCard module', () => {
     renderCard(createStatus('detail'), host, true)
 
     expect(screen.getByTestId('status-card-body')).not.toHaveAttribute('role', 'link')
-    fireEvent.click(screen.getByRole('button', { name: '回复微博' }))
+    fireEvent.click(screen.getByRole('button', { name: '回复微博，2 条评论' }))
     expect(host.composeStatus).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'detail' }),
       'comment',

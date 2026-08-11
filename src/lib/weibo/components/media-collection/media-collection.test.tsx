@@ -449,15 +449,14 @@ describe('MediaCollection', () => {
     expect(emblaApi.scrollTo).toHaveBeenCalledWith(0, true)
   })
 
-  it('does not draw a focus border around the gallery container', () => {
+  it('draws a visible focus ring around the keyboard-scrollable gallery', () => {
     const store = getAppSettingsStore()
     store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
 
     render(<MediaCollection presentation="card" items={createItems(2)} />)
 
     const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
-    expect(strip).toHaveClass('outline-none', 'focus:outline-none', 'focus:ring-0')
-    expect(strip).not.toHaveClass('focus-visible:ring-2')
+    expect(strip).toHaveClass('outline-none', 'focus-visible:ring-3', 'focus-visible:ring-inset')
   })
 
   it.each([

@@ -141,6 +141,16 @@ export type ContentDensity = 'relaxed' | 'standard' | 'compact'
 
 export type ContentDisplay = 'expanded' | 'collapsed'
 
+export const WEIBO_CARD_MEDIA_COLLAPSE_TYPES = [
+  'image',
+  'video',
+  'multiple',
+  'live',
+  'audio',
+] as const
+
+export type WeiboCardMediaCollapseType = (typeof WEIBO_CARD_MEDIA_COLLAPSE_TYPES)[number]
+
 export type WeiboCardMultiMediaLayout = 'grid' | 'horizontal'
 
 export const WEIBO_CARD_MULTI_MEDIA_GRID_LIMIT_OPTIONS = [4, 6, 9, 12, 16] as const
@@ -200,7 +210,7 @@ export interface AppSettings {
   weiboCardShowPublishInfo: boolean
   weiboCardShowTitleBadge: boolean
   weiboCardShowInteractionCounts: boolean
-  weiboCardMediaDisplay: ContentDisplay
+  weiboCardCollapsedMediaTypes: WeiboCardMediaCollapseType[]
   weiboCardSingleImageMaxWidth: number
   weiboCardSingleVideoMaxWidth: number
   weiboCardMultiMediaLayout: WeiboCardMultiMediaLayout
@@ -301,7 +311,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   weiboCardShowPublishInfo: true,
   weiboCardShowTitleBadge: true,
   weiboCardShowInteractionCounts: true,
-  weiboCardMediaDisplay: 'expanded',
+  weiboCardCollapsedMediaTypes: [],
   weiboCardSingleImageMaxWidth: DEFAULT_WEIBO_CARD_SINGLE_IMAGE_MAX_WIDTH,
   weiboCardSingleVideoMaxWidth: DEFAULT_WEIBO_CARD_SINGLE_VIDEO_MAX_WIDTH,
   weiboCardMultiMediaLayout: 'grid',
@@ -356,6 +366,17 @@ function isFontFamilyClass(value: unknown): value is FontFamilyClass {
 
 function isFontApplyScope(value: unknown): value is FontApplyScope {
   return value === 'content' || value === 'app'
+}
+
+function isWeiboCardMediaCollapseType(value: unknown): value is WeiboCardMediaCollapseType {
+  return WEIBO_CARD_MEDIA_COLLAPSE_TYPES.includes(value as WeiboCardMediaCollapseType)
+}
+
+function normalizeWeiboCardCollapsedMediaTypes(value: unknown): WeiboCardMediaCollapseType[] {
+  if (!Array.isArray(value)) return DEFAULT_APP_SETTINGS.weiboCardCollapsedMediaTypes
+
+  const selected = new Set(value.filter(isWeiboCardMediaCollapseType))
+  return WEIBO_CARD_MEDIA_COLLAPSE_TYPES.filter((type) => selected.has(type))
 }
 
 function normalizeFontApplyScope(value: unknown): FontApplyScope {
@@ -744,9 +765,9 @@ export function normalizeAppSettings(value: unknown): AppSettings {
       typeof candidate.weiboCardShowInteractionCounts === 'boolean'
         ? candidate.weiboCardShowInteractionCounts
         : DEFAULT_APP_SETTINGS.weiboCardShowInteractionCounts,
-    weiboCardMediaDisplay: isContentDisplay(candidate.weiboCardMediaDisplay)
-      ? candidate.weiboCardMediaDisplay
-      : DEFAULT_APP_SETTINGS.weiboCardMediaDisplay,
+    weiboCardCollapsedMediaTypes: normalizeWeiboCardCollapsedMediaTypes(
+      candidate.weiboCardCollapsedMediaTypes,
+    ),
     weiboCardSingleImageMaxWidth: normalizeSteppedNumber(
       candidate.weiboCardSingleImageMaxWidth,
       WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_MIN,

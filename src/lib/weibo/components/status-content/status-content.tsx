@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import type { ContentDisplay } from '@/lib/app-settings'
+import type { ContentDisplay, WeiboCardMediaCollapseType } from '@/lib/app-settings'
 import { useAppSettings } from '@/lib/app-settings-store'
 import { cn } from '@/lib/utils'
 import { useEmoticonConfigQuery } from '@/lib/weibo/app/emoticon-query'
@@ -294,13 +294,18 @@ function MarkdownText({ text }: { text: string }) {
 function ContentImages({
   block,
   imageDisplay,
+  collapsedMediaTypes,
 }: {
   block: StatusContentBlock
   imageDisplay: ContentDisplay
+  collapsedMediaTypes?: WeiboCardMediaCollapseType[]
 }) {
   if (block.images.length === 0) return null
+  const display = collapsedMediaTypes?.includes(block.images.length >= 2 ? 'multiple' : 'image')
+    ? 'collapsed'
+    : imageDisplay
   return (
-    <CollapsibleMedia display={imageDisplay} summary={`此微博包含 ${block.images.length} 张图片`}>
+    <CollapsibleMedia display={display} summary={`此微博包含 ${block.images.length} 张图片`}>
       <MediaCollection items={buildMediaCollectionItems(block.images)} />
     </CollapsibleMedia>
   )
@@ -310,17 +315,23 @@ function ContentBlockView({
   block,
   keyPrefix,
   imageDisplay,
+  collapsedMediaTypes,
 }: {
   block: StatusContentBlock
   keyPrefix: string
   imageDisplay: ContentDisplay
+  collapsedMediaTypes?: WeiboCardMediaCollapseType[]
 }) {
   const textNode = renderStatusTokens(block.tokens, keyPrefix)
   if (block.images.length > 0) {
     return (
       <span className="flex flex-col gap-2">
         {block.text ? <span className="whitespace-pre-wrap">{textNode}</span> : null}
-        <ContentImages block={block} imageDisplay={imageDisplay} />
+        <ContentImages
+          block={block}
+          imageDisplay={imageDisplay}
+          collapsedMediaTypes={collapsedMediaTypes}
+        />
       </span>
     )
   }
@@ -330,9 +341,11 @@ function ContentBlockView({
 function ReplySegmentView({
   segment,
   imageDisplay,
+  collapsedMediaTypes,
 }: {
   segment: InterpretedReplySegment
   imageDisplay: ContentDisplay
+  collapsedMediaTypes?: WeiboCardMediaCollapseType[]
 }) {
   return (
     <blockquote
@@ -343,7 +356,11 @@ function ReplySegmentView({
       {segment.content.text ? (
         <span>: {renderStatusTokens(segment.content.tokens, `chain-${segment.index}`)}</span>
       ) : null}
-      <ContentImages block={segment.content} imageDisplay={imageDisplay} />
+      <ContentImages
+        block={segment.content}
+        imageDisplay={imageDisplay}
+        collapsedMediaTypes={collapsedMediaTypes}
+      />
     </blockquote>
   )
 }
@@ -351,12 +368,19 @@ function ReplySegmentView({
 function ReplyChainView({
   content,
   imageDisplay,
+  collapsedMediaTypes,
 }: {
   content: Extract<InterpretedStatusContent, { kind: 'reply-chain' }>
   imageDisplay: ContentDisplay
+  collapsedMediaTypes?: WeiboCardMediaCollapseType[]
 }) {
   const leading = content.leading ? (
-    <ContentBlockView block={content.leading} keyPrefix="leading" imageDisplay={imageDisplay} />
+    <ContentBlockView
+      block={content.leading}
+      keyPrefix="leading"
+      imageDisplay={imageDisplay}
+      collapsedMediaTypes={collapsedMediaTypes}
+    />
   ) : null
 
   if (content.chain.kind === 'collapsed') {
@@ -368,6 +392,7 @@ function ReplyChainView({
             key={`chain-${segment.screenName}-${segment.index}`}
             segment={segment}
             imageDisplay={imageDisplay}
+            collapsedMediaTypes={collapsedMediaTypes}
           />
         ))}
         {content.chain.middle.length > 0 ? (
@@ -390,12 +415,17 @@ function ReplyChainView({
                   key={`chain-${segment.screenName}-${segment.index}`}
                   segment={segment}
                   imageDisplay={imageDisplay}
+                  collapsedMediaTypes={collapsedMediaTypes}
                 />
               ))}
             </CollapsibleContent>
           </Collapsible>
         ) : null}
-        <ReplySegmentView segment={content.chain.tail} imageDisplay={imageDisplay} />
+        <ReplySegmentView
+          segment={content.chain.tail}
+          imageDisplay={imageDisplay}
+          collapsedMediaTypes={collapsedMediaTypes}
+        />
       </span>
     )
   }
@@ -409,6 +439,7 @@ function ReplyChainView({
             key={`chain-${segment.screenName}-${segment.index}`}
             segment={segment}
             imageDisplay={imageDisplay}
+            collapsedMediaTypes={collapsedMediaTypes}
           />
         ))}
       </div>
@@ -438,6 +469,7 @@ export function StatusText({
   mode = 'plain',
   hideMedia = false,
   imageDisplay = 'expanded',
+  collapsedMediaTypes,
 }: {
   item: Pick<
     FeedItem,
@@ -447,6 +479,7 @@ export function StatusText({
   mode?: 'plain' | 'markdown'
   hideMedia?: boolean
   imageDisplay?: ContentDisplay
+  collapsedMediaTypes?: WeiboCardMediaCollapseType[]
 }) {
   const emoticonQuery = useEmoticonConfigQuery()
   const collapseRepliesEnabled = useAppSettings((s) => s.collapseRepliesEnabled)
@@ -468,7 +501,20 @@ export function StatusText({
   if (content.kind === 'empty') return <>{EMPTY_STATUS_LABEL}</>
   if (content.kind === 'markdown') return <MarkdownText text={content.text} />
   if (content.kind === 'reply-chain') {
-    return <ReplyChainView content={content} imageDisplay={imageDisplay} />
+    return (
+      <ReplyChainView
+        content={content}
+        imageDisplay={imageDisplay}
+        collapsedMediaTypes={collapsedMediaTypes}
+      />
+    )
   }
-  return <ContentBlockView block={content.content} keyPrefix="status" imageDisplay={imageDisplay} />
+  return (
+    <ContentBlockView
+      block={content.content}
+      keyPrefix="status"
+      imageDisplay={imageDisplay}
+      collapsedMediaTypes={collapsedMediaTypes}
+    />
+  )
 }

@@ -419,6 +419,16 @@ export function ShellFrame({
         className="bg-background text-foreground flex h-screen flex-col overflow-y-auto"
         ref={assignShellRef}
       >
+        <a
+          href="#xb-main-content"
+          className="bg-background text-foreground focus-visible:ring-ring fixed top-2 left-2 z-[100] -translate-y-20 rounded-lg px-3 py-2 text-sm font-medium shadow-lg transition-transform outline-none focus-visible:translate-y-0 focus-visible:ring-3"
+          onClick={(event) => {
+            event.preventDefault()
+            contentMainRef.current?.focus()
+          }}
+        >
+          跳到主要内容
+        </a>
         <div
           className={cn(
             'relative mx-auto flex w-full px-3',
@@ -472,6 +482,8 @@ export function ShellFrame({
             )}
           </AnimatePresence>
           <motion.main
+            id="xb-main-content"
+            tabIndex={-1}
             ref={contentMainRef}
             className={cn('min-w-0 flex-1 pb-8', immersiveMode && 'mx-auto w-full')}
             style={{

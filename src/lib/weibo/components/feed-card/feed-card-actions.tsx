@@ -42,6 +42,7 @@ function FeedActionButton({
   iconTint,
   icon,
   count,
+  countUnit,
   countClassName,
   ariaLabel,
   ariaPressed,
@@ -56,6 +57,7 @@ function FeedActionButton({
   iconTint: string
   icon: ReactNode
   count?: number
+  countUnit?: string
   countClassName?: string
   ariaLabel: string
   ariaPressed?: boolean
@@ -69,7 +71,11 @@ function FeedActionButton({
     <Button
       type="button"
       variant="ghost"
-      aria-label={ariaLabel}
+      aria-label={
+        count !== undefined && countUnit
+          ? `${ariaLabel}，${count.toLocaleString('zh-CN')} ${countUnit}`
+          : ariaLabel
+      }
       aria-pressed={ariaPressed}
       aria-controls={ariaControls}
       aria-expanded={ariaExpanded}
@@ -80,7 +86,10 @@ function FeedActionButton({
     >
       {icon}
       {count !== undefined ? (
-        <span className={cn('tabular-nums transition-colors', iconTint, countClassName)}>
+        <span
+          aria-hidden="true"
+          className={cn('tabular-nums transition-colors', iconTint, countClassName)}
+        >
           {formatWeiboCount(count)}
         </span>
       ) : null}
@@ -167,6 +176,7 @@ export function FeedActions({
             />
           }
           count={showInteractionCounts ? item.stats.comments : undefined}
+          countUnit="条评论"
           onClick={(event) => {
             event.stopPropagation()
             if (!controlsInlineComments) {
@@ -191,6 +201,7 @@ export function FeedActions({
             <Repeat2 className={cn('size-3.5 transition-colors', FEED_ACTION_ICON_TINT.repost)} />
           }
           count={showInteractionCounts ? item.stats.reposts : undefined}
+          countUnit="次转发"
           onClick={(event) => {
             event.stopPropagation()
             onRepostClick?.(item)
@@ -219,6 +230,7 @@ export function FeedActions({
           />
         }
         count={showInteractionCounts ? item.stats.likes : undefined}
+        countUnit="次点赞"
         countClassName={liked ? 'text-rose-500' : undefined}
         onClick={(event) => {
           event.stopPropagation()

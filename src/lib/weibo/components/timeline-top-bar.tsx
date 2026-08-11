@@ -66,6 +66,7 @@ export function TimelineTopBar<TitleValue extends string = string>({
 
   return (
     <div className={headerClassName}>
+      <h1 className="sr-only">{title}</h1>
       <div className="relative flex min-h-16 items-center justify-between">
         <div className="flex min-w-0 items-center">
           {showMenu ? (
@@ -102,7 +103,7 @@ export function TimelineTopBar<TitleValue extends string = string>({
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <h1 className="text-foreground truncate px-2 py-1 text-xl font-semibold">{title}</h1>
+            <div className="text-foreground truncate px-2 py-1 text-xl font-semibold">{title}</div>
           )}
 
           <div className="flex h-full flex-col items-center justify-end gap-1">

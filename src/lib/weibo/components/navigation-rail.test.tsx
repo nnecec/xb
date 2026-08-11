@@ -119,6 +119,15 @@ describe('NavigationRail', () => {
     expect(screen.getByRole('navigation', { name: '主导航' })).toBeInTheDocument()
   })
 
+  it('renders private messages as a real external link without nesting a button', () => {
+    renderNavigationRail()
+
+    const link = screen.getByRole('link', { name: '私信' })
+    expect(link).toHaveAttribute('href', 'https://api.weibo.com/chat')
+    expect(link).toHaveAttribute('target', '_blank')
+    expect(link.querySelector('button')).not.toBeInTheDocument()
+  })
+
   it('marks active items through aria-current', () => {
     renderNavigationRail()
     expect(screen.getByRole('button', { name: '主页' })).toHaveAttribute('aria-current', 'page')

@@ -224,7 +224,7 @@ describe('AppShell', () => {
       expect(loadStatusComments).toHaveBeenCalledTimes(1)
     })
 
-    fireEvent.click(screen.getAllByRole('button', { name: '回复微博' })[0]!)
+    fireEvent.click(screen.getAllByRole('button', { name: /^回复微博，/ })[0]!)
     await waitFor(() => {
       expect(screen.getByRole('dialog', { name: '回复微博' })).toBeInTheDocument()
     })

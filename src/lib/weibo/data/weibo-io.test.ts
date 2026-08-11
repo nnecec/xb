@@ -6,6 +6,7 @@ import {
   createProfileGroup,
   destroyFavorite,
   loadExploreHot,
+  loadFavorites,
   loadHomeTimeline,
   loadLikedStatuses,
   loadProfileAssignedGroups,
@@ -128,6 +129,29 @@ describe('weibo-io', () => {
     })
 
     expect(wbGet).toHaveBeenCalledWith('/ajax/statuses/likelist', {
+      uid: '6393557498',
+      page: 1,
+      with_total: 'true',
+    })
+  })
+
+  it('marks deleted entries from the favorites list as favorited', async () => {
+    vi.mocked(wbGet).mockResolvedValue({
+      statuses: [
+        {
+          idstr: 'deleted-favorite',
+          deleted: '1',
+          text_raw: '',
+          user: { idstr: '1', screen_name: 'Alice' },
+        },
+      ],
+    })
+
+    await expect(loadFavorites('6393557498')).resolves.toMatchObject({
+      items: [{ id: 'deleted-favorite', deleted: true, favorited: true }],
+      nextCursor: '2',
+    })
+    expect(wbGet).toHaveBeenCalledWith('/ajax/favorites/all_fav', {
       uid: '6393557498',
       page: 1,
       with_total: 'true',

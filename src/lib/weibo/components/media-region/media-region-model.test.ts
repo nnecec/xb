@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest'
 
 import type { FeedItem } from '@/lib/weibo/models/feed'
 
-import { buildMediaAssets, buildMediaRegionModel } from './media-region-model'
+import {
+  buildMediaAssets,
+  buildMediaRegionModel,
+  getMediaRegionCollapseType,
+} from './media-region-model'
 
 const baseItem = {
   id: 'status-1',
@@ -146,6 +150,104 @@ describe('media region model', () => {
     )
 
     expect(region?.singleMediaMaxWidth).toBe(760)
+  })
+
+  it('classifies each configured media type with multiple media taking priority', () => {
+    const regionFor = (item: FeedItem) => buildMediaRegionModel(item, widths)!
+
+    expect(
+      getMediaRegionCollapseType(
+        regionFor({
+          ...baseItem,
+          images: [
+            {
+              id: 'livephoto',
+              thumbnailUrl: 'https://example.com/livephoto-thumb.jpg',
+              largeUrl: 'https://example.com/livephoto.jpg',
+              type: 'livephoto',
+            },
+          ],
+        }),
+      ),
+    ).toBe('image')
+    expect(
+      getMediaRegionCollapseType(
+        regionFor({
+          ...baseItem,
+          media: {
+            type: 'video',
+            title: '视频',
+            streamUrl: 'https://example.com/video.mp4',
+            coverUrl: null,
+          },
+        }),
+      ),
+    ).toBe('video')
+    expect(
+      getMediaRegionCollapseType(
+        regionFor({
+          ...baseItem,
+          media: {
+            type: 'live',
+            title: '直播',
+            streamUrl: 'https://example.com/live.m3u8',
+            coverUrl: null,
+          },
+        }),
+      ),
+    ).toBe('live')
+    expect(
+      getMediaRegionCollapseType(
+        regionFor({
+          ...baseItem,
+          media: {
+            type: 'audio',
+            sourceObjectType: 'audio',
+            title: '音频',
+            streamUrl: 'https://example.com/audio.mp3',
+            coverUrl: null,
+          },
+        }),
+      ),
+    ).toBe('audio')
+    expect(
+      getMediaRegionCollapseType(
+        regionFor({
+          ...baseItem,
+          images: [
+            {
+              id: 'image-1',
+              thumbnailUrl: 'https://example.com/thumb.jpg',
+              largeUrl: 'https://example.com/large.jpg',
+            },
+          ],
+          media: {
+            type: 'live',
+            title: '直播',
+            streamUrl: 'https://example.com/live.m3u8',
+            coverUrl: null,
+          },
+        }),
+      ),
+    ).toBe('multiple')
+  })
+
+  it('does not classify unknown external media for automatic collapse', () => {
+    const region = buildMediaRegionModel(
+      {
+        ...baseItem,
+        media: {
+          type: 'audio',
+          sourceObjectType: 'article',
+          title: '外部媒体',
+          streamUrl: 'https://example.com/external.mp3',
+          coverUrl: null,
+        },
+      },
+      widths,
+    )!
+
+    expect(getMediaRegionCollapseType(region)).toBeNull()
   })
 
   it('returns no media region when no valid asset remains', () => {

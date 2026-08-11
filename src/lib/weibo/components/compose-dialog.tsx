@@ -89,7 +89,7 @@ function ComposeForm({ onClose }: { onClose: () => void }) {
           放弃编辑
         </Button>
         <Button type="button" disabled={isSubmitDisabled} onClick={() => mutation.mutate(text)}>
-          {mutation.isPending ? '发布中...' : '发布微博'}
+          {mutation.isPending ? '发布中…' : '发布微博'}
         </Button>
       </DialogFooter>
     </DialogContent>

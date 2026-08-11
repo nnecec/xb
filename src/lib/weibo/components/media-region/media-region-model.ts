@@ -1,3 +1,4 @@
+import type { WeiboCardMediaCollapseType } from '@/lib/app-settings'
 import type { FeedItem, FeedMedia } from '@/lib/weibo/models/feed'
 
 import {
@@ -18,6 +19,27 @@ export interface MediaRegionModel {
   summary: string
   assets: MediaAsset[]
   singleMediaMaxWidth?: number
+}
+
+export function getMediaRegionCollapseType(
+  region: Pick<MediaRegionModel, 'assets'>,
+): WeiboCardMediaCollapseType | null {
+  if (region.assets.length > 1) return 'multiple'
+
+  const [asset] = region.assets
+  if (!asset) return null
+  if (asset.kind === 'image') return 'image'
+  if (asset.kind === 'video') return 'video'
+  if (asset.media.type === 'video') return 'video'
+  if (asset.media.type === 'live') return 'live'
+  if (
+    (asset.media.type === 'audio' || asset.media.type === 'podcast_audio') &&
+    (asset.media.sourceObjectType === 'audio' || asset.media.sourceObjectType === 'podcast_audio')
+  ) {
+    return 'audio'
+  }
+
+  return null
 }
 
 function itemLabel(count: number, label: string) {

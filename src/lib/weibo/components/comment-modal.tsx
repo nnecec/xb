@@ -157,7 +157,7 @@ function CommentModalForm({
             })
           }
         >
-          {mutation.isPending ? '发布中...' : copy.submitLabel}
+          {mutation.isPending ? '发布中…' : copy.submitLabel}
         </Button>
       </DialogFooter>
     </DialogContent>

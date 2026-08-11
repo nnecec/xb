@@ -353,7 +353,7 @@ export function GenImageDialog() {
               <div className="flex h-[60vh] w-[640px] items-center justify-center">
                 <div className="flex flex-col items-center gap-2">
                   <Spinner />
-                  <p className="text-muted-foreground text-sm">加载完整内容中...</p>
+                  <p className="text-muted-foreground text-sm">加载完整内容中…</p>
                 </div>
               </div>
             ) : cardData && CardComponent ? (

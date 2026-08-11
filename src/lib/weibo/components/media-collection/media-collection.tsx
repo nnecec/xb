@@ -113,7 +113,7 @@ export const MediaCollection = memo(function MediaCollection({
               : 'grid w-full gap-2',
             horizontal && (strip.isDragging ? 'cursor-grabbing' : 'cursor-grab'),
             horizontal &&
-              'select-none outline-none focus:outline-none focus:ring-0 [touch-action:pan-y]',
+              'focus-visible:ring-ring select-none outline-none focus-visible:ring-3 focus-visible:ring-inset [touch-action:pan-y]',
             !horizontal &&
               (usesCardLayout
                 ? cardGridClassName(visibleCount)

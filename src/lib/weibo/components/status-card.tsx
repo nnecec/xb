@@ -22,10 +22,10 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import {
   FEED_TOOLBAR_BUTTON_IDS,
   type ContentDensity,
-  type ContentDisplay,
   type FeedInteractionMode,
   type FeedPrimaryActionId,
   type FeedToolbarButtonId,
+  type WeiboCardMediaCollapseType,
 } from '@/lib/app-settings'
 import { useAppSettings, useShallow } from '@/lib/app-settings-store'
 import { cn } from '@/lib/utils'
@@ -109,7 +109,7 @@ interface StatusCardController {
   showPublishInfo: boolean
   showTitleBadge: boolean
   showInteractionCounts: boolean
-  imageDisplay: ContentDisplay
+  collapsedMediaTypes: WeiboCardMediaCollapseType[]
   like: (status: FeedItem) => void
   likePendingId: string | null
   favorite: (status: FeedItem) => Promise<void>
@@ -162,7 +162,7 @@ function StatusCardRoot({
     weiboCardShowPublishInfo,
     weiboCardShowTitleBadge,
     weiboCardShowInteractionCounts,
-    weiboCardMediaDisplay,
+    weiboCardCollapsedMediaTypes,
   } = useAppSettings(
     useShallow((s) => ({
       feedInteractionMode: s.feedInteractionMode,
@@ -176,7 +176,7 @@ function StatusCardRoot({
       weiboCardShowPublishInfo: s.weiboCardShowPublishInfo,
       weiboCardShowTitleBadge: s.weiboCardShowTitleBadge,
       weiboCardShowInteractionCounts: s.weiboCardShowInteractionCounts,
-      weiboCardMediaDisplay: s.weiboCardMediaDisplay,
+      weiboCardCollapsedMediaTypes: s.weiboCardCollapsedMediaTypes,
     })),
   )
   const queryClient = useQueryClient()
@@ -268,7 +268,7 @@ function StatusCardRoot({
       showPublishInfo: weiboCardShowPublishInfo,
       showTitleBadge: weiboCardShowTitleBadge,
       showInteractionCounts: weiboCardShowInteractionCounts,
-      imageDisplay: weiboCardMediaDisplay,
+      collapsedMediaTypes: weiboCardCollapsedMediaTypes,
       like: (target) => likeMutation.mutate(target),
       likePendingId,
       favorite: async (target) => {
@@ -304,7 +304,7 @@ function StatusCardRoot({
       weiboCardShowPublishInfo,
       weiboCardShowTitleBadge,
       weiboCardShowInteractionCounts,
-      weiboCardMediaDisplay,
+      weiboCardCollapsedMediaTypes,
       likeMutation,
       likePendingId,
       favoriteMutation,
@@ -355,7 +355,7 @@ function StatusCardView({ status, role }: { status: FeedItem; role: StatusCardRo
     showPublishInfo,
     showTitleBadge,
     showInteractionCounts,
-    imageDisplay,
+    collapsedMediaTypes,
   } = controller
   const [commentsExpanded, setCommentsExpanded] = useState(false)
   const commentsPanelId = useId()
@@ -651,7 +651,7 @@ function StatusCardView({ status, role }: { status: FeedItem; role: StatusCardRo
             isLongTextLoading={isLongTextLoading}
             hasLongTextError={hasLongTextError}
             onLoadLongText={onLoadLongText}
-            imageDisplay={imageDisplay}
+            collapsedMediaTypes={collapsedMediaTypes}
           />
 
           <MediaRegion

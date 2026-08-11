@@ -64,7 +64,9 @@ describe('InfiniteFeedList', () => {
       />,
     )
 
-    expect(screen.getByText('加载中')).toBeInTheDocument()
+    expect(screen.getByText('加载中', { selector: 'p' })).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('加载中')
+    expect(screen.getByRole('status').nextElementSibling).toHaveAttribute('aria-busy', 'true')
 
     rerender(
       <InfiniteFeedList
@@ -83,6 +85,7 @@ describe('InfiniteFeedList', () => {
   })
 
   it('renders empty and populated feed pages', () => {
+    const onRetry = vi.fn()
     const { rerender } = render(
       <InfiniteFeedList
         pages={[{ items: [] }]}
@@ -93,10 +96,15 @@ describe('InfiniteFeedList', () => {
         hasNextPage={false}
         isFetchingNextPage={false}
         fetchNextPage={vi.fn()}
+        onRetry={onRetry}
       />,
     )
 
     expect(screen.getByText('暂无内容')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: '暂无内容' })).toBeInTheDocument()
+    expect(screen.getByText('可以稍后再来，或刷新看看。')).toBeInTheDocument()
+    screen.getByRole('button', { name: '刷新' }).click()
+    expect(onRetry).toHaveBeenCalledTimes(1)
 
     rerender(
       <InfiniteFeedList
@@ -159,6 +167,28 @@ describe('InfiniteFeedList', () => {
     )
 
     expect(fetchNextPage).not.toHaveBeenCalled()
+    expect(screen.getByRole('status')).toHaveTextContent('正在加载更多微博…')
+    expect(screen.getByRole('status').nextElementSibling).toHaveAttribute('aria-busy', 'true')
+  })
+
+  it('keeps the live status node mounted as pagination finishes', () => {
+    const props = {
+      pages: [{ items: [createFeedItem('1', '第一条')] }],
+      emptyLabel: '暂无内容',
+      loadingLabel: '加载中',
+      errorMessage: null,
+      isLoading: false,
+      hasNextPage: true,
+      fetchNextPage: vi.fn(),
+    }
+    const { rerender } = render(<InfiniteFeedList {...props} isFetchingNextPage={true} />)
+    const status = screen.getByRole('status')
+
+    rerender(<InfiniteFeedList {...props} isFetchingNextPage={false} />)
+
+    expect(screen.getByRole('status')).toBe(status)
+    expect(status).toBeEmptyDOMElement()
+    expect(status.nextElementSibling).not.toHaveAttribute('aria-busy')
   })
 
   it('shows full error when errorMessage is set and there are no items', () => {

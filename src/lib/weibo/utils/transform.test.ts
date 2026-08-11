@@ -253,7 +253,20 @@ describe('toMedia', () => {
       const result = toMedia(status as any)
 
       expect(result?.type).toBe('audio')
+      expect(result?.sourceObjectType).toBe('audio')
       expect(result?.streamUrl).toBe('https://example.com/audio.mp3')
+    })
+
+    it('retains unknown media but marks its original type for display decisions', () => {
+      const result = toMedia({
+        id: '123',
+        page_info: {
+          object_type: 'article',
+          media_info: { stream_url: 'https://example.com/external.mp3' },
+        },
+      } as any)
+
+      expect(result).toMatchObject({ type: 'audio', sourceObjectType: 'article' })
     })
   })
 })

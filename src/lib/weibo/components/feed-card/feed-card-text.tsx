@@ -1,7 +1,7 @@
 import { useState, type MouseEvent } from 'react'
 
 import { Button } from '@/components/ui/button'
-import type { ContentDisplay } from '@/lib/app-settings'
+import type { ContentDisplay, WeiboCardMediaCollapseType } from '@/lib/app-settings'
 import { cn } from '@/lib/utils'
 import { StatusText } from '@/lib/weibo/components/status-text'
 import { useFontSettings } from '@/lib/weibo/hooks/use-font-settings'
@@ -15,6 +15,7 @@ export function FeedTextBlock({
   onLoadLongText,
   hideMedia = false,
   imageDisplay = 'expanded',
+  collapsedMediaTypes,
 }: {
   item: FeedItem
   canLoadLongText: boolean
@@ -23,6 +24,7 @@ export function FeedTextBlock({
   onLoadLongText: () => void
   hideMedia?: boolean
   imageDisplay?: ContentDisplay
+  collapsedMediaTypes?: WeiboCardMediaCollapseType[]
 }) {
   const { textClassName } = useFontSettings()
   const [textMode, setTextMode] = useState<'markdown' | 'plain'>('markdown')
@@ -37,6 +39,7 @@ export function FeedTextBlock({
         mode={resolvedTextMode}
         hideMedia={hideMedia}
         imageDisplay={imageDisplay}
+        collapsedMediaTypes={collapsedMediaTypes}
       />
 
       {canLoadLongText ? (
