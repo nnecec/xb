@@ -510,7 +510,7 @@ export function ShellFrame({
             )}
           </AnimatePresence>
         </div>
-        {!immersiveMode && <BackToTop scrollRoot={mainScrollRoot} />}
+        <BackToTop scrollRoot={mainScrollRoot} />
       </div>
     </ImmersiveHeaderHiddenContext.Provider>
   )

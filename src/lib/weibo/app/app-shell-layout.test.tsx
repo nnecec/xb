@@ -243,7 +243,7 @@ describe('ShellFrame', () => {
     expect(screen.queryByRole('navigation', { name: '主导航' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: '退出沉浸模式' })).toBeInTheDocument()
     expect(screen.queryByTestId('right-rail')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: '返回顶部' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '返回顶部' })).toBeInTheDocument()
 
     const main = mainRef.current
     expect(main).not.toBeNull()

@@ -117,6 +117,17 @@ describe('NavigationRail', () => {
   it('renders an accessible navigation landmark', () => {
     renderNavigationRail()
     expect(screen.getByRole('navigation', { name: '主导航' })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: '界面控制' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '设置' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '返回主页' })).toHaveAttribute('href', '/')
+  })
+
+  it('uses real links for internal destinations', () => {
+    renderNavigationRail()
+
+    expect(screen.getByRole('link', { name: '主页' })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', { name: '探索' })).toHaveAttribute('href', '/hot/weibo/102803')
+    expect(screen.getByRole('link', { name: '收藏' })).toHaveAttribute('href', '/u/page/fav/1001')
   })
 
   it('renders private messages as a real external link without nesting a button', () => {
@@ -130,19 +141,22 @@ describe('NavigationRail', () => {
 
   it('marks active items through aria-current', () => {
     renderNavigationRail()
-    expect(screen.getByRole('button', { name: '主页' })).toHaveAttribute('aria-current', 'page')
-    expect(screen.getByRole('button', { name: '我的' })).not.toHaveAttribute('aria-current')
+    expect(screen.getByRole('link', { name: '主页' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: '主页' })).toHaveClass('font-semibold')
+    expect(screen.getByRole('link', { name: '我的' })).not.toHaveAttribute('aria-current')
   })
 
   it('marks profile as active when viewing current user profile', () => {
     renderNavigationRail({ pageKind: 'profile', viewingProfileUserId: '1001' })
-    expect(screen.getByRole('button', { name: '我的' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: '我的' })).toHaveAttribute('aria-current', 'page')
   })
 
-  it('uses fallback profile target when current user id is missing', () => {
+  it('disables account-specific destinations when current user id is missing', () => {
     getCurrentUserUidMock.mockReturnValue(null)
     renderNavigationRail()
-    expect(screen.getByRole('button', { name: '我的' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '我的，登录后可用' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '收藏，登录后可用' })).toBeDisabled()
+    expect(screen.queryByRole('link', { name: '我的' })).not.toBeInTheDocument()
   })
 
   it('does not render the old card description text', () => {
@@ -173,7 +187,21 @@ describe('NavigationRail', () => {
 
     const rewriteLabel = screen.getByText('返回原模式')
     expect(rewriteLabel.parentElement).toHaveClass('justify-between')
-    expect(rewriteLabel.parentElement?.parentElement).toHaveClass('w-[180px]')
+    expect(screen.getByRole('complementary')).toHaveClass('w-[204px]', 'overflow-y-auto')
+  })
+
+  it('announces unread navigation entries in addition to showing their badge', async () => {
+    checkUnreadNotificationsMock.mockResolvedValue({
+      mentions: 1,
+      comments: 0,
+      likes: 0,
+      dm: 1,
+    })
+
+    renderNavigationRail()
+
+    expect(await screen.findByRole('link', { name: '通知，有未读' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '私信，有未读' })).toBeInTheDocument()
   })
 
   it('does not poll unread counts when notifications and DMs are hidden', async () => {
