@@ -8,6 +8,14 @@ import {
   resetPlaybackPositionStoreForTest,
 } from './video-playback-position-store'
 
+const { mockedAppSettings } = vi.hoisted(() => ({
+  mockedAppSettings: {
+    rememberPlaybackRate: false,
+    playbackRate: 1,
+    updateSettings: vi.fn(),
+  },
+}))
+
 vi.mock('@reactuses/core', () => ({
   useIntersectionObserver: vi.fn(),
   useInterval: vi.fn(),
@@ -20,12 +28,7 @@ vi.mock('@/lib/app-settings-store', () => ({
       playbackRate: number
       updateSettings: ReturnType<typeof vi.fn>
     }) => unknown,
-  ) =>
-    selector({
-      rememberPlaybackRate: false,
-      playbackRate: 1,
-      updateSettings: vi.fn(),
-    }),
+  ) => selector(mockedAppSettings),
   useShallow: (selector: unknown) => selector,
 }))
 
@@ -53,6 +56,9 @@ function PlaybackSessionProbe({ sessionId, mode }: { sessionId: string; mode: Vi
 describe('useVideoPlaybackSession', () => {
   beforeEach(() => {
     resetPlaybackPositionStoreForTest()
+    mockedAppSettings.rememberPlaybackRate = false
+    mockedAppSettings.playbackRate = 1
+    mockedAppSettings.updateSettings.mockReset()
   })
 
   afterEach(() => {
@@ -131,5 +137,30 @@ describe('useVideoPlaybackSession', () => {
     expect(currentTime).toBe(42)
     expect(playbackRate).toBe(1.5)
     expect(play).toHaveBeenCalledTimes(1)
+  })
+
+  it('restores and remembers the selected playback rate for on-demand video', () => {
+    mockedAppSettings.rememberPlaybackRate = true
+    mockedAppSettings.playbackRate = 1.5
+    const { getByTestId } = render(<PlaybackSessionProbe sessionId="speed-memory" mode="video" />)
+    const video = getByTestId('speed-memory') as HTMLVideoElement
+    let playbackRate = 1
+    Object.defineProperties(video, {
+      playbackRate: {
+        configurable: true,
+        get: () => playbackRate,
+        set: (value: number) => {
+          playbackRate = value
+        },
+      },
+      duration: { configurable: true, value: 120 },
+    })
+
+    fireEvent.loadedMetadata(video)
+    expect(playbackRate).toBe(1.5)
+
+    playbackRate = 2
+    fireEvent.rateChange(video)
+    expect(mockedAppSettings.updateSettings).toHaveBeenLastCalledWith({ playbackRate: 2 })
   })
 })

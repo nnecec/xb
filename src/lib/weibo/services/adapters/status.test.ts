@@ -170,6 +170,196 @@ describe('adaptStatusDetailResponse', () => {
     }
   })
 
+  it('keeps MPD resolution choices when playback rows omit protocol', () => {
+    const mpd = `<?xml version="1.0"?><MPD><Period><AdaptationSet mimeType="video/mp4"><Representation id="dash_2160p" bandwidth="1"/><Representation id="dash_720p" bandwidth="1"/></AdaptationSet><AdaptationSet mimeType="audio/mp4"><Representation id="dash_audio" bandwidth="1"/></AdaptationSet></Period></MPD>`
+    const result = adaptStatusDetailResponse({
+      idstr: '704',
+      text_raw: 'protocol omitted',
+      user: { idstr: '1', screen_name: 'Alice' },
+      page_info: {
+        object_type: 'video',
+        media_info: {
+          mpdInfo: { mpdcontent: mpd },
+          playback_list: [
+            {
+              meta: {
+                type: 1,
+                label: 'dash_720p',
+                quality_index: 720,
+                quality_label: '720p',
+              },
+              play_info: {
+                type: 1,
+                label: 'dash_720p',
+                url: 'https://example.com/video-720.mp4',
+              },
+            },
+            {
+              meta: {
+                type: 1,
+                label: 'dash_2160p',
+                quality_index: 2160,
+                quality_label: '2160p',
+              },
+              play_info: {
+                type: 1,
+                label: 'dash_2160p',
+                url: 'https://example.com/video-2160.mp4',
+              },
+            },
+          ],
+        },
+      },
+    })
+
+    expect(result.status.media?.dash).toEqual({
+      type: 'mpd',
+      manifestXml: mpd,
+      qualities: [
+        { id: 'dash_2160p', label: '2160p' },
+        { id: 'dash_720p', label: '720p' },
+      ],
+    })
+  })
+
+  it('maps the real detail video shape to ordered qualities and secure fallbacks', () => {
+    const mpd = `<?xml version="1.0"?><MPD><Period><AdaptationSet mimeType="video/mp4"><Representation id="dash_2160p60"/><Representation id="dash_1440p60"/><Representation id="dash_1080p60"/><Representation id="dash_1080p"/><Representation id="dash_720p"/><Representation id="dash_hd"/></AdaptationSet><AdaptationSet mimeType="audio/mp4"><Representation id="dash_audio"/></AdaptationSet></Period></MPD>`
+    const qualities = [
+      ['dash_2160p60', 2200, '4K60'],
+      ['dash_1440p60', 1500, '2K60'],
+      ['dash_1080p60', 1100, '1080P60'],
+      ['dash_1080p', 1080, '1080p'],
+      ['dash_720p', 720, '720p'],
+      ['dash_hd', 480, '480p'],
+    ] as const
+    const result = adaptStatusDetailResponse({
+      idstr: '705',
+      text_raw: 'real detail video shape',
+      user: { idstr: '1', screen_name: 'Alice' },
+      page_info: {
+        object_type: 'video',
+        page_pic: 'https://wx2.sinaimg.cn/orj480/cover.jpg',
+        media_info: {
+          video_title: 'video title',
+          video_orientation: 'horizontal',
+          stream_url:
+            'http://f.video.weibocdn.com/video-480.mp4?label=mp4_hd&template=852x480.25.0',
+          mp4_720p_mp4:
+            'http://f.video.weibocdn.com/video-720.mp4?label=mp4_720p&template=1280x720.25.0',
+          mpdInfo: { mpdcontent: mpd },
+          playback_list: [
+            ...qualities.map(([label, qualityIndex, qualityLabel]) => ({
+              meta: {
+                type: 1,
+                label,
+                quality_index: qualityIndex,
+                quality_label: qualityLabel,
+              },
+              play_info: {
+                type: 1,
+                protocol: 'dash',
+                mime: 'video/mp4',
+                label,
+                url: `https://f.video.weibocdn.com/${label}.mp4`,
+              },
+            })),
+            {
+              meta: { type: 2, label: 'dash_audio', quality_index: 360 },
+              play_info: {
+                type: 2,
+                protocol: 'dash',
+                mime: 'audio/mp4',
+                label: 'dash_audio',
+                url: 'https://f.video.weibocdn.com/audio.mp4',
+              },
+            },
+            {
+              meta: { type: 3, label: 'scrubber_hd' },
+              play_info: {
+                type: 3,
+                protocol: 'general',
+                mime: 'image/jpeg',
+                label: 'scrubber_hd',
+                url: 'https://wx1.sinaimg.cn/large/scrubber.jpg',
+              },
+            },
+          ],
+        },
+      },
+    })
+
+    expect(result.status.media).toMatchObject({
+      type: 'video',
+      title: 'video title',
+      coverUrl: 'https://wx2.sinaimg.cn/orj480/cover.jpg',
+      videoOrientation: 'horizontal',
+      streamUrl: 'https://f.video.weibocdn.com/video-720.mp4?label=mp4_720p&template=1280x720.25.0',
+      downloadUrl:
+        'https://f.video.weibocdn.com/video-720.mp4?label=mp4_720p&template=1280x720.25.0',
+      dash: {
+        type: 'mpd',
+        qualities: qualities.map(([id, , label]) => ({ id, label })),
+      },
+    })
+  })
+
+  it('excludes timeline scrubber images from progressive video sources', () => {
+    const result = adaptStatusDetailResponse({
+      idstr: '706',
+      text_raw: 'progressive sources',
+      user: { idstr: '1', screen_name: 'Alice' },
+      page_info: {
+        object_type: 'video',
+        media_info: {
+          playback_list: [
+            {
+              meta: { type: 1, label: 'dash_720p', quality_index: 720 },
+              play_info: {
+                type: 1,
+                protocol: 'dash',
+                mime: 'video/mp4',
+                label: 'dash_720p',
+                url: 'https://f.video.weibocdn.com/video.mp4',
+              },
+            },
+            {
+              meta: { type: 2, label: 'dash_audio' },
+              play_info: {
+                type: 2,
+                protocol: 'dash',
+                mime: 'audio/mp4',
+                label: 'dash_audio',
+                url: 'https://f.video.weibocdn.com/audio.mp4',
+              },
+            },
+            {
+              meta: { type: 3, label: 'scrubber_hd' },
+              play_info: {
+                type: 3,
+                protocol: 'general',
+                mime: 'image/jpeg',
+                label: 'scrubber_hd',
+                url: 'https://wx1.sinaimg.cn/large/scrubber.jpg',
+              },
+            },
+          ],
+        },
+      },
+    })
+
+    expect(result.status.media?.dash).toEqual({
+      type: 'playback',
+      selectedIndex: 0,
+      sources: [
+        {
+          id: 'dash_720p',
+          label: 'dash_720p',
+          url: 'https://f.video.weibocdn.com/video.mp4',
+        },
+      ],
+    })
+  })
+
   it('falls back to progressive when DASH has no audio track', () => {
     const result = adaptStatusDetailResponse({
       idstr: '702',

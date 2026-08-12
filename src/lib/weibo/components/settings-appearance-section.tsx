@@ -142,6 +142,7 @@ const WEIBO_CARD_SETTING_KEYS = [
   'weiboCardMultiMediaStripHeight',
   'rememberPlaybackRate',
   'playbackRate',
+  'videoQualityPreference',
   'feedInteractionMode',
   'feedPrimaryActionOrder',
   'feedToolbarButtonIds',

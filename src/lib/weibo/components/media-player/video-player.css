@@ -52,6 +52,63 @@
   pointer-events: none;
 }
 
+/* Videojs keeps controls visible while paused. On hover-capable devices, idle
+   players should reveal them only when the player is hovered or focused. */
+@media (hover: hover) and (pointer: fine) {
+  .media-default-skin--video[data-playback-idle]:not(:hover):not(:focus-within) {
+    .media-controls--root {
+      pointer-events: none;
+    }
+
+    @container media-root (width < 32rem) {
+      .media-controls--primary,
+      .media-controls--secondary {
+        opacity: 0;
+        scale: 0.95;
+      }
+
+      .media-controls--primary {
+        translate: 0 4px;
+      }
+
+      .media-controls--secondary {
+        translate: 0 -4px;
+      }
+    }
+
+    @container media-root (width >= 32rem) {
+      .media-controls--root {
+        opacity: 0;
+        scale: 0.95;
+        translate: 0 4px;
+      }
+    }
+
+    .media-controls--root ~ .media-overlay {
+      opacity: 0;
+    }
+  }
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: reduce) {
+  .media-default-skin--video[data-playback-idle]:not(:hover):not(:focus-within) {
+    @container media-root (width < 32rem) {
+      .media-controls--primary,
+      .media-controls--secondary {
+        scale: 1;
+        translate: 0;
+      }
+    }
+
+    @container media-root (width >= 32rem) {
+      .media-controls--root {
+        scale: 1;
+        translate: 0;
+      }
+    }
+  }
+}
+
 /* ============================================
    Progress Bar Hover Expand
    ============================================ */

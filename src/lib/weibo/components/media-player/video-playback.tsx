@@ -4,12 +4,13 @@ import { Play } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
+import { useAppSettings, useShallow } from '@/lib/app-settings-store'
 import { sanitizeFilename } from '@/lib/weibo/utils/filename'
 
 import { useInlineFullscreen } from './inline-fullscreen'
 import { useVideoPlaybackSession } from './use-video-playback-session'
 import { LiveVideoPlayer, OnDemandVideoPlayer } from './video-playback-context'
-import { AUTO_QUALITY_ID } from './video-playback-quality'
+import { getPreferredQualityId } from './video-playback-quality'
 import {
   getVideoPlaybackMode,
   getVideoQualityOptions,
@@ -35,6 +36,46 @@ interface VideoPlaybackProps {
   onPictureInPictureChange?: (active: boolean) => void
 }
 
+interface MediaFetchResponse {
+  ok: boolean
+  data?: string
+  contentType?: string
+  error?: string
+}
+
+function base64ToBlob(data: string, contentType = 'video/mp4') {
+  const binary = atob(data)
+  const bytes = new Uint8Array(binary.length)
+  for (let index = 0; index < binary.length; index++) {
+    bytes[index] = binary.charCodeAt(index)
+  }
+  return new Blob([bytes], { type: contentType })
+}
+
+export async function fetchVideoBlob(url: string) {
+  let directFetchError: unknown
+  try {
+    const response = await fetch(url)
+    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    return await response.blob()
+  } catch (error) {
+    directFetchError = error
+  }
+
+  if (typeof browser !== 'undefined' && browser.runtime?.sendMessage) {
+    const response = (await browser.runtime.sendMessage({
+      type: 'media-fetch',
+      url,
+    })) as MediaFetchResponse
+    if (!response.ok || !response.data) {
+      throw new Error(response.error || '视频下载失败')
+    }
+    return base64ToBlob(response.data, response.contentType)
+  }
+
+  throw directFetchError instanceof Error ? directFetchError : new Error('视频下载失败')
+}
+
 function LiveOverlay({ onLoad, onPlay }: { onLoad: () => void; onPlay: () => void }) {
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center">
@@ -52,54 +93,87 @@ function LiveOverlay({ onLoad, onPlay }: { onLoad: () => void; onPlay: () => voi
   )
 }
 
-function useVideoDownload(download?: VideoDownloadAction) {
-  const [downloading, setDownloading] = useState(false)
+interface VideoDownloadOption extends VideoDownloadAction {
+  id: string
+  label: string
+}
 
-  const handleDownload = useCallback(async () => {
-    if (!download || downloading) return
+function useVideoDownload(options: VideoDownloadOption[]) {
+  const [downloadingId, setDownloadingId] = useState<string | null>(null)
 
-    setDownloading(true)
-    const name = download.filename
-      ? `${sanitizeFilename(download.filename)}.mp4`
-      : 'weibo_video.mp4'
-    toast.info(`准备下载：${name}`)
-    try {
-      if (import.meta.env.FIREFOX) {
+  const handleDownload = useCallback(
+    async (download: VideoDownloadOption) => {
+      if (downloadingId) return
+
+      setDownloadingId(download.id)
+      const name = download.filename
+        ? `${sanitizeFilename(download.filename)}.mp4`
+        : 'weibo_video.mp4'
+      toast.info(`准备下载：${name}`)
+      try {
+        if (import.meta.env.FIREFOX) {
+          const anchor = document.createElement('a')
+          anchor.href = download.url
+          anchor.download = name
+          anchor.target = '_blank'
+          anchor.rel = 'noopener'
+          document.body.appendChild(anchor)
+          anchor.click()
+          anchor.remove()
+          toast.success(`视频已下载：${name}`)
+          return
+        }
+
+        const blobUrl = URL.createObjectURL(await fetchVideoBlob(download.url))
         const anchor = document.createElement('a')
-        anchor.href = download.url
+        anchor.href = blobUrl
         anchor.download = name
-        anchor.target = '_blank'
-        anchor.rel = 'noopener'
-        document.body.appendChild(anchor)
         anchor.click()
         anchor.remove()
+        URL.revokeObjectURL(blobUrl)
         toast.success(`视频已下载：${name}`)
-        return
+      } catch {
+        toast.error('视频下载失败，请稍后再试')
+      } finally {
+        setDownloadingId(null)
       }
+    },
+    [downloadingId],
+  )
 
-      const response = await fetch(download.url)
-      if (!response.ok) throw new Error(`HTTP ${response.status}`)
-      const blobUrl = URL.createObjectURL(await response.blob())
-      const anchor = document.createElement('a')
-      anchor.href = blobUrl
-      anchor.download = name
-      anchor.click()
-      anchor.remove()
-      URL.revokeObjectURL(blobUrl)
-      toast.success(`视频已下载：${name}`)
-    } catch {
-      toast.error('视频下载失败，请稍后再试')
-    } finally {
-      setDownloading(false)
-    }
-  }, [download, downloading])
-
-  return download
+  return options.length > 0
     ? {
-        loading: downloading,
-        onSelect: () => void handleDownload(),
+        options: options.map((option) => ({
+          id: option.id,
+          label: option.label,
+          loading: option.id === downloadingId,
+        })),
+        onSelect: (id: string) => {
+          const option = options.find((candidate) => candidate.id === id)
+          if (option) void handleDownload(option)
+        },
       }
     : undefined
+}
+
+function getVideoDownloadOptions(
+  media: PlayableVideoMedia,
+  download?: VideoDownloadAction,
+): VideoDownloadOption[] {
+  if (media.kind !== 'video') {
+    return download ? [{ id: 'source', label: '完整视频', ...download }] : []
+  }
+
+  if (media.dash?.type === 'playback') {
+    return media.dash.sources.map((source) => ({
+      id: source.id,
+      label: source.label,
+      url: source.url,
+      filename: download?.filename ? `${download.filename}-${source.label}` : source.label,
+    }))
+  }
+
+  return download ? [{ id: 'source', label: '720p 完整视频', ...download }] : []
 }
 
 function PlayableVideoPlayback({
@@ -110,7 +184,7 @@ function PlayableVideoPlayback({
   onPictureInPictureChange,
 }: Omit<VideoPlaybackProps, 'media'> & { media: PlayableVideoMedia }) {
   const mediaRef = useRef<HTMLVideoElement>(null)
-  const [qualityId, setQualityId] = useState(AUTO_QUALITY_ID)
+  const [qualityId, setQualityId] = useState<string | null>(null)
   const [inlineFullscreen, setInlineFullscreen] = useState(false)
   const mode = getVideoPlaybackMode(media)
   const session = useVideoPlaybackSession({
@@ -120,24 +194,34 @@ function PlayableVideoPlayback({
     onPlay,
     onPictureInPictureChange,
   })
-  const downloadAction = useVideoDownload(download)
   const qualityOptions = getVideoQualityOptions(media)
+  const { videoQualityPreference, updateSettings } = useAppSettings(
+    useShallow((settings) => ({
+      videoQualityPreference: settings.videoQualityPreference,
+      updateSettings: settings.updateSettings,
+    })),
+  )
+  const resolvedQualityId =
+    qualityId ?? getPreferredQualityId(qualityOptions, videoQualityPreference)
+  const downloadAction = useVideoDownload(getVideoDownloadOptions(media, download))
 
   useEffect(() => {
-    setQualityId(AUTO_QUALITY_ID)
-  }, [media.sessionId])
+    setQualityId(null)
+  }, [media.sessionId, videoQualityPreference])
 
   useInlineFullscreen(mediaRef, inlineFullscreen, () => setInlineFullscreen(false))
 
   const handleQualityChange = useCallback(
     (nextQualityId: string) => {
-      if (nextQualityId === qualityId) return
+      if (nextQualityId === resolvedQualityId) return
       if (media.kind === 'video' && media.dash?.type === 'playback' && session.shouldLoad) {
         session.prepareSourceChange()
       }
       setQualityId(nextQualityId)
+      const option = qualityOptions.find((candidate) => candidate.id === nextQualityId)
+      if (option) void updateSettings({ videoQualityPreference: option.preferenceKey })
     },
-    [media, qualityId, session],
+    [media, qualityOptions, resolvedQualityId, session, updateSettings],
   )
 
   return (
@@ -148,7 +232,7 @@ function PlayableVideoPlayback({
       quality={
         qualityOptions.length > 0
           ? {
-              value: qualityId,
+              value: resolvedQualityId,
               options: qualityOptions,
               disabled: !session.shouldLoad,
               onValueChange: handleQualityChange,
@@ -169,7 +253,7 @@ function PlayableVideoPlayback({
       <VideoPlaybackSource
         media={media}
         mediaRef={mediaRef}
-        qualityId={qualityId}
+        qualityId={resolvedQualityId}
         shouldLoad={session.shouldLoad}
         onLoadedMetadata={session.handleLoadedMetadata}
         onPointerDownCapture={session.ensureLoaded}

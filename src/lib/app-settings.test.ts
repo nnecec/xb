@@ -180,6 +180,7 @@ describe('app-settings', () => {
       ratingEnabled: false,
       rememberPlaybackRate: false,
       playbackRate: 1,
+      videoQualityPreference: null,
       forceRedirectToFollowing: false,
       firstLoadRedirect: 'for-you',
       homeTab: 'for-you',
@@ -262,6 +263,7 @@ describe('app-settings', () => {
         ratingEnabled: true,
         rememberPlaybackRate: false,
         playbackRate: 1,
+        videoQualityPreference: '1080p',
         forceRedirectToFollowing: false,
         firstLoadRedirect: 'for-you',
         homeTab: 'for-you',
@@ -345,6 +347,7 @@ describe('app-settings', () => {
       ratingEnabled: true,
       rememberPlaybackRate: false,
       playbackRate: 1,
+      videoQualityPreference: '1080p',
       forceRedirectToFollowing: false,
       firstLoadRedirect: 'for-you',
       homeTab: 'for-you',
@@ -381,6 +384,10 @@ describe('app-settings', () => {
     expect(
       normalizeAppSettings({ rememberPlaybackRate: 'yes' as never }).rememberPlaybackRate,
     ).toBe(false)
+    expect(normalizeAppSettings({ videoQualityPreference: ' 1080P ' }).videoQualityPreference).toBe(
+      '1080p',
+    )
+    expect(normalizeAppSettings({ videoQualityPreference: '' }).videoQualityPreference).toBeNull()
   })
 
   it('normalizes reading preferences and custom content widths', () => {

@@ -7,6 +7,22 @@ export const AUTO_QUALITY_ID = 'auto'
 export interface QualityOption {
   id: string
   label: string
+  preferenceKey: string
+}
+
+export function getQualityPreferenceKey(label: string) {
+  return label.trim().toLowerCase()
+}
+
+export function getPreferredQualityId(
+  options: QualityOption[],
+  preference: string | null | undefined,
+) {
+  return (
+    options.find((option) => option.preferenceKey === preference)?.id ??
+    options[0]?.id ??
+    AUTO_QUALITY_ID
+  )
 }
 
 export function applyDashQuality(player: MediaPlayerClass, qualityId: string) {

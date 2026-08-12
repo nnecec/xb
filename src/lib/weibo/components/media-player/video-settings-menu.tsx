@@ -1,8 +1,8 @@
 import { Menu, usePlaybackRateOptions, useQualityOptions } from '@videojs/react'
 import type { PlaybackRateOptionsResult } from '@videojs/react'
-import { Check, ChevronLeft, ChevronRight, Gauge, Settings } from 'lucide-react'
+import { Check, Download } from 'lucide-react'
 
-import { AUTO_QUALITY_ID, type QualityOption } from './video-playback-quality'
+import type { QualityOption } from './video-playback-quality'
 import { IconButton } from './video-player-controls'
 
 export interface VideoQualitySettings {
@@ -12,174 +12,170 @@ export interface VideoQualitySettings {
   onValueChange: (value: string) => void
 }
 
-interface VideoSettingsMenuProps {
-  quality?: VideoQualitySettings
-  allowPlaybackRate?: boolean
+export interface VideoDownloadSettings {
+  options: Array<{ id: string; label: string; loading?: boolean }>
+  onSelect: (id: string) => void
 }
 
-function MenuChevron({ back = false }: { back?: boolean }) {
-  const Icon = back ? ChevronLeft : ChevronRight
-  return <Icon className="media-icon media-menu__chevron" />
+export function VideoQualityMenu({ quality }: { quality?: VideoQualitySettings }) {
+  return quality ? <VideoQualityMenuContent quality={quality} /> : <AdaptiveVideoQualityMenu />
 }
 
-export function VideoSettingsMenu({ quality, allowPlaybackRate = true }: VideoSettingsMenuProps) {
-  if (!allowPlaybackRate) {
-    return <VideoSettingsMenuContent quality={quality} playbackRate={null} />
-  }
-
-  return <VideoSettingsMenuWithPlaybackRate quality={quality} />
-}
-
-function VideoSettingsMenuWithPlaybackRate({ quality }: Pick<VideoSettingsMenuProps, 'quality'>) {
-  const playbackRate = usePlaybackRateOptions()
+function AdaptiveVideoQualityMenu() {
   const adaptiveQuality = useQualityOptions()
-  const resolvedQuality =
-    quality ??
-    (adaptiveQuality?.state.availability === 'available'
-      ? {
-          value: adaptiveQuality.value,
-          options: adaptiveQuality.options
-            .filter((option) => option.value !== AUTO_QUALITY_ID)
-            .map((option) => ({ id: option.value, label: option.label })),
-          onValueChange: adaptiveQuality.setValue,
-        }
-      : undefined)
-  return <VideoSettingsMenuContent quality={resolvedQuality} playbackRate={playbackRate} />
+  if (adaptiveQuality?.state.availability !== 'available') return null
+
+  return (
+    <VideoQualityMenuContent
+      quality={{
+        value: adaptiveQuality.value,
+        options: adaptiveQuality.options.map((option) => ({
+          id: option.value,
+          label: option.label,
+          preferenceKey: option.value,
+        })),
+        onValueChange: adaptiveQuality.setValue,
+      }}
+    />
+  )
 }
 
-function VideoSettingsMenuContent({
-  quality,
-  playbackRate,
-}: {
-  quality?: VideoQualitySettings
-  playbackRate: PlaybackRateOptionsResult | null
-}) {
-  const hasQuality = Boolean(quality?.options.length)
-  const hasPlaybackRate = playbackRate?.state.availability === 'available'
+function VideoQualityMenuContent({ quality }: { quality: VideoQualitySettings }) {
+  if (quality.options.length === 0) return null
 
-  if (!hasQuality && !hasPlaybackRate) {
-    return null
-  }
-
-  const qualityOptions = quality ? [{ id: AUTO_QUALITY_ID, label: '自动' }, ...quality.options] : []
-  const currentQualityLabel =
-    qualityOptions.find((option) => option.id === quality?.value)?.label ?? '自动'
+  const currentLabel =
+    quality.options.find((option) => option.id === quality.value)?.label ?? '最高'
 
   return (
     <Menu.Root side="top" align="center">
       <Menu.Trigger
-        aria-label="播放设置"
-        className="media-button--settings"
-        render={<IconButton />}
+        aria-label={`清晰度：${currentLabel}`}
+        className="media-button media-button--subtle media-button--quality"
+        disabled={quality.disabled}
       >
-        <Settings className="media-icon media-icon--settings size-[18px]" />
+        {currentLabel}
       </Menu.Trigger>
+      <Menu.Content
+        className="media-surface media-popover media-menu media-menu--quality"
+        aria-label="清晰度"
+      >
+        <Menu.RadioGroup
+          className="media-menu__group"
+          value={quality.value}
+          onValueChange={quality.onValueChange}
+          aria-label="清晰度"
+        >
+          {quality.options.map((option) => (
+            <Menu.RadioItem
+              key={option.id}
+              className="media-menu__item"
+              value={option.id}
+              disabled={quality.disabled}
+            >
+              <span>{option.label}</span>
+              <Menu.ItemIndicator
+                checked={option.id === quality.value}
+                forceMount
+                className="media-menu__indicator"
+              >
+                <Check className="media-icon" />
+              </Menu.ItemIndicator>
+            </Menu.RadioItem>
+          ))}
+        </Menu.RadioGroup>
+      </Menu.Content>
+    </Menu.Root>
+  )
+}
 
-      <Menu.Content className="media-surface media-popover media-menu media-menu--settings">
-        <Menu.View className="media-menu__panel">
-          <div className="media-menu__group">
-            {hasQuality && quality ? (
-              <Menu.Root>
-                <Menu.Trigger
-                  type="quality"
-                  className="media-menu__item media-menu__item--submenu"
-                  disabled={quality.disabled}
-                  render={(props) => (
-                    <div {...props}>
-                      <Gauge className="media-icon" />
-                      <span>清晰度</span>
-                      <span className="media-menu__hint">
-                        <span className="media-menu__hint-label">{currentQualityLabel}</span>
-                        <MenuChevron />
-                      </span>
-                    </div>
-                  )}
-                />
-                <Menu.Content className="media-menu__panel">
-                  <Menu.Back className="media-menu__back">
-                    <MenuChevron back />
-                    清晰度
-                  </Menu.Back>
-                  <Menu.Separator className="media-menu__separator" />
-                  <Menu.RadioGroup
-                    className="media-menu__group"
-                    value={quality.value}
-                    onValueChange={quality.onValueChange}
-                    aria-label="清晰度"
-                  >
-                    {qualityOptions.map((option) => (
-                      <Menu.RadioItem
-                        key={option.id}
-                        className="media-menu__item"
-                        value={option.id}
-                        disabled={quality.disabled}
-                      >
-                        <span>{option.label}</span>
-                        <Menu.ItemIndicator
-                          checked={option.id === quality.value}
-                          forceMount
-                          className="media-menu__indicator"
-                        >
-                          <Check className="media-icon" />
-                        </Menu.ItemIndicator>
-                      </Menu.RadioItem>
-                    ))}
-                  </Menu.RadioGroup>
-                </Menu.Content>
-              </Menu.Root>
-            ) : null}
+export function VideoPlaybackRateMenu() {
+  const playbackRate = usePlaybackRateOptions()
+  if (playbackRate?.state.availability !== 'available') return null
 
-            {hasPlaybackRate && playbackRate ? (
-              <Menu.Root>
-                <Menu.Trigger
-                  type="playback-rate"
-                  className="media-menu__item media-menu__item--submenu"
-                  render={(props) => (
-                    <div {...props}>
-                      <Gauge className="media-icon" />
-                      <span>播放速度</span>
-                      <span className="media-menu__hint">
-                        <Menu.ItemValue className="media-menu__hint-label" />
-                        <MenuChevron />
-                      </span>
-                    </div>
-                  )}
-                />
-                <Menu.Content className="media-menu__panel">
-                  <Menu.Back className="media-menu__back">
-                    <MenuChevron back />
-                    播放速度
-                  </Menu.Back>
-                  <Menu.Separator className="media-menu__separator" />
-                  <Menu.RadioGroup
-                    className="media-menu__group"
-                    value={playbackRate.value}
-                    onValueChange={playbackRate.setValue}
-                    aria-label="播放速度"
-                  >
-                    {playbackRate.options.map((option) => (
-                      <Menu.RadioItem
-                        key={option.value}
-                        className="media-menu__item"
-                        value={option.value}
-                        disabled={option.disabled}
-                      >
-                        <span>{option.label}</span>
-                        <Menu.ItemIndicator
-                          checked={option.value === playbackRate.value}
-                          forceMount
-                          className="media-menu__indicator"
-                        >
-                          <Check className="media-icon" />
-                        </Menu.ItemIndicator>
-                      </Menu.RadioItem>
-                    ))}
-                  </Menu.RadioGroup>
-                </Menu.Content>
-              </Menu.Root>
-            ) : null}
-          </div>
-        </Menu.View>
+  return <VideoPlaybackRateMenuContent playbackRate={playbackRate} />
+}
+
+type VideoPlaybackRateSettings = Pick<PlaybackRateOptionsResult, 'options' | 'setValue' | 'value'>
+
+export function VideoPlaybackRateMenuContent({
+  playbackRate,
+}: {
+  playbackRate: VideoPlaybackRateSettings
+}) {
+  const currentLabel =
+    playbackRate.options.find((option) => option.value === playbackRate.value)?.label ??
+    playbackRate.value
+
+  return (
+    <Menu.Root side="top" align="center">
+      <Menu.Trigger
+        aria-label={`播放速度：${currentLabel}`}
+        className="media-button media-button--subtle media-button--playback-rate-trigger"
+      >
+        {currentLabel}
+      </Menu.Trigger>
+      <Menu.Content
+        className="media-surface media-popover media-menu media-menu--playback-rate"
+        aria-label="播放速度"
+      >
+        <Menu.RadioGroup
+          className="media-menu__group"
+          value={playbackRate.value}
+          onValueChange={playbackRate.setValue}
+          aria-label="播放速度"
+        >
+          {playbackRate.options.map((option) => (
+            <Menu.RadioItem
+              key={option.value}
+              className="media-menu__item"
+              value={option.value}
+              disabled={option.disabled}
+            >
+              <span>{option.label}</span>
+              <Menu.ItemIndicator
+                checked={option.value === playbackRate.value}
+                forceMount
+                className="media-menu__indicator"
+              >
+                <Check className="media-icon" />
+              </Menu.ItemIndicator>
+            </Menu.RadioItem>
+          ))}
+        </Menu.RadioGroup>
+      </Menu.Content>
+    </Menu.Root>
+  )
+}
+
+export function VideoDownloadMenu({ download }: { download?: VideoDownloadSettings }) {
+  if (!download?.options.length) return null
+
+  const downloading = download.options.some((option) => option.loading)
+
+  return (
+    <Menu.Root side="top" align="center">
+      <Menu.Trigger
+        aria-label={downloading ? '下载视频，下载中' : '下载视频'}
+        render={<IconButton className="media-button--download" />}
+      >
+        <Download className="media-icon size-[18px]" />
+      </Menu.Trigger>
+      <Menu.Content
+        className="media-surface media-popover media-menu media-menu--download"
+        aria-label="下载视频"
+      >
+        <div className="media-menu__group">
+          {download.options.map((option) => (
+            <Menu.Item
+              key={option.id}
+              className="media-menu__item"
+              disabled={option.loading}
+              onClick={() => download.onSelect(option.id)}
+            >
+              <span>{option.loading ? `${option.label}，下载中…` : option.label}</span>
+            </Menu.Item>
+          ))}
+        </div>
       </Menu.Content>
     </Menu.Root>
   )

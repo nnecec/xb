@@ -17,7 +17,6 @@ import {
   usePlayer,
 } from '@videojs/react'
 import {
-  Download,
   Expand,
   Loader2,
   Maximize,
@@ -32,7 +31,13 @@ import {
 import type { ReactNode } from 'react'
 
 import { CenterPlayButton, IconButton, VolumeControl } from './video-player-controls'
-import { VideoSettingsMenu, type VideoQualitySettings } from './video-settings-menu'
+import {
+  VideoDownloadMenu,
+  VideoPlaybackRateMenu,
+  VideoQualityMenu,
+  type VideoDownloadSettings,
+  type VideoQualitySettings,
+} from './video-settings-menu'
 
 type VideoPlayerSkinMode = 'video' | 'live' | 'replay'
 
@@ -43,10 +48,7 @@ interface VideoPlayerSkinProps {
   centerPlayVisible?: boolean
   interactive?: boolean
   quality?: VideoQualitySettings
-  download?: {
-    loading: boolean
-    onSelect: () => void
-  }
+  download?: VideoDownloadSettings
   inlineFullscreen?: {
     active: boolean
     onToggle: () => void
@@ -80,7 +82,10 @@ export function VideoPlayerSkin({
   const playbackActive = isVideoPlaybackActive(playback)
 
   return (
-    <Container className="media-default-skin media-default-skin--video relative h-full w-full overflow-hidden rounded-[inherit]">
+    <Container
+      className="media-default-skin media-default-skin--video relative h-full w-full overflow-hidden rounded-[inherit]"
+      data-playback-idle={playbackActive ? undefined : ''}
+    >
       {children}
 
       <BufferingIndicator
@@ -111,7 +116,7 @@ export function VideoPlayerSkin({
 
       {centerPlayVisible && !playbackActive ? <CenterPlayButton /> : null}
 
-      {controlsVisible && playbackActive ? (
+      {controlsVisible && (!isLive || playbackActive) ? (
         <Controls.Root className="media-surface media-controls media-controls--root">
           <Tooltip.Provider>
             <div className="media-surface media-controls media-controls--primary">
@@ -159,29 +164,9 @@ export function VideoPlayerSkin({
               ) : null}
 
               <div className="media-button-group">
-                {download ? (
-                  <Tooltip.Root side="top">
-                    <Tooltip.Trigger
-                      render={
-                        <IconButton
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            download.onSelect()
-                          }}
-                          aria-label="下载视频"
-                          disabled={download.loading}
-                        >
-                          <Download className="media-icon size-[18px]" />
-                        </IconButton>
-                      }
-                    />
-                    <Tooltip.Popup className="media-surface media-tooltip">
-                      {download.loading ? '下载中…' : '下载视频'}
-                    </Tooltip.Popup>
-                  </Tooltip.Root>
-                ) : null}
-
-                <VideoSettingsMenu quality={quality} allowPlaybackRate={!isLive} />
+                <VideoQualityMenu quality={quality} />
+                {!isLive ? <VideoPlaybackRateMenu /> : null}
+                <VideoDownloadMenu download={download} />
               </div>
             </div>
 

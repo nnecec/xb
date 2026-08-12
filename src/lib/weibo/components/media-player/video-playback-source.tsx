@@ -8,7 +8,11 @@ import type { PointerEventHandler, RefObject } from 'react'
 
 import type { VideoPlaybackMode } from './use-video-playback-session'
 import { OnDemandVideoPlayer } from './video-playback-context'
-import { applyDashQuality, getVariantSource } from './video-playback-quality'
+import {
+  applyDashQuality,
+  getQualityPreferenceKey,
+  getVariantSource,
+} from './video-playback-quality'
 import type { PlayableVideoMedia, VideoPlaybackMedia } from './video-playback-types'
 
 interface VideoPlaybackSourceProps {
@@ -26,8 +30,18 @@ export function getVideoPlaybackMode(media: PlayableVideoMedia): VideoPlaybackMo
 
 export function getVideoQualityOptions(media: PlayableVideoMedia) {
   if (media.kind !== 'video' || !media.dash) return []
-  if (media.dash.type === 'mpd') return media.dash.qualities
-  return media.dash.sources.map(({ id, label }) => ({ id, label }))
+  if (media.dash.type === 'mpd') {
+    return media.dash.qualities.map(({ id, label }) => ({
+      id,
+      label,
+      preferenceKey: getQualityPreferenceKey(label),
+    }))
+  }
+  return media.dash.sources.map(({ id, label }) => ({
+    id,
+    label,
+    preferenceKey: getQualityPreferenceKey(label),
+  }))
 }
 
 function DashQualityBridge({ qualityId, shouldLoad }: { qualityId: string; shouldLoad: boolean }) {

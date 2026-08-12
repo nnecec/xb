@@ -19,11 +19,14 @@ function getMpdXml(mediaInfo: WeiboMediaInfo | undefined): string | undefined {
 }
 
 /**
- * Checks if playback item is audio.
+ * Checks if playback item is a playable video resource.
  */
-function isPlaybackAudioItem(item: NonNullable<WeiboMediaInfo['playback_list']>[number]): boolean {
-  const t = item.meta?.type ?? item.play_info?.type
-  return t === 2
+function isPlaybackVideoItem(item: NonNullable<WeiboMediaInfo['playback_list']>[number]): boolean {
+  const type = item.meta?.type ?? item.play_info?.type
+  const mime = item.play_info?.mime?.toLowerCase()
+  if (type !== undefined) return type === 1
+  if (mime !== undefined) return mime.startsWith('video/')
+  return true
 }
 
 /**
@@ -31,6 +34,46 @@ function isPlaybackAudioItem(item: NonNullable<WeiboMediaInfo['playback_list']>[
  */
 function isPlaybackDashItem(item: NonNullable<WeiboMediaInfo['playback_list']>[number]): boolean {
   return item.play_info?.protocol?.toLowerCase() === 'dash'
+}
+
+/**
+ * Gets video representation ids declared by an MPD manifest.
+ */
+function mpdRepresentationIds(xml: string): ReadonlySet<string> {
+  const ids = new Set<string>()
+
+  for (const match of xml.matchAll(/<Representation\b[^>]*\bid=(?:"([^"]+)"|'([^']+)')/gi)) {
+    const id = match[1] ?? match[2]
+    if (id) ids.add(id)
+  }
+
+  return ids
+}
+
+/**
+ * Upgrades Weibo CDN media URLs to HTTPS for use on the secure host page.
+ */
+function secureWeiboMediaUrl(url: string | undefined): string | undefined {
+  const value = pickNonEmptyUrl(url)
+  if (!value) return undefined
+
+  if (value.startsWith('//')) {
+    return `https:${value}`
+  }
+
+  try {
+    const parsed = new URL(value)
+    const isWeiboCdn =
+      parsed.hostname === 'weibocdn.com' || parsed.hostname.endsWith('.weibocdn.com')
+    if (parsed.protocol === 'http:' && isWeiboCdn) {
+      parsed.protocol = 'https:'
+      return parsed.toString()
+    }
+  } catch {
+    return value
+  }
+
+  return value
 }
 
 /**
@@ -42,11 +85,11 @@ function bestProgressiveFromPlaybackList(mediaInfo: WeiboMediaInfo): string | un
   }
 
   const candidates = mediaInfo.playback_list
-    .filter((item) => !isPlaybackAudioItem(item))
+    .filter(isPlaybackVideoItem)
     .filter((item) => !isPlaybackDashItem(item))
     .map((item) => ({
       q: Number(item.meta?.quality_index ?? -1),
-      url: pickNonEmptyUrl(item.play_info?.url),
+      url: secureWeiboMediaUrl(item.play_info?.url),
     }))
     .filter((item): item is { q: number; url: string } => Boolean(item.url))
 
@@ -61,7 +104,10 @@ function bestProgressiveFromPlaybackList(mediaInfo: WeiboMediaInfo): string | un
 /**
  * Gets DASH qualities from playback list.
  */
-function dashQualitiesFromPlaybackList(mediaInfo: WeiboMediaInfo): FeedDashQuality[] {
+function dashQualitiesFromPlaybackList(
+  mediaInfo: WeiboMediaInfo,
+  representationIds?: ReadonlySet<string>,
+): FeedDashQuality[] {
   if (!Array.isArray(mediaInfo.playback_list)) {
     return []
   }
@@ -70,12 +116,13 @@ function dashQualitiesFromPlaybackList(mediaInfo: WeiboMediaInfo): FeedDashQuali
   const rows: Row[] = []
 
   for (const item of mediaInfo.playback_list) {
-    if (isPlaybackAudioItem(item) || !isPlaybackDashItem(item) || item.meta?.is_hidden) {
+    if (!isPlaybackVideoItem(item) || item.meta?.is_hidden) {
       continue
     }
     const id = (item.meta?.label ?? item.play_info?.label)?.trim()
-    const url = pickNonEmptyUrl(item.play_info?.url)
-    if (!id || !url) {
+    const url = secureWeiboMediaUrl(item.play_info?.url)
+    const matchesRepresentation = representationIds?.has(id ?? '')
+    if (!id || (!matchesRepresentation && !isPlaybackDashItem(item)) || !url) {
       continue
     }
     const label = (item.meta?.quality_label ?? id).trim()
@@ -113,11 +160,11 @@ function hasAudioAdaptationInMpd(xml: string): boolean {
  */
 function progressiveFallbackUrl(mediaInfo: WeiboMediaInfo): string | undefined {
   return (
-    pickNonEmptyUrl(mediaInfo.mp4_720p_mp4) ??
-    pickNonEmptyUrl(mediaInfo.h265_mp4_hd) ??
+    secureWeiboMediaUrl(mediaInfo.mp4_720p_mp4) ??
+    secureWeiboMediaUrl(mediaInfo.h265_mp4_hd) ??
     bestProgressiveFromPlaybackList(mediaInfo) ??
-    pickNonEmptyUrl(mediaInfo.stream_url_hd) ??
-    pickNonEmptyUrl(mediaInfo.stream_url)
+    secureWeiboMediaUrl(mediaInfo.stream_url_hd) ??
+    secureWeiboMediaUrl(mediaInfo.stream_url)
   )
 }
 
@@ -126,11 +173,11 @@ function progressiveFallbackUrl(mediaInfo: WeiboMediaInfo): string | undefined {
  */
 function downloadUrlFromMediaInfo(mediaInfo: WeiboMediaInfo): string | undefined {
   return (
-    pickNonEmptyUrl(mediaInfo.mp4_720p_mp4) ??
-    pickNonEmptyUrl(mediaInfo.h265_mp4_hd) ??
-    pickNonEmptyUrl(mediaInfo.mp4_hd_url) ??
-    pickNonEmptyUrl(mediaInfo.stream_url_hd) ??
-    pickNonEmptyUrl(mediaInfo.stream_url)
+    secureWeiboMediaUrl(mediaInfo.mp4_720p_mp4) ??
+    secureWeiboMediaUrl(mediaInfo.h265_mp4_hd) ??
+    secureWeiboMediaUrl(mediaInfo.mp4_hd_url) ??
+    secureWeiboMediaUrl(mediaInfo.stream_url_hd) ??
+    secureWeiboMediaUrl(mediaInfo.stream_url)
   )
 }
 
@@ -148,11 +195,11 @@ function playbackSourcesFromList(
   const out: Array<{ id: string; label: string; url: string }> = []
 
   for (const item of mediaInfo.playback_list) {
-    if (isPlaybackAudioItem(item) || item.meta?.is_hidden) {
+    if (!isPlaybackVideoItem(item) || item.meta?.is_hidden) {
       continue
     }
     const id = (item.meta?.label ?? item.play_info?.label)?.trim()
-    const url = pickNonEmptyUrl(item.play_info?.url)
+    const url = secureWeiboMediaUrl(item.play_info?.url)
     if (!id || !url) {
       continue
     }
@@ -203,7 +250,7 @@ export function toMixMediaInfo(mixMediaInfo: any): FeedMixMediaItem[] | undefine
         dash = {
           type: 'mpd',
           manifestXml: rawMpdXml.trim(),
-          qualities: dashQualitiesFromPlaybackList(mediaInfo),
+          qualities: dashQualitiesFromPlaybackList(mediaInfo, mpdRepresentationIds(rawMpdXml)),
         }
       } else if (sources.length > 0) {
         dash = {
@@ -302,12 +349,13 @@ export function toMedia(status: WeiboStatus) {
 
     return {
       type: 'live' as const,
-      streamUrl: mediaInfo.live_ld ?? mediaInfo.stream_url ?? '',
+      streamUrl:
+        secureWeiboMediaUrl(mediaInfo.live_ld) ?? secureWeiboMediaUrl(mediaInfo.stream_url) ?? '',
       title: mediaInfo.video_title ?? '',
       coverUrl: pagePicUrl ?? mediaInfo.subscribe?.cover ?? null,
       liveStatus: mediaInfo.live_status,
       liveStartTime: mediaInfo.live_start_time,
-      replayUrl: mediaInfo.replay_hd,
+      replayUrl: secureWeiboMediaUrl(mediaInfo.replay_hd),
     }
   }
 
@@ -342,7 +390,7 @@ export function toMedia(status: WeiboStatus) {
 
   if (rawMpdXml) {
     if (hasAudioAdaptationInMpd(rawMpdXml)) {
-      const qualities = dashQualitiesFromPlaybackList(mediaInfo)
+      const qualities = dashQualitiesFromPlaybackList(mediaInfo, mpdRepresentationIds(rawMpdXml))
       if (qualities.length > 0) {
         return {
           type: 'video' as const,

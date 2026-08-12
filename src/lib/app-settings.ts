@@ -243,6 +243,7 @@ export interface AppSettings {
   ratingEnabled: boolean
   rememberPlaybackRate: boolean
   playbackRate: number
+  videoQualityPreference: string | null
   forceRedirectToFollowing?: boolean
   firstLoadRedirect: HomeTab
   homeTab: HomeTab
@@ -344,6 +345,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   ratingEnabled: false,
   rememberPlaybackRate: false,
   playbackRate: 1,
+  videoQualityPreference: null,
   forceRedirectToFollowing: false,
   firstLoadRedirect: 'for-you',
   homeTab: 'for-you',
@@ -610,6 +612,12 @@ function normalizePlaybackRate(value: unknown): number {
     return DEFAULT_APP_SETTINGS.playbackRate
   }
   return isPlaybackRate(numeric) ? numeric : DEFAULT_APP_SETTINGS.playbackRate
+}
+
+function normalizeVideoQualityPreference(value: unknown): string | null {
+  if (typeof value !== 'string') return DEFAULT_APP_SETTINGS.videoQualityPreference
+  const normalized = value.trim().toLowerCase()
+  return normalized || null
 }
 
 function isSelectedThemeType(value: unknown): value is SelectedThemeType {
@@ -896,6 +904,7 @@ export function normalizeAppSettings(value: unknown): AppSettings {
         ? candidate.rememberPlaybackRate
         : DEFAULT_APP_SETTINGS.rememberPlaybackRate,
     playbackRate: normalizePlaybackRate(candidate.playbackRate),
+    videoQualityPreference: normalizeVideoQualityPreference(candidate.videoQualityPreference),
     forceRedirectToFollowing:
       typeof candidate.forceRedirectToFollowing === 'boolean'
         ? candidate.forceRedirectToFollowing
