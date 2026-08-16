@@ -53,10 +53,8 @@ export function ThemeUiPreview({
   return (
     <div className={cn('flex flex-col gap-1.5', className)}>
       <div
-        className={cn(
-          'border-border/50 aspect-5/3 w-full overflow-hidden rounded-lg border',
-          showLabels && 'aspect-5/2.5',
-        )}
+        className="border-border/50 w-full overflow-hidden rounded-lg border"
+        style={{ aspectRatio: showLabels ? '5 / 2.5' : '5 / 3' }}
       >
         <div className="flex h-full">
           <ThemeUiHalfPreview colors={light} />

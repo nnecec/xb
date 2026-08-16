@@ -49,6 +49,28 @@ describe('app-settings', () => {
     expect(normalizeAppSettings({ xLayoutEnabled: false }).feedInteractionMode).toBe('weibo')
   })
 
+  it('normalizes the merged reply-chain display setting and omits deleted settings', () => {
+    expect(normalizeAppSettings({ replyChainDisplay: 'plain' }).replyChainDisplay).toBe('plain')
+    expect(normalizeAppSettings({ replyChainDisplay: 'collapsed' }).replyChainDisplay).toBe(
+      'collapsed',
+    )
+    expect(normalizeAppSettings({ replyChainDisplay: 'unknown' as never }).replyChainDisplay).toBe(
+      'expanded',
+    )
+
+    const normalized = normalizeAppSettings({
+      renderReplyChainEnabled: false,
+      collapseRepliesEnabled: true,
+      forceRedirectToFollowing: true,
+      imageGenEnabled: true,
+    })
+    expect(normalized.replyChainDisplay).toBe('expanded')
+    expect(normalized).not.toHaveProperty('renderReplyChainEnabled')
+    expect(normalized).not.toHaveProperty('collapseRepliesEnabled')
+    expect(normalized).not.toHaveProperty('forceRedirectToFollowing')
+    expect(normalized).not.toHaveProperty('imageGenEnabled')
+  })
+
   it('migrates legacy font options to reading-scale defaults', () => {
     expect(normalizeAppSettings({ fontSizeClass: 'text-xs' }).contentFontSize).toBe(14)
     expect(normalizeAppSettings({ fontSizeClass: 'text-4xl' }).contentFontSize).toBe(24)
@@ -137,8 +159,7 @@ describe('app-settings', () => {
       sidebarCollapsed: false,
       immersiveMode: false,
       motionPreference: 'system',
-      collapseRepliesEnabled: false,
-      renderReplyChainEnabled: true,
+      replyChainDisplay: 'expanded',
       darkModeImageDim: false,
       autoLoadLongText: false,
       feedDensity: 'standard',
@@ -165,7 +186,6 @@ describe('app-settings', () => {
       commentCardCollapseRepliesByDefault: false,
       lightModeBgColor: 'white',
       darkModeBgColor: 'near-black',
-      imageGenEnabled: true,
       imageGenShowDataArea: true,
       imageGenShowFullImages: false,
       imageGenShowWeiboLink: false,
@@ -181,7 +201,6 @@ describe('app-settings', () => {
       rememberPlaybackRate: false,
       playbackRate: 1,
       videoQualityPreference: null,
-      forceRedirectToFollowing: false,
       firstLoadRedirect: 'for-you',
       homeTab: 'for-you',
       homeGroupId: null,
@@ -220,8 +239,7 @@ describe('app-settings', () => {
         sidebarCollapsed: false,
         immersiveMode: true,
         motionPreference: 'reduced',
-        collapseRepliesEnabled: false,
-        renderReplyChainEnabled: true,
+        replyChainDisplay: 'expanded',
         darkModeImageDim: false,
         autoLoadLongText: false,
         feedDensity: 'compact',
@@ -248,7 +266,6 @@ describe('app-settings', () => {
         commentCardCollapseRepliesByDefault: true,
         lightModeBgColor: 'paper',
         darkModeBgColor: 'dark-gray',
-        imageGenEnabled: true,
         imageGenShowDataArea: true,
         imageGenShowFullImages: false,
         imageGenShowWeiboLink: false,
@@ -264,7 +281,6 @@ describe('app-settings', () => {
         rememberPlaybackRate: false,
         playbackRate: 1,
         videoQualityPreference: '1080p',
-        forceRedirectToFollowing: false,
         firstLoadRedirect: 'for-you',
         homeTab: 'for-you',
         homeGroupId: null,
@@ -304,8 +320,7 @@ describe('app-settings', () => {
       sidebarCollapsed: false,
       immersiveMode: true,
       motionPreference: 'reduced',
-      collapseRepliesEnabled: false,
-      renderReplyChainEnabled: true,
+      replyChainDisplay: 'expanded',
       darkModeImageDim: false,
       autoLoadLongText: false,
       feedDensity: 'compact',
@@ -332,7 +347,6 @@ describe('app-settings', () => {
       commentCardCollapseRepliesByDefault: true,
       lightModeBgColor: 'paper',
       darkModeBgColor: 'dark-gray',
-      imageGenEnabled: true,
       imageGenShowDataArea: true,
       imageGenShowFullImages: false,
       imageGenShowWeiboLink: false,
@@ -348,7 +362,6 @@ describe('app-settings', () => {
       rememberPlaybackRate: false,
       playbackRate: 1,
       videoQualityPreference: '1080p',
-      forceRedirectToFollowing: false,
       firstLoadRedirect: 'for-you',
       homeTab: 'for-you',
       homeGroupId: null,

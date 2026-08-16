@@ -1,13 +1,11 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { AppSettings } from '@/lib/app-settings'
-import { DEFAULT_APP_SETTINGS } from '@/lib/app-settings'
+import { DEFAULT_APP_SETTINGS, type AppSettings } from '@/lib/app-settings'
 
 import { SettingsDialog } from './settings-dialog'
 
-// Mock app settings store
 const mockUpdateSettings = vi.fn().mockResolvedValue(undefined)
 const mockSettings: AppSettings & {
   updateSettings: typeof mockUpdateSettings
@@ -17,283 +15,231 @@ const mockSettings: AppSettings & {
 } = {
   ...DEFAULT_APP_SETTINGS,
   updateSettings: mockUpdateSettings,
-  addUserTheme: vi.fn(),
-  deleteUserTheme: vi.fn(),
-  updateUserTheme: vi.fn(),
+  addUserTheme: vi.fn().mockResolvedValue(undefined),
+  deleteUserTheme: vi.fn().mockResolvedValue(undefined),
+  updateUserTheme: vi.fn().mockResolvedValue(undefined),
 }
 
 vi.mock('@/lib/app-settings-store', () => ({
-  useAppSettings: vi.fn((selector) => {
-    if (typeof selector === 'function') {
-      return selector(mockSettings)
-    }
-    return mockSettings
-  }),
-  useShallow: vi.fn((fn) => fn),
+  useAppSettings: vi.fn((selector) => selector(mockSettings)),
+  useShallow: vi.fn((selector) => selector),
 }))
-
-// Mock chrome storage
-const mockChromeStorage = {
-  local: {
-    get: vi.fn().mockResolvedValue({}),
-    set: vi.fn().mockResolvedValue(undefined),
-  },
-}
-
-Object.defineProperty(global, 'chrome', {
-  value: {
-    storage: mockChromeStorage,
-  },
-  writable: true,
-})
 
 describe('SettingsDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     Object.assign(mockSettings, DEFAULT_APP_SETTINGS)
+    mockUpdateSettings.mockResolvedValue(undefined)
   })
 
-  it('renders dialog when open', () => {
-    render(<SettingsDialog open={true} onOpenChange={() => {}} forceMount />)
+  it('renders the large responsive settings shell', () => {
+    render(<SettingsDialog open onOpenChange={() => {}} forceMount />)
 
     const dialog = screen.getByRole('dialog')
-    expect(dialog).toBeInTheDocument()
     expect(dialog).toHaveAttribute('data-state', 'open')
-    expect(screen.getByText('设置')).toBeInTheDocument()
+    expect(dialog).toHaveClass('h-[min(560px,80vh)]', 'w-[min(720px,84vw)]')
+    expect(screen.getByRole('combobox', { name: '当前设置模块' })).toHaveTextContent('显示')
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument()
   })
 
-  it('has closed state when not open', () => {
+  it('keeps force-mounted content in the closed dialog state', () => {
     render(<SettingsDialog open={false} onOpenChange={() => {}} forceMount />)
 
-    const dialog = screen.getByRole('dialog')
-    // Dialog is still in DOM but with data-state="closed"
-    expect(dialog).toHaveAttribute('data-state', 'closed')
+    expect(screen.getByRole('dialog')).toHaveAttribute('data-state', 'closed')
   })
 
-  it('renders all sidebar groups', () => {
-    render(<SettingsDialog open={true} onOpenChange={() => {}} forceMount />)
+  it('renders the ten confirmed settings modules', () => {
+    render(<SettingsDialog open onOpenChange={() => {}} forceMount />)
 
-    // Check for main setting groups - use getAllByText to handle duplicates
-    const appearanceElements = screen.getAllByText('外观')
-    expect(appearanceElements.length).toBeGreaterThan(0)
-
-    expect(screen.getByText('主题')).toBeInTheDocument()
-    expect(screen.queryByText('个性化')).not.toBeInTheDocument()
-    expect(screen.getByText('字体')).toBeInTheDocument()
-    expect(screen.getByText('高级')).toBeInTheDocument()
+    const navigation = screen.getByRole('navigation')
+    for (const label of [
+      '显示',
+      '主题',
+      '字体',
+      '导航布局',
+      '信息流',
+      '卡片',
+      '媒体',
+      '操作',
+      '高级',
+      '关于',
+    ]) {
+      expect(within(navigation).getByRole('button', { name: label })).toBeInTheDocument()
+    }
+    expect(screen.queryByText('设置搜索')).not.toBeInTheDocument()
   })
 
-  it('switches between different setting panels', async () => {
-    const user = userEvent.setup()
-    render(<SettingsDialog open={true} onOpenChange={() => {}} />)
-
-    // Default panel is 'appearance'
-    expect(screen.getByRole('tab', { name: '应用整体' })).toHaveAttribute('data-state', 'active')
-
-    // Click on theme panel
-    const themeButton = screen.getByRole('button', { name: /主题/ })
-    await user.click(themeButton)
-
-    // Should show theme-related content
-    expect(screen.getByText('主题模式')).toBeInTheDocument()
-    expect(screen.getByText('自定义主题')).toBeInTheDocument()
-  })
-
-  it('displays appearance settings in default panel', () => {
-    render(<SettingsDialog open={true} onOpenChange={() => {}} />)
-
-    // Appearance panel should be default
-    expect(screen.getByText('内容宽度')).toBeInTheDocument()
-    expect(screen.getByRole('radio', { name: '更窄' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: '信息流' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: '微博卡片' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: '评论卡片' })).toBeInTheDocument()
-  })
-
-  it('shows the custom content width slider when custom width is selected', () => {
+  it('shows display settings by default and reveals the custom width slider', () => {
     mockSettings.contentWidth = 'custom'
     mockSettings.customContentWidth = 1340
 
-    render(<SettingsDialog open={true} onOpenChange={() => {}} />)
+    render(<SettingsDialog open onOpenChange={() => {}} />)
 
-    const slider = screen.getByRole('slider', { name: '自定义内容宽度' })
-    expect(slider).toHaveValue(1340)
-    expect(slider).toHaveAttribute('aria-valuemax', '2000')
+    expect(screen.getByRole('button', { name: '显示' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('slider', { name: '自定义内容宽度' })).toHaveValue(1340)
     expect(screen.getByText('1340px')).toBeInTheDocument()
   })
 
-  it('shows timeline reading preferences in the feed tab', async () => {
+  it('switches modules and remembers the active module while the dialog stays mounted', async () => {
     const user = userEvent.setup()
-    render(<SettingsDialog open={true} onOpenChange={() => {}} />)
+    const { rerender } = render(<SettingsDialog open onOpenChange={() => {}} />)
 
-    await user.click(screen.getByRole('tab', { name: '信息流' }))
+    await user.click(screen.getByRole('button', { name: '字体' }))
+    expect(screen.getByRole('combobox', { name: '字体' })).toBeInTheDocument()
 
-    expect(screen.getByText('自动查看全文')).toBeInTheDocument()
-    expect(screen.getByText('信息流密度')).toBeInTheDocument()
-    expect(screen.queryByText('纯文字信息流')).not.toBeInTheDocument()
+    rerender(<SettingsDialog open={false} onOpenChange={() => {}} />)
+    rerender(<SettingsDialog open onOpenChange={() => {}} />)
+    expect(screen.getByRole('combobox', { name: '字体' })).toBeInTheDocument()
   })
 
-  it('shows entity-specific controls in card tabs', async () => {
+  it('shows every font setting without a fine-tuning disclosure', async () => {
     const user = userEvent.setup()
-    render(<SettingsDialog open={true} onOpenChange={() => {}} />)
+    render(<SettingsDialog open onOpenChange={() => {}} />)
 
-    await user.click(screen.getByRole('tab', { name: '微博卡片' }))
-    expect(screen.getByText('显示发布信息')).toBeInTheDocument()
-    expect(screen.getByText('固定到操作栏')).toBeInTheDocument()
-    expect(screen.getByRole('radio', { name: /X 风格/ })).toBeInTheDocument()
-    expect(screen.getByRole('radio', { name: /微博风格/ })).toBeInTheDocument()
-    expect(screen.queryByText('作者与元信息')).not.toBeInTheDocument()
-    expect(screen.queryByText('媒体')).not.toBeInTheDocument()
-    expect(screen.queryByText('正文')).not.toBeInTheDocument()
-    expect(screen.queryByText('互动')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '字体' }))
 
-    await user.click(screen.getByRole('tab', { name: '评论卡片' }))
+    expect(screen.getByRole('combobox', { name: '字体粗细' })).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: '字间距' })).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: '行高' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '精细调整' })).not.toBeInTheDocument()
+  })
+
+  it('groups theme mode, built-in themes and custom themes in one module', async () => {
+    const user = userEvent.setup()
+    render(<SettingsDialog open onOpenChange={() => {}} />)
+
+    await user.click(screen.getByRole('button', { name: '主题' }))
+
+    expect(screen.getByText('明暗模式')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '内置主题' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '自定义主题' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '新建主题' })).toBeInTheDocument()
+    expect(screen.getAllByRole('radio').length).toBeGreaterThan(1)
+  })
+
+  it('stretches built-in theme previews across each theme card', async () => {
+    const user = userEvent.setup()
+    render(<SettingsDialog open onOpenChange={() => {}} />)
+
+    await user.click(screen.getByRole('button', { name: '主题' }))
+
+    expect(screen.getByText('Default').closest('label')).toHaveClass('items-stretch')
+  })
+
+  it('keeps the right content pane on a single vertical scroll container', () => {
+    render(<SettingsDialog open onOpenChange={() => {}} forceMount />)
+
+    const main = screen.getByRole('main')
+    expect(main).toHaveClass('overflow-y-auto', 'overscroll-contain', 'h-0', 'min-h-0', 'flex-1')
+    expect(main.parentElement).toHaveClass('overflow-hidden')
+    expect(main.parentElement).not.toHaveClass('overflow-y-auto')
+
+    const dialog = document.querySelector('[data-slot="dialog-content"]')
+    const overlay = document.querySelector('[data-slot="dialog-overlay"]')
+    expect(overlay).toContainElement(dialog as HTMLElement)
+  })
+
+  it('separates information flow from post and comment card settings', async () => {
+    const user = userEvent.setup()
+    render(<SettingsDialog open onOpenChange={() => {}} />)
+
+    await user.click(screen.getByRole('button', { name: '信息流' }))
+    expect(screen.getByText('自动查看全文')).toBeInTheDocument()
+    expect(screen.getByText('卡片间距')).toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: '微博' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '卡片' }))
+    expect(screen.getByRole('tab', { name: '微博' })).toHaveAttribute('data-state', 'active')
+    await user.click(screen.getByRole('tab', { name: '微博' }))
+    expect(screen.getByText('转发链样式')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '折叠卡片' }))
+    expect(mockUpdateSettings).toHaveBeenCalledWith({ replyChainDisplay: 'collapsed' })
+
+    await user.click(screen.getByRole('tab', { name: '评论' }))
     expect(screen.getByText('评论密度')).toBeInTheDocument()
     expect(screen.getByText('默认折叠回复')).toBeInTheDocument()
   })
 
-  it('shows grid-specific multi-media controls by default', async () => {
+  it('separates media and action controls and progressively discloses fine tuning', async () => {
     const user = userEvent.setup()
-    render(<SettingsDialog open={true} onOpenChange={() => {}} />)
+    render(<SettingsDialog open onOpenChange={() => {}} />)
 
-    await user.click(screen.getByRole('tab', { name: '微博卡片' }))
+    await user.click(screen.getByRole('button', { name: '媒体' }))
+    expect(screen.queryByRole('slider', { name: '单图最大宽度' })).not.toBeInTheDocument()
 
-    expect(screen.getByText('多图展示')).toBeInTheDocument()
-    expect(screen.getByRole('radio', { name: '宫格' })).toHaveAttribute('aria-checked', 'true')
+    await user.click(screen.getByRole('button', { name: '精细调整' }))
     expect(screen.getByRole('slider', { name: '单图最大宽度' })).toHaveValue(450)
-    expect(screen.getByRole('slider', { name: '单图最大宽度' })).toHaveAttribute(
-      'aria-valuemin',
-      '160',
-    )
-    expect(screen.getByRole('slider', { name: '单图最大宽度' })).toHaveAttribute(
-      'aria-valuemax',
-      '1200',
-    )
     expect(screen.getByRole('slider', { name: '单视频最大宽度' })).toHaveValue(650)
-    expect(screen.getByRole('radio', { name: '9 张' })).toHaveAttribute('aria-checked', 'true')
-    expect(screen.getByRole('slider', { name: '宫格最大宽度' })).toHaveValue(650)
-    expect(screen.queryByRole('slider', { name: '画廊高度' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '操作' }))
+    expect(screen.getByRole('radio', { name: /X 风格/ })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: /微博风格/ })).toBeInTheDocument()
+    expect(screen.getByText('显示互动数字')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /向前移动|向后移动/ })).not.toBeInTheDocument()
   })
 
-  it('shows only the strip height control for horizontal multi-media layout', async () => {
+  it('uses a flat navigation model and disables right-rail children with the parent', async () => {
     const user = userEvent.setup()
-    mockSettings.weiboCardMultiMediaLayout = 'horizontal'
-    mockSettings.weiboCardMultiMediaStripHeight = 480
+    mockSettings.showRightRail = false
+    render(<SettingsDialog open onOpenChange={() => {}} />)
 
-    render(<SettingsDialog open={true} onOpenChange={() => {}} />)
-    await user.click(screen.getByRole('tab', { name: '微博卡片' }))
+    await user.click(screen.getByRole('button', { name: '导航布局' }))
 
-    const label = screen.getByText('多图展示')
-    expect(label.parentElement?.parentElement).toHaveClass(
-      'flex',
-      'items-center',
-      'justify-between',
-    )
-    expect(screen.getByRole('radio', { name: '画廊' })).toHaveAttribute('aria-checked', 'true')
-    expect(screen.getByRole('slider', { name: '画廊高度' })).toHaveValue(480)
-    expect(screen.queryByRole('slider', { name: '宫格最大宽度' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('radio', { name: '9 张' })).not.toBeInTheDocument()
+    const firstOpen = screen.getByText('首次打开')
+    const leftNavigation = screen.getByText('左侧导航')
+    expect(firstOpen.compareDocumentPosition(leftNavigation)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(screen.getByRole('switch', { name: '显示右侧栏' })).not.toBeChecked()
+    expect(screen.getByRole('switch', { name: '显示热搜卡片' })).toBeDisabled()
+    expect(screen.getByRole('switch', { name: '显示超话卡片' })).toBeDisabled()
+    expect(screen.getByRole('combobox', { name: '首页默认时间线' })).toBeInTheDocument()
   })
 
-  it('confirms and resets only the active category', async () => {
+  it('confirms and resets only the active tab group', async () => {
     const user = userEvent.setup()
-    render(<SettingsDialog open={true} onOpenChange={() => {}} />)
+    render(<SettingsDialog open onOpenChange={() => {}} />)
 
-    await user.click(screen.getByRole('tab', { name: '信息流' }))
+    await user.click(screen.getByRole('button', { name: '信息流' }))
     await user.click(screen.getByRole('button', { name: '恢复默认设置' }))
-    expect(screen.getByRole('alertdialog')).toBeInTheDocument()
+    expect(screen.getByRole('alertdialog')).toHaveTextContent('恢复“信息流”默认设置？')
     await user.click(screen.getByRole('button', { name: '恢复默认' }))
 
     expect(mockUpdateSettings).toHaveBeenCalledWith({
-      firstLoadRedirect: DEFAULT_APP_SETTINGS.firstLoadRedirect,
       feedDensity: DEFAULT_APP_SETTINGS.feedDensity,
       autoLoadLongText: DEFAULT_APP_SETTINGS.autoLoadLongText,
     })
   })
 
-  it('renders page visibility section in appearance panel', async () => {
+  it('shows save failures in the header and retries the failed change', async () => {
     const user = userEvent.setup()
-    render(<SettingsDialog open={true} onOpenChange={() => {}} />)
+    mockUpdateSettings.mockRejectedValueOnce(new Error('storage unavailable'))
+    render(<SettingsDialog open onOpenChange={() => {}} />)
 
-    // Click on appearance panel
-    const appearanceButton = screen.getByRole('button', { name: /外观/ })
-    await user.click(appearanceButton)
+    await user.click(screen.getByRole('switch', { name: '暗色模式降低图片亮度' }))
+    const retryButton = await screen.findByRole('button', { name: '保存失败，重试' })
+    await user.click(retryButton)
 
-    // Should show page visibility section as the last item in appearance
-    expect(screen.getByText('页面可见性')).toBeInTheDocument()
-  })
-
-  it('calls onOpenChange when close button clicked', async () => {
-    const user = userEvent.setup()
-    const onOpenChange = vi.fn()
-
-    render(<SettingsDialog open={true} onOpenChange={onOpenChange} />)
-
-    // Find and click close button
-    const closeButtons = screen.getAllByRole('button')
-    const closeButton = closeButtons.find((btn) => btn.getAttribute('aria-label') === 'Close')
-
-    if (closeButton) {
-      await user.click(closeButton)
-      expect(onOpenChange).toHaveBeenCalledWith(false)
-    }
-  })
-
-  it('displays font size options', async () => {
-    const user = userEvent.setup()
-    render(<SettingsDialog open={true} onOpenChange={() => {}} />)
-
-    // Navigate to font panel using button with role
-    const buttons = screen.getAllByRole('button')
-    const fontButton = buttons.find((btn) => btn.textContent?.includes('字体'))
-    expect(fontButton).toBeDefined()
-
-    if (fontButton) {
-      await user.click(fontButton)
-      // Should show both independent font size controls
-      expect(screen.getByText('界面字号')).toBeInTheDocument()
-      expect(screen.getByText('正文字号')).toBeInTheDocument()
-      expect(screen.getByRole('combobox', { name: '界面字号' })).toHaveTextContent('14px')
-      expect(screen.getByRole('combobox', { name: '正文字号' })).toHaveTextContent('16px')
-    }
-  })
-
-  it('updates and resets independent UI and content font sizes', async () => {
-    const user = userEvent.setup()
-    render(<SettingsDialog open={true} onOpenChange={() => {}} />)
-
-    await user.click(screen.getByRole('button', { name: /字体/ }))
-
-    await user.click(screen.getByRole('combobox', { name: '界面字号' }))
-    await user.click(screen.getByRole('option', { name: '20px' }))
-    expect(mockUpdateSettings).toHaveBeenCalledWith({ uiFontSize: 20 })
-
-    await user.click(screen.getByRole('combobox', { name: '正文字号' }))
-    await user.click(screen.getByRole('option', { name: '32px' }))
-    expect(mockUpdateSettings).toHaveBeenCalledWith({ contentFontSize: 32 })
-
-    await user.click(screen.getByRole('button', { name: '恢复默认' }))
-    expect(mockUpdateSettings).toHaveBeenCalledWith(
-      expect.objectContaining({
-        uiFontSize: DEFAULT_APP_SETTINGS.uiFontSize,
-        contentFontSize: DEFAULT_APP_SETTINGS.contentFontSize,
-      }),
+    await waitFor(() => expect(mockUpdateSettings).toHaveBeenCalledTimes(2))
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: '保存失败，重试' })).not.toBeInTheDocument(),
     )
   })
 
-  it('shows theme picker in theme panel', async () => {
+  it('keeps version and project links in the dedicated About module', async () => {
     const user = userEvent.setup()
-    render(<SettingsDialog open={true} onOpenChange={() => {}} />)
+    render(<SettingsDialog open onOpenChange={() => {}} />)
 
-    // Navigate to theme panel
-    const buttons = screen.getAllByRole('button')
-    const themeButton = buttons.find((btn) => btn.textContent?.includes('主题'))
-    expect(themeButton).toBeDefined()
+    expect(screen.queryByRole('link', { name: 'xb 官网' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '关于' }))
+    expect(screen.getByRole('link', { name: 'xb 官网' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'GitHub' })).toBeInTheDocument()
+  })
 
-    if (themeButton) {
-      await user.click(themeButton)
-      // Should show custom theme section
-      expect(screen.getByText('自定义主题')).toBeInTheDocument()
-    }
+  it('calls onOpenChange from the accessible close button', async () => {
+    const user = userEvent.setup()
+    const onOpenChange = vi.fn()
+    render(<SettingsDialog open onOpenChange={onOpenChange} />)
+
+    await user.click(screen.getByRole('button', { name: '关闭' }))
+    expect(onOpenChange).toHaveBeenCalledWith(false)
   })
 })

@@ -1,110 +1,116 @@
 import { ArrowLeft, Pencil, Plus, Trash2 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 import type { SelectedThemeType, UserTheme } from '@/lib/app-settings'
 import { CUSTOM_THEME_PRESETS } from '@/lib/custom-theme'
 import { cn } from '@/lib/utils'
 
+import { StackedField } from './settings-dialog-ui'
 import { ThemeUiPreview } from './theme-ui-preview'
 
 function ThemeOptionCard({
+  value,
   name,
   description,
   lightCss,
   darkCss,
   selected,
-  onSelect,
   onEdit,
   onDelete,
 }: {
+  value: string
   name: string
   description?: string
   lightCss: string
   darkCss: string
   selected: boolean
-  onSelect: () => void
   onEdit?: () => void
   onDelete?: () => void
 }) {
+  const id = useId()
+
   return (
     <div className="group relative">
-      <button
-        type="button"
-        role="radio"
-        aria-checked={selected}
-        onClick={onSelect}
+      <RadioGroupItem id={id} value={value} className="absolute top-3 right-3 z-10 hidden" />
+      <Label
+        htmlFor={id}
         className={cn(
-          'border-border bg-background hover:bg-accent/30 flex w-full flex-col gap-2 rounded-lg border p-2 text-left transition-[box-shadow,background-color,border-color]',
-          selected && 'border-primary ring-primary/30 ring-2',
+          'flex h-full min-h-32 cursor-pointer flex-col items-stretch gap-2 rounded-lg border bg-background p-2 pe-8 text-left transition-[box-shadow,background-color,border-color] hover:bg-muted/40',
+          selected && 'border-primary bg-muted/30 ring-2 ring-primary/25',
         )}
       >
         <ThemeUiPreview lightCss={lightCss} darkCss={darkCss} />
-        <div className="min-w-0 px-0.5">
-          <p className="truncate text-sm font-medium">{name}</p>
-          {description && <p className="text-muted-foreground truncate text-xs">{description}</p>}
-        </div>
-      </button>
+        <span className="min-w-0 px-0.5 pe-14">
+          <span className="block truncate text-sm font-medium">{name}</span>
+          {description ? (
+            <span className="text-muted-foreground block truncate text-xs font-normal">
+              {description}
+            </span>
+          ) : null}
+        </span>
+      </Label>
 
-      {(onEdit || onDelete) && (
-        <div className="pointer-events-none absolute top-1.5 right-1.5 flex gap-0.5 opacity-0 transition-opacity group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
-          {onEdit && (
+      {onEdit || onDelete ? (
+        <div className="absolute right-2 bottom-2 flex gap-0.5">
+          {onEdit ? (
             <Button
               type="button"
-              variant="secondary"
-              size="icon"
-              className="size-6 shadow-sm"
+              variant="ghost"
+              size="icon-xs"
               aria-label={`编辑 ${name}`}
-              onClick={(event) => {
-                event.stopPropagation()
-                onEdit()
-              }}
+              onClick={onEdit}
             >
-              <Pencil size={12} />
+              <Pencil aria-hidden="true" />
             </Button>
-          )}
-          {onDelete && (
-            <Button
-              type="button"
-              variant="secondary"
-              size="icon"
-              className="text-muted-foreground hover:text-destructive size-6 shadow-sm"
-              aria-label={`删除 ${name}`}
-              onClick={(event) => {
-                event.stopPropagation()
-                onDelete()
-              }}
-            >
-              <Trash2 size={12} />
-            </Button>
-          )}
+          ) : null}
+          {onDelete ? (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  className="text-muted-foreground hover:text-destructive"
+                  aria-label={`删除 ${name}`}
+                >
+                  <Trash2 aria-hidden="true" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>删除“{name}”？</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    此操作无法撤销。如果它正在使用，xb 会自动切换到默认主题。
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>取消</AlertDialogCancel>
+                  <AlertDialogAction variant="destructive" onClick={onDelete}>
+                    删除
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          ) : null}
         </div>
-      )}
-    </div>
-  )
-}
-
-function StackedField({
-  label,
-  description,
-  children,
-}: {
-  label: string
-  description?: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="flex flex-col gap-2 py-[11px] first:pt-0 last:pb-0">
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <Label className="text-sm leading-snug font-medium">{label}</Label>
-        {description && (
-          <span className="text-muted-foreground text-xs leading-relaxed">{description}</span>
-        )}
-      </div>
-      {children}
+      ) : null}
     </div>
   )
 }
@@ -122,8 +128,6 @@ interface SettingsThemePickerProps {
     themeId: string,
     patch: Partial<Pick<UserTheme, 'name' | 'lightCss' | 'darkCss'>>,
   ) => void
-  onLightCssChange: (value: string) => void
-  onDarkCssChange: (value: string) => void
 }
 
 export function SettingsThemePicker({
@@ -136,8 +140,6 @@ export function SettingsThemePicker({
   onAddCustomTheme,
   onDeleteUserTheme,
   onUpdateUserTheme,
-  onLightCssChange,
-  onDarkCssChange,
 }: SettingsThemePickerProps) {
   const [view, setView] = useState<'list' | 'edit'>('list')
   const [editingThemeId, setEditingThemeId] = useState<string | null>(null)
@@ -148,10 +150,6 @@ export function SettingsThemePicker({
 
   const editingTheme =
     editingThemeId === null ? null : userThemes.find((theme) => theme.id === editingThemeId)
-
-  const isEditingActiveTheme =
-    selectedThemeType === 'custom' && editingThemeId !== null && selectedThemeId === editingThemeId
-
   useEffect(() => {
     if (view === 'edit' && editingTheme) {
       setThemeNameInput(editingTheme.name)
@@ -161,19 +159,15 @@ export function SettingsThemePicker({
   }, [view, editingTheme])
 
   useEffect(() => {
-    if (view !== 'edit') {
-      return
-    }
+    if (view !== 'edit') return
 
-    scrollContainerRef?.current?.scrollTo({ top: 0, behavior: 'instant' })
-    editTopRef.current?.scrollIntoView({ block: 'start', behavior: 'instant' })
+    scrollContainerRef?.current?.scrollTo?.({ top: 0, behavior: 'instant' })
+    editTopRef.current?.scrollIntoView?.({ block: 'start', behavior: 'instant' })
   }, [view, editingThemeId, scrollContainerRef])
 
   function openEditView(themeId: string) {
     const theme = userThemes.find((item) => item.id === themeId)
-    if (!theme) {
-      return
-    }
+    if (!theme) return
 
     setEditingThemeId(themeId)
     setThemeNameInput(theme.name)
@@ -183,82 +177,65 @@ export function SettingsThemePicker({
   }
 
   function handleEditLightCssChange(value: string) {
-    if (!editingThemeId) {
-      return
-    }
+    if (!editingThemeId) return
 
     setEditLightCss(value)
     onUpdateUserTheme(editingThemeId, { lightCss: value })
-    if (isEditingActiveTheme) {
-      onLightCssChange(value)
-    }
   }
 
   function handleEditDarkCssChange(value: string) {
-    if (!editingThemeId) {
-      return
-    }
+    if (!editingThemeId) return
 
     setEditDarkCss(value)
     onUpdateUserTheme(editingThemeId, { darkCss: value })
-    if (isEditingActiveTheme) {
-      onDarkCssChange(value)
-    }
   }
 
   function handleAddTheme() {
     const id = onAddCustomTheme()
-    openEditView(id)
-  }
-
-  function handleDeleteTheme(themeId: string) {
-    onDeleteUserTheme(themeId)
-    if (editingThemeId === themeId) {
-      setView('list')
-      setEditingThemeId(null)
-    }
+    setEditingThemeId(id)
+    setView('edit')
   }
 
   function handleSaveThemeName() {
-    if (editingThemeId && themeNameInput.trim().length > 0) {
-      onUpdateUserTheme(editingThemeId, { name: themeNameInput.trim() })
-    }
+    const name = themeNameInput.trim()
+    if (editingThemeId && name.length > 0) onUpdateUserTheme(editingThemeId, { name })
   }
 
   if (view === 'edit' && editingTheme) {
     return (
-      <div ref={editTopRef} className="flex flex-col gap-4 px-6 py-4">
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground -ml-2 h-8 px-2"
-            onClick={() => {
-              setView('list')
-              setEditingThemeId(null)
-            }}
-          >
-            <ArrowLeft size={16} />
-            返回主题列表
-          </Button>
-        </div>
+      <div ref={editTopRef} className="flex flex-col gap-5 px-6 py-5">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground -ms-2 w-fit"
+          onClick={() => {
+            setView('list')
+            setEditingThemeId(null)
+          }}
+        >
+          <ArrowLeft aria-hidden="true" />
+          返回主题列表
+        </Button>
 
-        <div className="flex items-center gap-2">
-          <Label className="shrink-0 text-sm leading-snug font-medium">主题名称</Label>
-          <input
-            type="text"
-            value={themeNameInput}
-            onChange={(event) => setThemeNameInput(event.target.value)}
-            className="border-input focus-visible:border-ring focus-visible:ring-ring/50 flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px]"
-          />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <Label htmlFor="custom-theme-name">主题名称</Label>
+            <Input
+              id="custom-theme-name"
+              value={themeNameInput}
+              onChange={(event) => setThemeNameInput(event.target.value)}
+              onBlur={handleSaveThemeName}
+            />
+          </div>
           <Button
-            variant="default"
             size="sm"
-            disabled={themeNameInput.trim() === editingTheme.name}
+            disabled={
+              themeNameInput.trim().length === 0 || themeNameInput.trim() === editingTheme.name
+            }
             onClick={handleSaveThemeName}
           >
-            保存
+            保存名称
           </Button>
         </div>
 
@@ -267,89 +244,114 @@ export function SettingsThemePicker({
           description="每行输入一个 CSS 变量声明，例如 --foreground: #333333;"
         >
           <Textarea
+            aria-label="浅色主题样式变量"
             value={editLightCss}
-            onChange={(event) => {
-              handleEditLightCssChange(event.target.value)
-            }}
+            onChange={(event) => handleEditLightCssChange(event.target.value)}
             rows={10}
             spellCheck={false}
-            className="min-h-[180px] resize-none font-mono text-xs leading-relaxed"
-            placeholder="--background: oklch(1.0000 0 0);
---foreground: #333333;"
+            className="min-h-44 resize-y font-mono text-xs leading-relaxed"
+            placeholder="--background: oklch(1 0 0);&#10;--foreground: #333333;"
           />
         </StackedField>
 
         <StackedField
           label="深色主题样式变量"
-          description="每行输入一个 CSS 变量声明，例如 --background: #000000;"
+          description="编辑中的主题正在使用时，修改会立即应用。"
         >
           <Textarea
+            aria-label="深色主题样式变量"
             value={editDarkCss}
-            onChange={(event) => {
-              handleEditDarkCssChange(event.target.value)
-            }}
+            onChange={(event) => handleEditDarkCssChange(event.target.value)}
             rows={10}
             spellCheck={false}
-            className="min-h-[180px] resize-none font-mono text-xs leading-relaxed"
-            placeholder="--background: oklch(0.1450 0 0);
---foreground: #ffffff;"
+            className="min-h-44 resize-y font-mono text-xs leading-relaxed"
+            placeholder="--background: oklch(0.145 0 0);&#10;--foreground: #ffffff;"
           />
         </StackedField>
       </div>
     )
   }
 
+  const selectedValue = `${selectedThemeType}:${selectedThemeId}`
+
   return (
-    <div className="flex flex-col gap-4 px-6 py-4" role="radiogroup" aria-label="主题选择">
-      <div className="flex flex-col gap-3">
-        <Label className="text-sm font-medium">默认主题</Label>
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+    <RadioGroup
+      aria-label="主题选择"
+      value={selectedValue}
+      onValueChange={(value) => {
+        if (typeof value !== 'string') return
+        const separator = value.indexOf(':')
+        const type = value.slice(0, separator)
+        const id = value.slice(separator + 1)
+        if (type === 'preset') onSelectPreset(id)
+        if (type === 'custom') onSelectUserTheme(id)
+      }}
+      className="flex flex-col gap-5 px-6 py-5"
+    >
+      <section className="flex flex-col gap-3" aria-labelledby="preset-theme-heading">
+        <h3 id="preset-theme-heading" className="text-sm font-semibold">
+          内置主题
+        </h3>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {CUSTOM_THEME_PRESETS.map((preset) => (
             <ThemeOptionCard
               key={preset.key}
+              value={`preset:${preset.key}`}
               name={preset.name}
               description={preset.description}
               lightCss={preset.lightCss}
               darkCss={preset.darkCss}
-              selected={selectedThemeType === 'preset' && selectedThemeId === preset.key}
-              onSelect={() => onSelectPreset(preset.key)}
+              selected={selectedValue === `preset:${preset.key}`}
             />
           ))}
         </div>
-      </div>
+      </section>
 
       <Separator />
 
-      <div className="flex flex-col gap-3">
+      <section className="flex flex-col gap-3" aria-labelledby="custom-theme-heading">
         <div className="flex items-center justify-between gap-3">
-          <Label className="text-sm font-medium">自定义主题</Label>
+          <div>
+            <h3 id="custom-theme-heading" className="text-sm font-semibold">
+              自定义主题
+            </h3>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              创建并维护你自己的浅色和深色配色。
+            </p>
+          </div>
           <Button variant="secondary" size="sm" onClick={handleAddTheme}>
-            <Plus size={14} />
-            添加
+            <Plus aria-hidden="true" />
+            新建主题
           </Button>
         </div>
 
         {userThemes.length === 0 ? (
-          <p className="text-muted-foreground rounded-lg border border-dashed px-4 py-6 text-center text-xs">
-            还没有自定义主题，点击添加创建你的配色方案
+          <p className="text-muted-foreground rounded-lg border border-dashed px-4 py-8 text-center text-xs">
+            还没有自定义主题
           </p>
         ) : (
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {userThemes.map((theme) => (
               <ThemeOptionCard
                 key={theme.id}
+                value={`custom:${theme.id}`}
                 name={theme.name}
                 lightCss={theme.lightCss}
                 darkCss={theme.darkCss}
-                selected={selectedThemeType === 'custom' && selectedThemeId === theme.id}
-                onSelect={() => onSelectUserTheme(theme.id)}
+                selected={selectedValue === `custom:${theme.id}`}
                 onEdit={() => openEditView(theme.id)}
-                onDelete={() => handleDeleteTheme(theme.id)}
+                onDelete={() => {
+                  onDeleteUserTheme(theme.id)
+                  if (editingThemeId === theme.id) {
+                    setView('list')
+                    setEditingThemeId(null)
+                  }
+                }}
               />
             ))}
           </div>
         )}
-      </div>
-    </div>
+      </section>
+    </RadioGroup>
   )
 }

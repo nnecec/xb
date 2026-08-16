@@ -68,7 +68,6 @@ describe('CommentCard', () => {
     })
     store.setState({
       ...store.getState(),
-      collapseRepliesEnabled: false,
       isHydrated: true,
     })
   })

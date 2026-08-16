@@ -482,8 +482,7 @@ export function StatusText({
   collapsedMediaTypes?: WeiboCardMediaCollapseType[]
 }) {
   const emoticonQuery = useEmoticonConfigQuery()
-  const collapseRepliesEnabled = useAppSettings((s) => s.collapseRepliesEnabled)
-  const renderReplyChainEnabled = useAppSettings((s) => s.renderReplyChainEnabled)
+  const replyChainDisplay = useAppSettings((s) => s.replyChainDisplay)
   const phraseMap = {
     ...emoticonQuery.data?.phraseMap,
     ...item.emoticons,
@@ -493,8 +492,8 @@ export function StatusText({
     text: text ?? '',
     mode,
     hideMedia,
-    renderReplyChain: renderReplyChainEnabled,
-    collapseReplies: collapseRepliesEnabled,
+    renderReplyChain: replyChainDisplay !== 'plain',
+    collapseReplies: replyChainDisplay === 'collapsed',
     phraseMap,
   })
 

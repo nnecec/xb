@@ -141,6 +141,8 @@ export type ContentDensity = 'relaxed' | 'standard' | 'compact'
 
 export type ContentDisplay = 'expanded' | 'collapsed'
 
+export type ReplyChainDisplay = 'plain' | 'expanded' | 'collapsed'
+
 export const WEIBO_CARD_MEDIA_COLLAPSE_TYPES = [
   'image',
   'video',
@@ -200,8 +202,7 @@ export interface AppSettings {
   sidebarCollapsed: boolean
   immersiveMode: boolean
   motionPreference: MotionPreference
-  collapseRepliesEnabled: boolean
-  renderReplyChainEnabled: boolean
+  replyChainDisplay: ReplyChainDisplay
   darkModeImageDim: boolean
   autoLoadLongText: boolean
   feedDensity: ContentDensity
@@ -228,7 +229,6 @@ export interface AppSettings {
   commentCardCollapseRepliesByDefault: boolean
   lightModeBgColor: LightBgColorPreset
   darkModeBgColor: DarkBgColorPreset
-  imageGenEnabled: boolean
   imageGenShowDataArea: boolean
   imageGenShowFullImages: boolean
   imageGenShowWeiboLink: boolean
@@ -244,7 +244,6 @@ export interface AppSettings {
   rememberPlaybackRate: boolean
   playbackRate: number
   videoQualityPreference: string | null
-  forceRedirectToFollowing?: boolean
   firstLoadRedirect: HomeTab
   homeTab: HomeTab
   homeGroupId: string | null
@@ -302,8 +301,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   sidebarCollapsed: false,
   immersiveMode: false,
   motionPreference: 'system',
-  collapseRepliesEnabled: false,
-  renderReplyChainEnabled: true,
+  replyChainDisplay: 'expanded',
   darkModeImageDim: false,
   autoLoadLongText: false,
   feedDensity: 'standard',
@@ -330,7 +328,6 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   commentCardCollapseRepliesByDefault: false,
   lightModeBgColor: 'white' as LightBgColorPreset,
   darkModeBgColor: 'near-black' as DarkBgColorPreset,
-  imageGenEnabled: true,
   imageGenShowDataArea: true,
   imageGenShowFullImages: false,
   imageGenShowWeiboLink: false,
@@ -346,7 +343,6 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   rememberPlaybackRate: false,
   playbackRate: 1,
   videoQualityPreference: null,
-  forceRedirectToFollowing: false,
   firstLoadRedirect: 'for-you',
   homeTab: 'for-you',
   homeGroupId: null,
@@ -474,6 +470,10 @@ function isContentDensity(value: unknown): value is ContentDensity {
 
 function isContentDisplay(value: unknown): value is ContentDisplay {
   return value === 'expanded' || value === 'collapsed'
+}
+
+function isReplyChainDisplay(value: unknown): value is ReplyChainDisplay {
+  return value === 'plain' || value === 'expanded' || value === 'collapsed'
 }
 
 function isWeiboCardMultiMediaLayout(value: unknown): value is WeiboCardMultiMediaLayout {
@@ -734,14 +734,9 @@ export function normalizeAppSettings(value: unknown): AppSettings {
     motionPreference: isMotionPreference(candidate.motionPreference)
       ? candidate.motionPreference
       : DEFAULT_APP_SETTINGS.motionPreference,
-    collapseRepliesEnabled:
-      typeof candidate.collapseRepliesEnabled === 'boolean'
-        ? candidate.collapseRepliesEnabled
-        : DEFAULT_APP_SETTINGS.collapseRepliesEnabled,
-    renderReplyChainEnabled:
-      typeof candidate.renderReplyChainEnabled === 'boolean'
-        ? candidate.renderReplyChainEnabled
-        : DEFAULT_APP_SETTINGS.renderReplyChainEnabled,
+    replyChainDisplay: isReplyChainDisplay(candidate.replyChainDisplay)
+      ? candidate.replyChainDisplay
+      : DEFAULT_APP_SETTINGS.replyChainDisplay,
     darkModeImageDim:
       typeof candidate.darkModeImageDim === 'boolean'
         ? candidate.darkModeImageDim
@@ -852,10 +847,6 @@ export function normalizeAppSettings(value: unknown): AppSettings {
     darkModeBgColor: isDarkBgColorPreset(candidate.darkModeBgColor)
       ? candidate.darkModeBgColor
       : DEFAULT_APP_SETTINGS.darkModeBgColor,
-    imageGenEnabled:
-      typeof candidate.imageGenEnabled === 'boolean'
-        ? candidate.imageGenEnabled
-        : DEFAULT_APP_SETTINGS.imageGenEnabled,
     imageGenShowDataArea:
       typeof candidate.imageGenShowDataArea === 'boolean'
         ? candidate.imageGenShowDataArea
@@ -905,10 +896,6 @@ export function normalizeAppSettings(value: unknown): AppSettings {
         : DEFAULT_APP_SETTINGS.rememberPlaybackRate,
     playbackRate: normalizePlaybackRate(candidate.playbackRate),
     videoQualityPreference: normalizeVideoQualityPreference(candidate.videoQualityPreference),
-    forceRedirectToFollowing:
-      typeof candidate.forceRedirectToFollowing === 'boolean'
-        ? candidate.forceRedirectToFollowing
-        : DEFAULT_APP_SETTINGS.forceRedirectToFollowing,
     firstLoadRedirect: isHomeTab(candidate.firstLoadRedirect)
       ? candidate.firstLoadRedirect
       : DEFAULT_APP_SETTINGS.firstLoadRedirect,

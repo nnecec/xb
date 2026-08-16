@@ -166,6 +166,37 @@ describe('app-settings-store', () => {
     })
   })
 
+  it('keeps theme creation idempotent and applies active theme CSS in one write', async () => {
+    const storage = createStorageArea()
+    const store = createAppSettingsStore(storage)
+    const theme = {
+      id: 'theme-1',
+      name: 'Test Theme',
+      lightCss: ':root { --background: white; }',
+      darkCss: ':root { --background: black; }',
+    }
+
+    await store.getState().addUserTheme(theme)
+    await store.getState().addUserTheme(theme)
+    expect(store.getState().userThemes).toEqual([theme])
+
+    await store.getState().updateSettings({
+      selectedThemeType: 'custom',
+      selectedThemeId: theme.id,
+      customThemeLightCss: theme.lightCss,
+      customThemeDarkCss: theme.darkCss,
+    })
+    await store.getState().updateUserTheme(theme.id, {
+      lightCss: ':root { --background: ivory; }',
+    })
+
+    expect(storage.read()).toMatchObject({
+      userThemes: [{ ...theme, lightCss: ':root { --background: ivory; }' }],
+      customThemeLightCss: ':root { --background: ivory; }',
+      customThemeDarkCss: theme.darkCss,
+    })
+  })
+
   it('merges a stale tab patch into the latest persisted snapshot', async () => {
     const storage = createStorageArea()
     const firstStore = createAppSettingsStore(storage)
