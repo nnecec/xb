@@ -8,6 +8,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@/lib/utils'
 import { followedSuperTopicsQueryOptions } from '@/lib/weibo/data/weibo-data'
 import type { SuperTopicItem } from '@/lib/weibo/models/super-topic'
+import { useColumnControls } from '@/lib/weibo/workspace/column-controls'
 
 function SuperTopicItemLink({ item }: { item: SuperTopicItem }) {
   const fallback = item.title.trim().slice(0, 1) || '#'
@@ -53,9 +54,11 @@ function SuperTopicItemLink({ item }: { item: SuperTopicItem }) {
 
 interface SuperTopicCardProps {
   className?: string
+  variant?: 'rail' | 'column'
 }
 
-export function SuperTopicCard({ className }: SuperTopicCardProps) {
+export function SuperTopicCard({ className, variant = 'rail' }: SuperTopicCardProps) {
+  const columnControls = useColumnControls()
   const superTopicsQuery = useQuery(followedSuperTopicsQueryOptions)
   const items = superTopicsQuery.data?.items ?? []
   const title = superTopicsQuery.data?.name ?? '我关注的超话'
@@ -63,11 +66,16 @@ export function SuperTopicCard({ className }: SuperTopicCardProps) {
   return (
     <Card className={className}>
       <div className="flex items-center justify-between gap-2 px-1">
-        <div className="min-w-0">
-          <h2 className="truncate text-sm leading-tight font-semibold">{title}</h2>
-          {items.length > 0 && (
-            <p className="text-muted-foreground mt-0.5 text-xs leading-tight">{items.length} 个</p>
-          )}
+        <div className="flex min-w-0 items-center gap-1">
+          {columnControls}
+          <div className="min-w-0">
+            <h2 className="truncate text-sm leading-tight font-semibold">{title}</h2>
+            {items.length > 0 && (
+              <p className="text-muted-foreground mt-0.5 text-xs leading-tight">
+                {items.length} 个
+              </p>
+            )}
+          </div>
         </div>
         <Button
           variant="ghost"
@@ -88,7 +96,12 @@ export function SuperTopicCard({ className }: SuperTopicCardProps) {
       ) : items.length === 0 ? (
         <CardDescription className="px-2 pb-2">暂无关注的超话</CardDescription>
       ) : (
-        <div className="max-h-[180px] w-full scrollbar-none overflow-x-hidden overflow-y-auto">
+        <div
+          className={cn(
+            'w-full scrollbar-none overflow-x-hidden overflow-y-auto',
+            variant === 'rail' && 'max-h-[180px]',
+          )}
+        >
           {items.map((item) => (
             <SuperTopicItemLink key={item.oid || item.link || item.title} item={item} />
           ))}

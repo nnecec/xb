@@ -4,12 +4,12 @@ import type { CSSProperties, KeyboardEvent, MouseEvent } from 'react'
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { useLocation, useOutletContext } from 'react-router'
+import { useLocation } from 'react-router'
 
 import type { AppTheme, ContentWidth } from '@/lib/app-settings'
 import { useAppSettings } from '@/lib/app-settings-store'
 import { cn } from '@/lib/utils'
-import type { AppShellContext } from '@/lib/weibo/app/app-shell'
+export { useAppShellContext } from '@/lib/weibo/app/app-shell-context'
 import { getContentWidthAdjustedMaxWidth } from '@/lib/weibo/app/content-width'
 import { ImmersiveHeaderHiddenContext } from '@/lib/weibo/app/immersive-header'
 import { BackToTop } from '@/lib/weibo/components/back-to-top'
@@ -20,6 +20,8 @@ import {
   type WeiboPageDescriptor,
 } from '@/lib/weibo/route/page-descriptor'
 import { parseWeiboUrl } from '@/lib/weibo/route/parse-weibo-url'
+import { SortableColumnCanvas } from '@/lib/weibo/workspace/sortable-column-canvas'
+import type { AuxiliaryColumn } from '@/lib/weibo/workspace/workspace-store'
 
 /** Routes whose primary feed scrolls inside ShellFrame `<main>` (timeline + profile posts). */
 function mainScrollRestorationKey(pathname: string, search: string): string | null {
@@ -102,12 +104,15 @@ interface ShellFrameProps {
   onThemeChange: (theme: AppTheme) => void
   onSettingsOpen: () => void
   onComposeOpen: () => void
+  multiColumnEnabled?: boolean
+  auxiliaryColumns?: AuxiliaryColumn[]
+  onColumnPickerOpen?: () => void
+  onRemoveAuxiliaryColumn?: (columnId: string) => void
+  onMoveAuxiliaryColumn?: (columnId: string, targetIndex: number) => Promise<void>
+  onFocusAuxiliaryColumn?: (columnId: string | null) => void
+  focusedColumnId?: string | null
   mainRef: React.RefObject<HTMLDivElement | null>
   children: ReactNode
-}
-
-export function useAppShellContext() {
-  return useOutletContext<AppShellContext>()
 }
 
 export function ShellFrame({
@@ -121,6 +126,13 @@ export function ShellFrame({
   onThemeChange,
   onSettingsOpen,
   onComposeOpen,
+  multiColumnEnabled = false,
+  auxiliaryColumns = [],
+  onColumnPickerOpen,
+  onRemoveAuxiliaryColumn,
+  onMoveAuxiliaryColumn,
+  onFocusAuxiliaryColumn,
+  focusedColumnId,
   mainRef,
   children,
 }: ShellFrameProps) {
@@ -413,6 +425,55 @@ export function ShellFrame({
         animate: { opacity: 1, scale: 1 },
         exit: { opacity: 0, scale: 0.98 },
       }
+  if (multiColumnEnabled) {
+    return (
+      <ImmersiveHeaderHiddenContext.Provider value={false}>
+        <div className="bg-background text-foreground flex h-screen overflow-hidden">
+          <a
+            href="#xb-main-content"
+            className="bg-background text-foreground focus-visible:ring-ring fixed top-2 left-2 z-[100] -translate-y-20 rounded-lg px-3 py-2 text-sm font-medium shadow-lg transition-transform outline-none focus-visible:translate-y-0 focus-visible:ring-3"
+            onClick={(event) => {
+              event.preventDefault()
+              contentMainRef.current?.focus()
+            }}
+          >
+            跳到主要内容
+          </a>
+          <div className="h-screen shrink-0">
+            <NavigationRail
+              pageKind={pageKind}
+              viewingProfileUserId={viewingProfileUserId}
+              rewriteEnabled={rewriteEnabled}
+              theme={theme}
+              onRewriteEnabledChange={onRewriteEnabledChange}
+              onThemeChange={onThemeChange}
+              onSettingsOpen={onSettingsOpen}
+              onComposeOpen={onComposeOpen}
+              onColumnPickerOpen={onColumnPickerOpen}
+              onPrimaryNavigate={() => onFocusAuxiliaryColumn?.(null)}
+              onSidebarCollapsedChange={(collapsed) =>
+                updateSettings({ sidebarCollapsed: collapsed })
+              }
+            />
+          </div>
+          <SortableColumnCanvas
+            auxiliaryColumns={auxiliaryColumns}
+            focusedColumnId={focusedColumnId ?? null}
+            shouldReduceMotion={Boolean(shouldReduceMotion)}
+            assignMainScrollRef={assignShellRef}
+            contentMainRef={contentMainRef}
+            onFocusColumn={onFocusAuxiliaryColumn}
+            onMoveColumn={onMoveAuxiliaryColumn}
+            onRemoveColumn={onRemoveAuxiliaryColumn}
+          >
+            {children}
+          </SortableColumnCanvas>
+          <BackToTop scrollRoot={mainScrollRoot} />
+        </div>
+      </ImmersiveHeaderHiddenContext.Provider>
+    )
+  }
+
   return (
     <ImmersiveHeaderHiddenContext.Provider value={immersiveMode && areImmersiveHeadersHidden}>
       <div

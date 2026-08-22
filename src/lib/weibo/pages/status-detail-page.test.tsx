@@ -6,16 +6,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const feedCardMock = vi.hoisted(() => vi.fn())
 const setComposeTarget = vi.fn()
 
-vi.mock('@/lib/weibo/app/app-shell-layout', () => ({
-  useAppShellContext: () => ({
+vi.mock('@/lib/weibo/app/page-runtime', () => ({
+  usePageRuntime: () => ({
     page: { kind: 'status', authorId: '1', statusId: '501' },
-    navigateToStatusDetail: vi.fn(),
-    resetMainScroll: vi.fn(),
-    composeTarget: null,
-    setComposeTarget,
-    viewingProfileUserId: null,
-    onProfileUserIdChange: vi.fn(),
-    onHomeTabChange: vi.fn(),
+    back: vi.fn(),
+    resetScroll: vi.fn(),
   }),
 }))
 

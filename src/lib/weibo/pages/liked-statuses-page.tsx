@@ -1,25 +1,24 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { useNavigate } from 'react-router'
 
 import { useAppSettings } from '@/lib/app-settings-store'
+import { usePageRuntime } from '@/lib/weibo/app/page-runtime'
 import { InfiniteFeedList } from '@/lib/weibo/components/infinite-feed-list'
 import { TimelineTopBar } from '@/lib/weibo/components/timeline-top-bar'
 import { likedStatusesInfiniteOptions } from '@/lib/weibo/data/weibo-data'
 import type { TimelinePage } from '@/lib/weibo/models/feed'
-import { useWeiboPage } from '@/lib/weibo/route/use-weibo-page'
 
 const SAVED_LIST_OPTIONS = [
   { value: 'favorites', label: '全部收藏' },
   { value: 'liked', label: '我的赞' },
 ]
 
-export function LikedStatusesPage() {
-  const page = useWeiboPage()
-  const navigate = useNavigate()
+export function LikedStatusesPage({ source }: { source?: { uid: string } } = {}) {
+  const runtime = usePageRuntime()
+  const page = runtime.page
   const rewriteEnabled = useAppSettings((s) => s.rewriteEnabled)
 
-  const uid = page.kind === 'liked' ? page.uid : ''
-  const isEnabled = rewriteEnabled && page.kind === 'liked'
+  const uid = source?.uid ?? (page.kind === 'liked' ? page.uid : '')
+  const isEnabled = rewriteEnabled && (source !== undefined || page.kind === 'liked')
 
   const likedStatusesQuery = useInfiniteQuery({
     ...likedStatusesInfiniteOptions(uid),
@@ -40,7 +39,7 @@ export function LikedStatusesPage() {
   const isRefreshing = likedStatusesQuery.isFetching && !isFetchingNextPage && !isLoading
   const handleSavedListChange = (value: string) => {
     if (value === 'favorites' && uid !== '') {
-      navigate(`/u/page/fav/${uid}`)
+      runtime.navigate(`/u/page/fav/${uid}`)
     }
   }
 
@@ -48,14 +47,15 @@ export function LikedStatusesPage() {
     <div className="flex flex-col">
       <TimelineTopBar
         title="我的赞"
-        titleOptions={SAVED_LIST_OPTIONS}
-        titleValue="liked"
-        onTitleChange={handleSavedListChange}
+        titleOptions={source ? undefined : SAVED_LIST_OPTIONS}
+        titleValue={source ? undefined : 'liked'}
+        onTitleChange={source ? undefined : handleSavedListChange}
         onRefresh={() => void likedStatusesQuery.refetch()}
         isRefreshing={isRefreshing}
       />
 
       <InfiniteFeedList
+        scrollRootRef={runtime.scrollRootRef}
         pages={likedStatusesQuery.data?.pages as TimelinePage[] | undefined}
         emptyLabel="暂无点赞内容"
         loadingLabel="正在加载我的赞…"

@@ -12,8 +12,10 @@ import {
 } from '@/lib/weibo/components/profile-shared'
 import { RatingPanel } from '@/lib/weibo/components/rating-panel'
 import type { UserProfile } from '@/lib/weibo/models/profile'
+import { useColumnControls } from '@/lib/weibo/workspace/column-controls'
 
 function ProfileIdentity({ profile }: { profile: UserProfile }) {
+  const columnControls = useColumnControls()
   return (
     <>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -28,6 +30,7 @@ function ProfileIdentity({ profile }: { profile: UserProfile }) {
           </div>
           <div className="min-w-0 pb-1">
             <div className="flex min-w-0 items-center gap-1.5">
+              {columnControls}
               <h1 className="truncate text-2xl leading-tight font-extrabold tracking-normal">
                 {profile.name}
               </h1>

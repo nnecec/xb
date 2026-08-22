@@ -25,6 +25,15 @@ vi.mock('@/lib/app-settings-store', () => ({
   useShallow: vi.fn((selector) => selector),
 }))
 
+vi.mock('@/lib/weibo/workspace/workspace-store', () => ({
+  useWorkspace: vi.fn((selector) =>
+    selector({
+      enabled: false,
+      setEnabled: vi.fn().mockResolvedValue(undefined),
+    }),
+  ),
+}))
+
 describe('SettingsDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks()

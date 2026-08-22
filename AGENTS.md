@@ -4,6 +4,20 @@
 `DESIGN.json`（UI 规则与 token）· `README.md` / `README.en.md`（面向用户）·
 `src/lib/app-settings.ts`（设置项默认值）
 
+## Agent skills
+
+### Issue tracker
+
+Specs and tickets are tracked in GitHub Issues. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the canonical triage label mapping. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This is a single-context repository. See `docs/agents/domain.md`.
+
 ## Project Overview
 
 xb is a browser extension that rewrites weibo.com into a cleaner X-like reading

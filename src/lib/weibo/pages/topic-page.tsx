@@ -4,6 +4,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { useAppSettings } from '@/lib/app-settings-store'
 import { cn } from '@/lib/utils'
 import { useImmersiveHeaderClassName } from '@/lib/weibo/app/immersive-header'
+import { usePageRuntime } from '@/lib/weibo/app/page-runtime'
 import { InfiniteFeedList } from '@/lib/weibo/components/infinite-feed-list'
 import { MweiboTopicRecoveryPrompt } from '@/lib/weibo/components/mweibo-topic-recovery-prompt'
 import {
@@ -13,7 +14,7 @@ import {
   topicSearchInfiniteOptions,
 } from '@/lib/weibo/data/weibo-data'
 import type { TimelinePage, TopicChannel } from '@/lib/weibo/models/feed'
-import { useWeiboPage } from '@/lib/weibo/route/use-weibo-page'
+import { useColumnControls } from '@/lib/weibo/workspace/column-controls'
 
 function TopicChannelBar({
   channels,
@@ -68,15 +69,22 @@ function TopicChannelPill({
   )
 }
 
-export function TopicPage() {
-  const page = useWeiboPage()
+export function TopicPage({
+  source,
+}: {
+  source?: { topic: string; channelType?: string }
+} = {}) {
+  const runtime = usePageRuntime()
+  const page = runtime.page
   const rewriteEnabled = useAppSettings((s) => s.rewriteEnabled)
+  const columnControls = useColumnControls()
   const headerClassName = useImmersiveHeaderClassName('bg-muted/80 sticky top-0 z-10 backdrop-blur')
 
-  const topic = page.kind === 'topic' ? page.topic : ''
-  const isEnabled = rewriteEnabled && page.kind === 'topic' && topic !== ''
+  const topic = source?.topic ?? (page.kind === 'topic' ? page.topic : '')
+  const isEnabled =
+    rewriteEnabled && (source !== undefined || page.kind === 'topic') && topic !== ''
 
-  const [selectedChannelId, setSelectedChannelId] = useState<string>('1')
+  const [selectedChannelId, setSelectedChannelId] = useState<string>(source?.channelType ?? '1')
 
   const topicQuery = useInfiniteQuery({
     ...topicSearchInfiniteOptions(topic, selectedChannelId),
@@ -107,29 +115,24 @@ export function TopicPage() {
 
   const recovery = isInitialError ? getMweiboTopicRecoveryState(topicQuery.error) : null
 
-  if (recovery) {
-    return (
-      <div className="flex flex-col gap-3">
-        <MweiboTopicRecoveryPrompt recovery={recovery} onRetry={() => void topicQuery.refetch()} />
-      </div>
-    )
-  }
-
   return (
     <div className="flex flex-col gap-3">
       <div className={headerClassName}>
-        <div className="gap-0.5 px-4 py-3">
-          <h2 className="text-lg font-semibold">#{topic}#</h2>
-          {headData ? (
-            <div className="text-muted-foreground flex gap-2 text-xs">
-              {headData.midtext ? (
-                <span>{headData.midtext.replace(/\s+详情\s*>/g, '')}</span>
-              ) : null}
-              {headData.downtext ? <span>{headData.downtext}</span> : null}
-            </div>
-          ) : null}
+        <div className="flex items-start gap-1 px-2 py-3">
+          {columnControls}
+          <div className="min-w-0 flex-1 gap-0.5">
+            <h2 className="truncate text-lg font-semibold">#{topic}#</h2>
+            {headData ? (
+              <div className="text-muted-foreground flex gap-2 text-xs">
+                {headData.midtext ? (
+                  <span>{headData.midtext.replace(/\s+详情\s*>/g, '')}</span>
+                ) : null}
+                {headData.downtext ? <span>{headData.downtext}</span> : null}
+              </div>
+            ) : null}
+          </div>
         </div>
-        {channels.length > 0 ? (
+        {!source && channels.length > 0 ? (
           <TopicChannelBar
             channels={channels}
             selectedId={selectedChannelId}
@@ -138,18 +141,23 @@ export function TopicPage() {
         ) : null}
       </div>
 
-      <InfiniteFeedList
-        pages={topicQuery.data?.pages as TimelinePage[] | undefined}
-        emptyLabel="暂无话题内容"
-        loadingLabel="正在加载话题内容…"
-        errorMessage={errorMessage}
-        loadMoreErrorMessage={loadMoreErrorMessage}
-        isLoading={isLoading}
-        hasNextPage={hasNextPage}
-        isFetchingNextPage={isFetchingNextPage}
-        fetchNextPage={topicQuery.fetchNextPage}
-        onRetry={() => void topicQuery.refetch()}
-      />
+      {recovery ? (
+        <MweiboTopicRecoveryPrompt recovery={recovery} onRetry={() => void topicQuery.refetch()} />
+      ) : (
+        <InfiniteFeedList
+          scrollRootRef={runtime.scrollRootRef}
+          pages={topicQuery.data?.pages as TimelinePage[] | undefined}
+          emptyLabel="暂无话题内容"
+          loadingLabel="正在加载话题内容…"
+          errorMessage={errorMessage}
+          loadMoreErrorMessage={loadMoreErrorMessage}
+          isLoading={isLoading}
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          fetchNextPage={topicQuery.fetchNextPage}
+          onRetry={() => void topicQuery.refetch()}
+        />
+      )}
     </div>
   )
 }

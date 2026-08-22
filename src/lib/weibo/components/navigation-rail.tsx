@@ -6,6 +6,7 @@ import {
   ChevronsRightIcon,
   Diamond,
   DiamondMinus,
+  Columns3,
   Pencil,
 } from 'lucide-react'
 import { useMemo } from 'react'
@@ -113,6 +114,7 @@ function NavButton({
       aria-label={showBadge || disabled || !showLabel ? accessibleLabel : undefined}
       aria-current={isActive ? 'page' : undefined}
       className={cn(buttonVariants({ variant: buttonVariant, size }), sharedClassName)}
+      onClick={onClick}
     >
       {iconWrap(children)}
       {showLabel && <span className="min-w-0 truncate">{label}</span>}
@@ -185,6 +187,8 @@ interface NavigationRailProps {
   onThemeChange: (theme: AppTheme) => void
   onSettingsOpen: () => void
   onComposeOpen: () => void
+  onColumnPickerOpen?: () => void
+  onPrimaryNavigate?: () => void
   onSidebarCollapsedChange: (collapsed: boolean) => void
   immersiveMode?: boolean
   onImmersiveModeChange?: (enabled: boolean) => void
@@ -226,6 +230,8 @@ export function NavigationRail({
   onThemeChange,
   onSettingsOpen,
   onComposeOpen,
+  onColumnPickerOpen,
+  onPrimaryNavigate,
   onSidebarCollapsedChange,
   immersiveMode = false,
   onImmersiveModeChange,
@@ -299,6 +305,7 @@ export function NavigationRail({
             to="/"
             aria-label="返回主页"
             className="focus-visible:ring-ring/50 rounded-lg opacity-80 transition-opacity duration-150 ease-out hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-3 focus-visible:outline-none"
+            onClick={onPrimaryNavigate}
           >
             <img src={WeiboLogo} alt="" className="size-8 translate-y-px object-contain" />
           </Link>
@@ -318,6 +325,7 @@ export function NavigationRail({
                     ? '/'
                     : '/mygroups'
               }
+              onClick={onPrimaryNavigate}
             >
               <HomeIcon aria-hidden="true" className="size-4 shrink-0" />
             </NavButton>
@@ -329,6 +337,7 @@ export function NavigationRail({
                 showLabel={!isCollapsed}
                 isActive={pageKind === 'explore'}
                 to="/hot/weibo/102803"
+                onClick={onPrimaryNavigate}
               >
                 <CompassIcon aria-hidden="true" className="size-4 shrink-0" />
               </NavButton>
@@ -342,6 +351,7 @@ export function NavigationRail({
                 isActive={isSavedItemsActive}
                 to={favoritesHref ?? undefined}
                 disabled={!favoritesHref}
+                onClick={onPrimaryNavigate}
               >
                 <BookmarkIcon aria-hidden="true" className="size-4 shrink-0" />
               </NavButton>
@@ -354,6 +364,7 @@ export function NavigationRail({
                 showLabel={!isCollapsed}
                 isActive={pageKind === 'history'}
                 to="/history"
+                onClick={onPrimaryNavigate}
               >
                 <HistoryIcon aria-hidden="true" className="size-4 shrink-0" />
               </NavButton>
@@ -367,6 +378,7 @@ export function NavigationRail({
                 isActive={pageKind === 'notifications'}
                 showBadge={showNotificationBadge}
                 to="/at/weibo"
+                onClick={onPrimaryNavigate}
               >
                 <BellIcon aria-hidden="true" className="size-4 shrink-0" />
               </NavButton>
@@ -398,6 +410,7 @@ export function NavigationRail({
                 isActive={isOwnProfileActive}
                 to={profileHref ?? undefined}
                 disabled={!profileHref}
+                onClick={onPrimaryNavigate}
               >
                 <UserIcon aria-hidden="true" className="size-4 shrink-0" />
               </NavButton>
@@ -422,6 +435,20 @@ export function NavigationRail({
           <div role="group" aria-label="界面控制" className="mt-auto shrink-0 pt-4">
             <Separator className="bg-border/40 mb-3" />
             <div className={cn('flex flex-col gap-3', !isCollapsed && 'gap-3.5')}>
+              {onColumnPickerOpen ? (
+                <RailControl label="添加列" isCollapsed={isCollapsed}>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="secondary"
+                    aria-label="添加列"
+                    onClick={onColumnPickerOpen}
+                  >
+                    <Columns3 aria-hidden="true" />
+                  </Button>
+                </RailControl>
+              ) : null}
+
               <RailControl label="设置" isCollapsed={isCollapsed}>
                 <Button
                   type="button"

@@ -14,8 +14,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useAppSettings } from '@/lib/app-settings-store'
-import { useAppShellContext } from '@/lib/weibo/app/app-shell-layout'
 import { useImmersiveHeaderClassName } from '@/lib/weibo/app/immersive-header'
+import { usePageRuntime } from '@/lib/weibo/app/page-runtime'
 import { CommentBox } from '@/lib/weibo/components/comment-box'
 import { CommentList } from '@/lib/weibo/components/comment-list'
 import { PageErrorState, PageLoadingState } from '@/lib/weibo/components/page-state'
@@ -27,8 +27,8 @@ import {
 } from '@/lib/weibo/data/weibo-data'
 import { browsingHistoryStore } from '@/lib/weibo/hooks/use-browsing-history'
 import type { CommentItem } from '@/lib/weibo/models/status'
-import { useWeiboPage } from '@/lib/weibo/route/use-weibo-page'
 import { formatWeiboCount } from '@/lib/weibo/utils/format-weibo-count'
+import { useColumnControls } from '@/lib/weibo/workspace/column-controls'
 
 function StatusCommentsSection({
   statusId,
@@ -140,20 +140,13 @@ function StatusCommentsSection({
   )
 }
 
-function handleGoBack() {
-  if (window.history.length > 2) {
-    window.history.back()
-  } else {
-    window.location.href = 'https://weibo.com'
-  }
-}
-
 function StatusDetailTopBar({
   showStatusSummary,
   authorName,
   createdAtLabel,
   statusText,
   regionName,
+  onBack,
 }: {
   showStatusSummary: boolean
   authorName?: string
@@ -161,8 +154,10 @@ function StatusDetailTopBar({
   statusText?: string
   source?: string
   regionName?: string
+  onBack: () => void
 }) {
   const shouldReduceMotion = useReducedMotion()
+  const columnControls = useColumnControls()
   const headerClassName = useImmersiveHeaderClassName(
     'bg-background/85 border-border/45 sticky top-0 z-50 border-b backdrop-blur-lg',
   )
@@ -175,13 +170,14 @@ function StatusDetailTopBar({
     <div className={headerClassName}>
       <div className="relative flex min-h-16 items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
+          {columnControls}
           <Button
             type="button"
             variant="ghost"
             size="icon"
             aria-label="返回"
             className="shrink-0"
-            onClick={handleGoBack}
+            onClick={onBack}
           >
             <ArrowLeft className="size-4" />
           </Button>
@@ -231,16 +227,16 @@ function StatusDetailTopBar({
 }
 
 export function StatusDetailPage() {
-  const ctx = useAppShellContext()
-  const page = useWeiboPage()
+  const runtime = usePageRuntime()
+  const page = runtime.page
   const rewriteEnabled = useAppSettings((state) => state.rewriteEnabled)
   const statusArticleRef = useRef<HTMLElement | null>(null)
   const [showStatusSummary, setShowStatusSummary] = useState(false)
 
   useEffect(() => {
-    ctx.resetMainScroll()
+    runtime.resetScroll()
     // oxlint-disable-next-line eslint-plugin-react-hooks/exhaustive-deps
-  }, [ctx.resetMainScroll])
+  }, [runtime.resetScroll])
 
   const urlStatusId = page.kind === 'status' ? page.statusId : null
   const authorId = page.kind === 'status' ? page.authorId : null
@@ -289,6 +285,7 @@ export function StatusDetailPage() {
         statusText={detail?.status.text}
         source={detail?.status.source}
         regionName={detail?.status.regionName}
+        onBack={runtime.back}
       />
 
       {detailQuery.isLoading ? <PageLoadingState label="正在加载此微博…" /> : null}

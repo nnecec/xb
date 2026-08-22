@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type RefObject } from 'react'
 
 import { Card } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
@@ -13,6 +13,7 @@ interface UserListProps {
   isLoading: boolean
   emptyLabel?: string
   msg?: string | null
+  scrollRootRef?: RefObject<HTMLElement | null>
 }
 
 export function UserList({
@@ -23,6 +24,7 @@ export function UserList({
   isLoading,
   emptyLabel = '暂无内容',
   msg,
+  scrollRootRef,
 }: UserListProps) {
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const isFetchingNextPageRef = useRef(isFetchingNextPage)
@@ -38,12 +40,12 @@ export function UserList({
           onLoadMore()
         }
       },
-      { threshold: 0.2 },
+      { root: scrollRootRef?.current ?? null, threshold: 0.2 },
     )
 
     observer.observe(el)
     return () => observer.disconnect()
-  }, [hasNextPage, onLoadMore])
+  }, [hasNextPage, onLoadMore, scrollRootRef])
 
   if (isLoading) {
     return (

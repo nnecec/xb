@@ -30,7 +30,11 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useAppSettings } from '@/lib/app-settings-store'
 import { TimelineTopBar } from '@/lib/weibo/components/timeline-top-bar'
-import { browsingHistoryStore, useBrowsingHistory } from '@/lib/weibo/hooks/use-browsing-history'
+import {
+  browsingHistoryStore,
+  type HistoryEntry,
+  useBrowsingHistory,
+} from '@/lib/weibo/hooks/use-browsing-history'
 
 function getDateKey(date: Date): string {
   return format(date, 'yyyy-MM-dd')
@@ -76,7 +80,7 @@ function formatReadAt(timestamp: number): string {
   return format(date, 'M月d日')
 }
 
-export function HistoryPage() {
+export function HistoryPage({ onOpenEntry }: { onOpenEntry?: (entry: HistoryEntry) => void } = {}) {
   const entries = useBrowsingHistory((s) => s.entries)
   const browsingHistoryLimit = useAppSettings((s) => s.browsingHistoryLimit)
   const removeEntry = browsingHistoryStore.getState().removeEntry
@@ -231,42 +235,51 @@ export function HistoryPage() {
                   entry.statusId && entry.authorId
                     ? `/${entry.authorId}/${entry.statusId}`
                     : `/u/${entry.authorId}`
+                const content = (
+                  <>
+                    <ItemMedia variant="image">
+                      <Avatar className="size-9">
+                        {entry.authorAvatar && <AvatarImage src={entry.authorAvatar} />}
+                        <AvatarFallback className="text-xs">
+                          {entry.authorName.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </ItemMedia>
+                    <ItemContent>
+                      <ItemTitle>
+                        <span>{entry.authorName}</span>
+                        <span className="text-muted-foreground ml-auto text-xs font-normal">
+                          {formatReadAt(entry.readAt)}
+                        </span>
+                      </ItemTitle>
+                      <ItemDescription>{entry.textSnippet}</ItemDescription>
+                    </ItemContent>
+                    <ItemActions>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-7"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          removeEntry(entry.id)
+                        }}
+                        aria-label="移除"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </ItemActions>
+                  </>
+                )
                 return (
                   <Item key={entry.id} asChild size="sm">
-                    <Link to={to}>
-                      <ItemMedia variant="image">
-                        <Avatar className="size-9">
-                          {entry.authorAvatar && <AvatarImage src={entry.authorAvatar} />}
-                          <AvatarFallback className="text-xs">
-                            {entry.authorName.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                      </ItemMedia>
-                      <ItemContent>
-                        <ItemTitle>
-                          <span>{entry.authorName}</span>
-                          <span className="text-muted-foreground ml-auto text-xs font-normal">
-                            {formatReadAt(entry.readAt)}
-                          </span>
-                        </ItemTitle>
-                        <ItemDescription>{entry.textSnippet}</ItemDescription>
-                      </ItemContent>
-                      <ItemActions>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-7"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            removeEntry(entry.id)
-                          }}
-                          aria-label="移除"
-                        >
-                          <Trash2 className="size-3.5" />
-                        </Button>
-                      </ItemActions>
-                    </Link>
+                    {onOpenEntry ? (
+                      <button type="button" onClick={() => onOpenEntry(entry)}>
+                        {content}
+                      </button>
+                    ) : (
+                      <Link to={to}>{content}</Link>
+                    )}
                   </Item>
                 )
               })}

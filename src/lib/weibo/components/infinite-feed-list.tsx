@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, type RefObject } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
@@ -20,6 +20,7 @@ interface InfiniteFeedListProps {
   fetchNextPage: () => void | Promise<unknown>
   onRetry?: () => void
   className?: string
+  scrollRootRef?: RefObject<HTMLElement | null>
 }
 
 export function InfiniteFeedList({
@@ -34,6 +35,7 @@ export function InfiniteFeedList({
   fetchNextPage,
   onRetry,
   className = 'flex flex-col gap-3',
+  scrollRootRef,
 }: InfiniteFeedListProps) {
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const fetchNextPageRef = useRef(fetchNextPage)
@@ -58,12 +60,12 @@ export function InfiniteFeedList({
           void fetchNextPageRef.current()
         }
       },
-      { threshold: 0.2 },
+      { root: scrollRootRef?.current ?? null, threshold: 0.2 },
     )
 
     observer.observe(el)
     return () => observer.disconnect()
-  }, [hasNextPage])
+  }, [hasNextPage, scrollRootRef])
 
   const handleLoadMoreRetry = () => {
     void fetchNextPage()

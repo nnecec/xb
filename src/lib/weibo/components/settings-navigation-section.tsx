@@ -1,3 +1,5 @@
+import { toast } from 'sonner'
+
 import {
   Select,
   SelectContent,
@@ -9,6 +11,7 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { type AppSettings, type HomeTab } from '@/lib/app-settings'
 import { type AppSettingsStoreState, useAppSettings, useShallow } from '@/lib/app-settings-store'
+import { useWorkspace } from '@/lib/weibo/workspace/workspace-store'
 
 import {
   defaultsFor,
@@ -56,6 +59,12 @@ export function SettingsNavigationSection({
       firstLoadRedirect: state.firstLoadRedirect,
     })),
   )
+  const multiColumnEnabled = useWorkspace((state) => state.enabled)
+  const setMultiColumnEnabled = useWorkspace((state) => state.setEnabled)
+
+  function updateMultiColumnEnabled(enabled: boolean) {
+    void setMultiColumnEnabled(enabled).catch(() => toast.error('无法保存多列工作区配置'))
+  }
 
   function updateBooleanSetting(key: keyof AppSettings, checked: boolean) {
     void updateSettings({ [key]: checked } as Partial<AppSettings>)
@@ -64,6 +73,19 @@ export function SettingsNavigationSection({
   return (
     <div className="flex flex-col">
       <SettingsPanel>
+        <SettingsSection
+          title="多列工作区"
+          description="开启后保留左侧导航，并在右侧平铺固定宽度的信息流列。"
+        >
+          <Field label="启用多列模式" description="关闭后仍会保留已添加的列和顺序。">
+            <Switch
+              aria-label="启用多列模式"
+              checked={multiColumnEnabled}
+              onCheckedChange={updateMultiColumnEnabled}
+            />
+          </Field>
+        </SettingsSection>
+
         <SettingsSection title="首次打开">
           <Field label="首页默认时间线" description="仅在新打开微博首页时生效">
             <Select
@@ -132,7 +154,10 @@ export function SettingsNavigationSection({
         <ResetSectionButton
           label="导航布局"
           keys={NAVIGATION_SETTING_KEYS}
-          onReset={() => void updateSettings(defaultsFor(NAVIGATION_SETTING_KEYS))}
+          onReset={() => {
+            void updateSettings(defaultsFor(NAVIGATION_SETTING_KEYS))
+            updateMultiColumnEnabled(false)
+          }}
         />
       </SettingsPanel>
     </div>

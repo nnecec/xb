@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -18,6 +19,10 @@ import {
 import { HomeTimelinePage } from '@/lib/weibo/pages/home-timeline-page'
 import { ProfilePage } from '@/lib/weibo/pages/profile-page'
 import { StatusDetailPage } from '@/lib/weibo/pages/status-detail-page'
+import {
+  getWorkspaceStore,
+  resetWorkspaceStoreForTest,
+} from '@/lib/weibo/workspace/workspace-store'
 
 vi.mock('@/lib/weibo/components/emoticon-picker', () => ({
   EmoticonPicker: () => null,
@@ -112,6 +117,7 @@ describe('AppShell', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     resetAppSettingsStoreForTest()
+    resetWorkspaceStoreForTest()
     Object.defineProperty(globalThis, 'browser', {
       writable: true,
       value: {
@@ -147,6 +153,11 @@ describe('AppShell', () => {
       rewriteEnabled: true,
       isHydrated: true,
     })
+    const workspaceStore = getWorkspaceStore({
+      get: async () => ({}),
+      set: async () => {},
+    })
+    workspaceStore.setState({ ...workspaceStore.getState(), isHydrated: true })
   })
 
   it('navigates to the following timeline when the home tab changes', async () => {
@@ -161,6 +172,55 @@ describe('AppShell', () => {
     await waitFor(() => {
       expect(vi.mocked(loadHomeTimeline)).toHaveBeenLastCalledWith('following', { cursor: null })
     })
+  })
+
+  it('renders a fixed primary column and auxiliary leaf columns in multi-column mode', async () => {
+    const user = userEvent.setup()
+    getWorkspaceStore().setState({
+      enabled: true,
+      auxiliaryColumns: [
+        {
+          id: 'following-column',
+          source: { kind: 'home', tab: 'following' },
+        },
+      ],
+      focusedColumnId: 'following-column',
+    })
+
+    renderWeiboShell(['/'])
+
+    expect(screen.getByRole('button', { name: '添加列' })).toBeInTheDocument()
+    expect(screen.queryByRole('menuitem', { name: '删除列' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '我关注的', level: 1 })).toBeInTheDocument()
+    expect(document.querySelector('[data-column-canvas]')).toHaveClass('overflow-x-auto')
+    expect(document.querySelector('[data-primary-column]')).toHaveClass('w-[420px]')
+    expect(document.querySelector('[data-auxiliary-column="following-column"]')).toHaveClass(
+      'w-[420px]',
+    )
+    const columnControl = screen.getByRole('button', { name: '我关注的列操作' })
+    expect(columnControl).toBeInTheDocument()
+    expect(document.querySelector('[data-column-header]')).not.toBeInTheDocument()
+    fireEvent.pointerDown(columnControl, { button: 0, pointerId: 1 })
+    expect(columnControl).toHaveFocus()
+    fireEvent.pointerUp(columnControl, { button: 0, pointerId: 1 })
+    await user.click(columnControl)
+    expect(screen.getByRole('menuitem', { name: '向左移' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    )
+    expect(screen.getByRole('menuitem', { name: '移动到最左边' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    )
+    expect(screen.getByRole('menuitem', { name: '向右移' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    )
+    expect(screen.getByRole('menuitem', { name: '移动到最右边' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    )
+    expect(screen.getByRole('menuitem', { name: '删除列' })).not.toHaveAttribute('aria-disabled')
   })
 
   it('navigates to the special-follow timeline with the gid from allGroups', async () => {

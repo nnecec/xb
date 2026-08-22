@@ -1,10 +1,9 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router'
 
 import { Spinner } from '@/components/ui/spinner'
 import { useAppSettings } from '@/lib/app-settings-store'
-import { useAppShellContext } from '@/lib/weibo/app/app-shell-layout'
+import { usePageRuntime } from '@/lib/weibo/app/page-runtime'
 import { InfiniteFeedList } from '@/lib/weibo/components/infinite-feed-list'
 import { PageErrorState } from '@/lib/weibo/components/page-state'
 import { TimelineTopBar } from '@/lib/weibo/components/timeline-top-bar'
@@ -14,20 +13,23 @@ import {
 } from '@/lib/weibo/data/weibo-data'
 import type { ExploreGroup } from '@/lib/weibo/models/explore'
 import type { TimelinePage } from '@/lib/weibo/models/feed'
-import { useWeiboPage } from '@/lib/weibo/route/use-weibo-page'
 
 function resetMainScrollAfterRouteChange(resetMainScroll: () => void) {
   requestAnimationFrame(resetMainScroll)
 }
 
-export function ExplorePage() {
-  const ctx = useAppShellContext()
-  const page = useWeiboPage()
-  const navigate = useNavigate()
+export interface ExplorePageProps {
+  source?: { groupId: string }
+  onSourceChange?: (source: { groupId: string }) => void
+}
+
+export function ExplorePage({ source, onSourceChange }: ExplorePageProps = {}) {
+  const runtime = usePageRuntime()
+  const page = source ? { kind: 'explore' as const, ...source } : runtime.page
   const rewriteEnabled = useAppSettings((s) => s.rewriteEnabled)
 
   const groupId = page.kind === 'explore' ? page.groupId : '102803'
-  const isEnabled = rewriteEnabled && page.kind === 'explore'
+  const isEnabled = rewriteEnabled && (source !== undefined || page.kind === 'explore')
 
   const groupsQuery = useQuery(exploreGroupsQueryOptions)
   const groups = groupsQuery.data ?? []
@@ -61,15 +63,19 @@ export function ExplorePage() {
 
   useEffect(() => {
     if (wasRefreshingRef.current && !isRefreshing) {
-      ctx.scrollMainToTop()
+      runtime.scrollToTop()
     }
     wasRefreshingRef.current = isRefreshing
-  }, [isRefreshing, ctx])
+  }, [isRefreshing, runtime])
 
   const handleGroupClick = (group: ExploreGroup) => {
     if (group.gid === groupId) return
-    navigate(`/hot/weibo/${group.gid}`)
-    resetMainScrollAfterRouteChange(ctx.resetMainScroll)
+    if (onSourceChange) {
+      onSourceChange({ groupId: group.gid })
+    } else {
+      runtime.navigate(`/hot/weibo/${group.gid}`)
+    }
+    resetMainScrollAfterRouteChange(runtime.resetScroll)
   }
 
   const groupOptions =
@@ -85,12 +91,16 @@ export function ExplorePage() {
         title={activeGroupLabel}
         titleOptions={groupOptions}
         titleValue={groupId}
-        onTitleChange={(value) => {
-          const group = groups.find((g) => g.gid === value)
-          if (group) {
-            handleGroupClick(group)
-          }
-        }}
+        onTitleChange={
+          source
+            ? undefined
+            : (value) => {
+                const group = groups.find((g) => g.gid === value)
+                if (group) {
+                  handleGroupClick(group)
+                }
+              }
+        }
         onRefresh={() => void timelineQuery.refetch()}
         isRefreshing={isRefreshing}
       />
@@ -105,6 +115,7 @@ export function ExplorePage() {
           <PageErrorState description="加载分组失败" onRetry={() => void groupsQuery.refetch()} />
         ) : null}
         <InfiniteFeedList
+          scrollRootRef={runtime.scrollRootRef}
           pages={timelineQuery.data?.pages as TimelinePage[] | undefined}
           emptyLabel="暂无内容"
           loadingLabel="正在加载探索内容…"

@@ -14,6 +14,7 @@ import {
 import { RefreshCWIcon } from '@/components/ui/refresh-cw'
 import { cn } from '@/lib/utils'
 import { useImmersiveHeaderClassName } from '@/lib/weibo/app/immersive-header'
+import { useColumnControls } from '@/lib/weibo/workspace/column-controls'
 
 export interface TimelineTopBarOption<Value extends string = string> {
   value: Value
@@ -51,6 +52,7 @@ export function TimelineTopBar<TitleValue extends string = string>({
   rightAction,
   children,
 }: TimelineTopBarProps<TitleValue>) {
+  const columnControls = useColumnControls()
   const headerClassName = useImmersiveHeaderClassName(
     'bg-background/70 border-border/40 sticky top-0 z-50 border-b backdrop-blur-lg',
   )
@@ -69,6 +71,7 @@ export function TimelineTopBar<TitleValue extends string = string>({
       <h1 className="sr-only">{title}</h1>
       <div className="relative flex min-h-16 items-center justify-between">
         <div className="flex min-w-0 items-center">
+          {columnControls}
           {showMenu ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
