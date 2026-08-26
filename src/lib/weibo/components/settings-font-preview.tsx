@@ -1,5 +1,6 @@
+import { cn } from 'cn'
+
 import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
 import { useFontSettings } from '@/lib/weibo/hooks/use-font-settings'
 
 export function FontPreviewCard() {
