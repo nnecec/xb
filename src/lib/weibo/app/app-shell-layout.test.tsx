@@ -12,7 +12,6 @@ import {
   ShellFrame,
   startContentColumnTransition,
 } from '@/lib/weibo/app/app-shell-layout'
-import { TimelineTopBar } from '@/lib/weibo/components/timeline-top-bar'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },
@@ -34,25 +33,6 @@ vi.mock('motion/react', async () => {
       animateTo(value, target, options),
   }
 })
-
-function mockMainRect(contentMain: HTMLElement, getLeft: () => number) {
-  vi.spyOn(contentMain, 'getBoundingClientRect').mockImplementation(
-    () =>
-      ({
-        width: 768,
-        left: getLeft(),
-        right: getLeft() + 768,
-        top: 0,
-        bottom: 800,
-        height: 800,
-        x: getLeft(),
-        y: 0,
-        toJSON() {
-          return {}
-        },
-      }) as DOMRect,
-  )
-}
 
 describe('ShellFrame', () => {
   beforeEach(() => {
@@ -154,8 +134,6 @@ describe('ShellFrame', () => {
             viewingProfileUserId={null}
             rewriteEnabled
             theme="system"
-            contentWidth="standard"
-            customContentWidth={1200}
             onRewriteEnabledChange={vi.fn()}
             onThemeChange={vi.fn()}
             onSettingsOpen={vi.fn()}
@@ -179,10 +157,6 @@ describe('ShellFrame', () => {
   })
 
   it('keeps one fixed back-to-top button when the right rail is hidden', () => {
-    getAppSettingsStore().setState({
-      ...getAppSettingsStore().getState(),
-      showRightRail: false,
-    })
     const mainRef = createRef<HTMLDivElement>()
     render(
       <QueryClientProvider client={queryClient}>
@@ -192,8 +166,6 @@ describe('ShellFrame', () => {
             viewingProfileUserId={null}
             rewriteEnabled
             theme="system"
-            contentWidth="standard"
-            customContentWidth={1200}
             onRewriteEnabledChange={vi.fn()}
             onThemeChange={vi.fn()}
             onSettingsOpen={vi.fn()}
@@ -212,11 +184,7 @@ describe('ShellFrame', () => {
     expect(backToTopButtons[0]).toHaveClass('fixed', 'right-4', 'bottom-4')
   })
 
-  it('uses an exit-only rail and hides headers while scrolling in immersive mode', () => {
-    getAppSettingsStore().setState({
-      ...getAppSettingsStore().getState(),
-      immersiveMode: true,
-    })
+  it('keeps the back-to-top button available in the workspace', () => {
     const mainRef = createRef<HTMLDivElement>()
     render(
       <QueryClientProvider client={queryClient}>
@@ -226,199 +194,55 @@ describe('ShellFrame', () => {
             viewingProfileUserId={null}
             rewriteEnabled
             theme="system"
-            contentWidth="standard"
-            customContentWidth={1200}
             onRewriteEnabledChange={vi.fn()}
             onThemeChange={vi.fn()}
             onSettingsOpen={vi.fn()}
             onComposeOpen={vi.fn()}
             mainRef={mainRef}
           >
-            <TimelineTopBar title="推荐" />
+            <div>center content</div>
           </ShellFrame>
         </MemoryRouter>
       </QueryClientProvider>,
     )
 
-    expect(screen.queryByRole('navigation', { name: '主导航' })).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '退出沉浸模式' })).toBeInTheDocument()
-    expect(screen.queryByTestId('right-rail')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: '返回顶部' })).toBeInTheDocument()
+  })
 
-    const main = mainRef.current
+  it('scrolls the main column when the pointer is over blank workspace space', () => {
+    const mainRef = createRef<HTMLDivElement>()
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <ShellFrame
+            pageKind="home"
+            viewingProfileUserId={null}
+            rewriteEnabled
+            theme="system"
+            onRewriteEnabledChange={vi.fn()}
+            onThemeChange={vi.fn()}
+            onSettingsOpen={vi.fn()}
+            onComposeOpen={vi.fn()}
+            mainRef={mainRef}
+          >
+            <div>center content</div>
+          </ShellFrame>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    const main = document.querySelector<HTMLDivElement>('[data-primary-column] .xb-column-scroll')
+    const gutter = document.querySelector('[data-column-canvas] > div')
     expect(main).not.toBeNull()
-    if (!main) return
+    expect(gutter).not.toBeNull()
+    Object.defineProperty(main, 'scrollHeight', { configurable: true, value: 900 })
+    Object.defineProperty(main, 'clientHeight', { configurable: true, value: 300 })
+    main!.scrollTop = 12
 
-    main.scrollTop = 40
-    fireEvent.scroll(main)
+    expect(fireEvent.wheel(gutter!, { deltaY: 30 })).toBe(false)
+    expect(main!.scrollTop).toBe(42)
 
-    expect(
-      screen.getByRole('heading', { level: 1, name: '推荐' }).closest('[class*="sticky"]'),
-    ).toHaveClass('-translate-y-[calc(100%+1px)]')
-
-    main.scrollTop = 20
-    fireEvent.scroll(main)
-
-    expect(
-      screen.getByRole('heading', { level: 1, name: '推荐' }).closest('[class*="sticky"]'),
-    ).not.toHaveClass('-translate-y-[calc(100%+1px)]')
-  })
-
-  it('preserves the measured reading-column width when entering immersive mode', () => {
-    const mainRef = createRef<HTMLDivElement>()
-    render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
-          <ShellFrame
-            pageKind="home"
-            viewingProfileUserId={null}
-            rewriteEnabled
-            theme="system"
-            contentWidth="standard"
-            customContentWidth={1200}
-            onRewriteEnabledChange={vi.fn()}
-            onThemeChange={vi.fn()}
-            onSettingsOpen={vi.fn()}
-            onComposeOpen={vi.fn()}
-            mainRef={mainRef}
-          >
-            <div>center content</div>
-          </ShellFrame>
-        </MemoryRouter>
-      </QueryClientProvider>,
-    )
-
-    const contentMain = screen.getByRole('main')
-    mockMainRect(contentMain, () => 164)
-
-    fireEvent.click(screen.getByRole('button', { name: '切换沉浸模式' }))
-
-    expect(screen.getByRole('button', { name: '退出沉浸模式' })).toBeInTheDocument()
-    expect(contentMain).toHaveStyle({ maxWidth: '768px' })
-  })
-
-  it('takes shell rails out of document flow when entering immersive mode', () => {
-    const mainRef = createRef<HTMLDivElement>()
-    render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
-          <ShellFrame
-            pageKind="home"
-            viewingProfileUserId={null}
-            rewriteEnabled
-            theme="system"
-            contentWidth="standard"
-            customContentWidth={1200}
-            onRewriteEnabledChange={vi.fn()}
-            onThemeChange={vi.fn()}
-            onSettingsOpen={vi.fn()}
-            onComposeOpen={vi.fn()}
-            mainRef={mainRef}
-          >
-            <div>center content</div>
-          </ShellFrame>
-        </MemoryRouter>
-      </QueryClientProvider>,
-    )
-
-    const contentMain = screen.getByRole('main')
-    mockMainRect(contentMain, () => (getAppSettingsStore().getState().immersiveMode ? 296 : 164))
-
-    fireEvent.click(screen.getByRole('button', { name: '切换沉浸模式' }))
-
-    const row = contentMain.parentElement
-    expect(row?.className ?? '').toContain('[&_[data-shell-rail=left]]:absolute')
-    expect(document.querySelector('[data-shell-rail="left"]')).not.toBeNull()
-  })
-
-  it('pins the reading column when entering immersive mode before sliding to center', () => {
-    const frames: FrameRequestCallback[] = []
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
-      frames.push(callback)
-      return frames.length
-    })
-
-    const mainRef = createRef<HTMLDivElement>()
-    render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
-          <ShellFrame
-            pageKind="home"
-            viewingProfileUserId={null}
-            rewriteEnabled
-            theme="system"
-            contentWidth="standard"
-            customContentWidth={1200}
-            onRewriteEnabledChange={vi.fn()}
-            onThemeChange={vi.fn()}
-            onSettingsOpen={vi.fn()}
-            onComposeOpen={vi.fn()}
-            mainRef={mainRef}
-          >
-            <div>center content</div>
-          </ShellFrame>
-        </MemoryRouter>
-      </QueryClientProvider>,
-    )
-
-    const contentMain = screen.getByRole('main')
-    mockMainRect(contentMain, () => (getAppSettingsStore().getState().immersiveMode ? 296 : 164))
-
-    fireEvent.click(screen.getByRole('button', { name: '切换沉浸模式' }))
-
-    expect(screen.getByRole('button', { name: '退出沉浸模式' })).toBeInTheDocument()
-    // Pin applied synchronously; animate-to-center waits for double rAF
-    expect(animateTo).not.toHaveBeenCalled()
-    frames.shift()?.(0)
-    frames.shift()?.(16)
-    expect(animateTo).toHaveBeenCalled()
-    expect(animateTo.mock.calls[0]?.[1]).toBe(0)
-  })
-
-  it('pins the reading column when leaving immersive mode before sliding back', () => {
-    getAppSettingsStore().setState({
-      ...getAppSettingsStore().getState(),
-      immersiveMode: true,
-    })
-
-    const frames: FrameRequestCallback[] = []
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
-      frames.push(callback)
-      return frames.length
-    })
-
-    const mainRef = createRef<HTMLDivElement>()
-    render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
-          <ShellFrame
-            pageKind="home"
-            viewingProfileUserId={null}
-            rewriteEnabled
-            theme="system"
-            contentWidth="standard"
-            customContentWidth={1200}
-            onRewriteEnabledChange={vi.fn()}
-            onThemeChange={vi.fn()}
-            onSettingsOpen={vi.fn()}
-            onComposeOpen={vi.fn()}
-            mainRef={mainRef}
-          >
-            <div>center content</div>
-          </ShellFrame>
-        </MemoryRouter>
-      </QueryClientProvider>,
-    )
-
-    const contentMain = screen.getByRole('main')
-    mockMainRect(contentMain, () => (getAppSettingsStore().getState().immersiveMode ? 296 : 164))
-
-    fireEvent.click(screen.getByRole('button', { name: '退出沉浸模式' }))
-
-    expect(animateTo).not.toHaveBeenCalled()
-    frames.shift()?.(0)
-    frames.shift()?.(16)
-    expect(animateTo).toHaveBeenCalled()
-    expect(animateTo.mock.calls[0]?.[1]).toBe(0)
+    expect(fireEvent.wheel(main!, { deltaY: 30 })).toBe(true)
+    expect(main!.scrollTop).toBe(42)
   })
 })
