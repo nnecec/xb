@@ -9,6 +9,7 @@ import { markWeiboPageReady } from '@/lib/weibo/content/page-takeover'
 import { bindShellState } from '@/lib/weibo/content/shell-state'
 import { loadFollowGroups } from '@/lib/weibo/data/weibo-data'
 import { homeTimelinePathFromTab } from '@/lib/weibo/route/home-timeline-path'
+import { bindWorkspaceStorageSync, getWorkspaceStore } from '@/lib/weibo/workspace/workspace-store'
 
 interface MountedWeiboUi {
   root: Root
@@ -56,7 +57,9 @@ export async function mountWeiboHostShell({
 
   const settingsStore = getAppSettingsStore()
   const cleanupStorageSync = bindAppSettingsStorageSync(settingsStore)
-  await settingsStore.getState().hydrate()
+  const workspaceStore = getWorkspaceStore()
+  const cleanupWorkspaceStorageSync = bindWorkspaceStorageSync(workspaceStore)
+  await Promise.all([settingsStore.getState().hydrate(), workspaceStore.getState().hydrate()])
 
   // 首次加载跳转：当 window.history.length <= 2 且当前在首页时，重定向到用户选择的页面
   const { firstLoadRedirect } = settingsStore.getState()
@@ -77,6 +80,7 @@ export async function mountWeiboHostShell({
       }
     }
     cleanupStorageSync()
+    cleanupWorkspaceStorageSync()
     window.location.replace(redirectPath)
     return null
   }
@@ -99,6 +103,7 @@ export async function mountWeiboHostShell({
       return {
         cleanup() {
           cleanupStorageSync()
+          cleanupWorkspaceStorageSync()
           cleanupShellState()
         },
         root,

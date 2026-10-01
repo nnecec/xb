@@ -38,10 +38,12 @@ describe('bindShellState', () => {
     })
 
     expect(document.documentElement.getAttribute('data-xb-weibo-ready')).toBe('')
+    expect(container.style.colorScheme).toBe('light')
 
     await store.getState().updateSettings({ theme: 'dark', rewriteEnabled: false })
 
     expect(container.classList.contains('dark')).toBe(true)
+    expect(container.style.colorScheme).toBe('dark')
     expect(appRoot.getAttribute('data-xb-hidden')).toBeNull()
     expect(document.documentElement.style.overflow).toBe('auto')
 
@@ -86,9 +88,11 @@ describe('bindShellState', () => {
     expect(container.hasAttribute('data-xb-ui-font-size')).toBe(false)
   })
 
-  it('cleans up takeover and dark mode classes on unbind', async () => {
+  it('locks document horizontal overflow during takeover and restores it on unbind', async () => {
     const container = document.createElement('div')
     const appRoot = document.createElement('div')
+    document.documentElement.style.overflowX = 'scroll'
+    document.body.style.overflowX = 'auto'
     const store = createAppSettingsStore({
       get: async () => ({ [APP_SETTINGS_STORAGE_KEY]: undefined }),
       set: async () => {},
@@ -112,14 +116,20 @@ describe('bindShellState', () => {
     await store.getState().updateSettings({ theme: 'dark' })
 
     expect(container.classList.contains('dark')).toBe(true)
+    expect(container.style.colorScheme).toBe('dark')
     expect(appRoot.getAttribute('data-xb-hidden')).toBe('true')
     expect(document.documentElement.style.overflow).toBe('hidden')
+    expect(document.documentElement.style.overflowX).toBe('hidden')
+    expect(document.body.style.overflowX).toBe('hidden')
 
     cleanup()
 
     expect(container.classList.contains('dark')).toBe(false)
+    expect(container.style.colorScheme).toBe('')
     expect(appRoot.getAttribute('data-xb-hidden')).toBeNull()
     expect(document.documentElement.style.overflow).toBe('auto')
+    expect(document.documentElement.style.overflowX).toBe('scroll')
+    expect(document.body.style.overflowX).toBe('auto')
   })
 
   it('applies custom theme variables for the active color mode', async () => {
