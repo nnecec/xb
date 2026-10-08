@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { HomeTab } from '@/lib/app-settings'
 import { useAppSettings } from '@/lib/app-settings-store'
@@ -125,8 +125,10 @@ export function HomeTimelinePage({ source, onSourceChange }: HomeTimelinePagePro
     refetchOnWindowFocus: true,
   })
 
-  const dismissedNewPostsCheckAtByGroup = useRef<Record<string, number>>({})
-  const dismissedForGroup = dismissedNewPostsCheckAtByGroup.current[followingNewPostsGroupKey] ?? 0
+  const [dismissedNewPostsCheckAtByGroup, setDismissedNewPostsCheckAtByGroup] = useState<
+    Record<string, number>
+  >({})
+  const dismissedForGroup = dismissedNewPostsCheckAtByGroup[followingNewPostsGroupKey] ?? 0
   const showNewPostsBubble =
     activeTab === 'following' &&
     Boolean(newPostsCheckQuery.data) &&
@@ -145,7 +147,10 @@ export function HomeTimelinePage({ source, onSourceChange }: HomeTimelinePagePro
   }, [isRefreshing, runtime])
 
   const handleTimelineRefresh = useCallback(() => {
-    dismissedNewPostsCheckAtByGroup.current[followingNewPostsGroupKey] = Date.now()
+    setDismissedNewPostsCheckAtByGroup((current) => ({
+      ...current,
+      [followingNewPostsGroupKey]: Date.now(),
+    }))
     void timelineQuery.refetch()
   }, [timelineQuery, followingNewPostsGroupKey])
 

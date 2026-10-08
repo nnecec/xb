@@ -1,5 +1,6 @@
+import { cn } from 'cn'
+
 import { ButtonGroup } from '@/components/ui/button-group'
-import { cn } from '@/lib/utils'
 import { FollowButton } from '@/lib/weibo/components/follow-button'
 import { ProfileGroupButton } from '@/lib/weibo/components/profile-group-button'
 import { SpecialFollowButton } from '@/lib/weibo/components/special-follow-button'

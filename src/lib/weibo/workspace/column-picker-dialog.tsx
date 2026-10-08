@@ -1,9 +1,7 @@
 import { skipToken, useQuery } from '@tanstack/react-query'
-import { Check, Plus } from 'lucide-react'
 import { useMemo } from 'react'
 import { toast } from 'sonner'
 
-import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -11,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Switch } from '@/components/ui/switch'
 import {
   exploreGroupsQueryOptions,
   followGroupsQueryOptions,
@@ -55,45 +54,62 @@ const DEFAULT_EXPLORE_COLUMN_OPTION: ColumnOption = {
   source: { kind: 'explore', groupId: '102803', label: '热门' },
 }
 
+function withSavedColumns(
+  catalog: readonly ColumnOption[],
+  saved: readonly ColumnOption[],
+  matches: (source: ColumnSource) => boolean,
+): ColumnOption[] {
+  const seen = new Set(catalog.map((option) => columnSourceIdentity(option.source)))
+  const extras = saved.filter(
+    (option) => matches(option.source) && !seen.has(columnSourceIdentity(option.source)),
+  )
+  return [...catalog, ...extras]
+}
+
 function ColumnOptionGroup({
   label,
   options,
-  addedSourceIdentities,
+  addedColumnIdByIdentity,
   onAdd,
+  onRemove,
 }: {
   label: string
   options: ColumnOption[]
-  addedSourceIdentities: ReadonlySet<string>
+  addedColumnIdByIdentity: ReadonlyMap<string, string>
   onAdd: (option: ColumnOption) => void
+  onRemove: (columnId: string) => void
 }) {
   if (options.length === 0) return null
 
   return (
-    <section className="flex flex-col gap-2" aria-labelledby={`column-group-${label}`}>
-      <h3 id={`column-group-${label}`} className="text-muted-foreground text-xs font-medium">
+    <section className="flex flex-col" aria-labelledby={`column-group-${label}`}>
+      <h3
+        id={`column-group-${label}`}
+        className="text-muted-foreground px-1 pt-1 pb-1 text-xs font-medium"
+      >
         {label}
       </h3>
-      <div className="grid grid-cols-2 gap-2">
+      <ul className="divide-border/60 divide-y">
         {options.map((option) => {
           const identity = columnSourceIdentity(option.source)
           const title = columnSourceTitle(option.source)
-          const isAdded = addedSourceIdentities.has(identity)
+          const columnId = addedColumnIdByIdentity.get(identity)
+          const isAdded = columnId !== undefined
           return (
-            <Button
-              key={identity}
-              type="button"
-              variant="outline"
-              className="justify-start"
-              disabled={isAdded}
-              onClick={() => onAdd(option)}
-            >
-              {isAdded ? <Check data-icon="inline-start" /> : <Plus data-icon="inline-start" />}
-              <span className="truncate">{title}</span>
-              {isAdded ? <span className="sr-only">，已添加</span> : null}
-            </Button>
+            <li key={identity} className="flex items-center justify-between gap-3 px-1 py-2">
+              <span className="min-w-0 truncate text-sm">{title}</span>
+              <Switch
+                checked={isAdded}
+                aria-label={title}
+                onCheckedChange={(checked) => {
+                  if (checked) onAdd(option)
+                  else if (columnId) onRemove(columnId)
+                }}
+              />
+            </li>
           )
         })}
-      </div>
+      </ul>
     </section>
   )
 }
@@ -109,6 +125,7 @@ export function ColumnPickerDialog({
 }) {
   const auxiliaryColumns = useWorkspace((state) => state.auxiliaryColumns)
   const addColumn = useWorkspace((state) => state.addColumn)
+  const removeColumn = useWorkspace((state) => state.removeColumn)
   const followGroupsQuery = useQuery({ ...followGroupsQueryOptions, enabled: open })
   const exploreGroupsQuery = useQuery({ ...exploreGroupsQueryOptions, enabled: open })
   const primaryProfileLookup =
@@ -122,10 +139,17 @@ export function ColumnPickerDialog({
     queryFn: primaryProfileLookup ? () => loadProfileHoverCard(primaryProfileLookup) : skipToken,
     enabled: open && primaryProfileLookup !== null,
   })
-  const addedSourceIdentities = useMemo(
-    () => new Set(auxiliaryColumns.map((column) => columnSourceIdentity(column.source))),
+  const savedOptions = useMemo<ColumnOption[]>(
+    () => auxiliaryColumns.map((column) => ({ source: column.source })),
     [auxiliaryColumns],
   )
+  const addedColumnIdByIdentity = useMemo(() => {
+    const ids = new Map<string, string>()
+    for (const column of auxiliaryColumns) {
+      ids.set(columnSourceIdentity(column.source), column.id)
+    }
+    return ids
+  }, [auxiliaryColumns])
   const groupOptions = useMemo<ColumnOption[]>(
     () =>
       (followGroupsQuery.data?.groups ?? []).map((group) => ({
@@ -171,12 +195,19 @@ export function ColumnPickerDialog({
       ]
     }
     return []
-  }, [primaryPage, primaryProfileQuery.data?.name])
+  }, [primaryPage, primaryProfileQuery.data])
 
   const handleAdd = async (option: ColumnOption) => {
     try {
       await addColumn(option.source)
-      onOpenChange(false)
+    } catch {
+      toast.error('无法保存列配置')
+    }
+  }
+
+  const handleRemove = async (columnId: string) => {
+    try {
+      await removeColumn(columnId)
     } catch {
       toast.error('无法保存列配置')
     }
@@ -186,61 +217,105 @@ export function ColumnPickerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>添加列</DialogTitle>
-          <DialogDescription>每种完整来源只能添加一次；已添加的来源会保持禁用。</DialogDescription>
+          <DialogTitle>列管理</DialogTitle>
+          <DialogDescription>每种来源对应一列。打开即添加，关闭即移除。</DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-4">
           <ColumnOptionGroup
             label="首页"
-            options={HOME_COLUMN_OPTIONS}
-            addedSourceIdentities={addedSourceIdentities}
+            options={withSavedColumns(
+              HOME_COLUMN_OPTIONS,
+              savedOptions,
+              (source) => source.kind === 'home' && !source.groupId,
+            )}
+            addedColumnIdByIdentity={addedColumnIdByIdentity}
             onAdd={(option) => void handleAdd(option)}
+            onRemove={(columnId) => void handleRemove(columnId)}
           />
           <ColumnOptionGroup
             label="用户分组"
-            options={groupOptions}
-            addedSourceIdentities={addedSourceIdentities}
+            options={withSavedColumns(
+              groupOptions,
+              savedOptions,
+              (source) => source.kind === 'home' && Boolean(source.groupId),
+            )}
+            addedColumnIdByIdentity={addedColumnIdByIdentity}
             onAdd={(option) => void handleAdd(option)}
+            onRemove={(columnId) => void handleRemove(columnId)}
           />
           <ColumnOptionGroup
             label="探索"
-            options={exploreOptions}
-            addedSourceIdentities={addedSourceIdentities}
+            options={withSavedColumns(
+              exploreOptions,
+              savedOptions,
+              (source) => source.kind === 'explore',
+            )}
+            addedColumnIdByIdentity={addedColumnIdByIdentity}
             onAdd={(option) => void handleAdd(option)}
+            onRemove={(columnId) => void handleRemove(columnId)}
           />
           <ColumnOptionGroup
             label="当前页面"
-            options={currentPageOptions}
-            addedSourceIdentities={addedSourceIdentities}
+            options={withSavedColumns(
+              currentPageOptions,
+              savedOptions,
+              (source) =>
+                source.kind === 'profile' || source.kind === 'topic' || source.kind === 'follow',
+            )}
+            addedColumnIdByIdentity={addedColumnIdByIdentity}
             onAdd={(option) => void handleAdd(option)}
+            onRemove={(columnId) => void handleRemove(columnId)}
           />
           <ColumnOptionGroup
             label="我的内容"
-            options={currentUserOptions}
-            addedSourceIdentities={addedSourceIdentities}
+            options={withSavedColumns(
+              currentUserOptions,
+              savedOptions,
+              (source) => source.kind === 'favorites' || source.kind === 'liked',
+            )}
+            addedColumnIdByIdentity={addedColumnIdByIdentity}
             onAdd={(option) => void handleAdd(option)}
+            onRemove={(columnId) => void handleRemove(columnId)}
           />
           <ColumnOptionGroup
             label="通知"
-            options={NOTIFICATION_COLUMN_OPTIONS}
-            addedSourceIdentities={addedSourceIdentities}
+            options={withSavedColumns(
+              NOTIFICATION_COLUMN_OPTIONS,
+              savedOptions,
+              (source) => source.kind === 'notifications',
+            )}
+            addedColumnIdByIdentity={addedColumnIdByIdentity}
             onAdd={(option) => void handleAdd(option)}
+            onRemove={(columnId) => void handleRemove(columnId)}
           />
           <ColumnOptionGroup
             label="热搜"
-            options={HOT_SEARCH_COLUMN_OPTIONS}
-            addedSourceIdentities={addedSourceIdentities}
+            options={withSavedColumns(
+              HOT_SEARCH_COLUMN_OPTIONS,
+              savedOptions,
+              (source) => source.kind === 'hot-search',
+            )}
+            addedColumnIdByIdentity={addedColumnIdByIdentity}
             onAdd={(option) => void handleAdd(option)}
+            onRemove={(columnId) => void handleRemove(columnId)}
           />
           <ColumnOptionGroup
             label="其他"
-            options={[
-              { source: { kind: 'search-entry' } },
-              { source: { kind: 'history' } },
-              { source: { kind: 'followed-super-topics' } },
-            ]}
-            addedSourceIdentities={addedSourceIdentities}
+            options={withSavedColumns(
+              [
+                { source: { kind: 'search-entry' } },
+                { source: { kind: 'history' } },
+                { source: { kind: 'followed-super-topics' } },
+              ],
+              savedOptions,
+              (source) =>
+                source.kind === 'search-entry' ||
+                source.kind === 'history' ||
+                source.kind === 'followed-super-topics',
+            )}
+            addedColumnIdByIdentity={addedColumnIdByIdentity}
             onAdd={(option) => void handleAdd(option)}
+            onRemove={(columnId) => void handleRemove(columnId)}
           />
         </div>
       </DialogContent>

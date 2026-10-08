@@ -18,14 +18,19 @@ export interface PageRuntime {
 interface BrowserPageRuntimeInput {
   page: WeiboPageDescriptor
   navigate: NavigateFunction
-  scrollRootRef: RefObject<HTMLDivElement | null>
+  getScrollRoot: () => HTMLDivElement | null
 }
 
 export function createBrowserPageRuntime({
   page,
   navigate,
-  scrollRootRef,
+  getScrollRoot,
 }: BrowserPageRuntimeInput): PageRuntime {
+  const scrollRootRef = {
+    get current() {
+      return getScrollRoot()
+    },
+  }
   return {
     page,
     navigationMode: 'browser',

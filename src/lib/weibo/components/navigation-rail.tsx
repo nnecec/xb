@@ -1,5 +1,6 @@
 import { useMediaQuery } from '@reactuses/core'
 import { useQuery } from '@tanstack/react-query'
+import { cn } from 'cn'
 import {
   ArrowUpRightIcon,
   ChevronsLeftIcon,
@@ -27,7 +28,6 @@ import { UserIcon } from '@/components/ui/user'
 import { ZapOffIcon } from '@/components/ui/zap-off'
 import type { AppTheme } from '@/lib/app-settings'
 import { useAppSettings, useShallow } from '@/lib/app-settings-store'
-import { cn } from '@/lib/utils'
 import { ThemeModeToggle } from '@/lib/weibo/components/theme-mode-toggle'
 import {
   hasDmBadge,
@@ -436,12 +436,12 @@ export function NavigationRail({
             <Separator className="bg-border/40 mb-3" />
             <div className={cn('flex flex-col gap-3', !isCollapsed && 'gap-3.5')}>
               {onColumnPickerOpen ? (
-                <RailControl label="添加列" isCollapsed={isCollapsed}>
+                <RailControl label="列管理" isCollapsed={isCollapsed}>
                   <Button
                     type="button"
                     size="icon"
                     variant="secondary"
-                    aria-label="添加列"
+                    aria-label="列管理"
                     onClick={onColumnPickerOpen}
                   >
                     <Columns3 aria-hidden="true" />

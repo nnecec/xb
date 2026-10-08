@@ -52,8 +52,11 @@ export function useMediaStripInteraction({
     },
     plugins,
   )
+  if ((!emblaApi || !enabled) && isDragging) setIsDragging(false)
 
-  itemIdsRef.current = itemIds
+  useEffect(() => {
+    itemIdsRef.current = itemIds
+  }, [itemIds])
 
   const clearDrag = useCallback((clearClickGuard = true) => {
     setIsDragging(false)
@@ -87,7 +90,10 @@ export function useMediaStripInteraction({
 
   useEffect(() => {
     if (!emblaApi || !enabled) {
-      clearDrag()
+      pointerStartXRef.current = null
+      activePointerIdRef.current = null
+      activePointerTypeRef.current = null
+      suppressNextClickRef.current = false
       return
     }
 

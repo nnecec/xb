@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
+import { cn } from 'cn'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription } from '@/components/ui/card'
 import { RefreshCWIcon } from '@/components/ui/refresh-cw'
 import { Spinner } from '@/components/ui/spinner'
-import { cn } from '@/lib/utils'
 import { followedSuperTopicsQueryOptions } from '@/lib/weibo/data/weibo-data'
 import type { SuperTopicItem } from '@/lib/weibo/models/super-topic'
 import { useColumnControls } from '@/lib/weibo/workspace/column-controls'

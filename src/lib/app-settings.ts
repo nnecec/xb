@@ -86,6 +86,22 @@ export const CUSTOM_CONTENT_WIDTH_MAX = 2000
 export const CUSTOM_CONTENT_WIDTH_STEP = 20
 export const DEFAULT_CUSTOM_CONTENT_WIDTH = 1200
 
+export type ColumnWidth = ContentWidth
+
+/** 多列里每一列的宽度。standard 保持原先的 420px。 */
+export const COLUMN_WIDTH_PX = {
+  narrower: 340,
+  narrow: 380,
+  standard: 420,
+  wide: 480,
+  wider: 560,
+} as const satisfies Record<Exclude<ColumnWidth, 'custom'>, number>
+
+export const CUSTOM_COLUMN_WIDTH_MIN = 300
+export const CUSTOM_COLUMN_WIDTH_MAX = 720
+export const CUSTOM_COLUMN_WIDTH_STEP = 20
+export const DEFAULT_CUSTOM_COLUMN_WIDTH = COLUMN_WIDTH_PX.standard
+
 export type HomeTab = 'for-you' | 'following' | 'special-follow' | 'friend-circle'
 
 export type CustomThemePreset =
@@ -179,6 +195,8 @@ export const DEFAULT_WEIBO_CARD_SINGLE_VIDEO_MAX_WIDTH = 650
 export interface AppSettings {
   contentWidth: ContentWidth
   customContentWidth: number
+  columnWidth: ColumnWidth
+  customColumnWidth: number
   theme: AppTheme
   rewriteEnabled: boolean
   uiFontSize: UiFontSize
@@ -278,6 +296,8 @@ export const APP_SETTINGS_STORAGE_KEY = 'xb:app-settings'
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   contentWidth: 'standard' as ContentWidth,
   customContentWidth: DEFAULT_CUSTOM_CONTENT_WIDTH,
+  columnWidth: 'standard' as ColumnWidth,
+  customColumnWidth: DEFAULT_CUSTOM_COLUMN_WIDTH,
   theme: 'system',
   rewriteEnabled: true,
   uiFontSize: 14,
@@ -666,6 +686,16 @@ export function normalizeAppSettings(value: unknown): AppSettings {
       ? candidate.contentWidth
       : DEFAULT_APP_SETTINGS.contentWidth,
     customContentWidth: normalizeCustomContentWidth(candidate.customContentWidth),
+    columnWidth: isContentWidth(candidate.columnWidth)
+      ? candidate.columnWidth
+      : DEFAULT_APP_SETTINGS.columnWidth,
+    customColumnWidth: normalizeSteppedNumber(
+      candidate.customColumnWidth,
+      CUSTOM_COLUMN_WIDTH_MIN,
+      CUSTOM_COLUMN_WIDTH_MAX,
+      CUSTOM_COLUMN_WIDTH_STEP,
+      DEFAULT_APP_SETTINGS.customColumnWidth,
+    ),
     theme: isAppTheme(candidate.theme) ? candidate.theme : DEFAULT_APP_SETTINGS.theme,
     rewriteEnabled:
       typeof candidate.rewriteEnabled === 'boolean'

@@ -174,8 +174,12 @@ describe('AppShell', () => {
     })
   })
 
-  it('renders a fixed primary column and auxiliary leaf columns in multi-column mode', async () => {
+  it('renders primary and auxiliary columns at the configured column width', async () => {
     const user = userEvent.setup()
+    getAppSettingsStore().setState({
+      columnWidth: 'custom',
+      customColumnWidth: 500,
+    })
     getWorkspaceStore().setState({
       enabled: true,
       auxiliaryColumns: [
@@ -189,13 +193,28 @@ describe('AppShell', () => {
 
     renderWeiboShell(['/'])
 
-    expect(screen.getByRole('button', { name: '添加列' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '列管理' })).toBeInTheDocument()
     expect(screen.queryByRole('menuitem', { name: '删除列' })).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: '我关注的', level: 1 })).toBeInTheDocument()
-    expect(document.querySelector('[data-column-canvas]')).toHaveClass('overflow-x-auto')
-    expect(document.querySelector('[data-primary-column]')).toHaveClass('w-[420px]')
+    expect(document.querySelector('[data-column-canvas]')).toHaveClass(
+      'overflow-x-auto',
+      'xb-column-scroll',
+    )
+    expect(document.querySelector('[data-primary-column] .xb-column-scroll')).toBeInTheDocument()
+    expect(
+      document.querySelector('[data-auxiliary-column="following-column"] .xb-column-scroll'),
+    ).toBeInTheDocument()
+    expect(document.querySelector('[data-primary-column]')).toHaveStyle({ width: '500px' })
+    expect(document.querySelector('[data-auxiliary-column="following-column"]')).toHaveStyle({
+      width: '500px',
+    })
+    expect(document.querySelector('[data-primary-column]')).toHaveClass('border-x')
+    expect(document.querySelector('[data-primary-column]')).not.toHaveClass('rounded-lg')
     expect(document.querySelector('[data-auxiliary-column="following-column"]')).toHaveClass(
-      'w-[420px]',
+      'border-x',
+    )
+    expect(document.querySelector('[data-auxiliary-column="following-column"]')).not.toHaveClass(
+      'rounded-lg',
     )
     const columnControl = screen.getByRole('button', { name: '我关注的列操作' })
     expect(columnControl).toBeInTheDocument()

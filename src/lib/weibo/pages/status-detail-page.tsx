@@ -231,7 +231,6 @@ export function StatusDetailPage() {
   const page = runtime.page
   const rewriteEnabled = useAppSettings((state) => state.rewriteEnabled)
   const statusArticleRef = useRef<HTMLElement | null>(null)
-  const [showStatusSummary, setShowStatusSummary] = useState(false)
 
   useEffect(() => {
     runtime.resetScroll()
@@ -246,6 +245,15 @@ export function StatusDetailPage() {
     ...statusDetailQueryOptions(urlStatusId, isEnabled),
   })
   const detail = detailQuery.data
+  const detailIdentity = detail?.status.id ?? null
+  const [trackedDetailIdentity, setTrackedDetailIdentity] = useState(detailIdentity)
+  const [articleHidden, setArticleHidden] = useState(false)
+  if (detailIdentity !== trackedDetailIdentity) {
+    setTrackedDetailIdentity(detailIdentity)
+    setArticleHidden(false)
+  }
+  const showStatusSummary =
+    Boolean(detail) && typeof IntersectionObserver !== 'undefined' && articleHidden
 
   useEffect(() => {
     if (detail) {
@@ -255,19 +263,11 @@ export function StatusDetailPage() {
 
   useEffect(() => {
     const article = statusArticleRef.current
-    if (!article || !detail) {
-      setShowStatusSummary(false)
-      return
-    }
-
-    if (typeof IntersectionObserver === 'undefined') {
-      setShowStatusSummary(false)
-      return
-    }
+    if (!article || !detail || typeof IntersectionObserver === 'undefined') return
 
     const observer = new IntersectionObserver(
       (entries) => {
-        setShowStatusSummary(entries[0]?.isIntersecting === false)
+        setArticleHidden(entries[0]?.isIntersecting === false)
       },
       { threshold: 0 },
     )

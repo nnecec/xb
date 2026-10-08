@@ -51,9 +51,12 @@ function NotificationTabContent({
 }) {
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const onFetchNextPageRef = useRef(onFetchNextPage)
-  onFetchNextPageRef.current = onFetchNextPage
   const isFetchingNextPageRef = useRef(isFetchingNextPage)
-  isFetchingNextPageRef.current = isFetchingNextPage
+
+  useEffect(() => {
+    onFetchNextPageRef.current = onFetchNextPage
+    isFetchingNextPageRef.current = isFetchingNextPage
+  }, [isFetchingNextPage, onFetchNextPage])
 
   useEffect(() => {
     const el = loadMoreRef.current

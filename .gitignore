@@ -36,6 +36,7 @@ skills*
 .sisyphus
 plans/
 .impeccable/
+.vitest
 
 # craft
 statuses

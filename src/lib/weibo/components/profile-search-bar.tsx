@@ -1,3 +1,4 @@
+import { cn } from 'cn'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { CalendarDays, ChevronDown, Search, X } from 'lucide-react'
@@ -14,7 +15,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { cn } from '@/lib/utils'
 import {
   beijingDateStartTimestamp,
   beijingInclusiveEndDateTimestamp,

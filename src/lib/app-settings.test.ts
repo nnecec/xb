@@ -136,6 +136,8 @@ describe('app-settings', () => {
     expect(await loadAppSettings(storage)).toEqual({
       contentWidth: 'standard',
       customContentWidth: 1200,
+      columnWidth: 'standard',
+      customColumnWidth: 420,
       theme: 'dark',
       rewriteEnabled: false,
       uiFontSize: 14,
@@ -216,6 +218,8 @@ describe('app-settings', () => {
       {
         contentWidth: 'standard',
         customContentWidth: 1200,
+        columnWidth: 'standard',
+        customColumnWidth: 420,
         theme: 'light',
         rewriteEnabled: true,
         uiFontSize: 18,
@@ -297,6 +301,8 @@ describe('app-settings', () => {
     expect(storage.read()).toEqual({
       contentWidth: 'standard',
       customContentWidth: 1200,
+      columnWidth: 'standard',
+      customColumnWidth: 420,
       theme: 'light',
       rewriteEnabled: true,
       uiFontSize: 18,
@@ -475,6 +481,15 @@ describe('app-settings', () => {
     expect(normalizeAppSettings({ contentWidth: 'narrower' }).contentWidth).toBe('narrower')
     expect(normalizeAppSettings({ contentWidth: 'narrow' }).contentWidth).toBe('narrow')
     expect(normalizeAppSettings({ contentWidth: 'custom' }).contentWidth).toBe('custom')
+    expect(normalizeAppSettings({ columnWidth: 'wider' }).columnWidth).toBe('wider')
+    expect(normalizeAppSettings({ columnWidth: 'custom' }).columnWidth).toBe('custom')
+    expect(normalizeAppSettings({ columnWidth: 'huge' as never }).columnWidth).toBe('standard')
+    expect(normalizeAppSettings({ customColumnWidth: 301 }).customColumnWidth).toBe(300)
+    expect(normalizeAppSettings({ customColumnWidth: 311 }).customColumnWidth).toBe(320)
+    expect(normalizeAppSettings({ customColumnWidth: 720 }).customColumnWidth).toBe(720)
+    expect(normalizeAppSettings({ customColumnWidth: 800 }).customColumnWidth).toBe(720)
+    expect(normalizeAppSettings({ customColumnWidth: 0 }).customColumnWidth).toBe(300)
+    expect(normalizeAppSettings({ customColumnWidth: 'wide' as never }).customColumnWidth).toBe(420)
     expect(normalizeAppSettings({ immersiveMode: true }).immersiveMode).toBe(true)
     expect(normalizeAppSettings({ immersiveMode: 'yes' as never }).immersiveMode).toBe(false)
   })

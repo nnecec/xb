@@ -1,9 +1,8 @@
 import { selectPlayback } from '@videojs/core/dom'
 import { MuteButton, Popover, usePlayer, VolumeSlider } from '@videojs/react'
+import { cn } from 'cn'
 import { Play, Volume1, Volume2, VolumeX } from 'lucide-react'
 import { forwardRef, type ComponentPropsWithoutRef } from 'react'
-
-import { cn } from '@/lib/utils'
 
 const PlayerButton = forwardRef<
   HTMLButtonElement,
@@ -30,16 +29,12 @@ export function VolumeControl() {
   const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported')
   const muteButton = (
     <MuteButton
-      className="media-button--mute"
-      render={(props, state) => (
+      className="media-mute-button video-controls-volume-button"
+      render={(props) => (
         <IconButton {...props}>
-          {state.volumeLevel === 'off' ? (
-            <VolumeX className="media-icon size-[18px]" />
-          ) : state.volumeLevel === 'low' ? (
-            <Volume1 className="media-icon size-[18px]" />
-          ) : (
-            <Volume2 className="media-icon size-[18px]" />
-          )}
+          <VolumeX className="media-button-icon media-mute-button-off-icon" />
+          <Volume1 className="media-button-icon media-mute-button-low-icon" />
+          <Volume2 className="media-button-icon media-mute-button-high-icon" />
         </IconButton>
       )}
     />
@@ -50,12 +45,16 @@ export function VolumeControl() {
   return (
     <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
       <Popover.Trigger render={muteButton} />
-      <Popover.Popup className="media-surface media-popover media-popover--volume">
-        <VolumeSlider.Root className="media-slider" orientation="vertical" thumbAlignment="edge">
-          <VolumeSlider.Track className="media-slider__track">
-            <VolumeSlider.Fill className="media-slider__fill" />
+      <Popover.Popup className="media-popup media-popup-safe-area media-popup-transition media-popup-surface media-volume-popover">
+        <VolumeSlider.Root
+          className="media-slider media-volume-slider"
+          orientation="vertical"
+          thumbAlignment="edge"
+        >
+          <VolumeSlider.Track className="media-slider-track">
+            <VolumeSlider.Fill className="media-slider-fill" />
           </VolumeSlider.Track>
-          <VolumeSlider.Thumb className="media-slider__thumb media-slider__thumb--persistent" />
+          <VolumeSlider.Thumb className="media-slider-thumb media-volume-slider-thumb" />
         </VolumeSlider.Root>
       </Popover.Popup>
     </Popover.Root>

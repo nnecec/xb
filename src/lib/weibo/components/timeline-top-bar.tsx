@@ -1,3 +1,4 @@
+import { cn } from 'cn'
 import { Check, ChevronDown } from 'lucide-react'
 import { Fragment, type ReactNode } from 'react'
 
@@ -12,7 +13,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { RefreshCWIcon } from '@/components/ui/refresh-cw'
-import { cn } from '@/lib/utils'
 import { useImmersiveHeaderClassName } from '@/lib/weibo/app/immersive-header'
 import { useColumnControls } from '@/lib/weibo/workspace/column-controls'
 

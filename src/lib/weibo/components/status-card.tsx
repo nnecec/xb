@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { cn } from 'cn'
 import { Bookmark } from 'lucide-react'
 import {
   createContext,
@@ -27,7 +28,6 @@ import {
   type WeiboCardMediaCollapseType,
 } from '@/lib/app-settings'
 import { useAppSettings, useShallow } from '@/lib/app-settings-store'
-import { cn } from '@/lib/utils'
 import { usePageRuntime } from '@/lib/weibo/app/page-runtime'
 import { FeedCardMoreMenu } from '@/lib/weibo/components/feed-card-more-menu'
 import { FeedCommentsExpanded } from '@/lib/weibo/components/feed-comments-expanded'

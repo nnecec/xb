@@ -1,7 +1,7 @@
 'use client'
 
 import { Play } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
 import { useAppSettings, useShallow } from '@/lib/app-settings-store'
@@ -20,6 +20,7 @@ import {
 import type { PlayableVideoMedia, VideoPlaybackMedia } from './video-playback-types'
 import { VideoPlayerSkin } from './video-player-skin'
 
+import '@videojs/react/live-video/skin.css'
 import '@videojs/react/video/skin.css'
 import './video-player.css'
 
@@ -184,7 +185,10 @@ function PlayableVideoPlayback({
   onPictureInPictureChange,
 }: Omit<VideoPlaybackProps, 'media'> & { media: PlayableVideoMedia }) {
   const mediaRef = useRef<HTMLVideoElement>(null)
-  const [qualityId, setQualityId] = useState<string | null>(null)
+  const [qualitySelection, setQualitySelection] = useState<{
+    key: string
+    id: string | null
+  } | null>(null)
   const [inlineFullscreen, setInlineFullscreen] = useState(false)
   const mode = getVideoPlaybackMode(media)
   const session = useVideoPlaybackSession({
@@ -201,13 +205,11 @@ function PlayableVideoPlayback({
       updateSettings: settings.updateSettings,
     })),
   )
+  const qualityKey = `${media.sessionId}:${videoQualityPreference}`
+  const qualityId = qualitySelection?.key === qualityKey ? qualitySelection.id : null
   const resolvedQualityId =
     qualityId ?? getPreferredQualityId(qualityOptions, videoQualityPreference)
   const downloadAction = useVideoDownload(getVideoDownloadOptions(media, download))
-
-  useEffect(() => {
-    setQualityId(null)
-  }, [media.sessionId, videoQualityPreference])
 
   useInlineFullscreen(mediaRef, inlineFullscreen, () => setInlineFullscreen(false))
 
@@ -217,11 +219,11 @@ function PlayableVideoPlayback({
       if (media.kind === 'video' && media.dash?.type === 'playback' && session.shouldLoad) {
         session.prepareSourceChange()
       }
-      setQualityId(nextQualityId)
+      setQualitySelection({ key: qualityKey, id: nextQualityId })
       const option = qualityOptions.find((candidate) => candidate.id === nextQualityId)
       if (option) void updateSettings({ videoQualityPreference: option.preferenceKey })
     },
-    [media, qualityOptions, resolvedQualityId, session, updateSettings],
+    [media, qualityKey, qualityOptions, resolvedQualityId, session, updateSettings],
   )
 
   return (
@@ -283,14 +285,13 @@ function VideoPlaybackContent(props: VideoPlaybackProps) {
 }
 
 export function VideoPlayback(props: VideoPlaybackProps) {
-  const PlayerProvider =
-    props.media.kind === 'live' ? LiveVideoPlayer.Provider : OnDemandVideoPlayer.Provider
+  const Player = props.media.kind === 'live' ? LiveVideoPlayer.Player : OnDemandVideoPlayer.Player
 
   return (
     <div className="relative h-full w-full">
-      <PlayerProvider key={`${props.media.kind}:${props.media.sessionId}`}>
+      <Player key={`${props.media.kind}:${props.media.sessionId}`}>
         <VideoPlaybackContent {...props} />
-      </PlayerProvider>
+      </Player>
     </div>
   )
 }

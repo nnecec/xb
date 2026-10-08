@@ -83,8 +83,9 @@ export function VideoPlayerSkin({
 
   return (
     <Container
-      className="media-default-skin media-default-skin--video relative h-full w-full overflow-hidden rounded-[inherit]"
-      data-playback-idle={playbackActive ? undefined : ''}
+      className="media-skin media-container video-skin media-default-skin media-default-skin--video relative h-full w-full overflow-hidden rounded-[inherit]"
+      data-theme="default"
+      data-preset={isLive ? 'live-video' : 'video'}
     >
       {children}
 
@@ -116,62 +117,62 @@ export function VideoPlayerSkin({
 
       {centerPlayVisible && !playbackActive ? <CenterPlayButton /> : null}
 
-      {controlsVisible && (!isLive || playbackActive) ? (
-        <Controls.Root className="media-surface media-controls media-controls--root">
+      {controlsVisible && playbackActive ? (
+        <Controls.Root>
+          <Controls.Backdrop className="video-controls-backdrop" />
           <Tooltip.Provider>
-            <div className="media-surface media-controls media-controls--primary">
-              <div className="media-button-group">
+            <Controls.Content
+              className={`video-controls video-controls-content${isLive ? ' video-controls-spaced' : ''}`}
+            >
+              <Controls.Group className="video-controls-primary">
                 <Tooltip.Root side="top">
                   <Tooltip.Trigger
                     render={
                       <PlayButton
-                        className="media-button--play"
-                        render={(props, state) => (
+                        className="media-play-button media-button--play"
+                        render={(props) => (
                           <IconButton {...props}>
-                            <RotateCcw className="media-icon media-icon--restart size-[18px]" />
-                            {state.paused || state.ended ? (
-                              <Play className="media-icon media-icon--play size-[18px]" />
-                            ) : (
-                              <Pause className="media-icon media-icon--pause size-[18px]" />
-                            )}
+                            <RotateCcw className="media-button-icon media-play-button-restart-icon" />
+                            <Play className="media-button-icon media-play-button-play-icon" />
+                            <Pause className="media-button-icon media-play-button-pause-icon" />
                           </IconButton>
                         )}
                       />
                     }
                   />
-                  <Tooltip.Popup className="media-surface media-tooltip">播放/暂停</Tooltip.Popup>
+                  <Tooltip.Popup className="media-popup media-popup-surface media-tooltip">
+                    播放/暂停
+                  </Tooltip.Popup>
                 </Tooltip.Root>
-
-                <VolumeControl />
 
                 {isLive ? (
                   <LiveButton className="media-button media-button--subtle media-button--live" />
                 ) : null}
-              </div>
 
-              {!isLive ? (
-                <div className="media-time-controls">
-                  <Time.Value type="current" className="media-time" />
-                  <TimeSlider.Root className="media-slider">
-                    <TimeSlider.Track className="media-slider__track">
-                      <TimeSlider.Fill className="media-slider__fill" />
-                      <TimeSlider.Buffer className="media-slider__buffer" />
-                    </TimeSlider.Track>
-                    <TimeSlider.Thumb className="media-slider__thumb" />
-                  </TimeSlider.Root>
-                  <Time.Value type="duration" className="media-time" />
-                </div>
-              ) : null}
+                <VolumeControl />
 
-              <div className="media-button-group">
+                {!isLive ? (
+                  <Controls.Group className="video-time-slider-group">
+                    <Time.Value type="current" className="media-time-value video-time-value" />
+                    <TimeSlider.Root className="media-slider media-time-slider">
+                      <TimeSlider.Track className="media-slider-track">
+                        <TimeSlider.Fill className="media-slider-fill" />
+                        <TimeSlider.Buffer className="media-slider-buffer" />
+                      </TimeSlider.Track>
+                      <TimeSlider.Thumb className="media-slider-thumb" />
+                    </TimeSlider.Root>
+                    <Time.Value type="duration" className="media-time-value video-time-value" />
+                  </Controls.Group>
+                ) : (
+                  <div aria-hidden="true" className="video-controls-spacer" />
+                )}
+
                 <VideoQualityMenu quality={quality} />
                 {!isLive ? <VideoPlaybackRateMenu /> : null}
                 <VideoDownloadMenu download={download} />
-              </div>
-            </div>
+              </Controls.Group>
 
-            <div className="media-surface media-controls media-controls--secondary">
-              <div className="media-button-group">
+              <Controls.Group className="video-controls-secondary">
                 <Tooltip.Root side="top">
                   <Tooltip.Trigger
                     render={
@@ -184,16 +185,18 @@ export function VideoPlayerSkin({
                             disabled={state.availability !== 'available'}
                           >
                             {state.pip ? (
-                              <PictureInPicture className="media-icon size-[18px]" />
+                              <PictureInPicture className="media-button-icon" />
                             ) : (
-                              <PictureInPicture2 className="media-icon size-[18px]" />
+                              <PictureInPicture2 className="media-button-icon" />
                             )}
                           </IconButton>
                         )}
                       />
                     }
                   />
-                  <Tooltip.Popup className="media-surface media-tooltip">画中画</Tooltip.Popup>
+                  <Tooltip.Popup className="media-popup media-popup-surface media-tooltip">
+                    画中画
+                  </Tooltip.Popup>
                 </Tooltip.Root>
 
                 {inlineFullscreen ? (
@@ -205,14 +208,16 @@ export function VideoPlayerSkin({
                           aria-label={inlineFullscreen.active ? '退出网页内全屏' : '网页内全屏'}
                         >
                           {inlineFullscreen.active ? (
-                            <Shrink className="media-icon size-[18px]" />
+                            <Shrink className="media-button-icon" />
                           ) : (
-                            <Expand className="media-icon size-[18px]" />
+                            <Expand className="media-button-icon" />
                           )}
                         </IconButton>
                       }
                     />
-                    <Tooltip.Popup className="media-surface media-tooltip">网页全屏</Tooltip.Popup>
+                    <Tooltip.Popup className="media-popup media-popup-surface media-tooltip">
+                      网页全屏
+                    </Tooltip.Popup>
                   </Tooltip.Root>
                 ) : null}
 
@@ -227,24 +232,24 @@ export function VideoPlayerSkin({
                             aria-label={state.fullscreen ? '退出全屏' : '全屏'}
                           >
                             {state.fullscreen ? (
-                              <Minimize className="media-icon size-[18px]" />
+                              <Minimize className="media-button-icon" />
                             ) : (
-                              <Maximize className="media-icon size-[18px]" />
+                              <Maximize className="media-button-icon" />
                             )}
                           </IconButton>
                         )}
                       />
                     }
                   />
-                  <Tooltip.Popup className="media-surface media-tooltip">全屏</Tooltip.Popup>
+                  <Tooltip.Popup className="media-popup media-popup-surface media-tooltip">
+                    全屏
+                  </Tooltip.Popup>
                 </Tooltip.Root>
-              </div>
-            </div>
+              </Controls.Group>
+            </Controls.Content>
           </Tooltip.Provider>
         </Controls.Root>
       ) : null}
-
-      <div className="media-overlay" />
 
       {interactive ? (
         <>

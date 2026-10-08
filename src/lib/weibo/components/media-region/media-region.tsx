@@ -129,26 +129,31 @@ export function MediaRegion({
   )
   const [activeVideo, setActiveVideo] = useState<VideoCollectionItem | null>(null)
   const [focusedViewVisible, setFocusedViewVisible] = useState(false)
+  const [visibleItemId, setVisibleItemId] = useState<string | undefined>(undefined)
   const focusedViewVisibleRef = useRef(false)
   const pictureInPictureActiveRef = useRef(false)
-  const visibleItemIdRef = useRef<string | undefined>(undefined)
   const rootRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
+  const regionKey = region?.key
+  const [trackedRegionKey, setTrackedRegionKey] = useState(regionKey)
+  if (regionKey !== trackedRegionKey) {
+    setTrackedRegionKey(regionKey)
     setActiveVideo(null)
     setFocusedViewVisible(false)
+    setVisibleItemId(undefined)
+  }
+
+  useEffect(() => {
     focusedViewVisibleRef.current = false
     pictureInPictureActiveRef.current = false
-    visibleItemIdRef.current = undefined
-  }, [region?.key])
+  }, [regionKey])
 
   const handleVisibleItemChange = useCallback((itemId: string) => {
-    visibleItemIdRef.current = itemId
+    setVisibleItemId(itemId)
   }, [])
 
   const handleItemActivate = useCallback((mediaItem: MediaCollectionItem) => {
     if (mediaItem.kind !== 'video' || !mediaItem.playable) return
-    visibleItemIdRef.current = mediaItem.id
+    setVisibleItemId(mediaItem.id)
     setActiveVideo(mediaItem)
     focusedViewVisibleRef.current = true
     setFocusedViewVisible(true)
@@ -240,7 +245,7 @@ export function MediaRegion({
                     onOpen={onOpen}
                     singleMediaMaxWidth={region.singleMediaMaxWidth}
                     presentation="card"
-                    initialItemId={visibleItemIdRef.current}
+                    initialItemId={visibleItemId}
                     onVisibleItemChange={handleVisibleItemChange}
                     onItemActivate={handleItemActivate}
                   />

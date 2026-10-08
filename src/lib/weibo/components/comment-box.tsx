@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { cn } from 'cn'
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -6,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { cn } from '@/lib/utils'
 import { EmoticonPicker } from '@/lib/weibo/components/emoticon-picker'
 import { submitComposeAction } from '@/lib/weibo/data/weibo-data'
 import type { ComposeTarget } from '@/lib/weibo/models/compose'

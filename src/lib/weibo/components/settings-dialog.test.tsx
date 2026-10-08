@@ -6,6 +6,11 @@ import { DEFAULT_APP_SETTINGS, type AppSettings } from '@/lib/app-settings'
 
 import { SettingsDialog } from './settings-dialog'
 
+const workspaceMock = vi.hoisted(() => ({
+  enabled: false,
+  setEnabled: vi.fn(async () => {}),
+}))
+
 const mockUpdateSettings = vi.fn().mockResolvedValue(undefined)
 const mockSettings: AppSettings & {
   updateSettings: typeof mockUpdateSettings
@@ -26,17 +31,14 @@ vi.mock('@/lib/app-settings-store', () => ({
 }))
 
 vi.mock('@/lib/weibo/workspace/workspace-store', () => ({
-  useWorkspace: vi.fn((selector) =>
-    selector({
-      enabled: false,
-      setEnabled: vi.fn().mockResolvedValue(undefined),
-    }),
-  ),
+  useWorkspace: (selector: (state: typeof workspaceMock) => unknown) => selector(workspaceMock),
 }))
 
 describe('SettingsDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    workspaceMock.enabled = false
+    workspaceMock.setEnabled.mockResolvedValue(undefined)
     Object.assign(mockSettings, DEFAULT_APP_SETTINGS)
     mockUpdateSettings.mockResolvedValue(undefined)
   })
@@ -85,8 +87,44 @@ describe('SettingsDialog', () => {
     render(<SettingsDialog open onOpenChange={() => {}} />)
 
     expect(screen.getByRole('button', { name: '显示' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('switch', { name: '启用多列模式' })).not.toBeChecked()
+    expect(screen.getByRole('combobox', { name: '内容宽度' })).toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: '列宽度' })).not.toBeInTheDocument()
     expect(screen.getByRole('slider', { name: '自定义内容宽度' })).toHaveValue(1340)
     expect(screen.getByText('1340px')).toBeInTheDocument()
+  })
+
+  it('replaces content width with column width while multi-column mode is on', () => {
+    workspaceMock.enabled = true
+    mockSettings.columnWidth = 'custom'
+    mockSettings.customColumnWidth = 500
+
+    render(<SettingsDialog open onOpenChange={() => {}} />)
+
+    expect(screen.getByRole('switch', { name: '启用多列模式' })).toBeChecked()
+    expect(screen.queryByRole('combobox', { name: '内容宽度' })).not.toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: '列宽度' })).toHaveTextContent('自定义')
+    expect(screen.getByRole('slider', { name: '自定义列宽度' })).toHaveValue(500)
+    expect(screen.getByText('500px')).toBeInTheDocument()
+  })
+
+  it('resets display settings and turns multi-column mode off', async () => {
+    const user = userEvent.setup()
+    workspaceMock.enabled = true
+    render(<SettingsDialog open onOpenChange={() => {}} />)
+
+    await user.click(screen.getByRole('button', { name: '恢复默认设置' }))
+    await user.click(screen.getByRole('button', { name: '恢复默认' }))
+
+    expect(mockUpdateSettings).toHaveBeenCalledWith({
+      contentWidth: DEFAULT_APP_SETTINGS.contentWidth,
+      customContentWidth: DEFAULT_APP_SETTINGS.customContentWidth,
+      columnWidth: DEFAULT_APP_SETTINGS.columnWidth,
+      customColumnWidth: DEFAULT_APP_SETTINGS.customColumnWidth,
+      motionPreference: DEFAULT_APP_SETTINGS.motionPreference,
+      darkModeImageDim: DEFAULT_APP_SETTINGS.darkModeImageDim,
+    })
+    expect(workspaceMock.setEnabled).toHaveBeenCalledWith(false)
   })
 
   it('switches modules and remembers the active module while the dialog stays mounted', async () => {
@@ -201,6 +239,8 @@ describe('SettingsDialog', () => {
     expect(screen.getByRole('switch', { name: '显示热搜卡片' })).toBeDisabled()
     expect(screen.getByRole('switch', { name: '显示超话卡片' })).toBeDisabled()
     expect(screen.getByRole('combobox', { name: '首页默认时间线' })).toBeInTheDocument()
+    expect(screen.queryByRole('switch', { name: '启用多列模式' })).not.toBeInTheDocument()
+    expect(screen.queryByText('多列工作区')).not.toBeInTheDocument()
   })
 
   it('confirms and resets only the active tab group', async () => {

@@ -52,96 +52,13 @@
   pointer-events: none;
 }
 
-/* Videojs keeps controls visible while paused. On hover-capable devices, idle
-   players should reveal them only when the player is hovered or focused. */
-@media (hover: hover) and (pointer: fine) {
-  .media-default-skin--video[data-playback-idle]:not(:hover):not(:focus-within) {
-    .media-controls--root {
-      pointer-events: none;
-    }
-
-    @container media-root (width < 32rem) {
-      .media-controls--primary,
-      .media-controls--secondary {
-        opacity: 0;
-        scale: 0.95;
-      }
-
-      .media-controls--primary {
-        translate: 0 4px;
-      }
-
-      .media-controls--secondary {
-        translate: 0 -4px;
-      }
-    }
-
-    @container media-root (width >= 32rem) {
-      .media-controls--root {
-        opacity: 0;
-        scale: 0.95;
-        translate: 0 4px;
-      }
-    }
-
-    .media-controls--root ~ .media-overlay {
-      opacity: 0;
-    }
-  }
-}
-
-@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: reduce) {
-  .media-default-skin--video[data-playback-idle]:not(:hover):not(:focus-within) {
-    @container media-root (width < 32rem) {
-      .media-controls--primary,
-      .media-controls--secondary {
-        scale: 1;
-        translate: 0;
-      }
-    }
-
-    @container media-root (width >= 32rem) {
-      .media-controls--root {
-        scale: 1;
-        translate: 0;
-      }
-    }
-  }
-}
-
-/* ============================================
-   Progress Bar Hover Expand
-   ============================================ */
-
-/* Default horizontal track height: 3px; hover expands via scaleY (GPU) */
-.media-default-skin--video .media-slider .media-slider__track[data-orientation='horizontal'] {
-  height: 3px;
-  transform-origin: center;
-  transition: transform 150ms ease-out;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  /* Hover: expand 3px → 5px feel */
-  .media-default-skin--video
-    .media-slider:hover
-    .media-slider__track[data-orientation='horizontal'] {
-    transform: scaleY(1.6667);
-  }
-}
-
-/* Dragging: expand to 6px feel */
-.media-default-skin--video
-  .media-slider[data-dragging]
-  .media-slider__track[data-orientation='horizontal'] {
-  transform: scaleY(2);
-}
-
-/* ============================================
-   Buffer Progress Bar Color
-   ============================================ */
-
-.media-default-skin--video .media-slider__buffer {
-  background-color: oklch(1 0 0 / 0.25);
+.media-default-skin--video .media-button--quality,
+.media-default-skin--video .media-button--playback-rate-trigger {
+  width: auto;
+  min-width: var(--media-control-size, 2.25rem);
+  padding-inline: 0.5rem;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
 }
 
 .media-inline-fullscreen {

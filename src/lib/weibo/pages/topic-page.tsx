@@ -1,8 +1,8 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
+import { cn } from 'cn'
 import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { useAppSettings } from '@/lib/app-settings-store'
-import { cn } from '@/lib/utils'
 import { useImmersiveHeaderClassName } from '@/lib/weibo/app/immersive-header'
 import { usePageRuntime } from '@/lib/weibo/app/page-runtime'
 import { InfiniteFeedList } from '@/lib/weibo/components/infinite-feed-list'

@@ -39,7 +39,7 @@ describe('ColumnPickerDialog', () => {
     })
   })
 
-  it('disables an already-added complete source and adds an available leaf source', async () => {
+  it('turns on a source to add it and keeps that source in the same list', async () => {
     const user = userEvent.setup()
     const store = getWorkspaceStore()
     const followingColumnId = await store.getState().addColumn({ kind: 'home', tab: 'following' })
@@ -58,15 +58,43 @@ describe('ColumnPickerDialog', () => {
       </QueryClientProvider>,
     )
 
-    expect(screen.getByRole('button', { name: '我关注的，已添加' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: '热门' })).toBeEnabled()
-    expect(screen.getByRole('button', { name: '搜索' })).toBeEnabled()
-    await user.click(screen.getByRole('button', { name: '推荐' }))
+    expect(screen.getByRole('switch', { name: '我关注的' })).toBeChecked()
+    expect(screen.getByRole('switch', { name: '热门' })).not.toBeChecked()
+    expect(screen.getByRole('switch', { name: '搜索' })).not.toBeChecked()
+    expect(screen.queryByRole('heading', { name: '已添加' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('switch', { name: '推荐' }))
 
     expect(store.getState().auxiliaryColumns).toEqual([
       { id: followingColumnId, source: { kind: 'home', tab: 'following' } },
       expect.objectContaining({ source: { kind: 'home', tab: 'for-you' } }),
     ])
-    expect(onOpenChange).toHaveBeenCalledWith(false)
+    expect(screen.getByRole('switch', { name: '推荐' })).toBeChecked()
+    expect(onOpenChange).not.toHaveBeenCalled()
+  })
+
+  it('turns off a source to remove it and keeps the dialog open', async () => {
+    const user = userEvent.setup()
+    const store = getWorkspaceStore()
+    await store.getState().addColumn({ kind: 'home', tab: 'following' })
+    const onOpenChange = vi.fn()
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ColumnPickerDialog
+          open
+          onOpenChange={onOpenChange}
+          primaryPage={{ kind: 'home', tab: 'for-you' }}
+        />
+      </QueryClientProvider>,
+    )
+
+    await user.click(screen.getByRole('switch', { name: '我关注的' }))
+
+    expect(store.getState().auxiliaryColumns).toEqual([])
+    expect(screen.getByRole('switch', { name: '我关注的' })).not.toBeChecked()
+    expect(onOpenChange).not.toHaveBeenCalled()
   })
 })

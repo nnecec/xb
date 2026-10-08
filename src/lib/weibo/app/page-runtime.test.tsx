@@ -18,7 +18,7 @@ describe('page runtime', () => {
     const runtime = createBrowserPageRuntime({
       navigate,
       page: { kind: 'home', tab: 'for-you' },
-      scrollRootRef,
+      getScrollRoot: () => scrollRootRef.current,
     })
 
     runtime.openStatus({
@@ -40,7 +40,7 @@ describe('page runtime', () => {
     const runtime = createBrowserPageRuntime({
       navigate: vi.fn(),
       page: { kind: 'explore', groupId: '102803' },
-      scrollRootRef: createRef<HTMLDivElement>(),
+      getScrollRoot: () => null,
     })
     const wrapper = ({ children }: { children: ReactNode }) => (
       <PageRuntimeProvider runtime={runtime}>{children}</PageRuntimeProvider>

@@ -1,8 +1,8 @@
+import { cn } from 'cn'
 import { ExternalLinkIcon, ShieldAlertIcon, TriangleAlertIcon } from 'lucide-react'
 
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
 import type { MweiboTopicRecoveryState } from '@/lib/weibo/data/weibo-data'
 
 export function MweiboTopicRecoveryPrompt({

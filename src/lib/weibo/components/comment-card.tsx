@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { cn } from 'cn'
 import { Heart, MessageCircleIcon, Trash2 } from 'lucide-react'
-import { memo, useEffect, useState } from 'react'
+import { memo, useState } from 'react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
 
@@ -15,7 +16,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useAppSettings, useShallow } from '@/lib/app-settings-store'
-import { cn } from '@/lib/utils'
 import { CollapsibleMedia } from '@/lib/weibo/components/collapsible-media'
 import { CommentBox } from '@/lib/weibo/components/comment-box'
 import { CommentsDialog } from '@/lib/weibo/components/comments-dialog'
@@ -75,6 +75,11 @@ export const CommentCard = memo(function CommentCard({
     })),
   )
   const [showNestedReplies, setShowNestedReplies] = useState(!commentCardCollapseRepliesByDefault)
+  const [collapsePreference, setCollapsePreference] = useState(commentCardCollapseRepliesByDefault)
+  if (commentCardCollapseRepliesByDefault !== collapsePreference) {
+    setCollapsePreference(commentCardCollapseRepliesByDefault)
+    setShowNestedReplies(!commentCardCollapseRepliesByDefault)
+  }
   const uid = getCurrentUserUid()
   const isOwner = uid !== null && uid === item.author.id
   const isStatusAuthor = authorUid !== undefined && authorUid !== '' && authorUid === item.author.id
@@ -115,10 +120,6 @@ export const CommentCard = memo(function CommentCard({
   const liked = item.liked === true
   const nestedPreview = Array.isArray(item.comments) ? item.comments : []
   const avatarSize = depth > 0 ? 'size-7' : 'size-8'
-
-  useEffect(() => {
-    setShowNestedReplies(!commentCardCollapseRepliesByDefault)
-  }, [commentCardCollapseRepliesByDefault])
 
   const handleUserLinkClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.stopPropagation()

@@ -1,8 +1,8 @@
+import { cn } from 'cn'
 import { memo } from 'react'
 import { Link } from 'react-router'
 
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
 import { MentionInlineText } from '@/lib/weibo/components/status-text'
 import { UserHoverCard } from '@/lib/weibo/components/user-hover-card'
 import { CreatedAtBadge, UserAvatar } from '@/lib/weibo/components/user-presenter'

@@ -212,6 +212,34 @@ describe('ShellFrame', () => {
     expect(backToTopButtons[0]).toHaveClass('fixed', 'right-4', 'bottom-4')
   })
 
+  it('hides the back-to-top button in multi-column mode', () => {
+    const mainRef = createRef<HTMLDivElement>()
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <ShellFrame
+            pageKind="home"
+            viewingProfileUserId={null}
+            rewriteEnabled
+            theme="system"
+            contentWidth="standard"
+            customContentWidth={1200}
+            onRewriteEnabledChange={vi.fn()}
+            onThemeChange={vi.fn()}
+            onSettingsOpen={vi.fn()}
+            onComposeOpen={vi.fn()}
+            multiColumnEnabled
+            mainRef={mainRef}
+          >
+            <div>center content</div>
+          </ShellFrame>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    expect(screen.queryByRole('button', { name: '返回顶部' })).not.toBeInTheDocument()
+  })
+
   it('uses an exit-only rail and hides headers while scrolling in immersive mode', () => {
     getAppSettingsStore().setState({
       ...getAppSettingsStore().getState(),

@@ -40,8 +40,11 @@ export function InfiniteFeedList({
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const fetchNextPageRef = useRef(fetchNextPage)
   const isFetchingNextPageRef = useRef(isFetchingNextPage)
-  fetchNextPageRef.current = fetchNextPage
-  isFetchingNextPageRef.current = isFetchingNextPage
+
+  useEffect(() => {
+    fetchNextPageRef.current = fetchNextPage
+    isFetchingNextPageRef.current = isFetchingNextPage
+  }, [fetchNextPage, isFetchingNextPage])
 
   const items = useMemo(() => flattenInfiniteItems<FeedItem>(pages), [pages])
   const hasItems = items.length > 0

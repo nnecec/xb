@@ -1,3 +1,4 @@
+import { cn } from 'cn'
 import { PlayIcon, SquarePlay } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useEffect, useState } from 'react'
@@ -8,7 +9,6 @@ import type { PhotoRenderParams } from 'react-photo-view/dist/types'
 import { AspectRatio } from '@/components/ui/aspect-ratio'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 import type { FeedImage } from '@/lib/weibo/models/feed'
 
 import type { MediaCollectionItem } from './media-collection-model'

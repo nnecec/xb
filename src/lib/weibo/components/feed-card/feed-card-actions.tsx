@@ -1,3 +1,4 @@
+import { cn } from 'cn'
 import {
   Bookmark,
   Copy,
@@ -16,7 +17,6 @@ import {
   type FeedPrimaryActionId,
   type FeedToolbarButtonId,
 } from '@/lib/app-settings'
-import { cn } from '@/lib/utils'
 import type { FeedItem } from '@/lib/weibo/models/feed'
 import type { StatusFeedSurface } from '@/lib/weibo/models/status-presentation'
 import { formatWeiboCount } from '@/lib/weibo/utils/format-weibo-count'

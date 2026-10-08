@@ -44,6 +44,10 @@ function getReadDateKey(timestamp: number): string {
   return getDateKey(new Date(timestamp))
 }
 
+function getTodayDateKey(): string {
+  return getDateKey(new Date())
+}
+
 function formatGroupLabel(dateKey: string, todayKey: string): string {
   if (dateKey === todayKey) {
     return '今天'
@@ -99,7 +103,7 @@ export function HistoryPage({ onOpenEntry }: { onOpenEntry?: (entry: HistoryEntr
   }, [entries, selectedDateKey])
 
   const groupedEntries = useMemo(() => {
-    const todayKey = getDateKey(new Date())
+    const todayKey = getTodayDateKey()
     const groupMap = new Map<string, typeof entries>()
 
     for (const entry of visibleEntries) {

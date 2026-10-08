@@ -1,3 +1,4 @@
+import { cn } from 'cn'
 import {
   Bookmark,
   Copy,
@@ -46,7 +47,6 @@ import {
   type WeiboCardMultiMediaLayout,
 } from '@/lib/app-settings'
 import { type AppSettingsStoreState, useAppSettings, useShallow } from '@/lib/app-settings-store'
-import { cn } from '@/lib/utils'
 
 import {
   defaultsFor,

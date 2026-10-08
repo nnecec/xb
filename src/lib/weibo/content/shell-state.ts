@@ -16,6 +16,8 @@ import {
 import { parseWeiboUrl } from '@/lib/weibo/route/parse-weibo-url'
 
 const OVERFLOW_STORAGE_KEY = 'data-xb-previous-overflow'
+const ROOT_OVERFLOW_X_STORAGE_KEY = 'data-xb-previous-root-overflow-x'
+const BODY_OVERFLOW_X_STORAGE_KEY = 'data-xb-previous-body-overflow-x'
 const DEFAULT_UI_FONT_SIZE: UiFontSize = 14
 const UI_TEXT_SIZES = {
   '--text-xs': 12,
@@ -56,6 +58,37 @@ function clearCustomThemeVariables(container: HTMLElement) {
   for (const variable of CUSTOM_THEME_VARIABLE_NAMES) {
     container.style.removeProperty(variable)
   }
+}
+
+function lockDocumentHorizontalOverflow() {
+  const root = document.documentElement
+  const body = document.body
+
+  if (!root.hasAttribute(ROOT_OVERFLOW_X_STORAGE_KEY)) {
+    root.setAttribute(ROOT_OVERFLOW_X_STORAGE_KEY, root.style.overflowX)
+  }
+  if (body && !root.hasAttribute(BODY_OVERFLOW_X_STORAGE_KEY)) {
+    root.setAttribute(BODY_OVERFLOW_X_STORAGE_KEY, body.style.overflowX)
+  }
+
+  root.style.overflowX = 'hidden'
+  root.scrollLeft = 0
+  if (body) {
+    body.style.overflowX = 'hidden'
+    body.scrollLeft = 0
+  }
+}
+
+function restoreDocumentHorizontalOverflow() {
+  const root = document.documentElement
+  const previousRootOverflowX = root.getAttribute(ROOT_OVERFLOW_X_STORAGE_KEY)
+  const previousBodyOverflowX = root.getAttribute(BODY_OVERFLOW_X_STORAGE_KEY)
+  const body = document.body
+
+  if (previousRootOverflowX !== null) root.style.overflowX = previousRootOverflowX
+  if (previousBodyOverflowX !== null && body) body.style.overflowX = previousBodyOverflowX
+  root.removeAttribute(ROOT_OVERFLOW_X_STORAGE_KEY)
+  root.removeAttribute(BODY_OVERFLOW_X_STORAGE_KEY)
 }
 
 function clearTypographyVariables(container: HTMLElement) {
@@ -137,6 +170,7 @@ export function bindShellState({
     const isDark = resolveIsDarkMode(settings.theme, mediaQuery.matches)
 
     container.classList.toggle('dark', isDark)
+    container.style.colorScheme = isDark ? 'dark' : 'light'
     clearCustomThemeVariables(container)
 
     // Apply background color preset CSS variables
@@ -169,6 +203,7 @@ export function bindShellState({
       document.documentElement.style.overflow =
         previousOverflow !== null && previousOverflow !== '' ? previousOverflow : 'auto'
       document.documentElement.removeAttribute(OVERFLOW_STORAGE_KEY)
+      restoreDocumentHorizontalOverflow()
       clearPageTakeover(appRoot)
       return
     }
@@ -184,6 +219,7 @@ export function bindShellState({
         )
       }
       document.documentElement.style.overflow = 'hidden'
+      lockDocumentHorizontalOverflow()
       applyPageTakeover(appRoot)
       return
     }
@@ -192,6 +228,7 @@ export function bindShellState({
     document.documentElement.style.overflow =
       previousOverflow !== null && previousOverflow !== '' ? previousOverflow : 'auto'
     document.documentElement.removeAttribute(OVERFLOW_STORAGE_KEY)
+    restoreDocumentHorizontalOverflow()
     clearPageTakeover(appRoot)
   }
 
@@ -226,6 +263,7 @@ export function bindShellState({
     history.pushState = originalPushState
     history.replaceState = originalReplaceState
     container.classList.remove('dark')
+    container.style.removeProperty('color-scheme')
     clearCustomThemeVariables(container)
     clearAppFontFamily(container)
     clearTypographyVariables(container)
@@ -237,6 +275,7 @@ export function bindShellState({
     document.documentElement.style.overflow =
       previousOverflow !== null && previousOverflow !== '' ? previousOverflow : 'auto'
     document.documentElement.removeAttribute(OVERFLOW_STORAGE_KEY)
+    restoreDocumentHorizontalOverflow()
     clearPageTakeover(appRoot)
   }
 }

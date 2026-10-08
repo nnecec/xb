@@ -1,11 +1,11 @@
 import { useMutation } from '@tanstack/react-query'
+import { cn } from 'cn'
 import { Bell, BellRing } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { cn } from '@/lib/utils'
 import { setSpecialFollowUser } from '@/lib/weibo/data/weibo-data'
 import { getCurrentUserUid } from '@/lib/weibo/platform/current-user'
 

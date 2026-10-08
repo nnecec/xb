@@ -1,11 +1,11 @@
 import * as VisuallyHiddenPrimitive from '@radix-ui/react-visually-hidden'
+import { cn } from 'cn'
 import { XIcon } from 'lucide-react'
 import { Dialog as DialogPrimitive } from 'radix-ui'
 import * as React from 'react'
 
 import { Button } from '@/components/ui/button'
 import { getUiPortalContainer } from '@/components/ui/portal'
-import { cn } from '@/lib/utils'
 
 function VisuallyHidden({ children }: { children: React.ReactNode }) {
   return <VisuallyHiddenPrimitive.Root>{children}</VisuallyHiddenPrimitive.Root>

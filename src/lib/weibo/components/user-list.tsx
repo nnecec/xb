@@ -28,7 +28,10 @@ export function UserList({
 }: UserListProps) {
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const isFetchingNextPageRef = useRef(isFetchingNextPage)
-  isFetchingNextPageRef.current = isFetchingNextPage
+
+  useEffect(() => {
+    isFetchingNextPageRef.current = isFetchingNextPage
+  }, [isFetchingNextPage])
 
   useEffect(() => {
     const el = loadMoreRef.current

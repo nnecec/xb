@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { cn } from 'cn'
 import { Link } from 'react-router'
 
 import { Button } from '@/components/ui/button'
@@ -15,7 +16,6 @@ import {
 import { Spinner } from '@/components/ui/spinner'
 import type { HotSearchType } from '@/lib/app-settings'
 import { useAppSettings, useShallow } from '@/lib/app-settings-store'
-import { cn } from '@/lib/utils'
 import { hotSearchQueryOptions } from '@/lib/weibo/data/weibo-data'
 import { useColumnControls } from '@/lib/weibo/workspace/column-controls'
 

@@ -30,6 +30,28 @@ const GenImageDialog = lazy(() =>
   import('@/lib/weibo/components/gen-image-dialog').then((m) => ({ default: m.GenImageDialog })),
 )
 
+interface MainScrollRoot {
+  node: HTMLDivElement | null
+  current: HTMLDivElement | null
+}
+
+function createMainScrollRoot(): MainScrollRoot {
+  const root: MainScrollRoot = {
+    node: null,
+    get current() {
+      return root.node
+    },
+    set current(value: HTMLDivElement | null) {
+      root.node = value
+    },
+  }
+  return root
+}
+
+function readMainScrollRoot(root: MainScrollRoot) {
+  return root.node
+}
+
 export function AppShell() {
   const navigate = useNavigate()
   const page = useWeiboPage()
@@ -51,7 +73,7 @@ export function AppShell() {
   const [authDialogOpen, setAuthDialogOpen] = useState(false)
   const [composeOpen, setComposeOpen] = useState(false)
   const [columnPickerOpen, setColumnPickerOpen] = useState(false)
-  const mainRef = useRef<HTMLDivElement | null>(null)
+  const [mainRef] = useState(createMainScrollRoot)
   const homeTabNavigationRequestRef = useRef(0)
   const multiColumnEnabled = useWorkspace((state) => state.enabled)
   const auxiliaryColumns = useWorkspace((state) => state.auxiliaryColumns)
@@ -67,8 +89,13 @@ export function AppShell() {
   useEffect(() => onUnauthorized(() => setAuthDialogOpen(true)), [])
 
   const pageRuntime = useMemo(
-    () => createBrowserPageRuntime({ page, navigate, scrollRootRef: mainRef }),
-    [navigate, page],
+    () =>
+      createBrowserPageRuntime({
+        page,
+        navigate,
+        getScrollRoot: () => readMainScrollRoot(mainRef),
+      }),
+    [mainRef, navigate, page],
   )
 
   const refreshTimeline = useCallback(() => {

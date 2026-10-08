@@ -8,15 +8,7 @@ import {
   GripVertical,
   Trash2,
 } from 'lucide-react'
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type CSSProperties,
-  type MouseEvent,
-} from 'react'
+import { useCallback, useMemo, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -96,6 +88,7 @@ function sourcePage(source: ColumnSource) {
 
 export function AuxiliaryColumnView({
   column,
+  columnWidthPx,
   onRemove,
   onMove,
   index,
@@ -104,6 +97,7 @@ export function AuxiliaryColumnView({
   shouldReduceMotion,
 }: {
   column: AuxiliaryColumn
+  columnWidthPx: number
   onRemove: (id: string) => void
   onMove: (id: string, targetIndex: number) => void
   index: number
@@ -192,12 +186,12 @@ export function AuxiliaryColumnView({
   )
   const host = useMemo<StatusCardHost>(
     () => ({
-      openStatus: runtime.openStatus,
+      openStatus: pushDetail,
       composeStatus: (status: FeedItem, mode: 'comment' | 'repost') => {
         setComposeTarget(composeTargetFromFeedItem(status, mode))
       },
     }),
-    [runtime.openStatus, setComposeTarget],
+    [pushDetail, setComposeTarget],
   )
   const keepNavigationInsideColumn = (event: MouseEvent<HTMLDivElement>) => {
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
@@ -216,15 +210,14 @@ export function AuxiliaryColumnView({
     runtime.navigate(`${url.pathname}${url.search}`)
   }
   const sortableStyle: CSSProperties = {
+    width: columnWidthPx,
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.35 : undefined,
   }
   const title = columnSourceTitle(column.source)
 
-  useEffect(() => {
-    if (isDragging) setMenuOpen(false)
-  }, [isDragging])
+  if (isDragging && menuOpen) setMenuOpen(false)
 
   const columnControls = (
     <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
@@ -293,12 +286,12 @@ export function AuxiliaryColumnView({
     <section
       ref={setNodeRef}
       data-auxiliary-column={column.id}
-      className="bg-background flex h-full w-[420px] shrink-0 flex-col overflow-hidden rounded-lg border"
+      className="bg-background flex h-full shrink-0 flex-col overflow-hidden border-x"
       style={sortableStyle}
     >
       <div
         ref={scrollRootRef}
-        className="min-h-0 flex-1 overflow-y-auto px-2 pb-4"
+        className="xb-column-scroll min-h-0 flex-1 overflow-y-auto px-2 pb-4"
         onClickCapture={keepNavigationInsideColumn}
       >
         <ColumnControlsProvider controls={columnControls}>

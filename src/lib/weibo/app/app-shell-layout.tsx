@@ -1,3 +1,4 @@
+import { cn } from 'cn'
 import { Maximize2, Minimize2, Sparkles, Zap } from 'lucide-react'
 import { animate, AnimatePresence, motion, useMotionValue, useReducedMotion } from 'motion/react'
 import type { CSSProperties, KeyboardEvent, MouseEvent } from 'react'
@@ -8,8 +9,8 @@ import { useLocation } from 'react-router'
 
 import type { AppTheme, ContentWidth } from '@/lib/app-settings'
 import { useAppSettings } from '@/lib/app-settings-store'
-import { cn } from '@/lib/utils'
 export { useAppShellContext } from '@/lib/weibo/app/app-shell-context'
+import { resolveColumnWidthPx } from '@/lib/weibo/app/column-width'
 import { getContentWidthAdjustedMaxWidth } from '@/lib/weibo/app/content-width'
 import { ImmersiveHeaderHiddenContext } from '@/lib/weibo/app/immersive-header'
 import { BackToTop } from '@/lib/weibo/components/back-to-top'
@@ -140,8 +141,13 @@ export function ShellFrame({
   const savedMainScrollByRouteRef = useRef<Partial<Record<string, number>>>({})
   const savedScrollAnchorByRouteRef = useRef<Partial<Record<string, string>>>({})
   const locationRef = useRef(location)
-  locationRef.current = location
+  useLayoutEffect(() => {
+    locationRef.current = location
+  }, [location])
   const showRightRail = useAppSettings((state) => state.showRightRail)
+  const columnWidthPx = useAppSettings((state) =>
+    resolveColumnWidthPx(state.columnWidth, state.customColumnWidth),
+  )
   const immersiveMode = useAppSettings((state) => state.immersiveMode)
   const updateSettings = useAppSettings((state) => state.updateSettings)
   const shouldReduceMotion = useReducedMotion()
@@ -317,13 +323,12 @@ export function ShellFrame({
     return () => main.removeEventListener('scroll', onScroll)
   }, [immersiveMode, mainRef])
 
+  if (!immersiveMode && areImmersiveHeadersHidden) setAreImmersiveHeadersHidden(false)
+
   useEffect(() => {
     lastScrollTopRef.current = mainRef.current?.scrollTop ?? 0
     scrollDirectionRef.current = null
     scrollDirectionStartRef.current = lastScrollTopRef.current
-    if (!immersiveMode) {
-      setAreImmersiveHeadersHidden(false)
-    }
   }, [immersiveMode, mainRef])
 
   useLayoutEffect(() => {
@@ -458,17 +463,16 @@ export function ShellFrame({
           </div>
           <SortableColumnCanvas
             auxiliaryColumns={auxiliaryColumns}
+            columnWidthPx={columnWidthPx}
             focusedColumnId={focusedColumnId ?? null}
             shouldReduceMotion={Boolean(shouldReduceMotion)}
             assignMainScrollRef={assignShellRef}
             contentMainRef={contentMainRef}
-            onFocusColumn={onFocusAuxiliaryColumn}
             onMoveColumn={onMoveAuxiliaryColumn}
             onRemoveColumn={onRemoveAuxiliaryColumn}
           >
             {children}
           </SortableColumnCanvas>
-          <BackToTop scrollRoot={mainScrollRoot} />
         </div>
       </ImmersiveHeaderHiddenContext.Provider>
     )

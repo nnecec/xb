@@ -1,11 +1,12 @@
+import { cn } from 'cn'
 import { useReducedMotion } from 'motion/react'
 import { memo, useMemo } from 'react'
-import { PhotoProvider } from 'react-photo-view'
 
 import 'react-photo-view/dist/react-photo-view.css'
+import { PhotoProvider } from 'react-photo-view'
+
 import { getUiPortalContainer } from '@/components/ui/portal'
 import { useAppSettings } from '@/lib/app-settings-store'
-import { cn } from '@/lib/utils'
 
 import { PhotoToolbar } from '../photo-toolbar'
 import { MediaCollectionItemView } from './media-collection-item'

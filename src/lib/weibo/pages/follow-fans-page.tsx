@@ -1,8 +1,8 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
+import { cn } from 'cn'
 import { useParams, useSearchParams } from 'react-router'
 
 import { useAppSettings } from '@/lib/app-settings-store'
-import { cn } from '@/lib/utils'
 import { getContentWidthAdjustedMaxWidth } from '@/lib/weibo/app/content-width'
 import { useImmersiveHeaderClassName } from '@/lib/weibo/app/immersive-header'
 import { usePageRuntime } from '@/lib/weibo/app/page-runtime'

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { createContext, useContext, useState, type ReactNode, useEffect } from 'react'
+import { createContext, useContext, useState, type ReactNode } from 'react'
 
 import { longTextQueryOptions } from '@/lib/weibo/data/weibo-data'
 import type { FeedItem } from '@/lib/weibo/models/feed'
@@ -21,11 +21,10 @@ interface GenImageDialogProviderProps {
 
 export function GenImageDialogProvider({ children }: GenImageDialogProviderProps) {
   const [genImageItem, setGenImageItem] = useState<FeedItem | null>(null)
-  const [longTextEnabled, setLongTextEnabled] = useState(false)
-  const [retweetedLongTextEnabled, setRetweetedLongTextEnabled] = useState(false)
-
-  const canLoadLongText = genImageItem?.isLongText ?? false
-  const canLoadRetweetedLongText = genImageItem?.retweetedStatus?.isLongText ?? false
+  const longTextEnabled = genImageItem?.isLongText ?? false
+  const retweetedLongTextEnabled = genImageItem?.retweetedStatus?.isLongText ?? false
+  const canLoadLongText = longTextEnabled
+  const canLoadRetweetedLongText = retweetedLongTextEnabled
 
   const { data: longText, isLoading: isLoadingLongText } = useQuery({
     ...longTextQueryOptions(genImageItem?.mblogId ?? null, longTextEnabled && canLoadLongText),
@@ -37,21 +36,6 @@ export function GenImageDialogProvider({ children }: GenImageDialogProviderProps
       retweetedLongTextEnabled && canLoadRetweetedLongText,
     ),
   })
-
-  // Auto-enable long text loading when dialog opens with a long text item
-  useEffect(() => {
-    if (genImageItem?.isLongText) {
-      setLongTextEnabled(true)
-    } else {
-      setLongTextEnabled(false)
-    }
-
-    if (genImageItem?.retweetedStatus?.isLongText) {
-      setRetweetedLongTextEnabled(true)
-    } else {
-      setRetweetedLongTextEnabled(false)
-    }
-  }, [genImageItem])
 
   const hasResolvedLongText = Boolean(
     longText && (longText.longTextContent?.trim() || longText.longTextContent_raw?.trim()),
@@ -90,8 +74,6 @@ export function GenImageDialogProvider({ children }: GenImageDialogProviderProps
         openGenImage: setGenImageItem,
         closeGenImage: () => {
           setGenImageItem(null)
-          setLongTextEnabled(false)
-          setRetweetedLongTextEnabled(false)
         },
         genImageItem,
         resolvedItem,

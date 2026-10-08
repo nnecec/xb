@@ -11,7 +11,8 @@
   ],
   "project": ["src/**/*.{ts,tsx,css}", "*.config.{ts,mjs}"],
   "ignoreDependencies": [
-    "@videojs/core",
+    "@videojs/dash-video",
+    "@videojs/hlsjs-video",
     "@semantic-release/commit-analyzer",
     "@semantic-release/github",
     "@semantic-release/npm",

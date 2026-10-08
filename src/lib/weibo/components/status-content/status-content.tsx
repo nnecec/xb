@@ -1,3 +1,4 @@
+import { cn } from 'cn'
 import { ChevronRightIcon } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { Link } from 'react-router'
@@ -16,7 +17,6 @@ import {
 } from '@/components/ui/table'
 import type { ContentDisplay, WeiboCardMediaCollapseType } from '@/lib/app-settings'
 import { useAppSettings } from '@/lib/app-settings-store'
-import { cn } from '@/lib/utils'
 import { useEmoticonConfigQuery } from '@/lib/weibo/app/emoticon-query'
 import { CollapsibleMedia } from '@/lib/weibo/components/collapsible-media'
 import { buildMediaCollectionItems, MediaCollection } from '@/lib/weibo/components/media-collection'

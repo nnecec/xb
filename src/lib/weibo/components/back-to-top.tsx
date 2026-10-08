@@ -1,8 +1,8 @@
 import { useScroll } from '@reactuses/core'
+import { cn } from 'cn'
 import { ArrowUp } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 
 interface BackToTopProps {
   /**

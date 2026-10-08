@@ -99,7 +99,11 @@ interface SettingsDialogProps {
 }
 
 export function SettingsDialog({ open, onOpenChange, forceMount = false }: SettingsDialogProps) {
-  const [version, setVersion] = useState('')
+  const [version] = useState(() =>
+    typeof browser !== 'undefined' && browser.runtime?.getManifest
+      ? browser.runtime.getManifest().version
+      : '',
+  )
   const [activeModule, setActiveModule] = useState<SettingsModuleId>('display')
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [fontFamilyLoading, setFontFamilyLoading] = useState(false)
@@ -135,12 +139,9 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
     })),
   )
 
-  useEffect(() => {
-    if (typeof browser !== 'undefined' && browser.runtime?.getManifest) {
-      setVersion(browser.runtime.getManifest().version)
-    }
-  }, [])
-
+  const runTrackedSaveRef = useRef<(operation: () => Promise<void>) => Promise<void>>(
+    async () => {},
+  )
   const runTrackedSave = useCallback(async (operation: () => Promise<void>) => {
     const sequence = ++saveSequenceRef.current
     setSaveStatus('saving')
@@ -152,10 +153,16 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
     } catch {
       if (sequence !== saveSequenceRef.current) return
 
-      retrySaveRef.current = () => void runTrackedSave(operation)
+      retrySaveRef.current = () => {
+        void runTrackedSaveRef.current(operation)
+      }
       setSaveStatus('error')
     }
   }, [])
+
+  useEffect(() => {
+    runTrackedSaveRef.current = runTrackedSave
+  }, [runTrackedSave])
 
   const trackedUpdateSettings = useCallback<AppSettingsStoreState['updateSettings']>(
     async (patch) => {
