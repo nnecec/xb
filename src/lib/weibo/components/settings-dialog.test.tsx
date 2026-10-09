@@ -69,15 +69,33 @@ describe('SettingsDialog', () => {
     expect(screen.queryByText('设置搜索')).not.toBeInTheDocument()
   })
 
-  it('shows display settings by default and reveals the custom width slider', () => {
-    mockSettings.contentWidth = 'custom'
-    mockSettings.customContentWidth = 1340
+  it('always shows multi-column width settings and reveals the custom slider', () => {
+    mockSettings.columnWidth = 'custom'
+    mockSettings.customColumnWidth = 500
 
     render(<SettingsDialog open onOpenChange={() => {}} />)
 
     expect(screen.getByRole('button', { name: '显示' })).toHaveAttribute('aria-current', 'page')
-    expect(screen.getByRole('slider', { name: '自定义内容宽度' })).toHaveValue(1340)
-    expect(screen.getByText('1340px')).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: '列宽度' })).toHaveTextContent('自定义')
+    expect(screen.getByRole('slider', { name: '自定义列宽度' })).toHaveValue(500)
+    expect(screen.getByText('500px')).toBeInTheDocument()
+    expect(screen.queryByRole('switch', { name: '启用多列模式' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: '内容宽度' })).not.toBeInTheDocument()
+  })
+
+  it('resets display settings without changing the workspace mode', async () => {
+    const user = userEvent.setup()
+    render(<SettingsDialog open onOpenChange={() => {}} />)
+
+    await user.click(screen.getByRole('button', { name: '恢复默认设置' }))
+    await user.click(screen.getByRole('button', { name: '恢复默认' }))
+
+    expect(mockUpdateSettings).toHaveBeenCalledWith({
+      columnWidth: DEFAULT_APP_SETTINGS.columnWidth,
+      customColumnWidth: DEFAULT_APP_SETTINGS.customColumnWidth,
+      motionPreference: DEFAULT_APP_SETTINGS.motionPreference,
+      darkModeImageDim: DEFAULT_APP_SETTINGS.darkModeImageDim,
+    })
   })
 
   it('switches modules and remembers the active module while the dialog stays mounted', async () => {
@@ -160,16 +178,14 @@ describe('SettingsDialog', () => {
     expect(screen.getByText('默认折叠回复')).toBeInTheDocument()
   })
 
-  it('separates media and action controls and progressively discloses fine tuning', async () => {
+  it('shows media and action fine-tuning controls by default', async () => {
     const user = userEvent.setup()
     render(<SettingsDialog open onOpenChange={() => {}} />)
 
     await user.click(screen.getByRole('button', { name: '媒体' }))
-    expect(screen.queryByRole('slider', { name: '单图最大宽度' })).not.toBeInTheDocument()
-
-    await user.click(screen.getByRole('button', { name: '精细调整' }))
     expect(screen.getByRole('slider', { name: '单图最大宽度' })).toHaveValue(450)
     expect(screen.getByRole('slider', { name: '单视频最大宽度' })).toHaveValue(650)
+    expect(screen.queryByRole('button', { name: '精细调整' })).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: '操作' }))
     expect(screen.getByRole('radio', { name: /X 风格/ })).toBeInTheDocument()
@@ -178,9 +194,8 @@ describe('SettingsDialog', () => {
     expect(screen.queryByRole('button', { name: /向前移动|向后移动/ })).not.toBeInTheDocument()
   })
 
-  it('uses a flat navigation model and disables right-rail children with the parent', async () => {
+  it('keeps navigation settings focused on the first page and left rail', async () => {
     const user = userEvent.setup()
-    mockSettings.showRightRail = false
     render(<SettingsDialog open onOpenChange={() => {}} />)
 
     await user.click(screen.getByRole('button', { name: '导航布局' }))
@@ -188,10 +203,11 @@ describe('SettingsDialog', () => {
     const firstOpen = screen.getByText('首次打开')
     const leftNavigation = screen.getByText('左侧导航')
     expect(firstOpen.compareDocumentPosition(leftNavigation)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
-    expect(screen.getByRole('switch', { name: '显示右侧栏' })).not.toBeChecked()
-    expect(screen.getByRole('switch', { name: '显示热搜卡片' })).toBeDisabled()
-    expect(screen.getByRole('switch', { name: '显示超话卡片' })).toBeDisabled()
     expect(screen.getByRole('combobox', { name: '首页默认时间线' })).toBeInTheDocument()
+    expect(screen.queryByText('右侧栏')).not.toBeInTheDocument()
+    expect(screen.queryByRole('switch', { name: '显示右侧栏' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('switch', { name: '显示热搜卡片' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('switch', { name: '显示超话卡片' })).not.toBeInTheDocument()
   })
 
   it('confirms and resets only the active tab group', async () => {

@@ -1,4 +1,4 @@
-import { ChevronDown, XIcon } from 'lucide-react'
+import { XIcon } from 'lucide-react'
 import { Dialog as DialogPrimitive } from 'radix-ui'
 import React from 'react'
 
@@ -14,7 +14,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
   Field as UiField,
   FieldContent,
@@ -202,25 +201,8 @@ export function OptionPills<T extends string>({
   )
 }
 
-export function FineTuning({
-  children,
-  defaultOpen = false,
-}: {
-  children: React.ReactNode
-  defaultOpen?: boolean
-}) {
-  return (
-    <Collapsible defaultOpen={defaultOpen} className="border-t py-3">
-      <CollapsibleTrigger className="group text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 flex min-h-8 w-full items-center justify-between rounded-md text-left text-xs font-medium focus-visible:ring-3 focus-visible:outline-none">
-        精细调整
-        <ChevronDown
-          aria-hidden="true"
-          className="size-4 transition-transform group-data-[state=open]:rotate-180"
-        />
-      </CollapsibleTrigger>
-      <CollapsibleContent className="pt-2">{children}</CollapsibleContent>
-    </Collapsible>
-  )
+export function FineTuning({ children }: { children: React.ReactNode }) {
+  return <div className="border-t py-3">{children}</div>
 }
 
 export function ResetSectionButton({
