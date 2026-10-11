@@ -1,4 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
+import { cn } from 'cn'
+import { useCallback } from 'react'
 import { Link } from 'react-router'
 
 import { Button } from '@/components/ui/button'
@@ -7,6 +9,7 @@ import { RefreshCWIcon } from '@/components/ui/refresh-cw'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -14,8 +17,8 @@ import {
 import { Spinner } from '@/components/ui/spinner'
 import type { HotSearchType } from '@/lib/app-settings'
 import { useAppSettings, useShallow } from '@/lib/app-settings-store'
-import { cn } from '@/lib/utils'
 import { hotSearchQueryOptions } from '@/lib/weibo/data/weibo-data'
+import { useColumnPageRefresh } from '@/lib/weibo/workspace/column-page-toolbar'
 
 const HOT_SEARCH_TYPES: { value: HotSearchType; label: string }[] = [
   { value: 'hot', label: '热搜' },
@@ -44,14 +47,22 @@ function getRankClassName(index: number): string {
   return 'text-muted-foreground'
 }
 
-function HotSearchItemComponent({ item, index }: { item: HotSearchListData; index: number }) {
+function HotSearchItemComponent({
+  item,
+  index,
+  forceExternalLink = false,
+}: {
+  item: HotSearchListData
+  index: number
+  forceExternalLink?: boolean
+}) {
   const word = normalizeWord(item.word)
   const xbTopicPage = useAppSettings((s) => s.xbTopicPage)
 
   const className =
     'group hover:bg-accent/80 focus-visible:bg-accent/80 focus-visible:ring-ring/50 flex w-full min-w-0 items-center gap-2 rounded-lg px-2 py-2 transition-colors focus-visible:ring-2 focus-visible:outline-none'
 
-  if (!xbTopicPage) {
+  if (!xbTopicPage || forceExternalLink) {
     const url = `https://s.weibo.com/weibo?q=${encodeURIComponent(`#${word}#`)}`
     return (
       <a href={url} target="_blank" rel="noopener noreferrer" className={className}>
@@ -83,15 +94,24 @@ function HotSearchItemComponent({ item, index }: { item: HotSearchListData; inde
 
 interface HotSearchCardProps {
   className?: string
+  type?: HotSearchType
+  showTypeSelector?: boolean
+  variant?: 'rail' | 'column'
 }
 
-export function HotSearchCard({ className }: HotSearchCardProps) {
-  const { hotSearchType: selectedType, updateSettings } = useAppSettings(
+export function HotSearchCard({
+  className,
+  type,
+  showTypeSelector = type === undefined,
+  variant = 'rail',
+}: HotSearchCardProps) {
+  const { hotSearchType, updateSettings } = useAppSettings(
     useShallow((s) => ({
       hotSearchType: s.hotSearchType,
       updateSettings: s.updateSettings,
     })),
   )
+  const selectedType = type ?? hotSearchType
 
   const currentQuery = useQuery(hotSearchQueryOptions(selectedType))
   const items =
@@ -103,34 +123,55 @@ export function HotSearchCard({ className }: HotSearchCardProps) {
       labelName: item.labelName,
     })) ?? []
 
+  const refetchHotSearch = currentQuery.refetch
+  const refreshHotSearch = useCallback(() => {
+    void refetchHotSearch()
+  }, [refetchHotSearch])
+  useColumnPageRefresh(refreshHotSearch, currentQuery.isFetching && !currentQuery.isLoading)
+
   return (
     <Card className={className}>
-      <div className="flex items-center justify-between gap-2">
-        <Select
-          value={selectedType}
-          onValueChange={(value) => void updateSettings({ hotSearchType: value as HotSearchType })}
-        >
-          <SelectTrigger size="sm" className="w-fit">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent align="start">
-            {HOT_SEARCH_TYPES.map((type) => (
-              <SelectItem key={type.value} value={type.value}>
-                {type.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          onClick={() => currentQuery.refetch()}
-          disabled={currentQuery.isFetching}
-          title="刷新热搜"
-        >
-          <RefreshCWIcon className={cn(currentQuery.isFetching && 'animate-spin')} />
-        </Button>
-      </div>
+      {variant === 'column' ? null : (
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-1">
+            {showTypeSelector ? (
+              <Select
+                value={selectedType}
+                onValueChange={(value) =>
+                  void updateSettings({ hotSearchType: value as HotSearchType })
+                }
+              >
+                <SelectTrigger size="sm" className="w-fit">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent align="start">
+                  <SelectGroup>
+                    {HOT_SEARCH_TYPES.map((typeOption) => (
+                      <SelectItem key={typeOption.value} value={typeOption.value}>
+                        {typeOption.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            ) : (
+              <h2 className="truncate px-1 text-sm font-semibold">
+                {HOT_SEARCH_TYPES.find((typeOption) => typeOption.value === selectedType)?.label ??
+                  '热搜'}
+              </h2>
+            )}
+          </div>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={() => currentQuery.refetch()}
+            disabled={currentQuery.isFetching}
+            title="刷新热搜"
+          >
+            <RefreshCWIcon className={cn(currentQuery.isFetching && 'animate-spin')} />
+          </Button>
+        </div>
+      )}
       {currentQuery.isLoading ? (
         <div className="flex justify-center py-4">
           <Spinner />
@@ -140,9 +181,19 @@ export function HotSearchCard({ className }: HotSearchCardProps) {
       ) : items.length === 0 ? (
         <CardDescription className="px-2 pb-2">暂无热搜</CardDescription>
       ) : (
-        <div className="h-[380px] w-full scrollbar-none overflow-x-hidden overflow-y-auto">
+        <div
+          className={cn(
+            'w-full scrollbar-none overflow-x-hidden overflow-y-auto',
+            variant === 'rail' && 'h-[380px]',
+          )}
+        >
           {items.map((item, index) => (
-            <HotSearchItemComponent key={`${item.type}-${item.word}`} item={item} index={index} />
+            <HotSearchItemComponent
+              key={`${item.type}-${item.word}`}
+              item={item}
+              index={index}
+              forceExternalLink={variant === 'column'}
+            />
           ))}
         </div>
       )}
