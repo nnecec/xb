@@ -57,6 +57,10 @@ vi.mock('@/lib/weibo/components/gen-image-dialog-context', async () => {
   }
 })
 
+vi.mock('@/lib/weibo/app/page-runtime', () => ({
+  usePageRuntime: () => ({ back: vi.fn() }),
+}))
+
 function createStatus(id: string, overrides: Partial<FeedItem> = {}): FeedItem {
   return {
     id,

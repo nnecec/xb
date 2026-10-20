@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { cn } from 'cn'
 import { Bookmark } from 'lucide-react'
 import {
   createContext,
@@ -13,7 +14,6 @@ import {
   type KeyboardEvent,
   type MouseEvent,
 } from 'react'
-import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
 
 import { Badge } from '@/components/ui/badge'
@@ -28,7 +28,7 @@ import {
   type WeiboCardMediaCollapseType,
 } from '@/lib/app-settings'
 import { useAppSettings, useShallow } from '@/lib/app-settings-store'
-import { cn } from '@/lib/utils'
+import { usePageRuntime } from '@/lib/weibo/app/page-runtime'
 import { FeedCardMoreMenu } from '@/lib/weibo/components/feed-card-more-menu'
 import { FeedCommentsExpanded } from '@/lib/weibo/components/feed-comments-expanded'
 import { useGenImageDialog } from '@/lib/weibo/components/gen-image-dialog-context'
@@ -135,8 +135,8 @@ export const StatusCard = memo(function StatusCard({ status }: { status: FeedIte
 })
 
 export const DetailStatusCard = memo(function DetailStatusCard({ status }: { status: FeedItem }) {
-  const navigate = useNavigate()
-  const handleRootDeleted = useCallback(() => navigate(-1), [navigate])
+  const runtime = usePageRuntime()
+  const handleRootDeleted = useCallback(() => runtime.back(), [runtime])
   return <StatusCardRoot status={status} surface="detail" onRootDeleted={handleRootDeleted} />
 })
 
