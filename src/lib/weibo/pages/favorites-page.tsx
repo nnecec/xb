@@ -1,28 +1,31 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router'
 
 import { useAppSettings } from '@/lib/app-settings-store'
-import { useAppShellContext } from '@/lib/weibo/app/app-shell-layout'
+import { usePageRuntime } from '@/lib/weibo/app/page-runtime'
 import { InfiniteFeedList } from '@/lib/weibo/components/infinite-feed-list'
 import { TimelineTopBar } from '@/lib/weibo/components/timeline-top-bar'
 import { favoritesInfiniteOptions } from '@/lib/weibo/data/weibo-data'
 import type { TimelinePage } from '@/lib/weibo/models/feed'
-import { useWeiboPage } from '@/lib/weibo/route/use-weibo-page'
 
 const SAVED_LIST_OPTIONS = [
   { value: 'favorites', label: '我的收藏' },
   { value: 'liked', label: '我的赞' },
 ]
 
-export function FavoritesPage() {
-  const ctx = useAppShellContext()
-  const page = useWeiboPage()
-  const navigate = useNavigate()
+export function FavoritesPage({
+  source,
+  onSavedListChange,
+}: {
+  source?: { uid: string }
+  onSavedListChange?: (value: 'favorites' | 'liked') => void
+} = {}) {
+  const runtime = usePageRuntime()
+  const page = runtime.page
   const rewriteEnabled = useAppSettings((s) => s.rewriteEnabled)
 
-  const uid = page.kind === 'favorites' ? page.uid : ''
-  const isEnabled = rewriteEnabled && page.kind === 'favorites'
+  const uid = source?.uid ?? (page.kind === 'favorites' ? page.uid : '')
+  const isEnabled = rewriteEnabled && (source !== undefined || page.kind === 'favorites')
 
   const favoritesQuery = useInfiniteQuery({
     ...favoritesInfiniteOptions(uid),
@@ -45,14 +48,14 @@ export function FavoritesPage() {
   const wasRefreshingRef = useRef(false)
   useEffect(() => {
     if (wasRefreshingRef.current && !isRefreshing) {
-      ctx.scrollMainToTop()
+      runtime.scrollToTop()
     }
     wasRefreshingRef.current = isRefreshing
-  }, [isRefreshing, ctx])
+  }, [isRefreshing, runtime])
 
   const handleSavedListChange = (value: string) => {
     if (value === 'liked' && uid !== '') {
-      navigate(`/u/page/like/${uid}`)
+      runtime.navigate(`/u/page/like/${uid}`)
     }
   }
 
@@ -62,12 +65,17 @@ export function FavoritesPage() {
         title="我的收藏"
         titleOptions={SAVED_LIST_OPTIONS}
         titleValue="favorites"
-        onTitleChange={handleSavedListChange}
+        onTitleChange={(value) =>
+          onSavedListChange
+            ? onSavedListChange(value as 'favorites' | 'liked')
+            : handleSavedListChange(value)
+        }
         onRefresh={() => void favoritesQuery.refetch()}
         isRefreshing={isRefreshing}
       />
 
       <InfiniteFeedList
+        scrollRootRef={runtime.scrollRootRef}
         pages={favoritesQuery.data?.pages as TimelinePage[] | undefined}
         emptyLabel="暂无收藏内容"
         loadingLabel="正在加载收藏…"

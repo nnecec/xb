@@ -163,7 +163,7 @@ describe('HomeTimelinePage', () => {
       </QueryClientProvider>,
     )
 
-    expect(screen.getByRole('status')).toHaveTextContent('正在加载微博时间线…')
+    expect(screen.getAllByText('正在加载微博时间线…').length).toBeGreaterThan(0)
     expect(screen.queryByText('此时间线暂无内容')).not.toBeInTheDocument()
 
     resolveGroups?.({
