@@ -1,6 +1,3 @@
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
-
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -12,11 +9,6 @@ import {
   VideoPlaybackRateMenuContent,
   VideoQualityMenu,
 } from './video-settings-menu'
-
-const videoPlayerCss = readFileSync(
-  join(process.cwd(), 'src/lib/weibo/components/media-player/video-player.css'),
-  'utf8',
-)
 
 vi.mock('@reactuses/core', () => ({
   useIntersectionObserver: vi.fn(),
@@ -52,13 +44,7 @@ describe('VideoPlayback', () => {
     Object.assign(browser.runtime, { sendMessage: originalRuntimeSendMessage })
   })
 
-  it('keeps controls mounted before on-demand playback starts so hover can reveal them', () => {
-    expect(videoPlayerCss).toContain(
-      '.media-default-skin--video[data-playback-idle]:not(:hover):not(:focus-within)',
-    )
-    expect(videoPlayerCss).toContain('@media (hover: hover) and (pointer: fine)')
-    expect(videoPlayerCss).not.toContain('restart state handled by bottom bar')
-
+  it('hides the control bar until on-demand playback starts', () => {
     render(
       <VideoPlayback
         media={{
@@ -72,12 +58,31 @@ describe('VideoPlayback', () => {
 
     const video = document.querySelector('video')
     expect(video).toBeInTheDocument()
-    expect(document.querySelector('.media-controls--root')).toBeInTheDocument()
-    expect(document.querySelector('.media-default-skin--video')).toHaveAttribute(
-      'data-playback-idle',
-    )
+    expect(document.querySelector('.video-controls-content')).not.toBeInTheDocument()
+    expect(document.querySelector('.media-skin')).toHaveAttribute('data-theme', 'default')
+    expect(document.querySelector('.media-skin')).toHaveAttribute('data-preset', 'video')
 
     expect(screen.getByRole('button', { name: '播放' })).toBeInTheDocument()
+  })
+
+  it('plays the paused video when the center play button is clicked', async () => {
+    render(
+      <VideoPlayback
+        media={{
+          kind: 'video',
+          sessionId: 'status-1:video-1:video',
+          src: 'https://example.com/video.mp4',
+        }}
+      />,
+    )
+
+    const video = document.querySelector('video')!
+    const play = vi.fn(() => Promise.resolve())
+    Object.defineProperty(video, 'play', { configurable: true, value: play })
+
+    fireEvent.click(screen.getByRole('button', { name: '播放' }))
+
+    expect(play).toHaveBeenCalledTimes(1)
   })
 
   it('keeps live controls hidden until playback starts', () => {
@@ -95,10 +100,10 @@ describe('VideoPlayback', () => {
     const video = document.querySelector('video')
     expect(video).toBeInTheDocument()
     expect(video?.poster).toBe('https://example.com/cover.jpg')
-    expect(document.querySelector('.media-controls--root')).not.toBeInTheDocument()
+    expect(document.querySelector('.video-controls-content')).not.toBeInTheDocument()
 
     fireEvent.pointerDown(video!)
-    expect(document.querySelector('.media-controls--root')).not.toBeInTheDocument()
+    expect(document.querySelector('.video-controls-content')).not.toBeInTheDocument()
   })
 
   it('detects active playback for the center play state', () => {
@@ -223,7 +228,7 @@ describe('VideoPlayback', () => {
       'poster',
       'https://example.com/cover.jpg',
     )
-    expect(document.querySelector('.media-controls--root')).not.toBeInTheDocument()
+    expect(document.querySelector('.video-controls-content')).not.toBeInTheDocument()
   })
 
   it('restores an on-demand position when the same playback session remounts', async () => {
