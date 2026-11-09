@@ -1,17 +1,12 @@
 import useEmblaCarousel from 'embla-carousel-react'
 import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type {
-  KeyboardEvent as ReactKeyboardEvent,
-  MouseEvent as ReactMouseEvent,
-  PointerEvent as ReactPointerEvent,
-} from 'react'
+import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
 
 interface UseMediaStripInteractionOptions {
   enabled: boolean
   itemIds: string[]
   initialItemId?: string
-  dragFree: boolean
   onVisibleItemChange?: (itemId: string) => void
 }
 
@@ -21,61 +16,57 @@ function resolveInitialIndex(itemIds: string[], initialItemId?: string) {
   return index < 0 ? 0 : index
 }
 
+/**
+ * 横向媒体条与 Embla 的接线。
+ *
+ * 拖动、松手惯性、拖后点击抑制全部交给 Embla 自己：
+ * - 拖动：Embla 在视口节点上监听 `mousedown`/`touchstart`，在 `document` 上跟踪
+ *   `mousemove`/`mouseup`；
+ * - 惯性：`dragFree`；
+ * - 拖后点击抑制：`mousemove` 超过 `dragThreshold` 后，Embla 在视口节点的 click
+ *   捕获阶段 `stopPropagation` + `preventDefault`。
+ *
+ * 这里不再维护指针状态机、不再合成 `mouseup`、也不再自己拦截 click。
+ *
+ * 唯一的硬约束：Embla 的 options 必须保持稳定。`embla-carousel-react` 会对 options
+ * 做值比较并在变化时调用 `reInit()`，而 `reInit()` 会销毁进行中的拖动
+ * （`dragHandler.destroy()`，连拖后点击抑制标志一起丢弃）并把位置硬重置到对齐后的
+ * snap（`translate.clear()` 后按 `startIndex` 重建）。那正是"松手瞬间吸附到左边缘、
+ * 惯性消失、并且这一次点击落到大图上"的成因，所以 `startIndex` 只在挂载时读取一次。
+ */
 export function useMediaStripInteraction({
   enabled,
   itemIds,
   initialItemId,
-  dragFree,
   onVisibleItemChange,
 }: UseMediaStripInteractionOptions) {
-  const initialIndex = resolveInitialIndex(itemIds, initialItemId)
+  const rootRef = useRef<HTMLDivElement | null>(null)
   const itemIdsRef = useRef(itemIds)
+  const initialIndex = resolveInitialIndex(itemIds, initialItemId)
+  // Embla 只在创建引擎时读取 startIndex，挂载后传入新值只会触发 reInit（见文件头注释）。
+  const [startIndex] = useState(initialIndex)
   const currentItemIdRef = useRef(itemIds[initialIndex])
-  const rootRef = useRef<HTMLDivElement>(null)
-  const pointerStartXRef = useRef<number | null>(null)
-  const activePointerIdRef = useRef<number | null>(null)
-  const activePointerTypeRef = useRef<string | null>(null)
-  const suppressNextClickRef = useRef(false)
   const [activeIndex, setActiveIndex] = useState(initialIndex)
   const itemIdentity = itemIds.join('\u0000')
   const previousItemIdentityRef = useRef(itemIdentity)
-  const [isDragging, setIsDragging] = useState(false)
   const plugins = useMemo(() => [WheelGesturesPlugin({ wheelDraggingClass: '' })], [])
-  const [emblaRef, emblaApi] = useEmblaCarousel(
-    {
-      axis: 'x',
-      align: 'start',
-      dragFree,
-      containScroll: 'trimSnaps',
+  const options = useMemo(
+    () => ({
+      axis: 'x' as const,
+      align: 'start' as const,
+      // 惯性是这条横向条的交互模型本身（松手后自由滑行），不随 reduced motion 开关变化。
+      dragFree: true,
+      containScroll: 'trimSnaps' as const,
       loop: false,
-      startIndex: initialIndex,
-    },
-    plugins,
+      startIndex,
+    }),
+    [startIndex],
   )
+  const [emblaRef, emblaApi] = useEmblaCarousel(options, plugins)
 
-  itemIdsRef.current = itemIds
-
-  const clearDrag = useCallback((clearClickGuard = true) => {
-    setIsDragging(false)
-    pointerStartXRef.current = null
-    activePointerIdRef.current = null
-    activePointerTypeRef.current = null
-    if (clearClickGuard) suppressNextClickRef.current = false
-  }, [])
-
-  const releaseEmblaDrag = useCallback(() => {
-    const root = rootRef.current
-    if (!root || activePointerIdRef.current === null || activePointerTypeRef.current !== 'mouse') {
-      return
-    }
-
-    root.ownerDocument.dispatchEvent(
-      new MouseEvent('mouseup', {
-        bubbles: true,
-        cancelable: true,
-      }),
-    )
-  }, [])
+  useEffect(() => {
+    itemIdsRef.current = itemIds
+  }, [itemIds])
 
   const setRootRef = useCallback(
     (node: HTMLDivElement | null) => {
@@ -86,50 +77,26 @@ export function useMediaStripInteraction({
   )
 
   useEffect(() => {
-    if (!emblaApi || !enabled) {
-      clearDrag()
-      return
-    }
+    if (!emblaApi || !enabled) return
 
-    const updateVisibleItem = () => {
-      const maxIndex = Math.max(itemIdsRef.current.length - 1, 0)
-      const index = Math.min(Math.max(emblaApi.selectedScrollSnap(), 0), maxIndex)
+    const syncSelectedItem = () => {
+      const lastIndex = Math.max(itemIdsRef.current.length - 1, 0)
+      const index = Math.min(Math.max(emblaApi.selectedScrollSnap(), 0), lastIndex)
       const itemId = itemIdsRef.current[index]
       setActiveIndex(index)
       currentItemIdRef.current = itemId
       if (itemId) onVisibleItemChange?.(itemId)
     }
-    const handleWindowRelease = (event: PointerEvent) => {
-      if (event.pointerId !== activePointerIdRef.current) return
-      if (event.type === 'pointercancel') releaseEmblaDrag()
-      const target = event.target
-      const releasedInside = target instanceof Node && rootRef.current?.contains(target)
-      clearDrag(!releasedInside)
-    }
-    const handleEmblaPointerUp = () => clearDrag(false)
-    const handleWindowBlur = () => {
-      releaseEmblaDrag()
-      clearDrag()
-    }
 
-    emblaApi.on('select', updateVisibleItem)
-    emblaApi.on('reInit', updateVisibleItem)
-    emblaApi.on('pointerUp', handleEmblaPointerUp)
-    window.addEventListener('pointerup', handleWindowRelease)
-    window.addEventListener('pointercancel', handleWindowRelease)
-    window.addEventListener('blur', handleWindowBlur)
-    updateVisibleItem()
+    emblaApi.on('select', syncSelectedItem)
+    emblaApi.on('reInit', syncSelectedItem)
+    syncSelectedItem()
 
     return () => {
-      emblaApi.off('select', updateVisibleItem)
-      emblaApi.off('reInit', updateVisibleItem)
-      emblaApi.off('pointerUp', handleEmblaPointerUp)
-      window.removeEventListener('pointerup', handleWindowRelease)
-      window.removeEventListener('pointercancel', handleWindowRelease)
-      window.removeEventListener('blur', handleWindowBlur)
-      clearDrag()
+      emblaApi.off('select', syncSelectedItem)
+      emblaApi.off('reInit', syncSelectedItem)
     }
-  }, [clearDrag, emblaApi, enabled, onVisibleItemChange, releaseEmblaDrag])
+  }, [emblaApi, enabled, onVisibleItemChange])
 
   useEffect(() => {
     if (previousItemIdentityRef.current === itemIdentity) return
@@ -177,67 +144,25 @@ export function useMediaStripInteraction({
 
   const handleKeyDown = useCallback(
     (event: ReactKeyboardEvent<HTMLDivElement>) => {
+      if (!emblaApi) return
+      const lastIndex = Math.max(itemIds.length - 1, 0)
+      const currentIndex = emblaApi.selectedScrollSnap()
       let nextIndex: number | null = null
-      if (event.key === 'ArrowLeft') nextIndex = activeIndex - 1
-      if (event.key === 'ArrowRight') nextIndex = activeIndex + 1
+      if (event.key === 'ArrowLeft') nextIndex = currentIndex - 1
+      if (event.key === 'ArrowRight') nextIndex = currentIndex + 1
       if (event.key === 'Home') nextIndex = 0
-      if (event.key === 'End') nextIndex = itemIds.length - 1
+      if (event.key === 'End') nextIndex = lastIndex
       if (nextIndex === null) return
 
       event.preventDefault()
-      const clampedIndex = Math.min(Math.max(nextIndex, 0), itemIds.length - 1)
-      const itemId = itemIds[clampedIndex]
-      setActiveIndex(clampedIndex)
-      currentItemIdRef.current = itemId
-      if (itemId) onVisibleItemChange?.(itemId)
-      emblaApi?.scrollTo(clampedIndex)
+      emblaApi.scrollTo(Math.min(Math.max(nextIndex, 0), lastIndex))
     },
-    [activeIndex, emblaApi, itemIds, onVisibleItemChange],
-  )
-
-  const handlePointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.pointerType === 'mouse' && event.button !== 0) return
-    pointerStartXRef.current = event.clientX
-    activePointerIdRef.current = event.pointerId
-    activePointerTypeRef.current = event.pointerType
-    suppressNextClickRef.current = false
-  }, [])
-
-  const handlePointerMove = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    if (
-      event.pointerId === activePointerIdRef.current &&
-      pointerStartXRef.current !== null &&
-      Math.abs(event.clientX - pointerStartXRef.current) > 5
-    ) {
-      suppressNextClickRef.current = true
-      setIsDragging(true)
-    }
-  }, [])
-
-  const handleClickCapture = useCallback((event: ReactMouseEvent<HTMLDivElement>) => {
-    if (!suppressNextClickRef.current) return
-    suppressNextClickRef.current = false
-    event.preventDefault()
-    event.stopPropagation()
-  }, [])
-
-  const handlePointerEnd = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (event.pointerId !== activePointerIdRef.current) return
-      releaseEmblaDrag()
-      clearDrag()
-    },
-    [clearDrag, releaseEmblaDrag],
+    [emblaApi, itemIds.length],
   )
 
   return {
     activeIndex,
-    isDragging,
     setRootRef,
-    handleClickCapture,
     handleKeyDown,
-    handlePointerDown,
-    handlePointerMove,
-    handlePointerEnd,
   }
 }

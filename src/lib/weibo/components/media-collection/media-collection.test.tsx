@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -18,31 +19,6 @@ function createImages(count: number) {
 
 function createItems(count: number) {
   return buildMediaCollectionItems(createImages(count))
-}
-
-function firePointerEvent(
-  target: HTMLElement | Window,
-  type: string,
-  {
-    button = 0,
-    clientX = 0,
-    pointerId,
-    pointerType = 'mouse',
-  }: {
-    button?: number
-    clientX?: number
-    pointerId: number
-    pointerType?: string
-  },
-) {
-  const event = new Event(type, { bubbles: true, cancelable: true })
-  Object.defineProperties(event, {
-    button: { value: button },
-    clientX: { value: clientX },
-    pointerId: { value: pointerId },
-    pointerType: { value: pointerType },
-  })
-  fireEvent(target, event)
 }
 
 const { photoViewClickSpy } = vi.hoisted(() => ({
@@ -329,7 +305,7 @@ describe('MediaCollection', () => {
 
     const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
     expect(strip).toHaveStyle({ height: '480px' })
-    expect(strip).toHaveClass('[touch-action:pan-y]')
+    expect(strip.firstElementChild).toHaveClass('[touch-action:pan-y_pinch-zoom]')
 
     const items = strip.querySelectorAll<HTMLElement>('[data-media-strip-item]')
     expect(items).toHaveLength(2)
@@ -351,47 +327,6 @@ describe('MediaCollection', () => {
     fireEvent.keyDown(strip, { key: 'End' })
     expect(emblaApi.scrollTo).toHaveBeenNthCalledWith(1, 0)
     expect(emblaApi.scrollTo).toHaveBeenNthCalledWith(2, 1)
-  })
-
-  it('suppresses the lightbox click after an Embla drag, then resets on the next click', () => {
-    const store = getAppSettingsStore()
-    store.setState({
-      weiboCardMultiMediaLayout: 'horizontal',
-    })
-
-    render(<MediaCollection presentation="card" items={createItems(2)} />)
-
-    const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
-    const photoView = screen.getAllByTestId('photo-view')[0]!
-
-    firePointerEvent(strip, 'pointerdown', {
-      pointerId: 7,
-      pointerType: 'mouse',
-      button: 0,
-      clientX: 300,
-    })
-    expect(strip).toHaveClass('cursor-grab')
-
-    firePointerEvent(strip, 'pointermove', {
-      pointerId: 7,
-      pointerType: 'mouse',
-      clientX: 220,
-    })
-    expect(strip).toHaveClass('cursor-grabbing')
-
-    firePointerEvent(strip, 'pointerup', {
-      pointerId: 7,
-      pointerType: 'mouse',
-      clientX: 220,
-    })
-    act(() => emitEmblaEvent('pointerUp'))
-    expect(strip).toHaveClass('cursor-grab')
-
-    fireEvent.click(photoView)
-    expect(photoViewClickSpy).not.toHaveBeenCalled()
-
-    fireEvent.click(photoView)
-    expect(photoViewClickSpy).toHaveBeenCalledTimes(1)
   })
 
   it('announces the Embla-selected media item after select and reInit', () => {
@@ -459,123 +394,6 @@ describe('MediaCollection', () => {
     expect(strip).toHaveClass('outline-none', 'focus-visible:ring-3', 'focus-visible:ring-inset')
   })
 
-  it.each([
-    [
-      'pointercancel',
-      21,
-      (strip: HTMLElement, pointerId: number) =>
-        firePointerEvent(strip, 'pointercancel', { pointerId }),
-    ],
-    [
-      'lostpointercapture',
-      22,
-      (strip: HTMLElement, pointerId: number) =>
-        firePointerEvent(strip, 'lostpointercapture', { pointerId }),
-    ],
-  ])('clears dragging state on %s', (_name, pointerId, finish) => {
-    const store = getAppSettingsStore()
-    store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
-    render(<MediaCollection presentation="card" items={createItems(2)} />)
-
-    const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
-    firePointerEvent(strip, 'pointerdown', {
-      pointerId,
-      pointerType: 'mouse',
-      button: 0,
-      clientX: 300,
-    })
-    firePointerEvent(strip, 'pointermove', { pointerId, pointerType: 'mouse', clientX: 200 })
-    expect(strip).toHaveClass('cursor-grabbing')
-    finish(strip, pointerId)
-    expect(strip).toHaveClass('cursor-grab')
-  })
-
-  it('clears dragging state when the window blurs or pointer releases outside', () => {
-    const store = getAppSettingsStore()
-    store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
-    render(<MediaCollection presentation="card" items={createItems(2)} />)
-
-    const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
-    const photoView = screen.getAllByTestId('photo-view')[0]!
-    firePointerEvent(strip, 'pointerdown', {
-      pointerId: 31,
-      pointerType: 'mouse',
-      button: 0,
-      clientX: 300,
-    })
-    firePointerEvent(strip, 'pointermove', { pointerId: 31, pointerType: 'mouse', clientX: 200 })
-    firePointerEvent(window, 'pointerup', { pointerId: 31 })
-    expect(strip).toHaveClass('cursor-grab')
-    fireEvent.click(photoView)
-    expect(photoViewClickSpy).toHaveBeenCalledTimes(1)
-
-    const forcedMouseUp = vi.fn()
-    document.addEventListener('mouseup', forcedMouseUp)
-    firePointerEvent(strip, 'pointerdown', {
-      pointerId: 32,
-      pointerType: 'mouse',
-      button: 0,
-      clientX: 300,
-    })
-    firePointerEvent(strip, 'pointermove', { pointerId: 32, pointerType: 'mouse', clientX: 200 })
-    fireEvent.blur(window)
-    expect(strip).toHaveClass('cursor-grab')
-    expect(forcedMouseUp).toHaveBeenCalledTimes(1)
-    document.removeEventListener('mouseup', forcedMouseUp)
-  })
-
-  it('resets drag and click suppression when horizontal layout is disabled', () => {
-    const store = getAppSettingsStore()
-    store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
-    render(<MediaCollection presentation="card" items={createItems(2)} />)
-
-    const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
-    firePointerEvent(strip, 'pointerdown', {
-      pointerId: 51,
-      pointerType: 'mouse',
-      button: 0,
-      clientX: 300,
-    })
-    firePointerEvent(strip, 'pointermove', { pointerId: 51, pointerType: 'mouse', clientX: 200 })
-    expect(strip).toHaveClass('cursor-grabbing')
-
-    act(() => {
-      store.setState({ weiboCardMultiMediaLayout: 'grid' })
-    })
-    expect(screen.queryByRole('region', { name: /横向媒体画廊/ })).not.toBeInTheDocument()
-
-    act(() => {
-      store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
-    })
-    const nextPhotoView = screen.getAllByTestId('photo-view')[0]!
-    expect(screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })).toHaveClass('cursor-grab')
-    fireEvent.click(nextPhotoView)
-    expect(photoViewClickSpy).toHaveBeenCalledTimes(1)
-  })
-
-  it('does not suppress a click after a below-threshold release', () => {
-    const store = getAppSettingsStore()
-    store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
-    render(<MediaCollection presentation="card" items={createItems(2)} />)
-
-    const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
-    const photoView = screen.getAllByTestId('photo-view')[0]!
-    firePointerEvent(strip, 'pointerdown', {
-      pointerId: 41,
-      pointerType: 'mouse',
-      button: 0,
-      clientX: 300,
-    })
-    firePointerEvent(strip, 'pointermove', {
-      pointerId: 41,
-      pointerType: 'mouse',
-      clientX: 297,
-    })
-    firePointerEvent(window, 'pointerup', { pointerId: 41 })
-    fireEvent.click(photoView)
-    expect(photoViewClickSpy).toHaveBeenCalledTimes(1)
-  })
-
   it('keeps the legacy grid image structure free of horizontal press feedback', () => {
     const store = getAppSettingsStore()
     store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
@@ -640,7 +458,7 @@ describe('MediaCollection', () => {
     expect(onItemActivate).not.toHaveBeenCalled()
   })
 
-  it('keeps Embla drag enabled but disables drag-free motion when reduced motion is requested', () => {
+  it('keeps drag-free inertia when reduced motion is requested', () => {
     reducedMotionState.current = true
     const store = getAppSettingsStore()
     store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
@@ -648,11 +466,12 @@ describe('MediaCollection', () => {
     render(<MediaCollection presentation="card" items={createItems(2)} />)
 
     expect(useEmblaCarouselMock).toHaveBeenCalledWith(
-      expect.not.objectContaining({ watchDrag: false }),
+      expect.objectContaining({ dragFree: true }),
       expect.any(Array),
     )
+    expect(screen.getAllByTestId('media-strip-pressable')).toHaveLength(2)
     expect(useEmblaCarouselMock).toHaveBeenCalledWith(
-      expect.objectContaining({ dragFree: false }),
+      expect.not.objectContaining({ watchDrag: false }),
       expect.any(Array),
     )
   })
@@ -684,29 +503,56 @@ describe('MediaCollection', () => {
     expect(normalizedEvents).toHaveLength(2)
   })
 
-  it('ignores non-primary mouse buttons when dragging the strip', () => {
+  it('keeps Embla options stable when the selected item is echoed back as initialItemId', () => {
     const store = getAppSettingsStore()
-    store.setState({
-      weiboCardMultiMediaLayout: 'horizontal',
-    })
+    store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
+    const items = createItems(3)
 
+    function StripHarness() {
+      const [visibleItemId, setVisibleItemId] = useState<string | undefined>('image-3')
+      return (
+        <MediaCollection
+          presentation="card"
+          items={items}
+          initialItemId={visibleItemId}
+          onVisibleItemChange={setVisibleItemId}
+        />
+      )
+    }
+
+    render(<StripHarness />)
+    expect(useEmblaCarouselMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({ startIndex: 2 }),
+      expect.any(Array),
+    )
+
+    // 拖动结束时 select 变化 → 父组件把新的可见项当作 initialItemId 传回。
+    // 这条反馈必须不改动 Embla 的 options：options 值一变，embla-carousel-react 就会
+    // reInit()，而 reInit() 会销毁正在进行的拖动并把位置硬吸附到对齐后的 snap。
+    act(() => {
+      setEmblaSelectedIndex(0)
+      emitEmblaEvent('select')
+    })
+    expect(screen.getByText('当前第 1 项，共 3 项')).toBeInTheDocument()
+
+    const calls = useEmblaCarouselMock.mock.calls as unknown[][]
+    const firstOptions = calls[0]?.[0]
+    for (const call of calls) {
+      expect(call[0]).toBe(firstOptions)
+      expect(call[0]).toMatchObject({ startIndex: 2 })
+    }
+  })
+
+  it('leaves drag-versus-click judgement to Embla so a plain click opens the lightbox once', () => {
+    const store = getAppSettingsStore()
+    store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
     render(<MediaCollection presentation="card" items={createItems(2)} />)
 
-    const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
     const photoView = screen.getAllByTestId('photo-view')[0]!
+    fireEvent.click(photoView)
+    expect(photoViewClickSpy).toHaveBeenCalledTimes(1)
 
-    firePointerEvent(photoView, 'pointerdown', {
-      pointerId: 9,
-      pointerType: 'mouse',
-      button: 1,
-      clientX: 300,
-    })
-    firePointerEvent(photoView, 'pointermove', {
-      pointerId: 9,
-      pointerType: 'mouse',
-      clientX: 220,
-    })
-
-    expect(strip).toHaveClass('cursor-grab')
+    fireEvent.click(photoView)
+    expect(photoViewClickSpy).toHaveBeenCalledTimes(2)
   })
 })
