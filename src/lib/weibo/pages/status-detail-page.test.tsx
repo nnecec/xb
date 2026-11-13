@@ -6,6 +6,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const feedCardMock = vi.hoisted(() => vi.fn())
 const setComposeTarget = vi.fn()
 
+const scrollToTop = vi.fn()
+
 vi.mock('@/lib/weibo/app/page-runtime', () => ({
   usePageRuntime: () => ({
     page: { kind: 'status', authorId: '1', statusId: '501' },
@@ -14,6 +16,7 @@ vi.mock('@/lib/weibo/app/page-runtime', () => ({
     navigationMode: 'browser',
     scrollRootRef: { current: null },
     resetScroll: vi.fn(),
+    scrollToTop,
   }),
 }))
 
@@ -237,7 +240,10 @@ describe('StatusDetailPage', () => {
       </QueryClientProvider>,
     )
 
-    expect(await screen.findByRole('heading', { name: '微博正文' })).toBeInTheDocument()
+    const heading = await screen.findByRole('heading', { name: '微博正文' })
+    expect(heading).toBeInTheDocument()
+    fireEvent.click(heading)
+    expect(scrollToTop).toHaveBeenCalledOnce()
     expect(screen.queryByRole('heading', { name: /Alice/ })).not.toBeInTheDocument()
 
     await waitFor(() => {

@@ -92,6 +92,8 @@ interface ShellFrameProps {
   onMainWidthChange?: (width: number) => Promise<void>
   onFocusAuxiliaryColumn?: (columnId: string | null) => void
   focusedColumnId?: string | null
+  canvasScrollLeft?: number
+  onCanvasScrollLeftChange?: (scrollLeft: number) => void
   mainRef: React.RefObject<HTMLDivElement | null>
   children: ReactNode
 }
@@ -114,6 +116,8 @@ export function ShellFrame({
   onMainWidthChange,
   onFocusAuxiliaryColumn,
   focusedColumnId,
+  canvasScrollLeft,
+  onCanvasScrollLeftChange,
   mainRef,
   children,
 }: ShellFrameProps) {
@@ -235,6 +239,8 @@ export function ShellFrame({
           auxiliaryColumns={auxiliaryColumns}
           columnWidthPx={columnWidthPx}
           focusedColumnId={focusedColumnId ?? null}
+          canvasScrollLeft={canvasScrollLeft}
+          onCanvasScrollLeftChange={onCanvasScrollLeftChange}
           shouldReduceMotion={Boolean(shouldReduceMotion)}
           assignMainScrollRef={assignShellRef}
           contentMainRef={contentMainRef}

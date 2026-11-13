@@ -18,8 +18,10 @@ import { usePageRuntime } from '@/lib/weibo/app/page-runtime'
 import {
   ColumnToolbarDragRegion,
   ColumnToolbarMenuButton,
+  isColumnToolbarControlTarget,
   useColumnControls,
 } from '@/lib/weibo/workspace/column-controls'
+import { ColumnRefreshButton } from '@/lib/weibo/workspace/column-page-toolbar'
 
 export interface TimelineTopBarOption<Value extends string = string> {
   value: Value
@@ -59,6 +61,9 @@ export function TimelineTopBar<TitleValue extends string = string>({
 }: TimelineTopBarProps<TitleValue>) {
   const runtime = usePageRuntime()
   const columnControls = useColumnControls()
+  const scrollColumnToTop = () => {
+    runtime.scrollToTop()
+  }
   const headerClassName = useImmersiveHeaderClassName(
     'bg-background/70 border-border/40 sticky top-0 z-50 border-b backdrop-blur-lg',
   )
@@ -73,7 +78,13 @@ export function TimelineTopBar<TitleValue extends string = string>({
   const showMenu = visibleMenuGroups.length > 0
   return (
     <ColumnToolbarDragRegion>
-      <div className={headerClassName}>
+      <div
+        className={headerClassName}
+        onClick={(event) => {
+          if (isColumnToolbarControlTarget(event.target)) return
+          scrollColumnToTop()
+        }}
+      >
         <h1 className="sr-only">{title}</h1>
         <div className="relative flex min-h-16 items-center justify-between">
           <div className="flex min-w-0 items-center">
@@ -161,7 +172,9 @@ export function TimelineTopBar<TitleValue extends string = string>({
               >
                 <RefreshCWIcon className={cn('size-3', isRefreshing && 'animate-spin')} />
               </Button>
-            ) : null}
+            ) : (
+              <ColumnRefreshButton />
+            )}
             <ColumnToolbarMenuButton />
           </div>
 

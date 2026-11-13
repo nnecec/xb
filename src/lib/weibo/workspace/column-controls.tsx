@@ -45,6 +45,13 @@ export function ColumnToolbarDragProvider({
   )
 }
 
+const COLUMN_TOOLBAR_CONTROL_SELECTOR =
+  'button,a,[role="button"],[role="menuitem"],input,select,textarea,[data-column-control]'
+
+export function isColumnToolbarControlTarget(target: EventTarget | null): boolean {
+  return target instanceof Element && target.closest(COLUMN_TOOLBAR_CONTROL_SELECTOR) !== null
+}
+
 export function ColumnToolbarDragRegion({ children }: { children: ReactNode }) {
   const listeners = useContext(ColumnDragListenersContext)
   const setActivatorNodeRef = useContext(ColumnDragActivatorContext)
@@ -70,10 +77,9 @@ export function ColumnToolbarDragRegion({ children }: { children: ReactNode }) {
   const guardedListeners = useMemo(() => {
     if (!listeners) return undefined
     const isControlTarget = (event: React.SyntheticEvent) =>
-      event.target instanceof Element &&
-      event.target.closest(
-        'button,[role="button"],[role="menu"],[role="menuitem"],[data-column-control],[data-column-title-control]',
-      ) !== null
+      isColumnToolbarControlTarget(event.target) ||
+      (event.target instanceof Element &&
+        event.target.closest('[role="menu"],[data-column-title-control]') !== null)
     return {
       ...listeners,
       onPointerDown: (event: React.PointerEvent<HTMLElement>) => {

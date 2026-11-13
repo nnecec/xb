@@ -291,6 +291,8 @@ export function SortableColumnCanvas({
   shouldReduceMotion,
   assignMainScrollRef,
   contentMainRef,
+  canvasScrollLeft = 0,
+  onCanvasScrollLeftChange,
   onMoveColumn,
   onWidthColumn,
   onMainWidthChange,
@@ -303,6 +305,8 @@ export function SortableColumnCanvas({
   shouldReduceMotion: boolean
   assignMainScrollRef: (node: HTMLDivElement | null) => void
   contentMainRef: React.RefObject<HTMLElement | null>
+  canvasScrollLeft?: number
+  onCanvasScrollLeftChange?: (scrollLeft: number) => void
   onMoveColumn?: (columnId: string, targetIndex: number) => Promise<void>
   onWidthColumn?: (columnId: string, width: number) => Promise<void>
   onMainWidthChange?: (width: number) => Promise<void>
@@ -318,7 +322,34 @@ export function SortableColumnCanvas({
   const mainResizeStartRef = useRef<{ startX: number; startWidth: number } | null>(null)
   const canvasRef = useRef<HTMLDivElement | null>(null)
   const auxiliaryColumnNodesRef = useRef(new Map<string, HTMLDivElement>())
+  const savedCanvasScrollLeftRef = useRef(canvasScrollLeft)
+  const restoringCanvasScrollRef = useRef(false)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
+
+  useLayoutEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const maxScrollLeft = Math.max(0, canvas.scrollWidth - canvas.clientWidth)
+    const nextScrollLeft = Math.min(savedCanvasScrollLeftRef.current, maxScrollLeft)
+    restoringCanvasScrollRef.current = true
+    canvas.scrollLeft = nextScrollLeft
+    canvas.dispatchEvent(new Event('scroll'))
+    restoringCanvasScrollRef.current = false
+    let rememberTimer = 0
+    const rememberScroll = () => {
+      if (restoringCanvasScrollRef.current) return
+      savedCanvasScrollLeftRef.current = canvas.scrollLeft
+      window.clearTimeout(rememberTimer)
+      rememberTimer = window.setTimeout(() => {
+        onCanvasScrollLeftChange?.(savedCanvasScrollLeftRef.current)
+      }, 200)
+    }
+    canvas.addEventListener('scroll', rememberScroll, { passive: true })
+    return () => {
+      window.clearTimeout(rememberTimer)
+      canvas.removeEventListener('scroll', rememberScroll)
+    }
+  }, [onCanvasScrollLeftChange])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -480,7 +511,7 @@ export function SortableColumnCanvas({
         className="xb-column-scroll min-w-0 flex-1 overflow-x-auto overflow-y-hidden"
       >
         <div
-          className="flex h-full w-max min-w-full justify-center px-3"
+          className="flex h-full w-max min-w-full justify-center-safe px-3"
           style={{ gap: COLUMN_CANVAS_GAP_PX }}
         >
           <section

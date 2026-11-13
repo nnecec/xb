@@ -77,11 +77,19 @@ export function AppShell() {
   const moveColumn = useWorkspace((state) => state.moveColumn)
   const focusColumn = useWorkspace((state) => state.focusColumn)
   const focusedColumnId = useWorkspace((state) => state.focusedColumnId)
+  const canvasScrollLeft = useWorkspace((state) => state.canvasScrollLeft)
+  const setCanvasScrollLeft = useWorkspace((state) => state.setCanvasScrollLeft)
   const setColumnWidth = useWorkspace((state) => state.setColumnWidth)
 
   const persistWorkspaceChange = useCallback((change: Promise<unknown>) => {
     void change.catch(() => toast.error('无法保存多列工作区配置'))
   }, [])
+  const handleCanvasScrollLeftChange = useCallback(
+    (scrollLeft: number) => {
+      persistWorkspaceChange(setCanvasScrollLeft(scrollLeft))
+    },
+    [persistWorkspaceChange, setCanvasScrollLeft],
+  )
 
   useEffect(() => onUnauthorized(() => setAuthDialogOpen(true)), [])
 
@@ -220,6 +228,8 @@ export function AppShell() {
             onMainWidthChange={(width) => updateSettings({ customColumnWidth: width })}
             onFocusAuxiliaryColumn={(columnId) => persistWorkspaceChange(focusColumn(columnId))}
             focusedColumnId={focusedColumnId}
+            canvasScrollLeft={canvasScrollLeft}
+            onCanvasScrollLeftChange={handleCanvasScrollLeftChange}
             mainRef={mainRef}
           >
             <PageRuntimeProvider runtime={pageRuntime}>

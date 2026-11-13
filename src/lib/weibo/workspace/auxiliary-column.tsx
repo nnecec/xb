@@ -542,36 +542,36 @@ export function AuxiliaryColumnView({
         onLostPointerCapture={() => void finishResize()}
         onKeyDown={handleResizeKeyDown}
       />
-      <div
-        ref={scrollRootRef}
-        className="xb-column-scroll min-h-0 flex-1 overflow-y-auto"
-        onClickCapture={keepNavigationInsideColumn}
-      >
-        <ColumnPageChromeProvider active>
-          <PageRuntimeProvider runtime={runtime}>
-            <ColumnToolbarDragProvider
-              listeners={sortingDisabled ? undefined : listeners}
-              setActivatorNodeRef={setActivatorNodeRef}
-              menu={columnMenu}
+      <ColumnPageChromeProvider active>
+        <PageRuntimeProvider runtime={runtime}>
+          <ColumnToolbarDragProvider
+            listeners={sortingDisabled ? undefined : listeners}
+            setActivatorNodeRef={setActivatorNodeRef}
+            menu={columnMenu}
+          >
+            <ColumnControlsProvider
+              controls={
+                canGoBack ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label="返回"
+                    data-column-control
+                    className="shrink-0"
+                    onClick={back}
+                  >
+                    <ArrowLeft className="size-4" />
+                  </Button>
+                ) : null
+              }
             >
-              <ColumnControlsProvider
-                controls={
-                  canGoBack ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      aria-label="返回"
-                      data-column-control
-                      className="shrink-0"
-                      onClick={back}
-                    >
-                      <ArrowLeft className="size-4" />
-                    </Button>
-                  ) : null
-                }
-              >
-                <StatusCardHostProvider host={host}>
+              <StatusCardHostProvider host={host}>
+                <div
+                  ref={scrollRootRef}
+                  className="xb-column-scroll min-h-0 flex-1 overflow-y-auto"
+                  onClickCapture={keepNavigationInsideColumn}
+                >
                   {navigatedPage ? (
                     <ColumnLocationPage
                       location={navigatedPage}
@@ -660,12 +660,12 @@ export function AuxiliaryColumnView({
                       </div>
                     </>
                   )}
-                </StatusCardHostProvider>
-              </ColumnControlsProvider>
-            </ColumnToolbarDragProvider>
-          </PageRuntimeProvider>
-        </ColumnPageChromeProvider>
-      </div>
+                </div>
+              </StatusCardHostProvider>
+            </ColumnControlsProvider>
+          </ColumnToolbarDragProvider>
+        </PageRuntimeProvider>
+      </ColumnPageChromeProvider>
     </section>
   )
 }

@@ -53,6 +53,8 @@ export interface WorkspaceSnapshot {
   focusedColumnId: string | null
   /** The last width used for each source kind, applied to columns added later. */
   columnWidths: ColumnWidthOverrides
+  /** Horizontal scroll of the column canvas, restored after a reload. */
+  canvasScrollLeft: number
 }
 
 export interface WorkspaceStoreState extends WorkspaceSnapshot {
@@ -69,6 +71,7 @@ export interface WorkspaceStoreState extends WorkspaceSnapshot {
   ) => Promise<void>
   setColumnWidth: (columnId: string, width: number) => Promise<void>
   resetColumnWidths: () => Promise<void>
+  setCanvasScrollLeft: (scrollLeft: number) => Promise<void>
 }
 
 export type WorkspaceStore = StoreApi<WorkspaceStoreState>
@@ -82,6 +85,13 @@ const DEFAULT_WORKSPACE: WorkspaceSnapshot = {
   auxiliaryColumns: [],
   focusedColumnId: null,
   columnWidths: {},
+  canvasScrollLeft: 0,
+}
+
+export function normalizeCanvasScrollLeft(value: unknown): number {
+  const numeric = typeof value === 'number' ? value : Number.NaN
+  if (!Number.isFinite(numeric) || numeric <= 0) return 0
+  return Math.round(numeric)
 }
 
 export function normalizeColumnWidth(value: unknown, fallback = CUSTOM_COLUMN_WIDTH_MIN): number {
@@ -441,6 +451,7 @@ function normalizeWorkspace(value: unknown): WorkspaceSnapshot {
     auxiliaryColumns,
     focusedColumnId,
     columnWidths,
+    canvasScrollLeft: normalizeCanvasScrollLeft(value.canvasScrollLeft),
   }
 }
 
@@ -452,6 +463,7 @@ function serializeWorkspace(snapshot: WorkspaceSnapshot) {
     ...(Object.keys(snapshot.columnWidths).length > 0
       ? { columnWidths: snapshot.columnWidths }
       : {}),
+    ...(snapshot.canvasScrollLeft > 0 ? { canvasScrollLeft: snapshot.canvasScrollLeft } : {}),
   }
 }
 
@@ -608,6 +620,16 @@ export function createWorkspaceStore(
           }),
           columnWidths: {},
         }))
+      },
+      async setCanvasScrollLeft(scrollLeft) {
+        const canvasScrollLeft = normalizeCanvasScrollLeft(scrollLeft)
+        const current = get()
+        if (current.canvasScrollLeft === canvasScrollLeft) return
+        await updateAndPersist((snapshot) =>
+          snapshot.canvasScrollLeft === canvasScrollLeft
+            ? snapshot
+            : { ...snapshot, canvasScrollLeft },
+        )
       },
     }
   })

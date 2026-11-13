@@ -65,6 +65,7 @@ describe('HotSearchCard topic links', () => {
 
     const link = await screen.findByRole('link', { name: /测试话题/ })
     expect(link).toHaveAttribute('href', '/topic?q=%E6%B5%8B%E8%AF%95%E8%AF%9D%E9%A2%98')
+    expect(link).not.toHaveClass('rounded-lg')
     expect(link.closest('[data-slot="card"]')).toBeNull()
   })
 

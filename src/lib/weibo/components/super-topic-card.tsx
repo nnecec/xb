@@ -118,8 +118,8 @@ export function SuperTopicCard({ className, variant = 'rail' }: SuperTopicCardPr
       ) : (
         <div
           className={cn(
-            'w-full scrollbar-none overflow-x-hidden overflow-y-auto',
-            variant === 'rail' && 'max-h-[180px]',
+            'w-full',
+            variant === 'rail' && 'scrollbar-none max-h-[180px] overflow-x-hidden overflow-y-auto',
           )}
         >
           {items.map((item) => (

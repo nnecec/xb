@@ -231,6 +231,22 @@ describe('workspace store', () => {
     ])
   })
 
+  it('remembers the horizontal canvas scroll across a reload', async () => {
+    const storage = createStorageArea()
+    const store = createWorkspaceStore(storage)
+
+    await store.getState().setCanvasScrollLeft(480.4)
+    await store.getState().setCanvasScrollLeft(480)
+    expect(storage.set).toHaveBeenCalledTimes(1)
+
+    const reloaded = createWorkspaceStore(storage)
+    await reloaded.getState().hydrate()
+
+    expect(reloaded.getState().canvasScrollLeft).toBe(480)
+    await reloaded.getState().setCanvasScrollLeft(-20)
+    expect(reloaded.getState().canvasScrollLeft).toBe(0)
+  })
+
   it('forgets resized widths so columns follow the settings width again', async () => {
     const storage = createStorageArea()
     const ids = ['first-column', 'second-column']

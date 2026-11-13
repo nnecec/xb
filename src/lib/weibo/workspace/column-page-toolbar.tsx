@@ -8,6 +8,10 @@ import {
   type ReactNode,
 } from 'react'
 
+import { Button } from '@/components/ui/button'
+import { RefreshCWIcon } from '@/components/ui/refresh-cw'
+import { cn } from '@/lib/utils'
+
 interface ColumnRefreshRegistration {
   token: symbol
   refresh: () => void
@@ -56,6 +60,29 @@ export function ColumnPageChromeProvider({
 
 export function useColumnPageToolbarActive(): boolean {
   return useContext(ColumnPageChromeApiContext)?.active ?? false
+}
+
+export function useColumnRefreshRegistration(): ColumnRefreshRegistration | null {
+  return useContext(ColumnPageRefreshContext)
+}
+
+export function ColumnRefreshButton() {
+  const registration = useColumnRefreshRegistration()
+  if (!registration) return null
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      aria-label="刷新"
+      data-column-control
+      onPointerDown={(event) => event.stopPropagation()}
+      onClick={registration.refresh}
+      disabled={registration.isRefreshing}
+    >
+      <RefreshCWIcon className={cn('size-3', registration.isRefreshing && 'animate-spin')} />
+    </Button>
+  )
 }
 
 export function useColumnPageRefresh(refresh: () => void, isRefreshing: boolean) {

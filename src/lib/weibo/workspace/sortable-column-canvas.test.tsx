@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
   ColumnDragPreview,
@@ -117,6 +117,10 @@ describe('column drag preview', () => {
 })
 
 describe('sortable column canvas', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('sizes the primary column from the configured column width', () => {
     render(
       <SortableColumnCanvas
@@ -274,6 +278,47 @@ describe('sortable column canvas', () => {
       ])
     })
     expect(toastError).toHaveBeenCalledWith('无法保存列顺序，已恢复原顺序')
+  })
+
+  it('restores the remembered horizontal scroll without writing it back', () => {
+    vi.useFakeTimers()
+    const onCanvasScrollLeftChange = vi.fn()
+    const elementPrototype = HTMLElement.prototype
+    const scrollWidthDescriptor = Object.getOwnPropertyDescriptor(elementPrototype, 'scrollWidth')
+    const clientWidthDescriptor = Object.getOwnPropertyDescriptor(elementPrototype, 'clientWidth')
+    Object.defineProperty(elementPrototype, 'scrollWidth', { configurable: true, get: () => 1_300 })
+    Object.defineProperty(elementPrototype, 'clientWidth', { configurable: true, get: () => 500 })
+    render(
+      <SortableColumnCanvas
+        auxiliaryColumns={columns}
+        focusedColumnId={null}
+        shouldReduceMotion
+        assignMainScrollRef={() => {}}
+        contentMainRef={{ current: null }}
+        canvasScrollLeft={240}
+        onCanvasScrollLeftChange={onCanvasScrollLeftChange}
+      >
+        主列
+      </SortableColumnCanvas>,
+    )
+
+    const canvas = document.querySelector<HTMLDivElement>('[data-column-canvas]')!
+    expect(canvas.scrollLeft).toBe(240)
+    expect(onCanvasScrollLeftChange).not.toHaveBeenCalled()
+
+    canvas.scrollLeft = 80
+    fireEvent.scroll(canvas)
+    canvas.scrollLeft = 120
+    fireEvent.scroll(canvas)
+    expect(onCanvasScrollLeftChange).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(200)
+    expect(onCanvasScrollLeftChange).toHaveBeenCalledTimes(1)
+    expect(onCanvasScrollLeftChange).toHaveBeenCalledWith(120)
+    vi.useRealTimers()
+    if (scrollWidthDescriptor)
+      Object.defineProperty(elementPrototype, 'scrollWidth', scrollWidthDescriptor)
+    if (clientWidthDescriptor)
+      Object.defineProperty(elementPrototype, 'clientWidth', clientWidthDescriptor)
   })
 
   it('scrolls only the column canvas when focusing an auxiliary column', () => {

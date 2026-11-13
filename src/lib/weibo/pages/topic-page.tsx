@@ -14,7 +14,12 @@ import {
   topicSearchInfiniteOptions,
 } from '@/lib/weibo/data/weibo-data'
 import type { TimelinePage, TopicChannel } from '@/lib/weibo/models/feed'
-import { ColumnToolbarDragRegion, useColumnControls } from '@/lib/weibo/workspace/column-controls'
+import {
+  ColumnToolbarDragRegion,
+  isColumnToolbarControlTarget,
+  useColumnControls,
+} from '@/lib/weibo/workspace/column-controls'
+import { ColumnRefreshButton } from '@/lib/weibo/workspace/column-page-toolbar'
 import { useColumnPageRefresh } from '@/lib/weibo/workspace/column-page-toolbar'
 
 function TopicChannelBar({
@@ -127,7 +132,13 @@ export function TopicPage({
   return (
     <div className="flex flex-col gap-3">
       <ColumnToolbarDragRegion>
-        <div className={headerClassName}>
+        <div
+          className={headerClassName}
+          onClick={(event) => {
+            if (isColumnToolbarControlTarget(event.target)) return
+            runtime.scrollToTop()
+          }}
+        >
           <div className="flex items-start gap-1 px-2 py-3">
             {columnControls}
             <div className="min-w-0 flex-1 gap-0.5">
@@ -141,6 +152,7 @@ export function TopicPage({
                 </div>
               ) : null}
             </div>
+            <ColumnRefreshButton />
           </div>
           {!source && channels.length > 0 ? (
             <TopicChannelBar

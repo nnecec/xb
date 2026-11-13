@@ -31,6 +31,7 @@ import { formatWeiboCount } from '@/lib/weibo/utils/format-weibo-count'
 import {
   ColumnToolbarDragRegion,
   ColumnToolbarMenuButton,
+  isColumnToolbarControlTarget,
   useColumnControls,
 } from '@/lib/weibo/workspace/column-controls'
 
@@ -166,6 +167,7 @@ function StatusDetailTopBar({
 }) {
   const shouldReduceMotion = useReducedMotion()
   const columnControls = useColumnControls()
+  const runtime = usePageRuntime()
   const headerClassName = useImmersiveHeaderClassName(
     'bg-background/85 border-border/45 sticky top-0 z-50 border-b backdrop-blur-lg',
   )
@@ -176,7 +178,13 @@ function StatusDetailTopBar({
 
   return (
     <ColumnToolbarDragRegion>
-      <div className={headerClassName}>
+      <div
+        className={headerClassName}
+        onClick={(event) => {
+          if (isColumnToolbarControlTarget(event.target)) return
+          runtime.scrollToTop()
+        }}
+      >
         <div className="relative flex min-h-16 items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">
             {columnControls}
