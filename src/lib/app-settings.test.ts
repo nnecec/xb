@@ -5,6 +5,8 @@ import {
   DEFAULT_APP_SETTINGS,
   loadAppSettings,
   normalizeAppSettings,
+  normalizeCommentCardSettings,
+  normalizeWeiboCardSettings,
   persistAppSettings,
   resolveIsDarkMode,
 } from '@/lib/app-settings'
@@ -24,6 +26,29 @@ function createStorageArea(initialValue?: unknown) {
     },
   }
 }
+
+describe('卡片设置', () => {
+  it('损坏的微博卡片和评论卡片各自回到默认', () => {
+    expect(
+      normalizeWeiboCardSettings({
+        weiboCardShowAvatar: 'yes',
+        weiboCardCollapsedMediaTypes: ['image', 'poster'],
+      }),
+    ).toMatchObject({
+      weiboCardShowAvatar: DEFAULT_APP_SETTINGS.weiboCardShowAvatar,
+      weiboCardCollapsedMediaTypes: ['image'],
+    })
+    expect(
+      normalizeCommentCardSettings({
+        commentCardShowAvatar: 1,
+        commentCardImageDisplay: 'invalid',
+      }),
+    ).toMatchObject({
+      commentCardShowAvatar: DEFAULT_APP_SETTINGS.commentCardShowAvatar,
+      commentCardImageDisplay: DEFAULT_APP_SETTINGS.commentCardImageDisplay,
+    })
+  })
+})
 
 describe('app-settings', () => {
   it('normalizes invalid values to the defaults', () => {
