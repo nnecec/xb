@@ -1,3 +1,4 @@
+import { normalizeCursor } from '@/lib/weibo/data/io/cursor'
 import type {
   CommentFilterOption,
   StatusCommentsPage,
@@ -45,13 +46,6 @@ function unwrapStatusDetailPayload(payload: unknown): WeiboStatus {
     }
   }
   return payload as WeiboStatus
-}
-
-function normalizeCursor(value: string | number | undefined): string | null {
-  if (value === undefined || value === null || value === '' || String(value) === '0') {
-    return null
-  }
-  return String(value)
 }
 
 export function adaptStatusDetailResponse(payload: unknown): StatusDetail {

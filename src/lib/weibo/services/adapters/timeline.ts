@@ -1,3 +1,4 @@
+import { normalizeCursor } from '@/lib/weibo/data/io/cursor'
 import type { TimelinePage } from '@/lib/weibo/models/feed'
 
 import { type WeiboStatus, toFeedItem } from '../../utils/transform'
@@ -11,14 +12,6 @@ export interface WeiboTimelinePayload {
   }
   max_id?: number | string
   statuses?: Array<WeiboStatus | null | undefined>
-}
-
-function normalizeCursor(value: number | string | undefined): string | null {
-  if (value === undefined || value === null || value === '' || String(value) === '0') {
-    return null
-  }
-
-  return String(value)
 }
 
 function getTimelineStatuses(payload: WeiboTimelinePayload): WeiboStatus[] {
