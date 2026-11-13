@@ -58,7 +58,7 @@ function StatusCommentsSection({
   const errorMessage = commentsQuery.error instanceof Error ? commentsQuery.error.message : null
 
   return (
-    <section className="bg-card/70 border-border/55 rounded-xl border shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
+    <section className="border-t">
       <div className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-2.5">
           <div className="min-w-0">
@@ -308,7 +308,7 @@ export function StatusDetailPage() {
         <PageErrorState description={detailQuery.error.message} />
       ) : null}
       {detail ? (
-        <div className="flex w-full flex-col gap-4">
+        <div className="flex w-full flex-col">
           <article ref={statusArticleRef} className="relative">
             <DetailStatusCard status={detail.status} />
           </article>

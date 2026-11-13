@@ -62,7 +62,7 @@ function ProfilePostsFeed({
   const total = searchQuery.data?.pages[0]?.total
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col">
       <ProfileSearchBar
         key={searchBarKey}
         state={searchState}
@@ -89,7 +89,6 @@ function ProfilePostsFeed({
         isFetchingNextPage={isFetchingNextPage}
         fetchNextPage={activeQuery.fetchNextPage}
         onRetry={() => void activeQuery.refetch()}
-        className="flex flex-col gap-4"
       />
     </div>
   )
@@ -163,13 +162,13 @@ function ProfileContent({
   return (
     <div>
       <TimelineTopBar title="个人主页" />
-      <div className="pt-4">
+      <div>
         {profileQuery.isLoading ? <PageLoadingState label="正在加载此用户主页…" /> : null}
         {!profileQuery.isLoading && errorMessage ? (
           <PageErrorState description={errorMessage} />
         ) : null}
         {!profileQuery.isLoading && !errorMessage && profileQuery.data ? (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col">
             <ProfileHeader profile={profileQuery.data} />
             <ProfilePostsFeed
               profileId={profileQuery.data.id}

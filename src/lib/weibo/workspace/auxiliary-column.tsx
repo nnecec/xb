@@ -313,13 +313,9 @@ export function AuxiliaryColumnView({
         stack: stack.slice(0, -1),
       }
     })
-    if (nextLocation) {
-      void setColumnLastLocation(
-        column.id,
-        nextLocation,
-        baseLocation ?? initialBaseLocation,
-      ).catch(() => {})
-    }
+    void setColumnLastLocation(column.id, nextLocation, baseLocation ?? initialBaseLocation).catch(
+      () => {},
+    )
     requestAnimationFrame(() => {
       if (scrollRootRef.current) {
         scrollRootRef.current.scrollTop = savedScrollByDepthRef.current[nextDepth] ?? 0
@@ -548,7 +544,7 @@ export function AuxiliaryColumnView({
       />
       <div
         ref={scrollRootRef}
-        className="xb-column-scroll min-h-0 flex-1 overflow-y-auto px-2 pb-4"
+        className="xb-column-scroll min-h-0 flex-1 overflow-y-auto"
         onClickCapture={keepNavigationInsideColumn}
       >
         <ColumnPageChromeProvider active>

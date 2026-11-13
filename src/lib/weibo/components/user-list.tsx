@@ -1,6 +1,5 @@
 import { useEffect, useRef, type RefObject } from 'react'
 
-import { Card } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
 import { UserCard } from '@/lib/weibo/components/user-card'
 import type { RelationUser } from '@/lib/weibo/models/user-relation'
@@ -60,14 +59,14 @@ export function UserList({
 
   if (items.length === 0) {
     return (
-      <Card className="text-muted-foreground flex min-h-48 items-center justify-center p-6 text-center text-sm">
+      <p className="text-muted-foreground flex min-h-48 items-center justify-center p-6 text-center text-sm">
         {msg ?? emptyLabel}
-      </Card>
+      </p>
     )
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col">
       {items.map((user) => (
         <UserCard key={user.id} user={user} />
       ))}

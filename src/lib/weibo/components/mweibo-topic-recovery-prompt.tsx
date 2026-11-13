@@ -15,7 +15,7 @@ export function MweiboTopicRecoveryPrompt({
   const captcha = recovery.kind === 'captcha'
 
   return (
-    <Card className="mx-4 my-6">
+    <Card className="mx-4 my-6 rounded-none border-x-0 bg-transparent shadow-none">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           {captcha ? (
@@ -28,7 +28,7 @@ export function MweiboTopicRecoveryPrompt({
         <CardDescription>
           {captcha
             ? '微博移动端要求验证，xb 暂时无法加载这个话题。请先打开微博原话题页完成验证，然后返回此处重新加载。'
-            : '微博移动端暂时没有返回可用数据，这通常由访问限制或登录状态失效引起。请先打开微博原话题页，再返回此处重新加载。若仍无法加载，可在设置中关闭「话题页打开方式」。'}
+            : '微博移动端暂时没有返回可用数据，这通常由访问限制或登录状态失效引起。请先打开微博原话题页，再返回此处重新加载。若仍无法加载，可在设置中关闭「使用 xb 打开话题页」。'}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-wrap gap-2">

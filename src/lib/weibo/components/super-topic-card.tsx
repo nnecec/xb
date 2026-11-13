@@ -4,7 +4,6 @@ import { useCallback } from 'react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { Card, CardDescription } from '@/components/ui/card'
 import { RefreshCWIcon } from '@/components/ui/refresh-cw'
 import { Spinner } from '@/components/ui/spinner'
 import { followedSuperTopicsQueryOptions } from '@/lib/weibo/data/weibo-data'
@@ -71,8 +70,16 @@ export function SuperTopicCard({ className, variant = 'rail' }: SuperTopicCardPr
     superTopicsQuery.isFetching && !superTopicsQuery.isLoading,
   )
 
+  const shellClassName = cn(
+    'flex flex-col',
+    variant === 'rail' && 'gap-2 rounded-xl border bg-card py-2 text-card-foreground',
+    variant === 'column' && 'min-h-0 flex-1',
+    className,
+  )
+  const statusClassName = 'text-muted-foreground px-2 pb-2 text-sm'
+
   return (
-    <Card className={className}>
+    <div data-slot={variant === 'rail' ? 'card' : undefined} className={shellClassName}>
       {variant === 'column' ? (
         items.length > 0 ? (
           <p className="text-muted-foreground px-1 text-xs">{items.length} 个</p>
@@ -105,9 +112,9 @@ export function SuperTopicCard({ className, variant = 'rail' }: SuperTopicCardPr
           <Spinner />
         </div>
       ) : superTopicsQuery.isError ? (
-        <CardDescription className="px-2 pb-2">超话加载失败</CardDescription>
+        <p className={statusClassName}>超话加载失败</p>
       ) : items.length === 0 ? (
-        <CardDescription className="px-2 pb-2">暂无关注的超话</CardDescription>
+        <p className={statusClassName}>暂无关注的超话</p>
       ) : (
         <div
           className={cn(
@@ -120,6 +127,6 @@ export function SuperTopicCard({ className, variant = 'rail' }: SuperTopicCardPr
           ))}
         </div>
       )}
-    </Card>
+    </div>
   )
 }

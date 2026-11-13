@@ -163,7 +163,12 @@ export const NotificationCard = memo(function NotificationCard({
   className?: string
 }) {
   return (
-    <Card className={cn('gap-4 py-4', className)}>
+    <Card
+      className={cn(
+        'gap-4 rounded-none border-x-0 border-t-0 bg-transparent py-4 shadow-none',
+        className,
+      )}
+    >
       <NotificationHeader
         user={item.user}
         createdAtLabel={item.createdAtLabel}

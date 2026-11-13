@@ -56,7 +56,7 @@ export function FollowFansContent({
         isRefreshing={query.isFetching && !query.isFetchingNextPage && !query.isLoading}
       />
 
-      <div className="py-2">
+      <div>
         <UserList
           items={items}
           hasNextPage={query.hasNextPage ?? false}

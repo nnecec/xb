@@ -1,4 +1,16 @@
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
+import {
   Select,
   SelectContent,
   SelectGroup,
@@ -6,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
 import {
   CUSTOM_COLUMN_WIDTH_MAX,
@@ -17,8 +28,10 @@ import {
   type MotionPreference,
 } from '@/lib/app-settings'
 import { type AppSettingsStoreState, useAppSettings, useShallow } from '@/lib/app-settings-store'
+import { useWorkspace } from '@/lib/weibo/workspace/workspace-store'
 
 import {
+  CommitSlider,
   defaultsFor,
   Field,
   OptionPills,
@@ -85,20 +98,15 @@ function WidthControl({
           </SelectContent>
         </Select>
         {value === 'custom' ? (
-          <div className="flex w-full items-center gap-3 pt-1">
-            <Slider
+          <div className="w-full pt-1">
+            <CommitSlider
+              label={customLabel}
+              value={customValue}
               min={customMin}
               max={customMax}
               step={customStep}
-              value={[customValue]}
-              aria-label={customLabel}
-              onValueChange={([next]) => {
-                if (next !== undefined) onCustomValueChange(next)
-              }}
+              onCommit={onCustomValueChange}
             />
-            <output className="text-muted-foreground w-16 shrink-0 text-right font-mono text-xs tabular-nums">
-              {customValue}px
-            </output>
           </div>
         ) : null}
       </div>
@@ -119,6 +127,12 @@ export function SettingsDisplaySection({
       darkModeImageDim: state.darkModeImageDim,
     })),
   )
+  const hasCustomColumnWidths = useWorkspace(
+    (state) =>
+      state.auxiliaryColumns.some((column) => column.width !== undefined) ||
+      Object.keys(state.columnWidths).length > 0,
+  )
+  const resetColumnWidths = useWorkspace((state) => state.resetColumnWidths)
   return (
     <div className="flex flex-col">
       <SettingsPanel>
@@ -134,6 +148,28 @@ export function SettingsDisplaySection({
           onValueChange={(value) => void updateSettings({ columnWidth: value as ColumnWidth })}
           onCustomValueChange={(value) => void updateSettings({ customColumnWidth: value })}
         />
+
+        <Field label="重置列宽" description="忘记拖动调整过的列宽，改用上面的列宽度">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button type="button" variant="outline" size="sm" disabled={!hasCustomColumnWidths}>
+                重置
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>重置列宽度？</AlertDialogTitle>
+                <AlertDialogDescription>
+                  拖动调整过的列宽会被忘记，所有列改用当前的列宽度设置。
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>取消</AlertDialogCancel>
+                <AlertDialogAction onClick={() => void resetColumnWidths()}>重置</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </Field>
 
         <Field label="动态效果" description="控制 xb 动画是否跟随系统的减少动态效果设置">
           <OptionPills

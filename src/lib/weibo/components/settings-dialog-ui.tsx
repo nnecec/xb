@@ -22,6 +22,7 @@ import {
   FieldTitle,
 } from '@/components/ui/field'
 import { getUiPortalContainer } from '@/components/ui/portal'
+import { Slider } from '@/components/ui/slider'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { type AppSettings, DEFAULT_APP_SETTINGS } from '@/lib/app-settings'
 
@@ -198,6 +199,47 @@ export function OptionPills<T extends string>({
         </ToggleGroupItem>
       ))}
     </ToggleGroup>
+  )
+}
+
+export function CommitSlider({
+  label,
+  value,
+  min,
+  max,
+  step,
+  onCommit,
+}: {
+  label: string
+  value: number
+  min: number
+  max: number
+  step: number
+  onCommit: (value: number) => void
+}) {
+  const [draft, setDraft] = React.useState<number | null>(null)
+  const shown = draft ?? value
+
+  return (
+    <div className="flex w-72 min-w-0 items-center gap-3">
+      <Slider
+        min={min}
+        max={max}
+        step={step}
+        value={[shown]}
+        aria-label={label}
+        onValueChange={([next]) => {
+          if (next !== undefined) setDraft(next)
+        }}
+        onValueCommit={([next]) => {
+          setDraft(null)
+          if (next !== undefined && next !== value) onCommit(next)
+        }}
+      />
+      <output className="text-muted-foreground w-16 shrink-0 text-right font-mono text-xs tabular-nums">
+        {shown}px
+      </output>
+    </div>
   )
 }
 

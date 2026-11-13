@@ -231,6 +231,25 @@ describe('workspace store', () => {
     ])
   })
 
+  it('forgets resized widths so columns follow the settings width again', async () => {
+    const storage = createStorageArea()
+    const ids = ['first-column', 'second-column']
+    const store = createWorkspaceStore(storage, {
+      createId: () => ids.shift() ?? 'fallback-column',
+    })
+
+    await store.getState().addColumn({ kind: 'explore' })
+    await store.getState().setColumnWidth('first-column', 640)
+    await store.getState().resetColumnWidths()
+    await store.getState().addColumn({ kind: 'explore' })
+
+    expect(store.getState().columnWidths).toEqual({})
+    expect(store.getState().auxiliaryColumns).toEqual([
+      { id: 'first-column', source: { kind: 'explore' } },
+      { id: 'second-column', source: { kind: 'explore' } },
+    ])
+  })
+
   it('clamps persisted and resized widths to the supported range', async () => {
     const storage = createStorageArea({
       version: 1,

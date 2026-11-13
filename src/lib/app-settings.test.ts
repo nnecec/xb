@@ -288,7 +288,7 @@ describe('app-settings', () => {
     expect(normalizeAppSettings({ customColumnWidth: 720 }).customColumnWidth).toBe(720)
     expect(normalizeAppSettings({ customColumnWidth: 800 }).customColumnWidth).toBe(720)
     expect(normalizeAppSettings({ customColumnWidth: 0 }).customColumnWidth).toBe(300)
-    expect(normalizeAppSettings({ customColumnWidth: 'wide' as never }).customColumnWidth).toBe(600)
+    expect(normalizeAppSettings({ customColumnWidth: 'wide' as never }).customColumnWidth).toBe(480)
     const normalized = normalizeAppSettings({
       contentWidth: 'wide',
       customContentWidth: 1600,

@@ -1,10 +1,31 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { useStore } from 'zustand'
 
 import { DEFAULT_APP_SETTINGS, type AppSettings } from '@/lib/app-settings'
+import {
+  createWorkspaceStore,
+  resetWorkspaceStoreForTest,
+  WORKSPACE_STORAGE_KEY,
+  type WorkspaceStoreState,
+} from '@/lib/weibo/workspace/workspace-store'
 
 import { SettingsDialog } from './settings-dialog'
+
+const workspaceStorage = {
+  stored: undefined as unknown,
+  get: vi.fn(async () => ({
+    [WORKSPACE_STORAGE_KEY]: workspaceStorage.stored,
+  })),
+  set: vi.fn(async (items: Record<string, unknown>) => {
+    workspaceStorage.stored = items[WORKSPACE_STORAGE_KEY]
+  }),
+}
+let workspaceStore = createWorkspaceStore({
+  get: workspaceStorage.get,
+  set: workspaceStorage.set,
+})
 
 const mockUpdateSettings = vi.fn().mockResolvedValue(undefined)
 const mockSettings: AppSettings & {
@@ -25,9 +46,27 @@ vi.mock('@/lib/app-settings-store', () => ({
   useShallow: vi.fn((selector) => selector),
 }))
 
+vi.mock('@/lib/weibo/workspace/workspace-store', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/weibo/workspace/workspace-store')>(
+    '@/lib/weibo/workspace/workspace-store',
+  )
+  return {
+    ...actual,
+    getWorkspaceStore: () => workspaceStore,
+    useWorkspace: <T,>(selector: (state: WorkspaceStoreState) => T) =>
+      useStore(workspaceStore, selector),
+  }
+})
+
 describe('SettingsDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    resetWorkspaceStoreForTest()
+    workspaceStorage.stored = undefined
+    workspaceStore = createWorkspaceStore({
+      get: workspaceStorage.get,
+      set: workspaceStorage.set,
+    })
     Object.assign(mockSettings, DEFAULT_APP_SETTINGS)
     mockUpdateSettings.mockResolvedValue(undefined)
   })
@@ -81,6 +120,37 @@ describe('SettingsDialog', () => {
     expect(screen.getByText('500px')).toBeInTheDocument()
     expect(screen.queryByRole('switch', { name: '启用多列模式' })).not.toBeInTheDocument()
     expect(screen.queryByRole('combobox', { name: '内容宽度' })).not.toBeInTheDocument()
+  })
+
+  it('forgets dragged column widths after confirming reset', async () => {
+    const user = userEvent.setup()
+    workspaceStore = createWorkspaceStore(
+      {
+        get: workspaceStorage.get,
+        set: workspaceStorage.set,
+      },
+      { createId: () => 'explore-column' },
+    )
+    await workspaceStore.getState().addColumn({ kind: 'explore' })
+    await workspaceStore.getState().setColumnWidth('explore-column', 640)
+
+    render(<SettingsDialog open onOpenChange={() => {}} />)
+
+    const resetButton = screen.getByRole('button', { name: '重置' })
+    expect(resetButton).toBeEnabled()
+    await user.click(resetButton)
+    expect(screen.getByRole('alertdialog', { name: '重置列宽度？' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '取消' }))
+    expect(workspaceStore.getState().auxiliaryColumns[0]).toMatchObject({ width: 640 })
+
+    await user.click(resetButton)
+    await user.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: '重置' }))
+
+    await waitFor(() => {
+      expect(workspaceStore.getState().columnWidths).toEqual({})
+      expect(workspaceStore.getState().auxiliaryColumns[0]).not.toHaveProperty('width')
+    })
+    expect(resetButton).toBeDisabled()
   })
 
   it('resets display settings without changing the workspace mode', async () => {
@@ -185,6 +255,11 @@ describe('SettingsDialog', () => {
     await user.click(screen.getByRole('button', { name: '媒体' }))
     expect(screen.getByRole('slider', { name: '单图最大宽度' })).toHaveValue(450)
     expect(screen.getByRole('slider', { name: '单视频最大宽度' })).toHaveValue(650)
+
+    const imageWidth = screen.getByRole('slider', { name: '单图最大宽度' })
+    imageWidth.focus()
+    await user.keyboard('{ArrowRight}')
+    expect(mockUpdateSettings).toHaveBeenCalledWith({ weiboCardSingleImageMaxWidth: 460 })
     expect(screen.queryByRole('button', { name: '精细调整' })).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: '操作' }))

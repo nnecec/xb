@@ -85,7 +85,7 @@ export const CUSTOM_COLUMN_WIDTH_MIN = 300
 export const CUSTOM_COLUMN_WIDTH_MAX = 720
 
 /** 主列与辅助列共用的标准宽度，其余预设以此为基准。 */
-const STANDARD_COLUMN_WIDTH_PX = 600
+const STANDARD_COLUMN_WIDTH_PX = 480
 
 export const COLUMN_WIDTH_PX = {
   narrower: STANDARD_COLUMN_WIDTH_PX - 80,

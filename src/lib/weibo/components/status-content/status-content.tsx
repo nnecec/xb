@@ -68,6 +68,11 @@ function renderInlineEmoticon(emoticon: WeiboEmoticonItem, key: string) {
   )
 }
 
+function xbTopicPath(title: string) {
+  const topic = title.replace(/^#/, '').replace(/#$/, '').trim()
+  return `/topic?q=${encodeURIComponent(topic)}`
+}
+
 function TopicLink({ entity, topicKey }: { entity: FeedTopicEntity; topicKey: string }) {
   const xbTopicPage = useAppSettings((s) => s.xbTopicPage)
 
@@ -86,7 +91,7 @@ function TopicLink({ entity, topicKey }: { entity: FeedTopicEntity; topicKey: st
   }
 
   return (
-    <Link key={topicKey} to={entity.url} className={LINK_TEXT_CLASS_NAME}>
+    <Link key={topicKey} to={xbTopicPath(entity.title)} className={LINK_TEXT_CLASS_NAME}>
       #{entity.title}#
     </Link>
   )

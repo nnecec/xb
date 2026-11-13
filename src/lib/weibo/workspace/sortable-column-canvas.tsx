@@ -506,12 +506,7 @@ export function SortableColumnCanvas({
               onKeyDown={handleMainResizeKeyDown}
             />
             <div ref={assignMainScrollRef} className="xb-column-scroll h-full overflow-y-auto">
-              <main
-                id="xb-main-content"
-                tabIndex={-1}
-                ref={contentMainRef}
-                className="min-w-0 px-2 pb-8"
-              >
+              <main id="xb-main-content" tabIndex={-1} ref={contentMainRef} className="min-w-0">
                 {children}
               </main>
             </div>

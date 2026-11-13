@@ -4,7 +4,6 @@ import { useCallback } from 'react'
 import { Link } from 'react-router'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardDescription } from '@/components/ui/card'
 import { RefreshCWIcon } from '@/components/ui/refresh-cw'
 import {
   Select,
@@ -47,22 +46,14 @@ function getRankClassName(index: number): string {
   return 'text-muted-foreground'
 }
 
-function HotSearchItemComponent({
-  item,
-  index,
-  forceExternalLink = false,
-}: {
-  item: HotSearchListData
-  index: number
-  forceExternalLink?: boolean
-}) {
+function HotSearchItemComponent({ item, index }: { item: HotSearchListData; index: number }) {
   const word = normalizeWord(item.word)
   const xbTopicPage = useAppSettings((s) => s.xbTopicPage)
 
   const className =
     'group hover:bg-accent/80 focus-visible:bg-accent/80 focus-visible:ring-ring/50 flex w-full min-w-0 items-center gap-2 rounded-lg px-2 py-2 transition-colors focus-visible:ring-2 focus-visible:outline-none'
 
-  if (!xbTopicPage || forceExternalLink) {
+  if (!xbTopicPage) {
     const url = `https://s.weibo.com/weibo?q=${encodeURIComponent(`#${word}#`)}`
     return (
       <a href={url} target="_blank" rel="noopener noreferrer" className={className}>
@@ -129,8 +120,16 @@ export function HotSearchCard({
   }, [refetchHotSearch])
   useColumnPageRefresh(refreshHotSearch, currentQuery.isFetching && !currentQuery.isLoading)
 
+  const shellClassName = cn(
+    'flex flex-col',
+    variant === 'rail' && 'gap-2 rounded-xl border bg-card py-2 text-card-foreground',
+    variant === 'column' && 'min-h-0 flex-1',
+    className,
+  )
+  const statusClassName = 'text-muted-foreground px-2 pb-2 text-sm'
+
   return (
-    <Card className={className}>
+    <div data-slot={variant === 'rail' ? 'card' : undefined} className={shellClassName}>
       {variant === 'column' ? null : (
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-1">
@@ -177,9 +176,9 @@ export function HotSearchCard({
           <Spinner />
         </div>
       ) : currentQuery.isError ? (
-        <CardDescription className="px-2 pb-2">热搜加载失败</CardDescription>
+        <p className={statusClassName}>热搜加载失败</p>
       ) : items.length === 0 ? (
-        <CardDescription className="px-2 pb-2">暂无热搜</CardDescription>
+        <p className={statusClassName}>暂无热搜</p>
       ) : (
         <div
           className={cn(
@@ -188,15 +187,10 @@ export function HotSearchCard({
           )}
         >
           {items.map((item, index) => (
-            <HotSearchItemComponent
-              key={`${item.type}-${item.word}`}
-              item={item}
-              index={index}
-              forceExternalLink={variant === 'column'}
-            />
+            <HotSearchItemComponent key={`${item.type}-${item.word}`} item={item} index={index} />
           ))}
         </div>
       )}
-    </Card>
+    </div>
   )
 }

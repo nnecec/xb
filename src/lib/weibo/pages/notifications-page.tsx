@@ -167,7 +167,7 @@ export function NotificationsPage({ source }: { source?: { tab: NotificationTab 
         isRefreshing={isRefreshing}
       />
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col">
         <NotificationTabContent
           items={items}
           hasNextPage={Boolean(notificationsQuery.hasNextPage)}

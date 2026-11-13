@@ -4,11 +4,11 @@ import { resolveColumnWidthPx } from '@/lib/weibo/app/column-width'
 
 describe('resolveColumnWidthPx', () => {
   it('maps designed presets onto column pixels', () => {
-    expect(resolveColumnWidthPx('narrower', 600)).toBe(520)
-    expect(resolveColumnWidthPx('narrow', 600)).toBe(560)
-    expect(resolveColumnWidthPx('standard', 600)).toBe(600)
-    expect(resolveColumnWidthPx('wide', 600)).toBe(660)
-    expect(resolveColumnWidthPx('wider', 600)).toBe(720)
+    expect(resolveColumnWidthPx('narrower', 480)).toBe(400)
+    expect(resolveColumnWidthPx('narrow', 480)).toBe(440)
+    expect(resolveColumnWidthPx('standard', 480)).toBe(480)
+    expect(resolveColumnWidthPx('wide', 480)).toBe(540)
+    expect(resolveColumnWidthPx('wider', 480)).toBe(620)
   })
 
   it('uses the custom width when that preset is selected', () => {

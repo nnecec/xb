@@ -542,11 +542,16 @@ function StatusCardView({ status, role }: { status: FeedItem; role: StatusCardRo
       })
   }, [])
 
+  const flatInColumn = role === 'root' && (isTimeline || surface === 'detail')
+  const timelineCardClassName =
+    flatInColumn && 'rounded-none border-x-0 border-t-0 bg-transparent shadow-none'
+
   if (resolvedItem.deleted) {
     return (
       <Card
         className={cn(
           'xb-feed-card xb-feed-card--compact relative gap-4 py-4',
+          timelineCardClassName,
           role === 'quoted' &&
             '-mx-4 rounded-none border-0 bg-muted/55 shadow-none sm:mx-0 sm:rounded-xl',
         )}
@@ -581,7 +586,7 @@ function StatusCardView({ status, role }: { status: FeedItem; role: StatusCardRo
       <Card
         className={cn(
           'xb-feed-card group/card relative',
-          surface === 'detail' && role === 'root' && 'border-border/55 bg-card/95',
+          timelineCardClassName,
           role === 'quoted' &&
             '-mx-4 rounded-none border-0 bg-muted/55 shadow-none sm:mx-0 sm:rounded-xl',
           effectiveDensity === 'compact' && 'gap-3 py-3',

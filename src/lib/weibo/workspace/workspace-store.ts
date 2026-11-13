@@ -68,6 +68,7 @@ export interface WorkspaceStoreState extends WorkspaceSnapshot {
     baseLocation?: ColumnNavigationLocation | null,
   ) => Promise<void>
   setColumnWidth: (columnId: string, width: number) => Promise<void>
+  resetColumnWidths: () => Promise<void>
 }
 
 export type WorkspaceStore = StoreApi<WorkspaceStoreState>
@@ -596,6 +597,17 @@ export function createWorkspaceStore(
             },
           }
         })
+      },
+      async resetColumnWidths() {
+        await updateAndPersist((snapshot) => ({
+          ...snapshot,
+          auxiliaryColumns: snapshot.auxiliaryColumns.map((column) => {
+            const nextColumn = { ...column }
+            delete nextColumn.width
+            return nextColumn
+          }),
+          columnWidths: {},
+        }))
       },
     }
   })

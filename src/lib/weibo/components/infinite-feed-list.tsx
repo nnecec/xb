@@ -34,7 +34,7 @@ export function InfiniteFeedList({
   isFetchingNextPage,
   fetchNextPage,
   onRetry,
-  className = 'flex flex-col gap-3',
+  className = 'flex flex-col',
   scrollRootRef,
 }: InfiniteFeedListProps) {
   const loadMoreRef = useRef<HTMLDivElement | null>(null)

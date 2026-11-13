@@ -9,7 +9,14 @@ import {
   type AppShellContextValue,
 } from '@/lib/weibo/app/app-shell-context'
 import { AuxiliaryColumnView } from '@/lib/weibo/workspace/auxiliary-column'
-import type { ColumnSource } from '@/lib/weibo/workspace/workspace-store'
+import {
+  getWorkspaceStore,
+  resetWorkspaceStoreForTest,
+  WORKSPACE_STORAGE_KEY,
+  type AuxiliaryColumn,
+  type ColumnSource,
+  type WorkspaceStore,
+} from '@/lib/weibo/workspace/workspace-store'
 
 vi.mock('@/lib/weibo/pages/home-timeline-page', async () => {
   const { usePageRuntime } = await import('@/lib/weibo/app/page-runtime')
@@ -167,6 +174,9 @@ vi.mock('@/lib/weibo/pages/follow-fans-page', async () => {
   }
 })
 
+vi.mock('@/lib/weibo/components/hotsearch-list', () => ({
+  HotSearchCard: () => <p>热搜列表</p>,
+}))
 vi.mock('@/lib/weibo/pages/explore-page', () => ({ ExplorePage: () => null }))
 vi.mock('@/lib/weibo/pages/liked-statuses-page', () => ({ LikedStatusesPage: () => null }))
 vi.mock('@/lib/weibo/pages/history-page', () => ({ HistoryPage: () => null }))
@@ -181,7 +191,10 @@ const shellContext: AppShellContextValue = {
   onFollowGroupChange: vi.fn(),
 }
 
-function renderColumn(source: ColumnSource, columnOverrides: Partial<{ width: number }> = {}) {
+function renderColumn(
+  source: ColumnSource,
+  columnOverrides: Partial<{ width: number; lastLocation: AuxiliaryColumn['lastLocation'] }> = {},
+) {
   return render(
     <AppShellContextProvider value={shellContext}>
       <DndContext>
@@ -202,9 +215,60 @@ function renderColumn(source: ColumnSource, columnOverrides: Partial<{ width: nu
   )
 }
 
+function createMemoryStorage(initial: unknown = undefined) {
+  const values = new Map<string, unknown>(
+    initial === undefined ? [] : [[WORKSPACE_STORAGE_KEY, initial]],
+  )
+  return {
+    get: async (key: string) => ({ [key]: values.get(key) }),
+    set: async (items: Record<string, unknown>) => {
+      for (const [key, value] of Object.entries(items)) values.set(key, value)
+    },
+  }
+}
+
 describe('AuxiliaryColumnView navigation', () => {
-  beforeEach(() => {
+  let workspace: WorkspaceStore
+
+  beforeEach(async () => {
     vi.clearAllMocks()
+    resetWorkspaceStoreForTest()
+    workspace = getWorkspaceStore(createMemoryStorage())
+    await workspace.getState().hydrate()
+  })
+
+  it('forgets a hot search detail after returning to the list', async () => {
+    const user = userEvent.setup()
+    resetWorkspaceStoreForTest()
+    workspace = getWorkspaceStore(
+      createMemoryStorage({
+        version: 1,
+        auxiliaryColumns: [
+          {
+            id: 'column-1',
+            source: { kind: 'hot-search', type: 'hot' },
+            lastLocation: { kind: 'topic', topic: '测试话题' },
+          },
+        ],
+        focusedColumnId: null,
+      }),
+    )
+    await workspace.getState().hydrate()
+
+    const persisted = workspace.getState().auxiliaryColumns[0]!
+    const { unmount } = renderColumn(persisted.source, { lastLocation: persisted.lastLocation })
+    expect(screen.getByText('话题 测试话题')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '返回' }))
+    expect(screen.getByText('热搜列表')).toBeInTheDocument()
+    await waitFor(() =>
+      expect(workspace.getState().auxiliaryColumns[0]?.lastLocation).toBeUndefined(),
+    )
+
+    unmount()
+    const restored = workspace.getState().auxiliaryColumns[0]!
+    renderColumn(restored.source, { lastLocation: restored.lastLocation })
+    expect(screen.getByText('热搜列表')).toBeInTheDocument()
   })
 
   it('renders an accessible resize handle and persists pointer width changes', async () => {

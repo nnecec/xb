@@ -239,17 +239,22 @@ export function bindShellState({
   const onUrlChange = () => applyShellState()
   window.addEventListener('popstate', onUrlChange)
 
-  // Also detect pushState/replaceState navigations by patching History methods.
-  const originalPushState = history.pushState.bind(history)
-  const originalReplaceState = history.replaceState.bind(history)
+  // The page-context history bridge may already own these methods. Call through
+  // the current implementation, then re-apply shell state only when the URL moves.
+  const originalPushState = history.pushState
+  const originalReplaceState = history.replaceState
 
   history.pushState = function (...args: Parameters<typeof history.pushState>) {
-    originalPushState(...args)
-    onUrlChange()
+    const before = window.location.href
+    const result = originalPushState.apply(history, args)
+    if (window.location.href !== before) onUrlChange()
+    return result
   }
   history.replaceState = function (...args: Parameters<typeof history.replaceState>) {
-    originalReplaceState(...args)
-    onUrlChange()
+    const before = window.location.href
+    const result = originalReplaceState.apply(history, args)
+    if (window.location.href !== before) onUrlChange()
+    return result
   }
 
   applyShellState()
