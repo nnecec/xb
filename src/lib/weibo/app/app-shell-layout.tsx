@@ -1,25 +1,25 @@
+import { cn } from 'cn'
 import { Maximize2, Minimize2, Sparkles, Zap } from 'lucide-react'
-import { animate, AnimatePresence, motion, useMotionValue, useReducedMotion } from 'motion/react'
-import type { CSSProperties, KeyboardEvent, MouseEvent } from 'react'
+import { useReducedMotion } from 'motion/react'
+import type { KeyboardEvent, MouseEvent } from 'react'
 import type { ReactNode } from 'react'
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { flushSync } from 'react-dom'
-import { useLocation, useOutletContext } from 'react-router'
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
+import { useLocation } from 'react-router'
 
-import type { AppTheme, ContentWidth } from '@/lib/app-settings'
+import type { AppTheme } from '@/lib/app-settings'
 import { useAppSettings } from '@/lib/app-settings-store'
-import { cn } from '@/lib/utils'
-import type { AppShellContext } from '@/lib/weibo/app/app-shell'
-import { getContentWidthAdjustedMaxWidth } from '@/lib/weibo/app/content-width'
+export { useAppShellContext } from '@/lib/weibo/app/app-shell-context'
+import { resolveColumnWidthPx } from '@/lib/weibo/app/column-width'
 import { ImmersiveHeaderHiddenContext } from '@/lib/weibo/app/immersive-header'
-import { BackToTop } from '@/lib/weibo/components/back-to-top'
-import { ImmersiveExitRail, NavigationRail } from '@/lib/weibo/components/navigation-rail'
-import { RightRail } from '@/lib/weibo/components/right-rail'
+import { NavigationRail } from '@/lib/weibo/components/navigation-rail'
 import {
   PAGE_KINDS_WITH_SCROLL_RESTORATION,
   type WeiboPageDescriptor,
 } from '@/lib/weibo/route/page-descriptor'
 import { parseWeiboUrl } from '@/lib/weibo/route/parse-weibo-url'
+import { forwardBlankAreaWheelToMainColumn } from '@/lib/weibo/workspace/blank-area-wheel'
+import { SortableColumnCanvas } from '@/lib/weibo/workspace/sortable-column-canvas'
+import type { AuxiliaryColumn } from '@/lib/weibo/workspace/workspace-store'
 
 /** Routes whose primary feed scrolls inside ShellFrame `<main>` (timeline + profile posts). */
 function mainScrollRestorationKey(pathname: string, search: string): string | null {
@@ -59,10 +59,7 @@ export function startContentColumnTransition({
   motionX,
   offset,
   transition,
-  animateTo = (value, target, options) => {
-    const playback = animate(value as never, target, options)
-    return { stop: () => playback.stop() }
-  },
+  animateTo,
   requestFrame = window.requestAnimationFrame,
 }: {
   motionX: ContentColumnMotionValue
@@ -73,41 +70,32 @@ export function startContentColumnTransition({
 }) {
   motionX.set(offset)
   return scheduleContentColumnAnimation(() => {
-    animateTo(motionX, 0, transition)
+    animateTo?.(motionX, 0, transition)
   }, requestFrame)
 }
-
-const immersiveChromeTransition = {
-  duration: 0.18,
-  ease: [0.23, 1, 0.32, 1] as const,
-}
-
-const immersiveColumnTransition = {
-  duration: 0.28,
-  ease: [0.23, 1, 0.32, 1] as const,
-}
-
-const reducedMotionChromeTransition = { duration: 0.12 }
-
-const immersiveChromeStyle = { willChange: 'transform, opacity' }
 
 interface ShellFrameProps {
   pageKind: WeiboPageDescriptor['kind']
   viewingProfileUserId?: string | null
   rewriteEnabled: boolean
   theme: AppTheme
-  contentWidth: ContentWidth
-  customContentWidth: number
   onRewriteEnabledChange: (enabled: boolean) => void
   onThemeChange: (theme: AppTheme) => void
   onSettingsOpen: () => void
   onComposeOpen: () => void
+  onSidebarCollapsedChange?: (collapsed: boolean) => void
+  auxiliaryColumns?: AuxiliaryColumn[]
+  onColumnPickerOpen?: () => void
+  onRemoveAuxiliaryColumn?: (columnId: string) => void
+  onMoveAuxiliaryColumn?: (columnId: string, targetIndex: number) => Promise<void>
+  onWidthAuxiliaryColumn?: (columnId: string, width: number) => Promise<void>
+  onMainWidthChange?: (width: number) => Promise<void>
+  onFocusAuxiliaryColumn?: (columnId: string | null) => void
+  focusedColumnId?: string | null
+  canvasScrollLeft?: number
+  onCanvasScrollLeftChange?: (scrollLeft: number) => void
   mainRef: React.RefObject<HTMLDivElement | null>
   children: ReactNode
-}
-
-export function useAppShellContext() {
-  return useOutletContext<AppShellContext>()
 }
 
 export function ShellFrame({
@@ -115,12 +103,21 @@ export function ShellFrame({
   viewingProfileUserId,
   rewriteEnabled,
   theme,
-  contentWidth,
-  customContentWidth,
   onRewriteEnabledChange,
   onThemeChange,
   onSettingsOpen,
   onComposeOpen,
+  onSidebarCollapsedChange,
+  auxiliaryColumns = [],
+  onColumnPickerOpen,
+  onRemoveAuxiliaryColumn,
+  onMoveAuxiliaryColumn,
+  onWidthAuxiliaryColumn,
+  onMainWidthChange,
+  onFocusAuxiliaryColumn,
+  focusedColumnId,
+  canvasScrollLeft,
+  onCanvasScrollLeftChange,
   mainRef,
   children,
 }: ShellFrameProps) {
@@ -128,296 +125,90 @@ export function ShellFrame({
   const savedMainScrollByRouteRef = useRef<Partial<Record<string, number>>>({})
   const savedScrollAnchorByRouteRef = useRef<Partial<Record<string, string>>>({})
   const locationRef = useRef(location)
-  locationRef.current = location
-  const showRightRail = useAppSettings((state) => state.showRightRail)
-  const immersiveMode = useAppSettings((state) => state.immersiveMode)
-  const updateSettings = useAppSettings((state) => state.updateSettings)
+  useLayoutEffect(() => {
+    locationRef.current = location
+  }, [location])
+  const columnWidthPx = useAppSettings((state) =>
+    resolveColumnWidthPx(state.columnWidth, state.customColumnWidth),
+  )
   const shouldReduceMotion = useReducedMotion()
-  const contentColumnX = useMotionValue(0)
-
-  const [mainScrollRoot, setMainScrollRoot] = useState<HTMLDivElement | null>(null)
-  const [areImmersiveHeadersHidden, setAreImmersiveHeadersHidden] = useState(false)
-  const [immersiveColumnWidth, setImmersiveColumnWidth] = useState<number | null>(null)
   const contentMainRef = useRef<HTMLElement | null>(null)
-  const contentColumnPreviousLeftRef = useRef<number | null>(null)
-  const contentColumnFrameRef = useRef<number | null>(null)
-  const contentColumnAnimateStopRef = useRef<(() => void) | null>(null)
-  const lastScrollTopRef = useRef(0)
-  const scrollDirectionRef = useRef<'up' | 'down' | null>(null)
-  const scrollDirectionStartRef = useRef(0)
+  const workspaceRef = useRef<HTMLDivElement | null>(null)
   const assignShellRef = useCallback(
     (node: HTMLDivElement | null) => {
       mainRef.current = node
-      setMainScrollRoot((prev) => (prev === node ? prev : node))
     },
     [mainRef],
   )
-  const handleImmersiveModeChange = useCallback(
-    (enabled: boolean) => {
-      if (enabled === immersiveMode) {
-        return
-      }
-      const rect = contentMainRef.current?.getBoundingClientRect()
-      contentColumnPreviousLeftRef.current = rect && Number.isFinite(rect.left) ? rect.left : null
-
-      flushSync(() => {
-        if (enabled && rect?.width && Number.isFinite(rect.width)) {
-          setImmersiveColumnWidth(rect.width)
-        }
-        void updateSettings({ immersiveMode: enabled })
-      })
-    },
-    [immersiveMode, updateSettings],
-  )
-
-  useEffect(
-    () => () => {
-      if (contentColumnFrameRef.current !== null) {
-        window.cancelAnimationFrame(contentColumnFrameRef.current)
-      }
-      contentColumnAnimateStopRef.current?.()
-    },
-    [],
-  )
-
-  useLayoutEffect(() => {
-    const previousLeft = contentColumnPreviousLeftRef.current
-    if (previousLeft === null) {
-      return
-    }
-    contentColumnPreviousLeftRef.current = null
-
-    const node = contentMainRef.current
-    if (!node) {
-      return
-    }
-
-    // Measure the layout position without the current transform.
-    const currentX = contentColumnX.get()
-    if (currentX !== 0) {
-      contentColumnX.set(0)
-    }
-    const nextLeft = node.getBoundingClientRect().left
-
-    if (shouldReduceMotion) {
-      contentColumnX.set(0)
-      return
-    }
-    if (!Number.isFinite(nextLeft)) {
-      return
-    }
-    const offset = getContentColumnOffset(previousLeft, nextLeft)
-    if (offset === null) {
-      contentColumnX.set(0)
-      return
-    }
-
-    contentColumnAnimateStopRef.current?.()
-    startContentColumnTransition({
-      motionX: contentColumnX,
-      offset,
-      transition: immersiveColumnTransition,
-      animateTo: (value, target, options) => {
-        const playback = animate(value as never, target, options)
-        contentColumnAnimateStopRef.current = () => playback.stop()
-        return { stop: () => playback.stop() }
-      },
-      requestFrame: (callback) => {
-        const frame = window.requestAnimationFrame((timestamp) => {
-          if (contentColumnFrameRef.current === frame) {
-            contentColumnFrameRef.current = null
-          }
-          callback(timestamp)
-        })
-        contentColumnFrameRef.current = frame
-        return frame
-      },
-    })
-
-    return () => {
-      if (contentColumnFrameRef.current !== null) {
-        window.cancelAnimationFrame(contentColumnFrameRef.current)
-        contentColumnFrameRef.current = null
-      }
-      contentColumnAnimateStopRef.current?.()
-      contentColumnAnimateStopRef.current = null
-    }
-  }, [contentColumnX, immersiveMode, shouldReduceMotion])
-
-  useEffect(() => {
-    if (!shouldReduceMotion) {
-      return
-    }
-    contentColumnX.set(0)
-  }, [contentColumnX, shouldReduceMotion])
 
   useEffect(() => {
     const main = mainRef.current
-    if (!main) {
-      return
-    }
+    if (!main) return
     const onScroll = () => {
-      const scrollTop = main.scrollTop
-
-      if (immersiveMode) {
-        if (scrollTop <= 24) {
-          setAreImmersiveHeadersHidden(false)
-          scrollDirectionRef.current = null
-          scrollDirectionStartRef.current = scrollTop
-        } else {
-          const delta = scrollTop - lastScrollTopRef.current
-          const direction = delta > 0 ? 'down' : delta < 0 ? 'up' : null
-          if (direction && direction !== scrollDirectionRef.current) {
-            scrollDirectionRef.current = direction
-            scrollDirectionStartRef.current = lastScrollTopRef.current
-          }
-
-          if (direction === 'down' && scrollTop - scrollDirectionStartRef.current >= 12) {
-            setAreImmersiveHeadersHidden(true)
-          }
-          if (direction === 'up' && scrollDirectionStartRef.current - scrollTop >= 8) {
-            setAreImmersiveHeadersHidden(false)
-          }
-        }
-      }
-      lastScrollTopRef.current = scrollTop
-
       const { pathname, search } = locationRef.current
       const key = mainScrollRestorationKey(pathname, search)
-      if (key) {
-        savedMainScrollByRouteRef.current[key] = main.scrollTop
-
-        // Save the ID of the first visible feed item in viewport
-        const feedElements = Array.from(main.querySelectorAll('[data-feed-id]')) as HTMLElement[]
-        for (const element of feedElements) {
-          const rect = element.getBoundingClientRect()
-          if (rect.top >= -100 && rect.top < window.innerHeight) {
-            const feedId = element.getAttribute('data-feed-id')
-            if (feedId) {
-              savedScrollAnchorByRouteRef.current[key] = feedId
-            }
-            break
-          }
+      if (!key) return
+      savedMainScrollByRouteRef.current[key] = main.scrollTop
+      for (const element of Array.from(main.querySelectorAll('[data-feed-id]'))) {
+        const rect = element.getBoundingClientRect()
+        if (rect.top >= -100 && rect.top < window.innerHeight) {
+          const feedId = element.getAttribute('data-feed-id')
+          if (feedId) savedScrollAnchorByRouteRef.current[key] = feedId
+          break
         }
       }
     }
     main.addEventListener('scroll', onScroll, { passive: true })
     return () => main.removeEventListener('scroll', onScroll)
-  }, [immersiveMode, mainRef])
+  }, [mainRef])
 
   useEffect(() => {
-    lastScrollTopRef.current = mainRef.current?.scrollTop ?? 0
-    scrollDirectionRef.current = null
-    scrollDirectionStartRef.current = lastScrollTopRef.current
-    if (!immersiveMode) {
-      setAreImmersiveHeadersHidden(false)
+    const workspace = workspaceRef.current
+    if (!workspace) return
+    const onWheel = (event: WheelEvent) => {
+      forwardBlankAreaWheelToMainColumn(event, workspace, mainRef.current)
     }
-  }, [immersiveMode, mainRef])
+    workspace.addEventListener('wheel', onWheel, { passive: false })
+    return () => workspace.removeEventListener('wheel', onWheel)
+  }, [mainRef])
 
   useLayoutEffect(() => {
     const main = mainRef.current
     const key = mainScrollRestorationKey(location.pathname, location.search)
-    if (!main || !key) {
-      return
-    }
+    if (!main || !key) return
     const y = savedMainScrollByRouteRef.current[key] ?? 0
     const anchorId = savedScrollAnchorByRouteRef.current[key]
-
-    // Prefer anchor-based restoration over pixel-based
-    if (anchorId) {
-      const anchorElement = main.querySelector(`[data-feed-id="${anchorId}"]`) as HTMLElement | null
-      if (anchorElement) {
-        // Scroll anchor element to the same viewport position as when saved
-        const targetScrollTop = anchorElement.offsetTop - 100
-        main.scrollTop = targetScrollTop
-      } else {
-        // Fallback to pixel position if anchor element not found
-        main.scrollTop = y
-      }
-    } else {
-      main.scrollTop = y
+    const restore = () => {
+      const anchor = anchorId
+        ? (main.querySelector(`[data-feed-id="${anchorId}"]`) as HTMLElement | null)
+        : null
+      main.scrollTop = anchor ? anchor.offsetTop - 100 : y
     }
-
-    // Monitor content height changes and re-anchor
-    let lastScrollHeight = main.scrollHeight
-    let stableCount = 0
-    let checkCount = 0
-    const maxChecks = 20
-    const requiredStableChecks = 3
-
-    const checkAndCorrect = () => {
-      checkCount++
-      const currentScrollHeight = main.scrollHeight
-      const heightChanged = currentScrollHeight !== lastScrollHeight
-
-      if (heightChanged) {
-        // Re-anchor when content height changes
-        if (anchorId) {
-          const anchorElement = main.querySelector(
-            `[data-feed-id="${anchorId}"]`,
-          ) as HTMLElement | null
-          if (anchorElement) {
-            const targetScrollTop = anchorElement.offsetTop - 100
-            main.scrollTop = targetScrollTop
-          }
-        }
-        stableCount = 0
+    restore()
+    let lastHeight = main.scrollHeight
+    let stableChecks = 0
+    let checks = 0
+    let timerId = 0
+    const check = () => {
+      checks += 1
+      if (main.scrollHeight !== lastHeight) {
+        restore()
+        lastHeight = main.scrollHeight
+        stableChecks = 0
       } else {
-        stableCount++
+        stableChecks += 1
       }
-
-      lastScrollHeight = currentScrollHeight
-
-      if (stableCount < requiredStableChecks && checkCount < maxChecks) {
-        timerId = setTimeout(checkAndCorrect, 100)
-      }
+      if (stableChecks < 3 && checks < 20) timerId = window.setTimeout(check, 100)
     }
-
-    let timerId = setTimeout(checkAndCorrect, 100)
-
-    return () => clearTimeout(timerId)
+    timerId = window.setTimeout(check, 100)
+    return () => window.clearTimeout(timerId)
   }, [location.pathname, location.search, mainRef])
 
-  const contentWidthClass: Record<ContentWidth, string> = {
-    narrower: 'lg:max-w-[800px] xl:max-w-[1000px]',
-    narrow: 'lg:max-w-[950px] xl:max-w-[1150px]',
-    standard: 'lg:max-w-[1100px] xl:max-w-[1300px]',
-    wide: 'lg:max-w-[1250px] xl:max-w-[1450px]',
-    wider: 'lg:max-w-[1400px] xl:max-w-[1600px]',
-    custom: 'lg:max-w-[var(--xb-content-width)]',
-  }
-  const contentWidthStyle =
-    contentWidth === 'custom'
-      ? ({ '--xb-content-width': `${customContentWidth}px` } as CSSProperties)
-      : undefined
-  const immersiveContentWidth = getContentWidthAdjustedMaxWidth(
-    contentWidth,
-    720,
-    customContentWidth,
-  )
-  const activeImmersiveColumnWidth = immersiveColumnWidth
-    ? `${immersiveColumnWidth}px`
-    : immersiveContentWidth
-  const chromeTransition = shouldReduceMotion
-    ? reducedMotionChromeTransition
-    : immersiveChromeTransition
-  const railFade = {
-    initial: { opacity: 0 },
-    animate: { opacity: 1 },
-    exit: { opacity: 0 },
-  }
-  const exitRailFade = shouldReduceMotion
-    ? railFade
-    : {
-        initial: { opacity: 0, scale: 0.96 },
-        animate: { opacity: 1, scale: 1 },
-        exit: { opacity: 0, scale: 0.98 },
-      }
   return (
-    <ImmersiveHeaderHiddenContext.Provider value={immersiveMode && areImmersiveHeadersHidden}>
+    <ImmersiveHeaderHiddenContext.Provider value={false}>
       <div
-        className="bg-background text-foreground flex h-screen flex-col overflow-y-auto"
-        ref={assignShellRef}
+        ref={workspaceRef}
+        className="bg-background text-foreground flex h-screen overflow-hidden"
       >
         <a
           href="#xb-main-content"
@@ -429,88 +220,37 @@ export function ShellFrame({
         >
           跳到主要内容
         </a>
-        <div
-          className={cn(
-            'relative mx-auto flex w-full px-3',
-            immersiveMode
-              ? 'gap-0 [&_[data-shell-rail=left]]:absolute [&_[data-shell-rail=left]]:top-0 [&_[data-shell-rail=left]]:left-0 [&_[data-shell-rail=right]]:absolute [&_[data-shell-rail=right]]:top-0 [&_[data-shell-rail=right]]:right-0'
-              : `gap-3 ${contentWidthClass[contentWidth]}`,
-          )}
-          style={immersiveMode ? undefined : contentWidthStyle}
-        >
-          <AnimatePresence initial={false}>
-            {immersiveMode ? (
-              <motion.div
-                key="immersive-exit-rail"
-                className="fixed top-0 left-0 z-50 h-screen"
-                initial={exitRailFade.initial}
-                animate={exitRailFade.animate}
-                exit={exitRailFade.exit}
-                transition={
-                  shouldReduceMotion ? chromeTransition : { ...chromeTransition, delay: 0.06 }
-                }
-                style={immersiveChromeStyle}
-              >
-                <ImmersiveExitRail onImmersiveModeChange={handleImmersiveModeChange} />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="navigation-rail"
-                data-shell-rail="left"
-                className="sticky top-0 h-screen shrink-0"
-                initial={railFade.initial}
-                animate={railFade.animate}
-                exit={railFade.exit}
-                transition={chromeTransition}
-                style={immersiveChromeStyle}
-              >
-                <NavigationRail
-                  pageKind={pageKind}
-                  viewingProfileUserId={viewingProfileUserId}
-                  rewriteEnabled={rewriteEnabled}
-                  theme={theme}
-                  onRewriteEnabledChange={onRewriteEnabledChange}
-                  onThemeChange={onThemeChange}
-                  onSettingsOpen={onSettingsOpen}
-                  onComposeOpen={onComposeOpen}
-                  onSidebarCollapsedChange={(collapsed) =>
-                    updateSettings({ sidebarCollapsed: collapsed })
-                  }
-                  onImmersiveModeChange={handleImmersiveModeChange}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-          <motion.main
-            id="xb-main-content"
-            tabIndex={-1}
-            ref={contentMainRef}
-            className={cn('min-w-0 flex-1 pb-8', immersiveMode && 'mx-auto w-full')}
-            style={{
-              x: contentColumnX,
-              ...(immersiveMode ? { maxWidth: activeImmersiveColumnWidth } : null),
-            }}
-          >
-            {children}
-          </motion.main>
-          <AnimatePresence initial={false}>
-            {!immersiveMode && showRightRail && (
-              <motion.div
-                key="right-rail"
-                data-shell-rail="right"
-                className="sticky top-0 h-screen w-[260px] shrink-0"
-                initial={railFade.initial}
-                animate={railFade.animate}
-                exit={railFade.exit}
-                transition={chromeTransition}
-                style={immersiveChromeStyle}
-              >
-                <RightRail />
-              </motion.div>
-            )}
-          </AnimatePresence>
+        <div className="h-screen shrink-0">
+          <NavigationRail
+            pageKind={pageKind}
+            viewingProfileUserId={viewingProfileUserId}
+            rewriteEnabled={rewriteEnabled}
+            theme={theme}
+            onRewriteEnabledChange={onRewriteEnabledChange}
+            onThemeChange={onThemeChange}
+            onSettingsOpen={onSettingsOpen}
+            onComposeOpen={onComposeOpen}
+            onColumnPickerOpen={onColumnPickerOpen}
+            onPrimaryNavigate={() => onFocusAuxiliaryColumn?.(null)}
+            onSidebarCollapsedChange={onSidebarCollapsedChange ?? (() => undefined)}
+          />
         </div>
-        <BackToTop scrollRoot={mainScrollRoot} />
+        <SortableColumnCanvas
+          auxiliaryColumns={auxiliaryColumns}
+          columnWidthPx={columnWidthPx}
+          focusedColumnId={focusedColumnId ?? null}
+          canvasScrollLeft={canvasScrollLeft}
+          onCanvasScrollLeftChange={onCanvasScrollLeftChange}
+          shouldReduceMotion={Boolean(shouldReduceMotion)}
+          assignMainScrollRef={assignShellRef}
+          contentMainRef={contentMainRef}
+          onMoveColumn={onMoveAuxiliaryColumn}
+          onWidthColumn={onWidthAuxiliaryColumn}
+          onMainWidthChange={onMainWidthChange}
+          onRemoveColumn={onRemoveAuxiliaryColumn}
+        >
+          {children}
+        </SortableColumnCanvas>
       </div>
     </ImmersiveHeaderHiddenContext.Provider>
   )

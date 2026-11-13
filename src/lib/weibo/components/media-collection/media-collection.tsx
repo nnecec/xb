@@ -83,7 +83,6 @@ export const MediaCollection = memo(function MediaCollection({
     enabled: horizontal,
     itemIds,
     initialItemId,
-    dragFree: motionEnabled,
     onVisibleItemChange,
   })
   const visibleCount =
@@ -111,9 +110,8 @@ export const MediaCollection = memo(function MediaCollection({
             horizontal
               ? 'scrollbar-none max-h-[60vh] overflow-hidden overscroll-x-contain md:max-h-none'
               : 'grid w-full gap-2',
-            horizontal && (strip.isDragging ? 'cursor-grabbing' : 'cursor-grab'),
             horizontal &&
-              'focus-visible:ring-ring select-none outline-none focus-visible:ring-3 focus-visible:ring-inset [touch-action:pan-y]',
+              'focus-visible:ring-ring cursor-grab select-none outline-none active:cursor-grabbing focus-visible:ring-3 focus-visible:ring-inset',
             !horizontal &&
               (usesCardLayout
                 ? cardGridClassName(visibleCount)
@@ -129,15 +127,14 @@ export const MediaCollection = memo(function MediaCollection({
                   : undefined
           }
           ref={horizontal ? strip.setRootRef : undefined}
-          onClickCapture={horizontal ? strip.handleClickCapture : undefined}
-          onDragStart={horizontal ? (event) => event.preventDefault() : undefined}
           onKeyDown={horizontal ? strip.handleKeyDown : undefined}
-          onPointerDown={horizontal ? strip.handlePointerDown : undefined}
-          onPointerMove={horizontal ? strip.handlePointerMove : undefined}
-          onPointerCancel={horizontal ? strip.handlePointerEnd : undefined}
-          onLostPointerCapture={horizontal ? strip.handlePointerEnd : undefined}
         >
-          <div className={cn(horizontal ? 'flex h-full gap-2' : 'contents')}>
+          <div
+            className={cn(
+              // Embla 官方结构：手势的 touch-action 放在 container 上，viewport 只负责 overflow。
+              horizontal ? 'flex h-full gap-2 [touch-action:pan-y_pinch-zoom]' : 'contents',
+            )}
+          >
             {items.map((item, index) => {
               const ratio = mediaRatio(item, items.length, horizontal)
               const hiddenByGridLimit = !horizontal && index >= visibleCount

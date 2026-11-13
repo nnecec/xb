@@ -79,12 +79,24 @@ export type LineHeightClass =
   | 'leading-relaxed'
   | 'leading-loose'
 
-export type ContentWidth = 'narrower' | 'narrow' | 'standard' | 'wide' | 'wider' | 'custom'
+export type ColumnWidth = 'narrower' | 'narrow' | 'standard' | 'wide' | 'wider' | 'custom'
 
-export const CUSTOM_CONTENT_WIDTH_MIN = 800
-export const CUSTOM_CONTENT_WIDTH_MAX = 2000
-export const CUSTOM_CONTENT_WIDTH_STEP = 20
-export const DEFAULT_CUSTOM_CONTENT_WIDTH = 1200
+export const CUSTOM_COLUMN_WIDTH_MIN = 300
+export const CUSTOM_COLUMN_WIDTH_MAX = 720
+
+/** 主列与辅助列共用的标准宽度，其余预设以此为基准。 */
+const STANDARD_COLUMN_WIDTH_PX = 480
+
+export const COLUMN_WIDTH_PX = {
+  narrower: STANDARD_COLUMN_WIDTH_PX - 80,
+  narrow: STANDARD_COLUMN_WIDTH_PX - 40,
+  standard: STANDARD_COLUMN_WIDTH_PX,
+  wide: STANDARD_COLUMN_WIDTH_PX + 60,
+  wider: Math.min(CUSTOM_COLUMN_WIDTH_MAX, STANDARD_COLUMN_WIDTH_PX + 140),
+} as const satisfies Record<Exclude<ColumnWidth, 'custom'>, number>
+
+export const CUSTOM_COLUMN_WIDTH_STEP = 20
+export const DEFAULT_CUSTOM_COLUMN_WIDTH = COLUMN_WIDTH_PX.standard
 
 export type HomeTab = 'for-you' | 'following' | 'special-follow' | 'friend-circle'
 
@@ -177,8 +189,8 @@ export const DEFAULT_WEIBO_CARD_SINGLE_IMAGE_MAX_WIDTH = 450
 export const DEFAULT_WEIBO_CARD_SINGLE_VIDEO_MAX_WIDTH = 650
 
 export interface AppSettings {
-  contentWidth: ContentWidth
-  customContentWidth: number
+  columnWidth: ColumnWidth
+  customColumnWidth: number
   theme: AppTheme
   rewriteEnabled: boolean
   uiFontSize: UiFontSize
@@ -195,12 +207,8 @@ export interface AppSettings {
   showDMs: boolean
   showProfile: boolean
   showCompose: boolean
-  showRightRail: boolean
-  showHotSearchCard: boolean
   xbEntryCollapsed: boolean
-  showFollowedSuperTopicsCard: boolean
   sidebarCollapsed: boolean
-  immersiveMode: boolean
   motionPreference: MotionPreference
   replyChainDisplay: ReplyChainDisplay
   darkModeImageDim: boolean
@@ -276,8 +284,8 @@ export interface AppSettingsStorageArea {
 export const APP_SETTINGS_STORAGE_KEY = 'xb:app-settings'
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
-  contentWidth: 'standard' as ContentWidth,
-  customContentWidth: DEFAULT_CUSTOM_CONTENT_WIDTH,
+  columnWidth: 'standard' as ColumnWidth,
+  customColumnWidth: DEFAULT_CUSTOM_COLUMN_WIDTH,
   theme: 'system',
   rewriteEnabled: true,
   uiFontSize: 14,
@@ -294,12 +302,8 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   showDMs: true,
   showProfile: true,
   showCompose: true,
-  showRightRail: true,
-  showHotSearchCard: true,
   xbEntryCollapsed: false,
-  showFollowedSuperTopicsCard: false,
   sidebarCollapsed: false,
-  immersiveMode: false,
   motionPreference: 'system',
   replyChainDisplay: 'expanded',
   darkModeImageDim: false,
@@ -564,7 +568,7 @@ function isLineHeightClass(value: unknown): value is LineHeightClass {
   )
 }
 
-function isContentWidth(value: unknown): value is ContentWidth {
+function isColumnWidth(value: unknown): value is ColumnWidth {
   return (
     value === 'narrower' ||
     value === 'narrow' ||
@@ -572,20 +576,6 @@ function isContentWidth(value: unknown): value is ContentWidth {
     value === 'wide' ||
     value === 'wider' ||
     value === 'custom'
-  )
-}
-
-export function normalizeCustomContentWidth(value: unknown): number {
-  const numeric = typeof value === 'number' ? value : Number.NaN
-  if (!Number.isFinite(numeric)) {
-    return DEFAULT_APP_SETTINGS.customContentWidth
-  }
-
-  const clamped = Math.min(CUSTOM_CONTENT_WIDTH_MAX, Math.max(CUSTOM_CONTENT_WIDTH_MIN, numeric))
-  return (
-    Math.round((clamped - CUSTOM_CONTENT_WIDTH_MIN) / CUSTOM_CONTENT_WIDTH_STEP) *
-      CUSTOM_CONTENT_WIDTH_STEP +
-    CUSTOM_CONTENT_WIDTH_MIN
   )
 }
 
@@ -662,10 +652,16 @@ export function normalizeAppSettings(value: unknown): AppSettings {
   const legacyCandidate = value as Record<string, unknown>
 
   return {
-    contentWidth: isContentWidth(candidate.contentWidth)
-      ? candidate.contentWidth
-      : DEFAULT_APP_SETTINGS.contentWidth,
-    customContentWidth: normalizeCustomContentWidth(candidate.customContentWidth),
+    columnWidth: isColumnWidth(candidate.columnWidth)
+      ? candidate.columnWidth
+      : DEFAULT_APP_SETTINGS.columnWidth,
+    customColumnWidth: normalizeSteppedNumber(
+      candidate.customColumnWidth,
+      CUSTOM_COLUMN_WIDTH_MIN,
+      CUSTOM_COLUMN_WIDTH_MAX,
+      CUSTOM_COLUMN_WIDTH_STEP,
+      DEFAULT_APP_SETTINGS.customColumnWidth,
+    ),
     theme: isAppTheme(candidate.theme) ? candidate.theme : DEFAULT_APP_SETTINGS.theme,
     rewriteEnabled:
       typeof candidate.rewriteEnabled === 'boolean'
@@ -707,30 +703,14 @@ export function normalizeAppSettings(value: unknown): AppSettings {
       typeof candidate.showCompose === 'boolean'
         ? candidate.showCompose
         : DEFAULT_APP_SETTINGS.showCompose,
-    showRightRail:
-      typeof candidate.showRightRail === 'boolean'
-        ? candidate.showRightRail
-        : DEFAULT_APP_SETTINGS.showRightRail,
-    showHotSearchCard:
-      typeof candidate.showHotSearchCard === 'boolean'
-        ? candidate.showHotSearchCard
-        : DEFAULT_APP_SETTINGS.showHotSearchCard,
     xbEntryCollapsed:
       typeof candidate.xbEntryCollapsed === 'boolean'
         ? candidate.xbEntryCollapsed
         : DEFAULT_APP_SETTINGS.xbEntryCollapsed,
-    showFollowedSuperTopicsCard:
-      typeof candidate.showFollowedSuperTopicsCard === 'boolean'
-        ? candidate.showFollowedSuperTopicsCard
-        : DEFAULT_APP_SETTINGS.showFollowedSuperTopicsCard,
     sidebarCollapsed:
       typeof candidate.sidebarCollapsed === 'boolean'
         ? candidate.sidebarCollapsed
         : DEFAULT_APP_SETTINGS.sidebarCollapsed,
-    immersiveMode:
-      typeof candidate.immersiveMode === 'boolean'
-        ? candidate.immersiveMode
-        : DEFAULT_APP_SETTINGS.immersiveMode,
     motionPreference: isMotionPreference(candidate.motionPreference)
       ? candidate.motionPreference
       : DEFAULT_APP_SETTINGS.motionPreference,

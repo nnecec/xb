@@ -1,4 +1,4 @@
-import { ChevronDown, XIcon } from 'lucide-react'
+import { XIcon } from 'lucide-react'
 import { Dialog as DialogPrimitive } from 'radix-ui'
 import React from 'react'
 
@@ -14,7 +14,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
   Field as UiField,
   FieldContent,
@@ -23,6 +22,7 @@ import {
   FieldTitle,
 } from '@/components/ui/field'
 import { getUiPortalContainer } from '@/components/ui/portal'
+import { Slider } from '@/components/ui/slider'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { type AppSettings, DEFAULT_APP_SETTINGS } from '@/lib/app-settings'
 
@@ -202,25 +202,49 @@ export function OptionPills<T extends string>({
   )
 }
 
-export function FineTuning({
-  children,
-  defaultOpen = false,
+export function CommitSlider({
+  label,
+  value,
+  min,
+  max,
+  step,
+  onCommit,
 }: {
-  children: React.ReactNode
-  defaultOpen?: boolean
+  label: string
+  value: number
+  min: number
+  max: number
+  step: number
+  onCommit: (value: number) => void
 }) {
+  const [draft, setDraft] = React.useState<number | null>(null)
+  const shown = draft ?? value
+
   return (
-    <Collapsible defaultOpen={defaultOpen} className="border-t py-3">
-      <CollapsibleTrigger className="group text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 flex min-h-8 w-full items-center justify-between rounded-md text-left text-xs font-medium focus-visible:ring-3 focus-visible:outline-none">
-        精细调整
-        <ChevronDown
-          aria-hidden="true"
-          className="size-4 transition-transform group-data-[state=open]:rotate-180"
-        />
-      </CollapsibleTrigger>
-      <CollapsibleContent className="pt-2">{children}</CollapsibleContent>
-    </Collapsible>
+    <div className="flex w-72 min-w-0 items-center gap-3">
+      <Slider
+        min={min}
+        max={max}
+        step={step}
+        value={[shown]}
+        aria-label={label}
+        onValueChange={([next]) => {
+          if (next !== undefined) setDraft(next)
+        }}
+        onValueCommit={([next]) => {
+          setDraft(null)
+          if (next !== undefined && next !== value) onCommit(next)
+        }}
+      />
+      <output className="text-muted-foreground w-16 shrink-0 text-right font-mono text-xs tabular-nums">
+        {shown}px
+      </output>
+    </div>
   )
+}
+
+export function FineTuning({ children }: { children: React.ReactNode }) {
+  return <div className="border-t py-3">{children}</div>
 }
 
 export function ResetSectionButton({

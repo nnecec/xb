@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -18,6 +19,10 @@ import {
 import { HomeTimelinePage } from '@/lib/weibo/pages/home-timeline-page'
 import { ProfilePage } from '@/lib/weibo/pages/profile-page'
 import { StatusDetailPage } from '@/lib/weibo/pages/status-detail-page'
+import {
+  getWorkspaceStore,
+  resetWorkspaceStoreForTest,
+} from '@/lib/weibo/workspace/workspace-store'
 
 vi.mock('@/lib/weibo/components/emoticon-picker', () => ({
   EmoticonPicker: () => null,
@@ -112,6 +117,7 @@ describe('AppShell', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     resetAppSettingsStoreForTest()
+    resetWorkspaceStoreForTest()
     Object.defineProperty(globalThis, 'browser', {
       writable: true,
       value: {
@@ -147,6 +153,11 @@ describe('AppShell', () => {
       rewriteEnabled: true,
       isHydrated: true,
     })
+    const workspaceStore = getWorkspaceStore({
+      get: async () => ({}),
+      set: async () => {},
+    })
+    workspaceStore.setState({ ...workspaceStore.getState(), isHydrated: true })
   })
 
   it('navigates to the following timeline when the home tab changes', async () => {
@@ -161,6 +172,56 @@ describe('AppShell', () => {
     await waitFor(() => {
       expect(vi.mocked(loadHomeTimeline)).toHaveBeenLastCalledWith('following', { cursor: null })
     })
+  })
+
+  it('renders primary and auxiliary columns at the configured column width', async () => {
+    const user = userEvent.setup()
+    getAppSettingsStore().setState({
+      columnWidth: 'custom',
+      customColumnWidth: 500,
+    })
+    getWorkspaceStore().setState({
+      isHydrated: true,
+      auxiliaryColumns: [
+        {
+          id: 'following-column',
+          source: { kind: 'home', tab: 'following' },
+        },
+      ],
+      focusedColumnId: 'following-column',
+    })
+
+    renderWeiboShell(['/'])
+
+    expect(screen.getByRole('button', { name: '列管理' })).toBeInTheDocument()
+    expect(screen.queryByRole('menuitem', { name: '删除列' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '我关注的', level: 1 })).toBeInTheDocument()
+    expect(document.querySelector('[data-column-canvas]')).toHaveClass(
+      'overflow-x-auto',
+      'xb-column-scroll',
+    )
+    expect(document.querySelector('[data-primary-column] .xb-column-scroll')).toBeInTheDocument()
+    expect(
+      document.querySelector('[data-auxiliary-column="following-column"] .xb-column-scroll'),
+    ).toBeInTheDocument()
+    expect(document.querySelector('[data-primary-column]')).toHaveStyle({ width: '500px' })
+    expect(document.querySelector('[data-auxiliary-column="following-column"]')).toHaveStyle({
+      width: '500px',
+    })
+    expect(document.querySelector('[data-primary-column]')).toHaveClass('border-x')
+    expect(document.querySelector('[data-primary-column]')).not.toHaveClass('rounded-lg')
+    expect(document.querySelector('[data-auxiliary-column="following-column"]')).toHaveClass(
+      'border-x',
+    )
+    expect(document.querySelector('[data-auxiliary-column="following-column"]')).not.toHaveClass(
+      'rounded-lg',
+    )
+    expect(document.querySelector('[data-column-header]')).not.toBeInTheDocument()
+    const columnControl = screen.getByRole('button', { name: '列管理' })
+    expect(columnControl).toBeInTheDocument()
+    const auxiliaryColumnControl = screen.queryByRole('button', { name: '我关注的列操作' })
+    if (auxiliaryColumnControl) await user.click(auxiliaryColumnControl)
+    expect(screen.queryByRole('menuitem', { name: '向左移' })).not.toBeInTheDocument()
   })
 
   it('navigates to the special-follow timeline with the gid from allGroups', async () => {

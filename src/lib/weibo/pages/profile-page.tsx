@@ -1,26 +1,29 @@
-import { skipToken, useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo } from 'react'
+import { skipToken, useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 
 import { useAppSettings } from '@/lib/app-settings-store'
 import { useAppShellContext } from '@/lib/weibo/app/app-shell-layout'
+import { usePageRuntime } from '@/lib/weibo/app/page-runtime'
 import { InfiniteFeedList } from '@/lib/weibo/components/infinite-feed-list'
 import { PageErrorState, PageLoadingState } from '@/lib/weibo/components/page-state'
 import { ProfileHeader } from '@/lib/weibo/components/profile-header'
 import { ProfileSearchBar } from '@/lib/weibo/components/profile-search-bar'
+import { TimelineTopBar } from '@/lib/weibo/components/timeline-top-bar'
 import {
+  loadProfileHoverCard,
   profileLookupFromPage,
   profilePostsInfiniteOptions,
   profileSearchInfiniteOptions,
 } from '@/lib/weibo/data/weibo-data'
-import { loadProfileHoverCard } from '@/lib/weibo/data/weibo-data'
 import type { TimelinePage } from '@/lib/weibo/models/feed'
 import {
   parseProfileSearchUrlState,
+  type ProfileSearchUrlState,
   profileSearchStateKey,
   writeProfileSearchParams,
 } from '@/lib/weibo/route/profile-search-params'
-import { useWeiboPage } from '@/lib/weibo/route/use-weibo-page'
+import { useColumnPageRefresh } from '@/lib/weibo/workspace/column-page-toolbar'
 
 function ProfilePostsFeed({
   profileId,
@@ -33,8 +36,9 @@ function ProfilePostsFeed({
   searchState: ReturnType<typeof parseProfileSearchUrlState>
   searchBarKey: string
   searchParams: URLSearchParams
-  setSearchParams: ReturnType<typeof useSearchParams>[1]
+  setSearchParams: (params: URLSearchParams) => void
 }) {
+  const scrollRootRef = usePageRuntime().scrollRootRef
   const postsQuery = useInfiniteQuery({
     ...profilePostsInfiniteOptions(profileId),
     enabled: profileId !== '' && !searchState.active,
@@ -58,7 +62,7 @@ function ProfilePostsFeed({
   const total = searchQuery.data?.pages[0]?.total
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col">
       <ProfileSearchBar
         key={searchBarKey}
         state={searchState}
@@ -74,6 +78,7 @@ function ProfilePostsFeed({
         }}
       />
       <InfiniteFeedList
+        scrollRootRef={scrollRootRef}
         pages={activeQuery.data?.pages as TimelinePage[] | undefined}
         emptyLabel={searchState.active ? '没有找到相关微博' : '暂时还没有微博内容'}
         loadingLabel={searchState.active ? '正在搜索此用户微博…' : '正在加载此用户微博…'}
@@ -84,20 +89,27 @@ function ProfilePostsFeed({
         isFetchingNextPage={isFetchingNextPage}
         fetchNextPage={activeQuery.fetchNextPage}
         onRetry={() => void activeQuery.refetch()}
-        className="flex flex-col gap-4"
       />
     </div>
   )
 }
 
-export function ProfilePage() {
-  const ctx = useAppShellContext()
-  const page = useWeiboPage()
-  const [searchParams, setSearchParams] = useSearchParams()
+function ProfileContent({
+  page,
+  searchParams,
+  setSearchParams,
+  onProfileUserIdChange,
+}: {
+  page: Extract<ReturnType<typeof usePageRuntime>['page'], { kind: 'profile' }>
+  searchParams: URLSearchParams
+  setSearchParams: (params: URLSearchParams) => void
+  onProfileUserIdChange?: (userId: string | null) => void
+}) {
   const rewriteEnabled = useAppSettings((s) => s.rewriteEnabled)
+  const queryClient = useQueryClient()
 
   const profileLookup = profileLookupFromPage(page)
-  const isEnabled = rewriteEnabled && page.kind === 'profile'
+  const isEnabled = rewriteEnabled
   const searchState = useMemo(() => parseProfileSearchUrlState(searchParams), [searchParams])
   const searchBarKey = profileSearchStateKey(searchState)
 
@@ -118,30 +130,95 @@ export function ProfilePage() {
   })
 
   useEffect(() => {
-    ctx.onProfileUserIdChange(profileQuery.data?.id ?? null)
+    onProfileUserIdChange?.(profileQuery.data?.id ?? null)
     // oxlint-disable-next-line eslint-plugin-react-hooks/exhaustive-deps
-  }, [ctx.onProfileUserIdChange, profileQuery.data?.id])
+  }, [onProfileUserIdChange, profileQuery.data?.id])
 
   const errorMessage = profileQuery.error instanceof Error ? profileQuery.error.message : null
+  const resolvedProfileId =
+    profileQuery.data?.id ?? (page.profileSource === 'u' ? page.profileId : '')
+  const [isRefreshingLists, setIsRefreshingLists] = useState(false)
+  const refetchProfile = profileQuery.refetch
+  const refreshProfile = useCallback(() => {
+    void refetchProfile()
+    if (!resolvedProfileId) return
+    setIsRefreshingLists(true)
+    void Promise.all([
+      queryClient.refetchQueries({
+        queryKey: ['weibo', 'profile', 'posts', resolvedProfileId],
+      }),
+      queryClient.refetchQueries({
+        queryKey: ['weibo', 'profile', 'search', resolvedProfileId],
+      }),
+    ]).finally(() => {
+      setIsRefreshingLists(false)
+    })
+  }, [queryClient, refetchProfile, resolvedProfileId])
+  useColumnPageRefresh(
+    refreshProfile,
+    (profileQuery.isFetching && !profileQuery.isLoading) || isRefreshingLists,
+  )
 
   return (
-    <div className="pt-4">
-      {profileQuery.isLoading ? <PageLoadingState label="正在加载此用户主页…" /> : null}
-      {!profileQuery.isLoading && errorMessage ? (
-        <PageErrorState description={errorMessage} />
-      ) : null}
-      {!profileQuery.isLoading && !errorMessage && profileQuery.data ? (
-        <div className="flex flex-col gap-4">
-          <ProfileHeader profile={profileQuery.data} />
-          <ProfilePostsFeed
-            profileId={profileQuery.data.id}
-            searchState={searchState}
-            searchBarKey={searchBarKey}
-            searchParams={searchParams}
-            setSearchParams={setSearchParams}
-          />
-        </div>
-      ) : null}
+    <div>
+      <TimelineTopBar title="个人主页" />
+      <div>
+        {profileQuery.isLoading ? <PageLoadingState label="正在加载此用户主页…" /> : null}
+        {!profileQuery.isLoading && errorMessage ? (
+          <PageErrorState description={errorMessage} />
+        ) : null}
+        {!profileQuery.isLoading && !errorMessage && profileQuery.data ? (
+          <div className="flex flex-col">
+            <ProfileHeader profile={profileQuery.data} />
+            <ProfilePostsFeed
+              profileId={profileQuery.data.id}
+              searchState={searchState}
+              searchBarKey={searchBarKey}
+              searchParams={searchParams}
+              setSearchParams={setSearchParams}
+            />
+          </div>
+        ) : null}
+      </div>
     </div>
+  )
+}
+
+export function ProfilePage() {
+  const page = usePageRuntime().page
+  const { onProfileUserIdChange } = useAppShellContext()
+  const [searchParams, setSearchParams] = useSearchParams()
+  if (page.kind !== 'profile') return null
+
+  return (
+    <ProfileContent
+      page={page}
+      searchParams={searchParams}
+      setSearchParams={(params) => setSearchParams(params)}
+      onProfileUserIdChange={onProfileUserIdChange}
+    />
+  )
+}
+
+export function ProfileColumnPage({
+  source,
+}: {
+  source: {
+    profileId: string
+    profileSource: 'u' | 'n'
+    search?: ProfileSearchUrlState
+  }
+}) {
+  const [searchParams, setSearchParams] = useState(() =>
+    source.search
+      ? writeProfileSearchParams(new URLSearchParams(), source.search)
+      : new URLSearchParams(),
+  )
+  return (
+    <ProfileContent
+      page={{ kind: 'profile', ...source, tab: 'posts' }}
+      searchParams={searchParams}
+      setSearchParams={(params) => setSearchParams(new URLSearchParams(params))}
+    />
   )
 }

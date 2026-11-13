@@ -1,8 +1,7 @@
 import { BadgeCheck } from 'lucide-react'
-import { useNavigate } from 'react-router'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Card, CardContent } from '@/components/ui/card'
+import { usePageRuntime } from '@/lib/weibo/app/page-runtime'
 import { FollowButton } from '@/lib/weibo/components/follow-button'
 import { formatProfileCount } from '@/lib/weibo/components/profile-shared'
 import type { RelationUser } from '@/lib/weibo/models/user-relation'
@@ -13,14 +12,14 @@ interface UserCardProps {
 }
 
 export function UserCard({ user, showFollowButton = true }: UserCardProps) {
-  const navigate = useNavigate()
+  const runtime = usePageRuntime()
 
   return (
-    <Card
-      className="hover:bg-accent/30 cursor-pointer transition-colors"
-      onClick={() => navigate(`/u/${user.id}`)}
+    <div
+      className="hover:bg-accent/30 cursor-pointer border-b px-4 py-3 transition-colors"
+      onClick={() => runtime.navigate(`/u/${user.id}`)}
     >
-      <CardContent className="flex items-start gap-3">
+      <div className="flex items-start gap-3">
         <Avatar className="size-12 shrink-0">
           <AvatarImage src={user.avatarLarge} alt={user.name} />
           <AvatarFallback className="text-sm font-semibold">
@@ -62,7 +61,7 @@ export function UserCard({ user, showFollowButton = true }: UserCardProps) {
             />
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

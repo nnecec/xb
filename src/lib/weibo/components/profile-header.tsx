@@ -2,7 +2,6 @@ import { BadgeCheck, CalendarDays, MapPin } from 'lucide-react'
 import { Link } from 'react-router'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Card, CardContent } from '@/components/ui/card'
 import { useAppSettings } from '@/lib/app-settings-store'
 import { FollowGroup } from '@/lib/weibo/components/follow-group'
 import {
@@ -144,8 +143,8 @@ function ProfileHeaderMutualFollowers({ profile }: { profile: UserProfile }) {
 export function ProfileHeader({ profile }: { profile: UserProfile }) {
   const ratingEnabled = useAppSettings((s) => s.ratingEnabled)
   return (
-    <Card className="overflow-hidden py-0">
-      <CardContent className="p-0">
+    <div className="overflow-hidden border-b">
+      <div>
         <ProfileBanner
           bannerUrl={profile.bannerUrl}
           className="bg-muted relative h-24 w-full overflow-hidden sm:h-30 lg:h-36"
@@ -157,7 +156,7 @@ export function ProfileHeader({ profile }: { profile: UserProfile }) {
           {ratingEnabled ? <RatingPanel targetUid={profile.id} size="md" className="mt-3" /> : null}
           <ProfileHeaderMutualFollowers profile={profile} />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

@@ -80,21 +80,24 @@ function DashVideoSource({
   onLoadedMetadata,
   onPointerDownCapture,
 }: VideoPlaybackSourceProps & { manifestXml: string }) {
-  const [manifestUrl, setManifestUrl] = useState('')
+  const sourceKey = shouldLoad ? manifestXml.trim() : ''
+  const [blobUrl, setBlobUrl] = useState<{ key: string; url: string } | null>(null)
+  const manifestUrl = blobUrl?.key === sourceKey ? blobUrl.url : ''
 
   useEffect(() => {
-    if (!shouldLoad || !manifestXml.trim()) {
-      setManifestUrl('')
-      return
-    }
+    if (!sourceKey) return
 
-    const blob = new Blob([manifestXml], { type: 'application/dash+xml' })
+    const blob = new Blob([sourceKey], { type: 'application/dash+xml' })
     const url = URL.createObjectURL(blob)
-    setManifestUrl(url)
+    let cancelled = false
+    queueMicrotask(() => {
+      if (!cancelled) setBlobUrl({ key: sourceKey, url })
+    })
     return () => {
+      cancelled = true
       URL.revokeObjectURL(url)
     }
-  }, [manifestXml, shouldLoad])
+  }, [sourceKey])
 
   return (
     <>

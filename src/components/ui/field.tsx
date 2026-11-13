@@ -1,8 +1,8 @@
 import { cva, type VariantProps } from 'class-variance-authority'
+import { cn } from 'cn'
 import * as React from 'react'
 
 import { Label } from '@/components/ui/label'
-import { cn } from '@/lib/utils'
 
 const fieldVariants = cva('group/field flex w-full gap-2', {
   variants: {

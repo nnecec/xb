@@ -14,8 +14,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useAppSettings } from '@/lib/app-settings-store'
-import { useAppShellContext } from '@/lib/weibo/app/app-shell-layout'
 import { useImmersiveHeaderClassName } from '@/lib/weibo/app/immersive-header'
+import { usePageRuntime } from '@/lib/weibo/app/page-runtime'
 import { CommentBox } from '@/lib/weibo/components/comment-box'
 import { CommentList } from '@/lib/weibo/components/comment-list'
 import { PageErrorState, PageLoadingState } from '@/lib/weibo/components/page-state'
@@ -27,8 +27,13 @@ import {
 } from '@/lib/weibo/data/weibo-data'
 import { browsingHistoryStore } from '@/lib/weibo/hooks/use-browsing-history'
 import type { CommentItem } from '@/lib/weibo/models/status'
-import { useWeiboPage } from '@/lib/weibo/route/use-weibo-page'
 import { formatWeiboCount } from '@/lib/weibo/utils/format-weibo-count'
+import {
+  ColumnToolbarDragRegion,
+  ColumnToolbarMenuButton,
+  isColumnToolbarControlTarget,
+  useColumnControls,
+} from '@/lib/weibo/workspace/column-controls'
 
 function StatusCommentsSection({
   statusId,
@@ -54,7 +59,7 @@ function StatusCommentsSection({
   const errorMessage = commentsQuery.error instanceof Error ? commentsQuery.error.message : null
 
   return (
-    <section className="bg-card/70 border-border/55 rounded-xl border shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
+    <section className="border-t">
       <div className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-2.5">
           <div className="min-w-0">
@@ -85,6 +90,8 @@ function StatusCommentsSection({
             variant="ghost"
             size="icon"
             aria-label="刷新评论"
+            data-column-control
+            onPointerDown={(event) => event.stopPropagation()}
             onClick={async () => {
               await commentsQuery.refetch()
               toast.success('评论刷新成功')
@@ -140,20 +147,14 @@ function StatusCommentsSection({
   )
 }
 
-function handleGoBack() {
-  if (window.history.length > 2) {
-    window.history.back()
-  } else {
-    window.location.href = 'https://weibo.com'
-  }
-}
-
 function StatusDetailTopBar({
   showStatusSummary,
   authorName,
   createdAtLabel,
   statusText,
   regionName,
+  onBack,
+  canGoBack,
 }: {
   showStatusSummary: boolean
   authorName?: string
@@ -161,8 +162,12 @@ function StatusDetailTopBar({
   statusText?: string
   source?: string
   regionName?: string
+  onBack: () => void
+  canGoBack: boolean
 }) {
   const shouldReduceMotion = useReducedMotion()
+  const columnControls = useColumnControls()
+  const runtime = usePageRuntime()
   const headerClassName = useImmersiveHeaderClassName(
     'bg-background/85 border-border/45 sticky top-0 z-50 border-b backdrop-blur-lg',
   )
@@ -172,75 +177,87 @@ function StatusDetailTopBar({
   }
 
   return (
-    <div className={headerClassName}>
-      <div className="relative flex min-h-16 items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label="返回"
-            className="shrink-0"
-            onClick={handleGoBack}
-          >
-            <ArrowLeft className="size-4" />
-          </Button>
-          <div className="relative min-w-0 flex-1 overflow-hidden">
-            <AnimatePresence initial={false} mode="wait">
-              {showStatusSummary ? (
-                <motion.div
-                  key="status-summary"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={titleTransition}
-                  className="min-w-0"
-                >
-                  <h1 className="text-foreground truncate text-lg leading-6 font-semibold">
-                    {authorName ?? '正文'}{' '}
-                    <span className="text-muted-foreground space-x-1 text-xs">
-                      {createdAtLabel && <span>{createdAtLabel}</span>}
-                      {regionName && <span>{regionName}</span>}
-                    </span>
-                  </h1>
-                  <p className="text-muted-foreground line-clamp-1 truncate text-xs">
-                    {statusText ? statusText : '详情页'}
-                  </p>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="default-title"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={titleTransition}
-                  className="min-w-0"
-                >
-                  <h1 className="text-foreground truncate text-lg leading-6 font-semibold">
-                    微博正文
-                  </h1>
-                  <p className="text-muted-foreground truncate text-xs">详情页</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
+    <ColumnToolbarDragRegion>
+      <div
+        className={headerClassName}
+        onClick={(event) => {
+          if (isColumnToolbarControlTarget(event.target)) return
+          runtime.scrollToTop()
+        }}
+      >
+        <div className="relative flex min-h-16 items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            {columnControls}
+            {!columnControls && canGoBack ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="返回微博列表"
+                data-column-control
+                className="shrink-0"
+                onClick={onBack}
+              >
+                <ArrowLeft className="size-4" />
+              </Button>
+            ) : null}
+            <div className="relative min-w-0 flex-1 overflow-hidden">
+              <AnimatePresence initial={false} mode="wait">
+                {showStatusSummary ? (
+                  <motion.div
+                    key="status-summary"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={titleTransition}
+                    className="min-w-0"
+                  >
+                    <h1 className="text-foreground truncate text-lg leading-6 font-semibold">
+                      {authorName ?? '正文'}{' '}
+                      <span className="text-muted-foreground space-x-1 text-xs">
+                        {createdAtLabel && <span>{createdAtLabel}</span>}
+                        {regionName && <span>{regionName}</span>}
+                      </span>
+                    </h1>
+                    <p className="text-muted-foreground line-clamp-1 truncate text-xs">
+                      {statusText ? statusText : '详情页'}
+                    </p>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="default-title"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={titleTransition}
+                    className="min-w-0"
+                  >
+                    <h1 className="text-foreground truncate text-lg leading-6 font-semibold">
+                      微博正文
+                    </h1>
+                    <p className="text-muted-foreground truncate text-xs">详情页</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
+          <ColumnToolbarMenuButton />
         </div>
       </div>
-    </div>
+    </ColumnToolbarDragRegion>
   )
 }
 
 export function StatusDetailPage() {
-  const ctx = useAppShellContext()
-  const page = useWeiboPage()
+  const runtime = usePageRuntime()
+  const page = runtime.page
   const rewriteEnabled = useAppSettings((state) => state.rewriteEnabled)
   const statusArticleRef = useRef<HTMLElement | null>(null)
-  const [showStatusSummary, setShowStatusSummary] = useState(false)
 
   useEffect(() => {
-    ctx.resetMainScroll()
+    runtime.resetScroll()
     // oxlint-disable-next-line eslint-plugin-react-hooks/exhaustive-deps
-  }, [ctx.resetMainScroll])
+  }, [runtime.resetScroll])
 
   const urlStatusId = page.kind === 'status' ? page.statusId : null
   const authorId = page.kind === 'status' ? page.authorId : null
@@ -250,6 +267,15 @@ export function StatusDetailPage() {
     ...statusDetailQueryOptions(urlStatusId, isEnabled),
   })
   const detail = detailQuery.data
+  const detailIdentity = detail?.status.id ?? null
+  const [trackedDetailIdentity, setTrackedDetailIdentity] = useState(detailIdentity)
+  const [articleHidden, setArticleHidden] = useState(false)
+  if (detailIdentity !== trackedDetailIdentity) {
+    setTrackedDetailIdentity(detailIdentity)
+    setArticleHidden(false)
+  }
+  const showStatusSummary =
+    Boolean(detail) && typeof IntersectionObserver !== 'undefined' && articleHidden
 
   useEffect(() => {
     if (detail) {
@@ -259,19 +285,11 @@ export function StatusDetailPage() {
 
   useEffect(() => {
     const article = statusArticleRef.current
-    if (!article || !detail) {
-      setShowStatusSummary(false)
-      return
-    }
-
-    if (typeof IntersectionObserver === 'undefined') {
-      setShowStatusSummary(false)
-      return
-    }
+    if (!article || !detail || typeof IntersectionObserver === 'undefined') return
 
     const observer = new IntersectionObserver(
       (entries) => {
-        setShowStatusSummary(entries[0]?.isIntersecting === false)
+        setArticleHidden(entries[0]?.isIntersecting === false)
       },
       { threshold: 0 },
     )
@@ -289,6 +307,8 @@ export function StatusDetailPage() {
         statusText={detail?.status.text}
         source={detail?.status.source}
         regionName={detail?.status.regionName}
+        onBack={runtime.back}
+        canGoBack={runtime.canGoBack}
       />
 
       {detailQuery.isLoading ? <PageLoadingState label="正在加载此微博…" /> : null}
@@ -296,7 +316,7 @@ export function StatusDetailPage() {
         <PageErrorState description={detailQuery.error.message} />
       ) : null}
       {detail ? (
-        <div className="flex w-full flex-col gap-4">
+        <div className="flex w-full flex-col">
           <article ref={statusArticleRef} className="relative">
             <DetailStatusCard status={detail.status} />
           </article>

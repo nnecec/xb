@@ -22,6 +22,8 @@ export type WeiboPageDescriptor =
   | { kind: 'topic'; topic: string }
   | { kind: 'unsupported'; reason: 'invalid-url' | 'unmatched-path' }
 
+export type ColumnNavigationLocation = Exclude<WeiboPageDescriptor, { kind: 'unsupported' }>
+
 export const PAGE_KINDS_WITH_SCROLL_RESTORATION: ReadonlySet<WeiboPageDescriptor['kind']> = new Set(
   [
     'home',

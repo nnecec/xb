@@ -1,8 +1,8 @@
+import { cn } from 'cn'
 import { memo } from 'react'
 import { Link } from 'react-router'
 
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
 import { MentionInlineText } from '@/lib/weibo/components/status-text'
 import { UserHoverCard } from '@/lib/weibo/components/user-hover-card'
 import { CreatedAtBadge, UserAvatar } from '@/lib/weibo/components/user-presenter'
@@ -163,7 +163,12 @@ export const NotificationCard = memo(function NotificationCard({
   className?: string
 }) {
   return (
-    <Card className={cn('gap-4 py-4', className)}>
+    <Card
+      className={cn(
+        'gap-4 rounded-none border-x-0 border-t-0 bg-transparent py-4 shadow-none',
+        className,
+      )}
+    >
       <NotificationHeader
         user={item.user}
         createdAtLabel={item.createdAtLabel}

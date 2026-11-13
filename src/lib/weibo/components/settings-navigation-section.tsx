@@ -30,9 +30,6 @@ const LEFT_NAVIGATION_ITEMS = [
 
 const NAVIGATION_SETTING_KEYS = [
   ...LEFT_NAVIGATION_ITEMS.map((item) => item.key),
-  'showRightRail',
-  'showHotSearchCard',
-  'showFollowedSuperTopicsCard',
   'firstLoadRedirect',
 ] as const satisfies readonly (keyof AppSettings)[]
 
@@ -50,9 +47,6 @@ export function SettingsNavigationSection({
       showDMs: state.showDMs,
       showProfile: state.showProfile,
       showCompose: state.showCompose,
-      showRightRail: state.showRightRail,
-      showHotSearchCard: state.showHotSearchCard,
-      showFollowedSuperTopicsCard: state.showFollowedSuperTopicsCard,
       firstLoadRedirect: state.firstLoadRedirect,
     })),
   )
@@ -97,36 +91,6 @@ export function SettingsNavigationSection({
               />
             </Field>
           ))}
-        </SettingsSection>
-
-        <SettingsSection title="右侧栏">
-          <Field label="显示右侧栏">
-            <Switch
-              aria-label="显示右侧栏"
-              checked={settings.showRightRail}
-              onCheckedChange={(checked) => void updateSettings({ showRightRail: checked })}
-            />
-          </Field>
-          <div className="ms-4 border-s ps-4">
-            <Field label="热搜卡片">
-              <Switch
-                aria-label="显示热搜卡片"
-                checked={settings.showHotSearchCard}
-                disabled={!settings.showRightRail}
-                onCheckedChange={(checked) => void updateSettings({ showHotSearchCard: checked })}
-              />
-            </Field>
-            <Field label="超话卡片">
-              <Switch
-                aria-label="显示超话卡片"
-                checked={settings.showFollowedSuperTopicsCard}
-                disabled={!settings.showRightRail}
-                onCheckedChange={(checked) =>
-                  void updateSettings({ showFollowedSuperTopicsCard: checked })
-                }
-              />
-            </Field>
-          </div>
         </SettingsSection>
 
         <ResetSectionButton

@@ -1,13 +1,14 @@
 import { useMediaQuery } from '@reactuses/core'
 import { useQuery } from '@tanstack/react-query'
+import { cn } from 'cn'
 import {
   ArrowUpRightIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
-  Diamond,
-  DiamondMinus,
+  Columns3,
   Pencil,
 } from 'lucide-react'
+import { motion } from 'motion/react'
 import { useMemo } from 'react'
 import { Link } from 'react-router'
 
@@ -26,7 +27,6 @@ import { UserIcon } from '@/components/ui/user'
 import { ZapOffIcon } from '@/components/ui/zap-off'
 import type { AppTheme } from '@/lib/app-settings'
 import { useAppSettings, useShallow } from '@/lib/app-settings-store'
-import { cn } from '@/lib/utils'
 import { ThemeModeToggle } from '@/lib/weibo/components/theme-mode-toggle'
 import {
   hasDmBadge,
@@ -38,8 +38,8 @@ import type { WeiboPageDescriptor } from '@/lib/weibo/route/page-descriptor'
 
 function navButtonClassName(showLabel: boolean) {
   return cn(
-    'flex w-full items-center gap-2',
-    showLabel ? 'justify-start' : 'justify-center',
+    'flex w-full items-center transition-[gap] duration-200',
+    showLabel ? 'justify-start gap-2' : 'justify-center gap-0',
     showLabel && 'font-medium',
   )
 }
@@ -104,7 +104,15 @@ function NavButton({
       onClick={onClick}
     >
       {iconWrap(children)}
-      {showLabel && <span className="min-w-0 truncate">{label}</span>}
+      <motion.span
+        aria-hidden={!showLabel}
+        animate={{ maxWidth: showLabel ? 160 : 0, opacity: showLabel ? 1 : 0 }}
+        className="min-w-0 truncate"
+        initial={false}
+        transition={{ duration: 0.18, ease: 'easeOut' }}
+      >
+        {label}
+      </motion.span>
       {showBadge && showLabel && <span className="sr-only">，有未读</span>}
     </a>
   ) : to && !disabled ? (
@@ -113,9 +121,18 @@ function NavButton({
       aria-label={showBadge || disabled || !showLabel ? accessibleLabel : undefined}
       aria-current={isActive ? 'page' : undefined}
       className={cn(buttonVariants({ variant: buttonVariant, size }), sharedClassName)}
+      onClick={onClick}
     >
       {iconWrap(children)}
-      {showLabel && <span className="min-w-0 truncate">{label}</span>}
+      <motion.span
+        aria-hidden={!showLabel}
+        animate={{ maxWidth: showLabel ? 160 : 0, opacity: showLabel ? 1 : 0 }}
+        className="min-w-0 truncate"
+        initial={false}
+        transition={{ duration: 0.18, ease: 'easeOut' }}
+      >
+        {label}
+      </motion.span>
       {showBadge && showLabel && <span className="sr-only">，有未读</span>}
     </Link>
   ) : (
@@ -131,7 +148,15 @@ function NavButton({
       static={!pressable}
     >
       {iconWrap(children)}
-      {showLabel && <span className="min-w-0 truncate">{label}</span>}
+      <motion.span
+        aria-hidden={!showLabel}
+        animate={{ maxWidth: showLabel ? 160 : 0, opacity: showLabel ? 1 : 0 }}
+        className="min-w-0 truncate"
+        initial={false}
+        transition={{ duration: 0.18, ease: 'easeOut' }}
+      >
+        {label}
+      </motion.span>
       {showBadge && showLabel && <span className="sr-only">，有未读</span>}
     </Button>
   )
@@ -185,36 +210,9 @@ interface NavigationRailProps {
   onThemeChange: (theme: AppTheme) => void
   onSettingsOpen: () => void
   onComposeOpen: () => void
+  onColumnPickerOpen?: () => void
+  onPrimaryNavigate?: () => void
   onSidebarCollapsedChange: (collapsed: boolean) => void
-  immersiveMode?: boolean
-  onImmersiveModeChange?: (enabled: boolean) => void
-}
-
-export function ImmersiveExitRail({
-  onImmersiveModeChange,
-}: Pick<NavigationRailProps, 'onImmersiveModeChange'>) {
-  return (
-    <TooltipProvider>
-      <aside className="flex h-full min-h-0 flex-col items-center px-1 py-3 md:px-2 md:py-4 xl:px-3 xl:py-5">
-        <div className="mt-auto">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                size="icon"
-                variant="secondary"
-                aria-label="退出沉浸模式"
-                onClick={() => onImmersiveModeChange?.(false)}
-              >
-                <DiamondMinus className="size-4" aria-hidden="true" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">退出沉浸模式</TooltipContent>
-          </Tooltip>
-        </div>
-      </aside>
-    </TooltipProvider>
-  )
 }
 
 export function NavigationRail({
@@ -226,9 +224,9 @@ export function NavigationRail({
   onThemeChange,
   onSettingsOpen,
   onComposeOpen,
+  onColumnPickerOpen,
+  onPrimaryNavigate,
   onSidebarCollapsedChange,
-  immersiveMode = false,
-  onImmersiveModeChange,
 }: NavigationRailProps) {
   const {
     homeTab,
@@ -257,7 +255,7 @@ export function NavigationRail({
   )
   const currentUserUid = useMemo(() => getCurrentUserUid(), [])
   const isXl = useMediaQuery('(min-width: 1280px)')
-  const isCollapsed = immersiveMode || !isXl || sidebarCollapsed
+  const isCollapsed = !isXl || sidebarCollapsed
 
   const profileHref = useMemo(
     () => (currentUserUid ? `/u/${currentUserUid}` : null),
@@ -274,7 +272,7 @@ export function NavigationRail({
     currentUserUid === viewingProfileUserId
   const isSavedItemsActive = pageKind === 'favorites' || pageKind === 'liked'
 
-  const shouldPollUnread = !immersiveMode && (showNotifications || showDMs)
+  const shouldPollUnread = showNotifications || showDMs
   const { data: unreadCounts } = useQuery({
     ...unreadNotificationsQueryOptions,
     enabled: shouldPollUnread,
@@ -282,13 +280,12 @@ export function NavigationRail({
   const showNotificationBadge = unreadCounts ? hasNotificationBadge(unreadCounts) : false
   const showDmBadge = unreadCounts ? hasDmBadge(unreadCounts) : false
 
-  if (immersiveMode) {
-    return <ImmersiveExitRail onImmersiveModeChange={onImmersiveModeChange} />
-  }
-
   return (
     <TooltipProvider>
-      <aside
+      <motion.aside
+        initial={false}
+        animate={isXl ? { width: isCollapsed ? 56 : 204 } : undefined}
+        transition={{ duration: 0.24, ease: [0.23, 1, 0.32, 1] }}
         className={cn(
           'scrollbar-none flex h-full min-h-0 flex-col overflow-y-auto px-1 py-3 md:px-2 md:py-4 xl:px-3 xl:py-5',
           isCollapsed ? 'w-10 md:w-14' : 'w-[204px]',
@@ -299,6 +296,7 @@ export function NavigationRail({
             to="/"
             aria-label="返回主页"
             className="focus-visible:ring-ring/50 rounded-lg opacity-80 transition-opacity duration-150 ease-out hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-3 focus-visible:outline-none"
+            onClick={onPrimaryNavigate}
           >
             <img src={WeiboLogo} alt="" className="size-8 translate-y-px object-contain" />
           </Link>
@@ -318,6 +316,7 @@ export function NavigationRail({
                     ? '/'
                     : '/mygroups'
               }
+              onClick={onPrimaryNavigate}
             >
               <HomeIcon aria-hidden="true" className="size-4 shrink-0" />
             </NavButton>
@@ -329,6 +328,7 @@ export function NavigationRail({
                 showLabel={!isCollapsed}
                 isActive={pageKind === 'explore'}
                 to="/hot/weibo/102803"
+                onClick={onPrimaryNavigate}
               >
                 <CompassIcon aria-hidden="true" className="size-4 shrink-0" />
               </NavButton>
@@ -342,6 +342,7 @@ export function NavigationRail({
                 isActive={isSavedItemsActive}
                 to={favoritesHref ?? undefined}
                 disabled={!favoritesHref}
+                onClick={onPrimaryNavigate}
               >
                 <BookmarkIcon aria-hidden="true" className="size-4 shrink-0" />
               </NavButton>
@@ -354,6 +355,7 @@ export function NavigationRail({
                 showLabel={!isCollapsed}
                 isActive={pageKind === 'history'}
                 to="/history"
+                onClick={onPrimaryNavigate}
               >
                 <HistoryIcon aria-hidden="true" className="size-4 shrink-0" />
               </NavButton>
@@ -367,6 +369,7 @@ export function NavigationRail({
                 isActive={pageKind === 'notifications'}
                 showBadge={showNotificationBadge}
                 to="/at/weibo"
+                onClick={onPrimaryNavigate}
               >
                 <BellIcon aria-hidden="true" className="size-4 shrink-0" />
               </NavButton>
@@ -398,6 +401,7 @@ export function NavigationRail({
                 isActive={isOwnProfileActive}
                 to={profileHref ?? undefined}
                 disabled={!profileHref}
+                onClick={onPrimaryNavigate}
               >
                 <UserIcon aria-hidden="true" className="size-4 shrink-0" />
               </NavButton>
@@ -422,6 +426,20 @@ export function NavigationRail({
           <div role="group" aria-label="界面控制" className="mt-auto shrink-0 pt-4">
             <Separator className="bg-border/40 mb-3" />
             <div className={cn('flex flex-col gap-3', !isCollapsed && 'gap-3.5')}>
+              {onColumnPickerOpen ? (
+                <RailControl label="列管理" isCollapsed={isCollapsed}>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="secondary"
+                    aria-label="列管理"
+                    onClick={onColumnPickerOpen}
+                  >
+                    <Columns3 aria-hidden="true" />
+                  </Button>
+                </RailControl>
+              ) : null}
+
               <RailControl label="设置" isCollapsed={isCollapsed}>
                 <Button
                   type="button"
@@ -451,19 +469,6 @@ export function NavigationRail({
                 <ThemeModeToggle value={theme} onChange={onThemeChange} />
               </RailControl>
 
-              <RailControl label="沉浸模式" isCollapsed={isCollapsed}>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="secondary"
-                  aria-label="切换沉浸模式"
-                  aria-pressed={immersiveMode}
-                  onClick={() => onImmersiveModeChange?.(!immersiveMode)}
-                >
-                  <Diamond className="size-4" aria-hidden="true" />
-                </Button>
-              </RailControl>
-
               {isXl ? (
                 <RailControl
                   label={sidebarCollapsed ? '展开' : '收起'}
@@ -488,7 +493,7 @@ export function NavigationRail({
             </div>
           </div>
         </nav>
-      </aside>
+      </motion.aside>
     </TooltipProvider>
   )
 }

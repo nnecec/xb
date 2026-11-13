@@ -57,6 +57,11 @@ vi.mock('@/lib/weibo/components/gen-image-dialog-context', async () => {
   }
 })
 
+vi.mock('@/lib/weibo/app/page-runtime', () => ({
+  usePageRuntime: () => ({ back: vi.fn() }),
+  PageRuntimeProvider: ({ children }: { children: React.ReactNode }) => children,
+}))
+
 function createStatus(id: string, overrides: Partial<FeedItem> = {}): FeedItem {
   return {
     id,
@@ -151,6 +156,12 @@ describe('StatusCard module', () => {
     expect(host.openStatus).toHaveBeenCalledWith(expect.objectContaining({ id: 'quoted' }))
     expect(host.openStatus).not.toHaveBeenCalledWith(expect.objectContaining({ id: 'root' }))
     expect(quotedCard).toHaveClass('border-0', 'shadow-none', 'bg-muted/55')
+    expect(screen.getAllByTestId('status-card-body')[0]).toHaveClass('border-x-0', 'bg-transparent')
+  })
+
+  it('keeps a detail status flush with the column', () => {
+    renderCard(createStatus('root'), { openStatus: vi.fn(), composeStatus: vi.fn() }, true)
+    expect(screen.getByTestId('status-card-body')).toHaveClass('border-x-0', 'bg-transparent')
   })
 
   it('composes against the action target', () => {

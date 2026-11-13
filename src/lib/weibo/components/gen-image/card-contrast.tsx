@@ -1,11 +1,27 @@
 import { Heart, MessageCircle, Repeat2 } from 'lucide-react'
-import * as React from 'react'
 
 import WeiboLogo from '@/assets/icons/weibo.svg'
 import { StatusText } from '@/lib/weibo/components/status-text'
 
 import { formatCount, formatDate, ShareCardAvatar, ShareCardImages } from './share-card-content'
 import type { ShareCardProps } from './types'
+
+function relativeTimeLabel(createdAt: string) {
+  try {
+    const now = new Date()
+    const created = new Date(createdAt)
+    const diffMs = now.getTime() - created.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMins / 60)
+    const diffDays = Math.floor(diffHours / 24)
+    if (diffMins < 60) return `${diffMins}m`
+    if (diffHours < 24) return `${diffHours}h`
+    if (diffDays < 30) return `${diffDays}d`
+    return formatDate(createdAt)
+  } catch {
+    return formatDate(createdAt)
+  }
+}
 
 // Stamp perforation holes
 function PerforationHoles({
@@ -59,24 +75,7 @@ export function CardContrast({
   const highlightText = isDark ? 'oklch(0.15 0.02 0)' : 'oklch(0.15 0.02 0)'
 
   const displayImages = data.images
-
-  // Get relative time from createdAt
-  const timeLabel = React.useMemo(() => {
-    try {
-      const now = new Date()
-      const created = new Date(data.createdAt)
-      const diffMs = now.getTime() - created.getTime()
-      const diffMins = Math.floor(diffMs / 60000)
-      const diffHours = Math.floor(diffMins / 60)
-      const diffDays = Math.floor(diffHours / 24)
-      if (diffMins < 60) return `${diffMins}m`
-      if (diffHours < 24) return `${diffHours}h`
-      if (diffDays < 30) return `${diffDays}d`
-      return formatDate(data.createdAt)
-    } catch {
-      return formatDate(data.createdAt)
-    }
-  }, [data.createdAt])
+  const timeLabel = relativeTimeLabel(data.createdAt)
 
   return (
     <div

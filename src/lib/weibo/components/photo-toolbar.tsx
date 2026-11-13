@@ -1,9 +1,9 @@
+import { cn } from 'cn'
 import { Repeat, RotateCcw, RotateCw, ZoomIn, ZoomOut } from 'lucide-react'
 import type { OverlayRenderProps } from 'react-photo-view/dist/types'
 
 import { Button } from '@/components/ui/button'
 import { useAppSettings } from '@/lib/app-settings-store'
-import { cn } from '@/lib/utils'
 
 interface PhotoToolbarProps {
   overlayProps: OverlayRenderProps

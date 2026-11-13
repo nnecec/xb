@@ -50,15 +50,23 @@ export function useVideoPlaybackSession({
 }: UseVideoPlaybackSessionOptions) {
   const resumable = mode !== 'live'
   const remembersRate = mode !== 'live'
+  const loadKey = `${mode}:${sessionId}`
+  const [trackedLoadKey, setTrackedLoadKey] = useState(loadKey)
   const [shouldLoad, setShouldLoad] = useState(mode === 'replay')
+  if (trackedLoadKey !== loadKey) {
+    setTrackedLoadKey(loadKey)
+    setShouldLoad(mode === 'replay')
+  }
   const pendingContinuityRef = useRef<PlaybackContinuity | null>(null)
   const isInPictureInPictureRef = useRef(false)
   const appliedPlaybackRateRef = useRef(false)
   const onPlayRef = useRef(onPlay)
   const onPictureInPictureChangeRef = useRef(onPictureInPictureChange)
 
-  onPlayRef.current = onPlay
-  onPictureInPictureChangeRef.current = onPictureInPictureChange
+  useEffect(() => {
+    onPlayRef.current = onPlay
+    onPictureInPictureChangeRef.current = onPictureInPictureChange
+  }, [onPictureInPictureChange, onPlay])
 
   const { rememberPlaybackRate, savedPlaybackRate, updateSettings } = useAppSettings(
     useShallow((settings) => ({
@@ -84,7 +92,6 @@ export function useVideoPlaybackSession({
     pendingContinuityRef.current = null
     appliedPlaybackRateRef.current = false
     isInPictureInPictureRef.current = false
-    setShouldLoad(mode === 'replay')
   }, [mode, sessionId])
 
   const ensureLoaded = useCallback(() => {

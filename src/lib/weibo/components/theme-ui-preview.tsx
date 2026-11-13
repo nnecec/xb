@@ -1,5 +1,6 @@
+import { cn } from 'cn'
+
 import { getThemePreviewColors, type ThemePreviewColors } from '@/lib/custom-theme'
-import { cn } from '@/lib/utils'
 
 function ThemeUiHalfPreview({ colors }: { colors: ThemePreviewColors }) {
   return (
