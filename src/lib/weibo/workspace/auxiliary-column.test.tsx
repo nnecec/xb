@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import type { AppSettingsStorageArea } from '@/lib/app-settings'
 import {
   AppShellContextProvider,
   type AppShellContextValue,
@@ -130,7 +131,10 @@ vi.mock('@/lib/weibo/pages/notifications-page', async () => {
         <div>
           {controls}
           <p>通知 {page.kind === 'notifications' ? page.tab : ''}</p>
-          <button type="button" onClick={() => runtime.navigate('/comment/inbox')}>
+          <button
+            type="button"
+            onClick={() => runtime.navigate('/comment/inbox', { replace: true })}
+          >
             切换评论
           </button>
         </div>
@@ -215,13 +219,16 @@ function renderColumn(
   )
 }
 
-function createMemoryStorage(initial: unknown = undefined) {
+function createMemoryStorage(initial: unknown = undefined): AppSettingsStorageArea {
   const values = new Map<string, unknown>(
     initial === undefined ? [] : [[WORKSPACE_STORAGE_KEY, initial]],
   )
   return {
-    get: async (key: string) => ({ [key]: values.get(key) }),
-    set: async (items: Record<string, unknown>) => {
+    get: async (key) => {
+      const storageKey = typeof key === 'string' ? key : WORKSPACE_STORAGE_KEY
+      return { [storageKey]: values.get(storageKey) }
+    },
+    set: async (items) => {
       for (const [key, value] of Object.entries(items)) values.set(key, value)
     },
   }

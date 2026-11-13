@@ -109,7 +109,9 @@ export function NotificationsPage({ source }: { source?: { tab: NotificationTab 
 
   const handleTabChange = (tab: string) => {
     if (tab === activeTab) return
-    runtime.navigate(TAB_ROUTES[tab as NotificationTab])
+    runtime.navigate(TAB_ROUTES[tab as NotificationTab], {
+      replace: runtime.navigationMode === 'column',
+    })
     resetMainScrollAfterRouteChange(runtime.resetScroll)
   }
 

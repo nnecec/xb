@@ -20,10 +20,9 @@ function resetMainScrollAfterRouteChange(resetMainScroll: () => void) {
 
 export interface ExplorePageProps {
   source?: { groupId: string }
-  onSourceChange?: (source: { groupId: string }) => void
 }
 
-export function ExplorePage({ source, onSourceChange }: ExplorePageProps = {}) {
+export function ExplorePage({ source }: ExplorePageProps = {}) {
   const runtime = usePageRuntime()
   const page = source ? { kind: 'explore' as const, ...source } : runtime.page
   const rewriteEnabled = useAppSettings((s) => s.rewriteEnabled)
@@ -70,11 +69,9 @@ export function ExplorePage({ source, onSourceChange }: ExplorePageProps = {}) {
 
   const handleGroupClick = (group: ExploreGroup) => {
     if (group.gid === groupId) return
-    if (onSourceChange) {
-      onSourceChange({ groupId: group.gid })
-    } else {
-      runtime.navigate(`/hot/weibo/${group.gid}`)
-    }
+    runtime.navigate(`/hot/weibo/${group.gid}`, {
+      replace: runtime.navigationMode === 'column',
+    })
     resetMainScrollAfterRouteChange(runtime.resetScroll)
   }
 

@@ -35,7 +35,14 @@ import { ProfileColumnPage } from '@/lib/weibo/pages/profile-page'
 import { StatusDetailPage } from '@/lib/weibo/pages/status-detail-page'
 import { TopicPage } from '@/lib/weibo/pages/topic-page'
 import type { ColumnNavigationLocation } from '@/lib/weibo/route/page-descriptor'
-import { parseWeiboUrl } from '@/lib/weibo/route/parse-weibo-url'
+import {
+  backAuxiliaryColumnReading,
+  followAuxiliaryColumnTarget,
+  openAuxiliaryColumnReading,
+  replaceAuxiliaryColumnSection,
+  restoreAuxiliaryColumnReading,
+  type AuxiliaryColumnReadingState,
+} from '@/lib/weibo/workspace/auxiliary-column-reading'
 import {
   ColumnControlsProvider,
   ColumnToolbarDragProvider,
@@ -45,102 +52,26 @@ import {
 import { ColumnPageChromeProvider } from '@/lib/weibo/workspace/column-page-toolbar'
 import {
   type AuxiliaryColumn,
-  type ColumnSource,
-  columnSourceIdentity,
   columnSourceTitle,
   useWorkspace,
 } from '@/lib/weibo/workspace/workspace-store'
 
 type ColumnLocation = ColumnNavigationLocation
-const EMPTY_LOCATION_STACK: ColumnLocation[] = []
-
-function sourcePage(source: ColumnSource): ColumnLocation | null {
-  switch (source.kind) {
-    case 'home':
-      return {
-        kind: 'home' as const,
-        tab: source.tab,
-        ...(source.groupId ? { groupId: source.groupId } : {}),
-      }
-    case 'explore':
-      return { kind: 'explore' as const, groupId: source.groupId ?? '102803' }
-    case 'saved':
-      return source.tab === 'liked'
-        ? { kind: 'liked' as const, uid: source.uid }
-        : { kind: 'favorites' as const, uid: source.uid }
-    case 'favorites':
-      return { kind: 'favorites' as const, uid: source.uid }
-    case 'liked':
-      return { kind: 'liked' as const, uid: source.uid }
-    case 'notifications':
-      return { kind: 'notifications' as const, tab: source.tab ?? 'mentions' }
-    case 'topic':
-      return { kind: 'topic' as const, topic: source.topic }
-    case 'follow':
-      return { kind: 'follow' as const, uid: source.uid, tab: source.tab }
-    case 'profile':
-      return {
-        kind: 'profile' as const,
-        profileId: source.profileId,
-        profileSource: source.profileSource,
-        tab: 'posts' as const,
-      }
-    case 'history':
-      return { kind: 'history' as const }
-    case 'hot-search':
-      return null
-    case 'followed-super-topics':
-    case 'search-entry':
-      return null
-    default:
-      return null
-  }
-}
-
-function columnLocationFromTarget(to: string): ColumnLocation | null {
-  const url = new URL(to, window.location.origin)
-  const page = parseWeiboUrl(url.href)
-  if (page.kind === 'unsupported') return null
-  if (page.kind === 'follow') {
-    return { ...page, tab: url.searchParams.get('tab') === 'fans' ? 'fans' : 'following' }
-  }
-  return page
-}
-
-function sameColumnLocation(left: ColumnLocation, right: ColumnLocation): boolean {
-  return JSON.stringify(left) === JSON.stringify(right)
-}
-
-function shouldReplaceSectionLocation(left: ColumnLocation | null, right: ColumnLocation): boolean {
-  if (!left) return false
-  const sectionKinds = new Set(['home', 'explore', 'notifications', 'favorites', 'liked'])
-  return sectionKinds.has(left.kind) && sectionKinds.has(right.kind)
-}
 
 function ColumnLocationPage({
   location,
-  onLocationChange,
+  onFollowTabChange,
   onSavedListChange,
 }: {
   location: ColumnLocation
-  onLocationChange: (location: ColumnLocation) => void
+  onFollowTabChange: (location: ColumnLocation) => void
   onSavedListChange?: (value: 'favorites' | 'liked') => void
 }) {
   switch (location.kind) {
     case 'home':
-      return (
-        <HomeTimelinePage
-          source={location}
-          onSourceChange={(source) => onLocationChange({ kind: 'home', ...source })}
-        />
-      )
+      return <HomeTimelinePage source={location} />
     case 'explore':
-      return (
-        <ExplorePage
-          source={location}
-          onSourceChange={(source) => onLocationChange({ kind: 'explore', ...source })}
-        />
-      )
+      return <ExplorePage source={location} />
     case 'favorites':
       return <FavoritesPage source={{ uid: location.uid }} onSavedListChange={onSavedListChange} />
     case 'liked':
@@ -159,7 +90,7 @@ function ColumnLocationPage({
           showTabs
           onTabChange={(tab) => {
             if (tab === location.tab) return
-            onLocationChange({ kind: 'follow', uid: location.uid, tab })
+            onFollowTabChange({ kind: 'follow', uid: location.uid, tab })
           }}
         />
       )
@@ -213,28 +144,27 @@ export function AuxiliaryColumnView({
   const scrollRootRef = useRef<HTMLDivElement | null>(null)
   const savedScrollByDepthRef = useRef<number[]>([])
   const savedFocusByDepthRef = useRef<Array<HTMLElement | null>>([])
-  const sourceIdentity = columnSourceIdentity(column.source)
   const setColumnLastLocation = useWorkspace((state) => state.setColumnLastLocation)
-  const initialBaseLocation = column.lastBaseLocation ?? sourcePage(column.source)
-  const initialStack = useMemo(
-    () =>
-      column.lastLocation &&
-      (!initialBaseLocation || !sameColumnLocation(column.lastLocation, initialBaseLocation))
-        ? [column.lastLocation]
-        : [],
-    [column.lastLocation, initialBaseLocation],
-  )
-  const [navigation, setNavigation] = useState<{
-    sourceIdentity: string
-    base: ColumnLocation | null
-    stack: ColumnLocation[]
-  }>({ sourceIdentity, base: initialBaseLocation, stack: initialStack })
-  const activeNavigation = navigation.sourceIdentity === sourceIdentity ? navigation : null
-  const locationStack = activeNavigation?.stack ?? EMPTY_LOCATION_STACK
-  const baseLocation = activeNavigation?.base ?? null
-  const location = locationStack.at(-1) ?? null
-  const navigatedPage = location ?? baseLocation
-  const page = navigatedPage ?? sourcePage(column.source)
+  const readingKey = JSON.stringify([column.source, column.lastLocation, column.lastBaseLocation])
+  const [readingSession, setReadingSession] = useState(() => ({
+    key: readingKey,
+    reading: restoreAuxiliaryColumnReading({
+      source: column.source,
+      persisted: { current: column.lastLocation ?? null, base: column.lastBaseLocation ?? null },
+    }),
+  }))
+  const reading =
+    readingSession.key === readingKey
+      ? readingSession.reading
+      : restoreAuxiliaryColumnReading({
+          source: column.source,
+          persisted: {
+            current: column.lastLocation ?? null,
+            base: column.lastBaseLocation ?? null,
+          },
+        })
+  const locationStack = reading.stack
+  const page = reading.page
   const [hotSearchType] = useState(
     column.source.kind === 'hot-search' ? (column.source.type ?? 'hot') : 'hot',
   )
@@ -246,101 +176,58 @@ export function AuxiliaryColumnView({
         ? (rootNode.activeElement as HTMLElement | null)
         : (document.activeElement as HTMLElement | null)
   }, [])
-  const showLocation = useCallback(
-    (nextLocation: ColumnLocation, mode: 'push' | 'replace') => {
-      const visible = locationStack.at(-1) ?? baseLocation ?? sourcePage(column.source)
-      if (visible && sameColumnLocation(visible, nextLocation)) return
-      const effectiveMode = shouldReplaceSectionLocation(visible, nextLocation) ? 'replace' : mode
-      const replacesTop = effectiveMode === 'replace' && locationStack.length > 0
-      if (!replacesTop && effectiveMode === 'push') rememberScroll(locationStack.length)
-      setNavigation((current) => {
-        const currentNavigation =
-          current.sourceIdentity === sourceIdentity
-            ? current
-            : { sourceIdentity, base: initialBaseLocation, stack: initialStack }
-        const currentVisible =
-          currentNavigation.stack.at(-1) ?? currentNavigation.base ?? sourcePage(column.source)
-        if (currentVisible && sameColumnLocation(currentVisible, nextLocation)) return current
-        if (effectiveMode === 'replace') {
-          return { sourceIdentity, base: nextLocation, stack: [] }
-        }
-        return {
-          sourceIdentity,
-          base: currentNavigation.base,
-          stack: [...currentNavigation.stack, nextLocation],
-        }
-      })
-      const nextBaseLocation =
-        effectiveMode === 'replace'
-          ? nextLocation
-          : (baseLocation ?? initialBaseLocation ?? sourcePage(column.source))
-      void setColumnLastLocation(column.id, nextLocation, nextBaseLocation).catch(() => {})
+  const commitReading = useCallback(
+    (current: AuxiliaryColumnReadingState, next: AuxiliaryColumnReadingState) => {
+      if (next === current) return
+      const pushed = next.stack.length > current.stack.length
+      if (pushed) rememberScroll(current.stack.length)
+      setReadingSession({ key: readingKey, reading: next })
+      void setColumnLastLocation(column.id, next.persisted.current, next.persisted.base).catch(
+        () => {},
+      )
       requestAnimationFrame(() => {
         if (scrollRootRef.current) scrollRootRef.current.scrollTop = 0
       })
     },
-    [
-      baseLocation,
-      column.id,
-      column.source,
-      initialBaseLocation,
-      initialStack,
-      locationStack,
-      rememberScroll,
-      setColumnLastLocation,
-      sourceIdentity,
-    ],
+    [column.id, readingKey, rememberScroll, setColumnLastLocation],
   )
   const openStatus = useCallback(
     (item: StatusDetailNavigationItem) => {
       const statusId = item.mblogId ?? item.id
       if (!item.author.id || !statusId) return
-      showLocation({ kind: 'status', authorId: item.author.id, statusId }, 'push')
+      commitReading(
+        reading,
+        openAuxiliaryColumnReading(reading, {
+          kind: 'status',
+          authorId: item.author.id,
+          statusId,
+        }),
+      )
     },
-    [showLocation],
+    [commitReading, reading],
   )
   const back = useCallback(() => {
     if (locationStack.length === 0) return
     const nextDepth = locationStack.length - 1
-    const currentStack = locationStack
-    const nextLocation = currentStack.at(-2) ?? baseLocation ?? sourcePage(column.source)
-    setNavigation((current) => {
-      const stack = current.sourceIdentity === sourceIdentity ? current.stack : []
-      if (stack.length === 0) return current
-      return {
-        sourceIdentity,
-        base: current.sourceIdentity === sourceIdentity ? current.base : initialBaseLocation,
-        stack: stack.slice(0, -1),
-      }
-    })
-    void setColumnLastLocation(column.id, nextLocation, baseLocation ?? initialBaseLocation).catch(
-      () => {},
-    )
+    commitReading(reading, backAuxiliaryColumnReading(reading))
     requestAnimationFrame(() => {
       if (scrollRootRef.current) {
         scrollRootRef.current.scrollTop = savedScrollByDepthRef.current[nextDepth] ?? 0
       }
       savedFocusByDepthRef.current[nextDepth]?.focus()
     })
-  }, [
-    baseLocation,
-    column.id,
-    column.source,
-    initialBaseLocation,
-    locationStack,
-    setColumnLastLocation,
-    sourceIdentity,
-  ])
+  }, [commitReading, locationStack.length, reading])
   const runtime = useMemo<PageRuntime>(
     () => ({
       page: page ?? { kind: 'unsupported', reason: 'unmatched-path' },
       navigationMode: 'column',
-      canGoBack: locationStack.length > 0,
+      canGoBack: reading.canGoBack,
       scrollRootRef,
       navigate: (to, options) => {
-        const nextLocation = columnLocationFromTarget(to)
-        if (!nextLocation) return
-        showLocation(nextLocation, options?.replace ? 'replace' : 'push')
+        commitReading(
+          reading,
+          followAuxiliaryColumnTarget(reading, to, options?.replace ? 'replace' : 'push'),
+        )
       },
       openStatus,
       back,
@@ -349,7 +236,7 @@ export function AuxiliaryColumnView({
       },
       scrollToTop: () => scrollRootRef.current?.scrollTo({ top: 0, behavior: 'smooth' }),
     }),
-    [back, locationStack.length, openStatus, page, showLocation],
+    [back, commitReading, openStatus, page, reading],
   )
   const host = useMemo<StatusCardHost>(
     () => ({
@@ -482,7 +369,7 @@ export function AuxiliaryColumnView({
     },
     [runtime, savedUid],
   )
-  const canGoBack = locationStack.length > 0
+  const canGoBack = reading.canGoBack
   const columnMenu = (
     <>
       <ColumnToolbarMenuItem disabled={index === 0} onSelect={() => onMove(column.id, index - 1)}>
@@ -572,18 +459,23 @@ export function AuxiliaryColumnView({
                   className="xb-column-scroll min-h-0 flex-1 overflow-y-auto"
                   onClickCapture={keepNavigationInsideColumn}
                 >
-                  {navigatedPage ? (
+                  {page ? (
                     <ColumnLocationPage
-                      location={navigatedPage}
-                      onLocationChange={(nextLocation) => showLocation(nextLocation, 'replace')}
+                      location={page}
+                      onFollowTabChange={(nextLocation) =>
+                        commitReading(reading, replaceAuxiliaryColumnSection(reading, nextLocation))
+                      }
                       onSavedListChange={
                         savedUid
                           ? (value) => {
-                              showLocation(
-                                value === 'liked'
-                                  ? { kind: 'liked', uid: savedUid }
-                                  : { kind: 'favorites', uid: savedUid },
-                                'replace',
+                              commitReading(
+                                reading,
+                                replaceAuxiliaryColumnSection(
+                                  reading,
+                                  value === 'liked'
+                                    ? { kind: 'liked', uid: savedUid }
+                                    : { kind: 'favorites', uid: savedUid },
+                                ),
                               )
                             }
                           : undefined
@@ -595,20 +487,6 @@ export function AuxiliaryColumnView({
                     ) : (
                       <FavoritesPage onSavedListChange={changeSavedList} />
                     )
-                  ) : column.source.kind === 'home' ? (
-                    <HomeTimelinePage
-                      source={column.source}
-                      onSourceChange={(source) =>
-                        showLocation({ kind: 'home', ...source }, 'replace')
-                      }
-                    />
-                  ) : column.source.kind === 'explore' ? (
-                    <ExplorePage
-                      source={{ groupId: column.source.groupId ?? '102803' }}
-                      onSourceChange={(source) =>
-                        showLocation({ kind: 'explore', ...source }, 'replace')
-                      }
-                    />
                   ) : column.source.kind === 'favorites' ? (
                     <FavoritesPage onSavedListChange={changeSavedList} />
                   ) : column.source.kind === 'liked' ? (
@@ -624,7 +502,9 @@ export function AuxiliaryColumnView({
                       showTabs
                       onTabChange={(tab) => {
                         if (column.source.kind !== 'follow' || tab === column.source.tab) return
-                        runtime.navigate(`/u/page/follow/${column.source.uid}?tab=${tab}`)
+                        runtime.navigate(`/u/page/follow/${column.source.uid}?tab=${tab}`, {
+                          replace: true,
+                        })
                       }}
                     />
                   ) : column.source.kind === 'profile' ? (

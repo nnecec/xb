@@ -55,7 +55,9 @@ export function FavoritesPage({
 
   const handleSavedListChange = (value: string) => {
     if (value === 'liked' && uid !== '') {
-      runtime.navigate(`/u/page/like/${uid}`)
+      runtime.navigate(`/u/page/like/${uid}`, {
+        replace: runtime.navigationMode === 'column',
+      })
     }
   }
 

@@ -45,7 +45,9 @@ export function LikedStatusesPage({
   const isRefreshing = likedStatusesQuery.isFetching && !isFetchingNextPage && !isLoading
   const handleSavedListChange = (value: string) => {
     if (value === 'favorites' && uid !== '') {
-      runtime.navigate(`/u/page/fav/${uid}`)
+      runtime.navigate(`/u/page/fav/${uid}`, {
+        replace: runtime.navigationMode === 'column',
+      })
     }
   }
 
