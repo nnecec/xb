@@ -51,6 +51,8 @@ import {
   optimisticallyRemoveStatusFromFavorites,
   optimisticallyToggleStatusFavorite,
   optimisticallyToggleStatusLike,
+  refreshStatusFavoriteLists,
+  refreshStatusLikeLists,
   restoreStatusCacheMutation,
 } from '@/lib/weibo/queries/status-cache'
 
@@ -194,7 +196,7 @@ function StatusCardRoot({
     },
     onMutate: (target: FeedItem) => optimisticallyToggleStatusLike(queryClient, target),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['weibo', 'liked-statuses'] })
+      refreshStatusLikeLists(queryClient)
     },
     onError: (_error, _target, context) => {
       restoreStatusCacheMutation(queryClient, context)
@@ -228,6 +230,7 @@ function StatusCardRoot({
     },
     onMutate: (target: FeedItem) => optimisticallyToggleStatusFavorite(queryClient, target),
     onSuccess: (_data, target) => {
+      refreshStatusFavoriteLists(queryClient)
       toast.success(target.favorited ? '取消收藏成功' : '收藏成功')
     },
     onError: (_error, target, context) => {
@@ -240,6 +243,7 @@ function StatusCardRoot({
     mutationFn: (targetId: string) => destroyFavorite(targetId),
     onMutate: (targetId: string) => optimisticallyRemoveStatusFromFavorites(queryClient, targetId),
     onSuccess: () => {
+      refreshStatusFavoriteLists(queryClient)
       toast.success('取消收藏成功')
     },
     onError: (error, _targetId, context) => {

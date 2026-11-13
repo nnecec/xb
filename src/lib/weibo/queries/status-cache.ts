@@ -303,6 +303,20 @@ async function prepareMutation(queryClient: QueryClient): Promise<StatusCacheMut
   return createStatusCacheMutationContext()
 }
 
+export function refreshStatusLikeLists(queryClient: QueryClient) {
+  void queryClient.invalidateQueries({ queryKey: ['weibo', 'liked-statuses'] })
+}
+
+export function refreshStatusFavoriteLists(queryClient: QueryClient) {
+  void queryClient.invalidateQueries({ queryKey: ['weibo', 'favorites'] })
+}
+
+export function refreshStatusCommentLists(queryClient: QueryClient, statusId: string) {
+  void queryClient.invalidateQueries({ queryKey: ['weibo', 'status-comments', statusId] })
+  void queryClient.invalidateQueries({ queryKey: ['weibo', 'feed-comments', statusId] })
+  void queryClient.invalidateQueries({ queryKey: ['weibo', 'nested-comments'] })
+}
+
 export async function optimisticallyToggleStatusLike(
   queryClient: QueryClient,
   target: FeedItem,

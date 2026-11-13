@@ -12,6 +12,7 @@ import { submitComposeAction } from '@/lib/weibo/data/weibo-data'
 import type { ComposeTarget } from '@/lib/weibo/models/compose'
 import {
   optimisticallyIncrementStatusComments,
+  refreshStatusCommentLists,
   restoreStatusCacheMutation,
 } from '@/lib/weibo/queries/status-cache'
 
@@ -48,15 +49,7 @@ export function CommentBox({
       setText('')
       setAlsoSecondaryAction(false)
       if (target.mode === 'comment') {
-        void queryClient.invalidateQueries({
-          queryKey: ['weibo', 'status-comments', target.statusId],
-        })
-        void queryClient.invalidateQueries({
-          queryKey: ['weibo', 'feed-comments', target.statusId],
-        })
-        void queryClient.invalidateQueries({
-          queryKey: ['weibo', 'nested-comments'],
-        })
+        refreshStatusCommentLists(queryClient, target.statusId)
       }
       onSubmitSuccess?.()
     },
