@@ -783,6 +783,23 @@ export function normalizeCommentCardSettings(
   }
 }
 
+export function normalizePlaybackSessionSettings(
+  value: unknown,
+): Pick<AppSettings, 'rememberPlaybackRate' | 'playbackRate' | 'videoQualityPreference'> {
+  const candidate =
+    value && typeof value === 'object'
+      ? (value as Partial<AppSettings>)
+      : ({} as Partial<AppSettings>)
+  return {
+    rememberPlaybackRate:
+      typeof candidate.rememberPlaybackRate === 'boolean'
+        ? candidate.rememberPlaybackRate
+        : DEFAULT_APP_SETTINGS.rememberPlaybackRate,
+    playbackRate: normalizePlaybackRate(candidate.playbackRate),
+    videoQualityPreference: normalizeVideoQualityPreference(candidate.videoQualityPreference),
+  }
+}
+
 export function normalizeAppSettings(value: unknown): AppSettings {
   if (!value || typeof value !== 'object') {
     return { ...DEFAULT_APP_SETTINGS }
@@ -919,12 +936,7 @@ export function normalizeAppSettings(value: unknown): AppSettings {
       typeof candidate.ratingEnabled === 'boolean'
         ? candidate.ratingEnabled
         : DEFAULT_APP_SETTINGS.ratingEnabled,
-    rememberPlaybackRate:
-      typeof candidate.rememberPlaybackRate === 'boolean'
-        ? candidate.rememberPlaybackRate
-        : DEFAULT_APP_SETTINGS.rememberPlaybackRate,
-    playbackRate: normalizePlaybackRate(candidate.playbackRate),
-    videoQualityPreference: normalizeVideoQualityPreference(candidate.videoQualityPreference),
+    ...normalizePlaybackSessionSettings(candidate),
     firstLoadRedirect: isHomeTab(candidate.firstLoadRedirect)
       ? candidate.firstLoadRedirect
       : DEFAULT_APP_SETTINGS.firstLoadRedirect,

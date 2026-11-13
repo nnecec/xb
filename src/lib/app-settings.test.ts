@@ -6,6 +6,7 @@ import {
   loadAppSettings,
   normalizeAppSettings,
   normalizeCommentCardSettings,
+  normalizePlaybackSessionSettings,
   normalizeWeiboCardSettings,
   persistAppSettings,
   resolveIsDarkMode,
@@ -46,6 +47,33 @@ describe('卡片设置', () => {
     ).toMatchObject({
       commentCardShowAvatar: DEFAULT_APP_SETTINGS.commentCardShowAvatar,
       commentCardImageDisplay: DEFAULT_APP_SETTINGS.commentCardImageDisplay,
+    })
+  })
+})
+
+describe('播放会话设置', () => {
+  it('损坏的倍速和清晰度回到默认', () => {
+    expect(
+      normalizePlaybackSessionSettings({
+        playbackRate: 1.1,
+        rememberPlaybackRate: 'yes',
+        videoQualityPreference: '  ',
+      }),
+    ).toEqual({
+      playbackRate: DEFAULT_APP_SETTINGS.playbackRate,
+      rememberPlaybackRate: DEFAULT_APP_SETTINGS.rememberPlaybackRate,
+      videoQualityPreference: null,
+    })
+    expect(
+      normalizePlaybackSessionSettings({
+        playbackRate: 1.5,
+        rememberPlaybackRate: true,
+        videoQualityPreference: ' 1080P ',
+      }),
+    ).toEqual({
+      playbackRate: 1.5,
+      rememberPlaybackRate: true,
+      videoQualityPreference: '1080p',
     })
   })
 })
