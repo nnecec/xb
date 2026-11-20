@@ -300,7 +300,7 @@ describe('AuxiliaryColumnView navigation', () => {
       </AppShellContextProvider>,
     )
 
-    const handle = screen.getByRole('separator', { name: '调整用户分组列宽' })
+    const handle = screen.getByRole('separator', { name: '调整我关注的列宽' })
     expect(handle).toHaveAttribute('aria-valuemin', '300')
     expect(handle).toHaveAttribute('aria-valuemax', '720')
     expect(handle).toHaveAttribute('aria-valuenow', '420')
@@ -314,7 +314,7 @@ describe('AuxiliaryColumnView navigation', () => {
 
   it('supports keyboard resizing and keeps the width within bounds', async () => {
     renderColumn({ kind: 'home', tab: 'following' }, { width: 420 })
-    const handle = screen.getByRole('separator', { name: '调整用户分组列宽' })
+    const handle = screen.getByRole('separator', { name: '调整我关注的列宽' })
 
     await userEvent.setup().click(handle)
     fireEvent.keyDown(handle, { key: 'ArrowLeft' })

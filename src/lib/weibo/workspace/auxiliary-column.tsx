@@ -145,6 +145,9 @@ export function AuxiliaryColumnView({
   const savedScrollByDepthRef = useRef<number[]>([])
   const savedFocusByDepthRef = useRef<Array<HTMLElement | null>>([])
   const setColumnLastLocation = useWorkspace((state) => state.setColumnLastLocation)
+  const setColumnSearch = useWorkspace((state) => state.setColumnSearch)
+  const [searchQuery, setSearchQuery] = useState(column.searchQuery ?? '')
+  const [searchActiveQuery, setSearchActiveQuery] = useState(column.searchActiveQuery ?? '')
   const readingKey = JSON.stringify([column.source, column.lastLocation, column.lastBaseLocation])
   const [readingSession, setReadingSession] = useState(() => ({
     key: readingKey,
@@ -448,7 +451,7 @@ export function AuxiliaryColumnView({
                     className="shrink-0"
                     onClick={back}
                   >
-                    <ArrowLeft className="size-4" />
+                    <ArrowLeft />
                   </Button>
                 ) : null
               }
@@ -530,7 +533,19 @@ export function AuxiliaryColumnView({
                   ) : column.source.kind === 'search-entry' ? (
                     <>
                       <TimelineTopBar title="搜索" />
-                      <SearchCard className="pt-4" />
+                      <SearchCard
+                        variant="column"
+                        columnQuery={searchQuery}
+                        columnActiveQuery={searchActiveQuery}
+                        onColumnQueryChange={(value) => {
+                          setSearchQuery(value)
+                          void setColumnSearch(column.id, value, searchActiveQuery)
+                        }}
+                        onColumnActiveQueryChange={(value) => {
+                          setSearchActiveQuery(value)
+                          void setColumnSearch(column.id, searchQuery, value)
+                        }}
+                      />
                     </>
                   ) : (
                     <>

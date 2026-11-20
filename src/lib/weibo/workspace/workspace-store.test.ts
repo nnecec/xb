@@ -208,7 +208,7 @@ describe('workspace store', () => {
         label: '不会进入唯一标识',
       }),
     ).toBe(columnSourceIdentity({ kind: 'explore', groupId: '102803' }))
-    expect(columnSourceTitle({ kind: 'home', tab: 'following' })).toBe('用户分组')
+    expect(columnSourceTitle({ kind: 'home', tab: 'following' })).toBe('我关注的')
     expect(columnSourceTitle({ kind: 'explore', groupId: '102803', label: '热门' })).toBe('热门')
   })
 

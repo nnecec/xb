@@ -44,6 +44,8 @@ export interface AuxiliaryColumn {
   width?: number
   lastLocation?: ColumnNavigationLocation
   lastBaseLocation?: ColumnNavigationLocation
+  searchQuery?: string
+  searchActiveQuery?: string
 }
 
 export type ColumnWidthOverrides = Partial<Record<ColumnSource['kind'], number>>
@@ -69,6 +71,7 @@ export interface WorkspaceStoreState extends WorkspaceSnapshot {
     location: ColumnNavigationLocation | null,
     baseLocation?: ColumnNavigationLocation | null,
   ) => Promise<void>
+  setColumnSearch: (columnId: string, query: string, activeQuery: string) => Promise<void>
   setColumnWidth: (columnId: string, width: number) => Promise<void>
   resetColumnWidths: () => Promise<void>
   setCanvasScrollLeft: (scrollLeft: number) => Promise<void>
@@ -287,7 +290,7 @@ export function columnSourceTitle(source: ColumnSource): string {
       if (source.groupId) return source.label ?? '用户分组'
       if (source.tab === 'for-you') return '推荐'
       if (source.tab === 'following')
-        return source.groupId ? (source.label ?? '用户分组') : '用户分组'
+        return source.groupId ? (source.label ?? '我关注的') : '我关注的'
       if (source.tab === 'special-follow') return '特别关注'
       return '朋友圈'
     case 'explore':
@@ -381,6 +384,8 @@ function normalizeAuxiliaryColumn(value: unknown): AuxiliaryColumn | null {
   const lastBaseLocation = normalizeColumnNavigationLocation(value.lastBaseLocation)
   const normalizedLastLocation = lastLocation ?? undefined
   const normalizedLastBaseLocation = lastBaseLocation ?? undefined
+  const searchQuery = normalizeString(value.searchQuery) ?? undefined
+  const searchActiveQuery = normalizeString(value.searchActiveQuery) ?? undefined
   const width = normalizeColumnWidth(value.width, CUSTOM_COLUMN_WIDTH_MIN)
 
   return {
@@ -389,6 +394,8 @@ function normalizeAuxiliaryColumn(value: unknown): AuxiliaryColumn | null {
     ...(typeof value.width === 'number' ? { width } : {}),
     ...(normalizedLastLocation ? { lastLocation: normalizedLastLocation } : {}),
     ...(normalizedLastBaseLocation ? { lastBaseLocation: normalizedLastBaseLocation } : {}),
+    ...(searchQuery ? { searchQuery } : {}),
+    ...(searchActiveQuery ? { searchActiveQuery } : {}),
   }
 }
 
@@ -590,6 +597,21 @@ export function createWorkspaceStore(
             nextColumn.lastLocation = location ?? undefined
             if (baseLocation !== undefined) nextColumn.lastBaseLocation = baseLocation ?? undefined
             return nextColumn
+          }),
+        }))
+      },
+      async setColumnSearch(columnId, query, activeQuery) {
+        await updateAndPersist((snapshot) => ({
+          ...snapshot,
+          auxiliaryColumns: snapshot.auxiliaryColumns.map((column) => {
+            if (column.id !== columnId) return column
+            return {
+              ...column,
+              ...(query ? { searchQuery: query } : { searchQuery: undefined }),
+              ...(activeQuery
+                ? { searchActiveQuery: activeQuery }
+                : { searchActiveQuery: undefined }),
+            }
           }),
         }))
       },
