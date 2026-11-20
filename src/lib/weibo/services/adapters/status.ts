@@ -1,10 +1,12 @@
+import { normalizeCursor } from '@/lib/weibo/data/io/cursor'
 import type {
   CommentFilterOption,
   StatusCommentsPage,
   StatusDetail,
 } from '@/lib/weibo/models/status'
+import type { WeiboStatus } from '@/lib/weibo/models/weibo-api'
 
-import { type WeiboStatus, toCommentItem, toFeedItem } from '../../utils/transform'
+import { toCommentItem, toFeedItem } from '../../utils/transform'
 
 interface StatusCommentsPayload {
   data?: WeiboStatus[]
@@ -45,13 +47,6 @@ function unwrapStatusDetailPayload(payload: unknown): WeiboStatus {
     }
   }
   return payload as WeiboStatus
-}
-
-function normalizeCursor(value: string | number | undefined): string | null {
-  if (value === undefined || value === null || value === '' || String(value) === '0') {
-    return null
-  }
-  return String(value)
 }
 
 export function adaptStatusDetailResponse(payload: unknown): StatusDetail {

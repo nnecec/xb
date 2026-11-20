@@ -79,12 +79,24 @@ export type LineHeightClass =
   | 'leading-relaxed'
   | 'leading-loose'
 
-export type ContentWidth = 'narrower' | 'narrow' | 'standard' | 'wide' | 'wider' | 'custom'
+export type ColumnWidth = 'narrower' | 'narrow' | 'standard' | 'wide' | 'wider' | 'custom'
 
-export const CUSTOM_CONTENT_WIDTH_MIN = 800
-export const CUSTOM_CONTENT_WIDTH_MAX = 2000
-export const CUSTOM_CONTENT_WIDTH_STEP = 20
-export const DEFAULT_CUSTOM_CONTENT_WIDTH = 1200
+export const CUSTOM_COLUMN_WIDTH_MIN = 300
+export const CUSTOM_COLUMN_WIDTH_MAX = 720
+
+/** 主列与辅助列共用的标准宽度，其余预设以此为基准。 */
+const STANDARD_COLUMN_WIDTH_PX = 480
+
+export const COLUMN_WIDTH_PX = {
+  narrower: STANDARD_COLUMN_WIDTH_PX - 80,
+  narrow: STANDARD_COLUMN_WIDTH_PX - 40,
+  standard: STANDARD_COLUMN_WIDTH_PX,
+  wide: STANDARD_COLUMN_WIDTH_PX + 60,
+  wider: Math.min(CUSTOM_COLUMN_WIDTH_MAX, STANDARD_COLUMN_WIDTH_PX + 140),
+} as const satisfies Record<Exclude<ColumnWidth, 'custom'>, number>
+
+export const CUSTOM_COLUMN_WIDTH_STEP = 20
+export const DEFAULT_CUSTOM_COLUMN_WIDTH = COLUMN_WIDTH_PX.standard
 
 export type HomeTab = 'for-you' | 'following' | 'special-follow' | 'friend-circle'
 
@@ -176,9 +188,9 @@ export const WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_STEP = 10
 export const DEFAULT_WEIBO_CARD_SINGLE_IMAGE_MAX_WIDTH = 450
 export const DEFAULT_WEIBO_CARD_SINGLE_VIDEO_MAX_WIDTH = 650
 
-export interface AppSettings {
-  contentWidth: ContentWidth
-  customContentWidth: number
+export interface FlatAppSettings {
+  columnWidth: ColumnWidth
+  customColumnWidth: number
   theme: AppTheme
   rewriteEnabled: boolean
   uiFontSize: UiFontSize
@@ -195,12 +207,8 @@ export interface AppSettings {
   showDMs: boolean
   showProfile: boolean
   showCompose: boolean
-  showRightRail: boolean
-  showHotSearchCard: boolean
   xbEntryCollapsed: boolean
-  showFollowedSuperTopicsCard: boolean
   sidebarCollapsed: boolean
-  immersiveMode: boolean
   motionPreference: MotionPreference
   replyChainDisplay: ReplyChainDisplay
   darkModeImageDim: boolean
@@ -255,6 +263,116 @@ export interface AppSettings {
   photoLoopEnabled: boolean
 }
 
+export interface AppearanceSettings extends Pick<
+  FlatAppSettings,
+  | 'theme'
+  | 'rewriteEnabled'
+  | 'uiFontSize'
+  | 'contentFontSize'
+  | 'fontWeightClass'
+  | 'letterSpacingClass'
+  | 'lineHeightClass'
+  | 'fontFamilyClass'
+  | 'fontApplyScope'
+  | 'motionPreference'
+  | 'darkModeImageDim'
+  | 'lightModeBgColor'
+  | 'darkModeBgColor'
+> {}
+
+export interface NavigationSettings extends Pick<
+  FlatAppSettings,
+  | 'columnWidth'
+  | 'customColumnWidth'
+  | 'showExplore'
+  | 'showFavorites'
+  | 'showHistory'
+  | 'showNotifications'
+  | 'showDMs'
+  | 'showProfile'
+  | 'showCompose'
+  | 'xbEntryCollapsed'
+  | 'sidebarCollapsed'
+> {}
+
+export interface FeedSettings extends Pick<
+  FlatAppSettings,
+  | 'replyChainDisplay'
+  | 'autoLoadLongText'
+  | 'feedDensity'
+  | 'weiboCardShowAvatar'
+  | 'weiboCardShowTimestamp'
+  | 'weiboCardShowPublishInfo'
+  | 'weiboCardShowTitleBadge'
+  | 'weiboCardShowInteractionCounts'
+  | 'weiboCardCollapsedMediaTypes'
+  | 'weiboCardSingleImageMaxWidth'
+  | 'weiboCardSingleVideoMaxWidth'
+  | 'weiboCardMultiMediaLayout'
+  | 'weiboCardMultiMediaGridLimit'
+  | 'weiboCardMultiMediaGridMaxWidth'
+  | 'weiboCardMultiMediaStripHeight'
+  | 'commentDensity'
+  | 'commentCardShowAvatar'
+  | 'commentCardShowTimestamp'
+  | 'commentCardShowPublishInfo'
+  | 'commentCardShowAuthorBadge'
+  | 'commentCardShowLikeCount'
+  | 'commentCardShowThreadLine'
+  | 'commentCardImageDisplay'
+  | 'commentCardCollapseRepliesByDefault'
+  | 'hotSearchType'
+  | 'feedInteractionMode'
+  | 'feedPrimaryActionOrder'
+  | 'feedToolbarButtonIds'
+  | 'browsingHistoryLimit'
+> {}
+
+export interface ImageGenSettings extends Pick<
+  FlatAppSettings,
+  | 'imageGenShowDataArea'
+  | 'imageGenShowFullImages'
+  | 'imageGenShowWeiboLink'
+  | 'imageGenTheme'
+  | 'imageGenCardStyle'
+> {}
+
+export interface HomeSettings extends Pick<
+  FlatAppSettings,
+  'firstLoadRedirect' | 'homeTab' | 'homeGroupId'
+> {}
+
+export interface FeatureSettings extends Pick<FlatAppSettings, 'xbTopicPage' | 'ratingEnabled'> {}
+
+export interface MediaSettings extends Pick<
+  FlatAppSettings,
+  'rememberPlaybackRate' | 'playbackRate' | 'videoQualityPreference' | 'photoLoopEnabled'
+> {}
+
+export interface ThemeSettings extends Pick<
+  FlatAppSettings,
+  | 'customThemeLightCss'
+  | 'customThemeDarkCss'
+  | 'selectedThemeType'
+  | 'selectedThemeId'
+  | 'userThemes'
+> {}
+
+export interface AppSettings {
+  appearance: AppearanceSettings
+  navigation: NavigationSettings
+  feed: FeedSettings
+  imageGen: ImageGenSettings
+  home: HomeSettings
+  features: FeatureSettings
+  media: MediaSettings
+  themes: ThemeSettings
+}
+
+export type AppSettingsPatch = {
+  [K in keyof AppSettings]?: Partial<AppSettings[K]>
+}
+
 type GenImageCardTheme = 'light' | 'dark'
 
 type CardStyle =
@@ -275,9 +393,9 @@ export interface AppSettingsStorageArea {
 
 export const APP_SETTINGS_STORAGE_KEY = 'xb:app-settings'
 
-export const DEFAULT_APP_SETTINGS: AppSettings = {
-  contentWidth: 'standard' as ContentWidth,
-  customContentWidth: DEFAULT_CUSTOM_CONTENT_WIDTH,
+export const DEFAULT_FLAT_APP_SETTINGS: FlatAppSettings = {
+  columnWidth: 'standard' as ColumnWidth,
+  customColumnWidth: DEFAULT_CUSTOM_COLUMN_WIDTH,
   theme: 'system',
   rewriteEnabled: true,
   uiFontSize: 14,
@@ -294,12 +412,8 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   showDMs: true,
   showProfile: true,
   showCompose: true,
-  showRightRail: true,
-  showHotSearchCard: true,
   xbEntryCollapsed: false,
-  showFollowedSuperTopicsCard: false,
   sidebarCollapsed: false,
-  immersiveMode: false,
   motionPreference: 'system',
   replyChainDisplay: 'expanded',
   darkModeImageDim: false,
@@ -354,6 +468,98 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   photoLoopEnabled: true,
 }
 
+export const DEFAULT_APP_SETTINGS: AppSettings = {
+  appearance: {
+    theme: DEFAULT_FLAT_APP_SETTINGS.theme,
+    rewriteEnabled: DEFAULT_FLAT_APP_SETTINGS.rewriteEnabled,
+    uiFontSize: DEFAULT_FLAT_APP_SETTINGS.uiFontSize,
+    contentFontSize: DEFAULT_FLAT_APP_SETTINGS.contentFontSize,
+    fontWeightClass: DEFAULT_FLAT_APP_SETTINGS.fontWeightClass,
+    letterSpacingClass: DEFAULT_FLAT_APP_SETTINGS.letterSpacingClass,
+    lineHeightClass: DEFAULT_FLAT_APP_SETTINGS.lineHeightClass,
+    fontFamilyClass: DEFAULT_FLAT_APP_SETTINGS.fontFamilyClass,
+    fontApplyScope: DEFAULT_FLAT_APP_SETTINGS.fontApplyScope,
+    motionPreference: DEFAULT_FLAT_APP_SETTINGS.motionPreference,
+    darkModeImageDim: DEFAULT_FLAT_APP_SETTINGS.darkModeImageDim,
+    lightModeBgColor: DEFAULT_FLAT_APP_SETTINGS.lightModeBgColor,
+    darkModeBgColor: DEFAULT_FLAT_APP_SETTINGS.darkModeBgColor,
+  },
+  navigation: {
+    columnWidth: DEFAULT_FLAT_APP_SETTINGS.columnWidth,
+    customColumnWidth: DEFAULT_FLAT_APP_SETTINGS.customColumnWidth,
+    showExplore: DEFAULT_FLAT_APP_SETTINGS.showExplore,
+    showFavorites: DEFAULT_FLAT_APP_SETTINGS.showFavorites,
+    showHistory: DEFAULT_FLAT_APP_SETTINGS.showHistory,
+    showNotifications: DEFAULT_FLAT_APP_SETTINGS.showNotifications,
+    showDMs: DEFAULT_FLAT_APP_SETTINGS.showDMs,
+    showProfile: DEFAULT_FLAT_APP_SETTINGS.showProfile,
+    showCompose: DEFAULT_FLAT_APP_SETTINGS.showCompose,
+    xbEntryCollapsed: DEFAULT_FLAT_APP_SETTINGS.xbEntryCollapsed,
+    sidebarCollapsed: DEFAULT_FLAT_APP_SETTINGS.sidebarCollapsed,
+  },
+  feed: {
+    replyChainDisplay: DEFAULT_FLAT_APP_SETTINGS.replyChainDisplay,
+    autoLoadLongText: DEFAULT_FLAT_APP_SETTINGS.autoLoadLongText,
+    feedDensity: DEFAULT_FLAT_APP_SETTINGS.feedDensity,
+    weiboCardShowAvatar: DEFAULT_FLAT_APP_SETTINGS.weiboCardShowAvatar,
+    weiboCardShowTimestamp: DEFAULT_FLAT_APP_SETTINGS.weiboCardShowTimestamp,
+    weiboCardShowPublishInfo: DEFAULT_FLAT_APP_SETTINGS.weiboCardShowPublishInfo,
+    weiboCardShowTitleBadge: DEFAULT_FLAT_APP_SETTINGS.weiboCardShowTitleBadge,
+    weiboCardShowInteractionCounts: DEFAULT_FLAT_APP_SETTINGS.weiboCardShowInteractionCounts,
+    weiboCardCollapsedMediaTypes: DEFAULT_FLAT_APP_SETTINGS.weiboCardCollapsedMediaTypes,
+    weiboCardSingleImageMaxWidth: DEFAULT_FLAT_APP_SETTINGS.weiboCardSingleImageMaxWidth,
+    weiboCardSingleVideoMaxWidth: DEFAULT_FLAT_APP_SETTINGS.weiboCardSingleVideoMaxWidth,
+    weiboCardMultiMediaLayout: DEFAULT_FLAT_APP_SETTINGS.weiboCardMultiMediaLayout,
+    weiboCardMultiMediaGridLimit: DEFAULT_FLAT_APP_SETTINGS.weiboCardMultiMediaGridLimit,
+    weiboCardMultiMediaGridMaxWidth: DEFAULT_FLAT_APP_SETTINGS.weiboCardMultiMediaGridMaxWidth,
+    weiboCardMultiMediaStripHeight: DEFAULT_FLAT_APP_SETTINGS.weiboCardMultiMediaStripHeight,
+    commentDensity: DEFAULT_FLAT_APP_SETTINGS.commentDensity,
+    commentCardShowAvatar: DEFAULT_FLAT_APP_SETTINGS.commentCardShowAvatar,
+    commentCardShowTimestamp: DEFAULT_FLAT_APP_SETTINGS.commentCardShowTimestamp,
+    commentCardShowPublishInfo: DEFAULT_FLAT_APP_SETTINGS.commentCardShowPublishInfo,
+    commentCardShowAuthorBadge: DEFAULT_FLAT_APP_SETTINGS.commentCardShowAuthorBadge,
+    commentCardShowLikeCount: DEFAULT_FLAT_APP_SETTINGS.commentCardShowLikeCount,
+    commentCardShowThreadLine: DEFAULT_FLAT_APP_SETTINGS.commentCardShowThreadLine,
+    commentCardImageDisplay: DEFAULT_FLAT_APP_SETTINGS.commentCardImageDisplay,
+    commentCardCollapseRepliesByDefault:
+      DEFAULT_FLAT_APP_SETTINGS.commentCardCollapseRepliesByDefault,
+    hotSearchType: DEFAULT_FLAT_APP_SETTINGS.hotSearchType,
+    feedInteractionMode: DEFAULT_FLAT_APP_SETTINGS.feedInteractionMode,
+    feedPrimaryActionOrder: DEFAULT_FLAT_APP_SETTINGS.feedPrimaryActionOrder,
+    feedToolbarButtonIds: DEFAULT_FLAT_APP_SETTINGS.feedToolbarButtonIds,
+    browsingHistoryLimit: DEFAULT_FLAT_APP_SETTINGS.browsingHistoryLimit,
+  },
+  imageGen: {
+    imageGenShowDataArea: DEFAULT_FLAT_APP_SETTINGS.imageGenShowDataArea,
+    imageGenShowFullImages: DEFAULT_FLAT_APP_SETTINGS.imageGenShowFullImages,
+    imageGenShowWeiboLink: DEFAULT_FLAT_APP_SETTINGS.imageGenShowWeiboLink,
+    imageGenTheme: DEFAULT_FLAT_APP_SETTINGS.imageGenTheme,
+    imageGenCardStyle: DEFAULT_FLAT_APP_SETTINGS.imageGenCardStyle,
+  },
+  home: {
+    firstLoadRedirect: DEFAULT_FLAT_APP_SETTINGS.firstLoadRedirect,
+    homeTab: DEFAULT_FLAT_APP_SETTINGS.homeTab,
+    homeGroupId: DEFAULT_FLAT_APP_SETTINGS.homeGroupId,
+  },
+  features: {
+    xbTopicPage: DEFAULT_FLAT_APP_SETTINGS.xbTopicPage,
+    ratingEnabled: DEFAULT_FLAT_APP_SETTINGS.ratingEnabled,
+  },
+  media: {
+    rememberPlaybackRate: DEFAULT_FLAT_APP_SETTINGS.rememberPlaybackRate,
+    playbackRate: DEFAULT_FLAT_APP_SETTINGS.playbackRate,
+    videoQualityPreference: DEFAULT_FLAT_APP_SETTINGS.videoQualityPreference,
+    photoLoopEnabled: DEFAULT_FLAT_APP_SETTINGS.photoLoopEnabled,
+  },
+  themes: {
+    customThemeLightCss: DEFAULT_FLAT_APP_SETTINGS.customThemeLightCss,
+    customThemeDarkCss: DEFAULT_FLAT_APP_SETTINGS.customThemeDarkCss,
+    selectedThemeType: DEFAULT_FLAT_APP_SETTINGS.selectedThemeType,
+    selectedThemeId: DEFAULT_FLAT_APP_SETTINGS.selectedThemeId,
+    userThemes: DEFAULT_FLAT_APP_SETTINGS.userThemes,
+  },
+}
+
 function isAppTheme(value: unknown): value is AppTheme {
   return value === 'system' || value === 'light' || value === 'dark'
 }
@@ -371,14 +577,14 @@ function isWeiboCardMediaCollapseType(value: unknown): value is WeiboCardMediaCo
 }
 
 function normalizeWeiboCardCollapsedMediaTypes(value: unknown): WeiboCardMediaCollapseType[] {
-  if (!Array.isArray(value)) return DEFAULT_APP_SETTINGS.weiboCardCollapsedMediaTypes
+  if (!Array.isArray(value)) return DEFAULT_FLAT_APP_SETTINGS.weiboCardCollapsedMediaTypes
 
   const selected = new Set(value.filter(isWeiboCardMediaCollapseType))
   return WEIBO_CARD_MEDIA_COLLAPSE_TYPES.filter((type) => selected.has(type))
 }
 
 function normalizeFontApplyScope(value: unknown): FontApplyScope {
-  return isFontApplyScope(value) ? value : DEFAULT_APP_SETTINGS.fontApplyScope
+  return isFontApplyScope(value) ? value : DEFAULT_FLAT_APP_SETTINGS.fontApplyScope
 }
 
 function normalizeFontFamilyClass(value: unknown): FontFamilyClass {
@@ -388,16 +594,16 @@ function normalizeFontFamilyClass(value: unknown): FontFamilyClass {
     value === 'font-sarasa-gothic' ||
     value === 'font-ibm-plex-sans-sc'
   ) {
-    return DEFAULT_APP_SETTINGS.fontFamilyClass
+    return DEFAULT_FLAT_APP_SETTINGS.fontFamilyClass
   }
 
-  return isFontFamilyClass(value) ? value : DEFAULT_APP_SETTINGS.fontFamilyClass
+  return isFontFamilyClass(value) ? value : DEFAULT_FLAT_APP_SETTINGS.fontFamilyClass
 }
 
 function normalizeUiFontSize(value: unknown): UiFontSize {
   return UI_FONT_SIZE_OPTIONS.includes(value as UiFontSize)
     ? (value as UiFontSize)
-    : DEFAULT_APP_SETTINGS.uiFontSize
+    : DEFAULT_FLAT_APP_SETTINGS.uiFontSize
 }
 
 function normalizeContentFontSize(value: unknown, legacyFontSizeClass: unknown): ContentFontSize {
@@ -418,7 +624,7 @@ function normalizeContentFontSize(value: unknown, legacyFontSizeClass: unknown):
     return 24
   }
 
-  return DEFAULT_APP_SETTINGS.contentFontSize
+  return DEFAULT_FLAT_APP_SETTINGS.contentFontSize
 }
 
 function normalizeFontWeightClass(value: unknown): FontWeightClass {
@@ -430,20 +636,20 @@ function normalizeFontWeightClass(value: unknown): FontWeightClass {
   if (value === 'font-extrabold' || value === 'font-black') {
     return 'font-bold'
   }
-  return DEFAULT_APP_SETTINGS.fontWeightClass
+  return DEFAULT_FLAT_APP_SETTINGS.fontWeightClass
 }
 
 function normalizeLetterSpacingClass(value: unknown): LetterSpacingClass {
   if (isLetterSpacingClass(value)) return value
   if (value === 'tracking-tighter') return 'tracking-tight'
   if (value === 'tracking-wider' || value === 'tracking-widest') return 'tracking-wide'
-  return DEFAULT_APP_SETTINGS.letterSpacingClass
+  return DEFAULT_FLAT_APP_SETTINGS.letterSpacingClass
 }
 
 function normalizeLineHeightClass(value: unknown): LineHeightClass {
   if (isLineHeightClass(value)) return value
   if (value === 'leading-none' || value === 'leading-tight') return 'leading-snug'
-  return DEFAULT_APP_SETTINGS.lineHeightClass
+  return DEFAULT_FLAT_APP_SETTINGS.lineHeightClass
 }
 
 function isHotSearchType(value: unknown): value is HotSearchType {
@@ -504,7 +710,7 @@ function isFeedPrimaryActionId(value: unknown): value is FeedPrimaryActionId {
 
 function normalizeFeedPrimaryActionOrder(value: unknown): FeedPrimaryActionId[] {
   if (!Array.isArray(value)) {
-    return DEFAULT_APP_SETTINGS.feedPrimaryActionOrder
+    return DEFAULT_FLAT_APP_SETTINGS.feedPrimaryActionOrder
   }
 
   const unique = value.filter(isFeedPrimaryActionId).filter((id, index, list) => {
@@ -512,7 +718,7 @@ function normalizeFeedPrimaryActionOrder(value: unknown): FeedPrimaryActionId[] 
   })
 
   if (unique.length !== FEED_PRIMARY_ACTION_IDS.length) {
-    return DEFAULT_APP_SETTINGS.feedPrimaryActionOrder
+    return DEFAULT_FLAT_APP_SETTINGS.feedPrimaryActionOrder
   }
 
   return unique
@@ -524,7 +730,7 @@ function isFeedToolbarButtonId(value: unknown): value is FeedToolbarButtonId {
 
 function normalizeFeedToolbarButtonIds(value: unknown): FeedToolbarButtonId[] {
   if (!Array.isArray(value)) {
-    return DEFAULT_APP_SETTINGS.feedToolbarButtonIds
+    return DEFAULT_FLAT_APP_SETTINGS.feedToolbarButtonIds
   }
 
   return value.filter(isFeedToolbarButtonId).filter((id, index, list) => {
@@ -564,7 +770,7 @@ function isLineHeightClass(value: unknown): value is LineHeightClass {
   )
 }
 
-function isContentWidth(value: unknown): value is ContentWidth {
+function isColumnWidth(value: unknown): value is ColumnWidth {
   return (
     value === 'narrower' ||
     value === 'narrow' ||
@@ -572,20 +778,6 @@ function isContentWidth(value: unknown): value is ContentWidth {
     value === 'wide' ||
     value === 'wider' ||
     value === 'custom'
-  )
-}
-
-export function normalizeCustomContentWidth(value: unknown): number {
-  const numeric = typeof value === 'number' ? value : Number.NaN
-  if (!Number.isFinite(numeric)) {
-    return DEFAULT_APP_SETTINGS.customContentWidth
-  }
-
-  const clamped = Math.min(CUSTOM_CONTENT_WIDTH_MAX, Math.max(CUSTOM_CONTENT_WIDTH_MIN, numeric))
-  return (
-    Math.round((clamped - CUSTOM_CONTENT_WIDTH_MIN) / CUSTOM_CONTENT_WIDTH_STEP) *
-      CUSTOM_CONTENT_WIDTH_STEP +
-    CUSTOM_CONTENT_WIDTH_MIN
   )
 }
 
@@ -609,13 +801,13 @@ function isPlaybackRate(value: unknown): value is PlaybackRate {
 function normalizePlaybackRate(value: unknown): number {
   const numeric = typeof value === 'number' ? value : Number.NaN
   if (!Number.isFinite(numeric)) {
-    return DEFAULT_APP_SETTINGS.playbackRate
+    return DEFAULT_FLAT_APP_SETTINGS.playbackRate
   }
-  return isPlaybackRate(numeric) ? numeric : DEFAULT_APP_SETTINGS.playbackRate
+  return isPlaybackRate(numeric) ? numeric : DEFAULT_FLAT_APP_SETTINGS.playbackRate
 }
 
 function normalizeVideoQualityPreference(value: unknown): string | null {
-  if (typeof value !== 'string') return DEFAULT_APP_SETTINGS.videoQualityPreference
+  if (typeof value !== 'string') return DEFAULT_FLAT_APP_SETTINGS.videoQualityPreference
   const normalized = value.trim().toLowerCase()
   return normalized || null
 }
@@ -653,24 +845,215 @@ function normalizeCustomThemePreset(value: unknown): CustomThemePreset {
   return isCustomThemePreset(value) ? value : 'default'
 }
 
-export function normalizeAppSettings(value: unknown): AppSettings {
+export function normalizeWeiboCardSettings(
+  value: unknown,
+): Pick<
+  FlatAppSettings,
+  | 'weiboCardShowAvatar'
+  | 'weiboCardShowTimestamp'
+  | 'weiboCardShowPublishInfo'
+  | 'weiboCardShowTitleBadge'
+  | 'weiboCardShowInteractionCounts'
+  | 'weiboCardCollapsedMediaTypes'
+  | 'weiboCardSingleImageMaxWidth'
+  | 'weiboCardSingleVideoMaxWidth'
+  | 'weiboCardMultiMediaLayout'
+  | 'weiboCardMultiMediaGridLimit'
+  | 'weiboCardMultiMediaGridMaxWidth'
+  | 'weiboCardMultiMediaStripHeight'
+> {
+  const candidate =
+    value && typeof value === 'object'
+      ? (value as Partial<FlatAppSettings>)
+      : ({} as Partial<FlatAppSettings>)
+  return {
+    weiboCardShowAvatar:
+      typeof candidate.weiboCardShowAvatar === 'boolean'
+        ? candidate.weiboCardShowAvatar
+        : DEFAULT_FLAT_APP_SETTINGS.weiboCardShowAvatar,
+    weiboCardShowTimestamp:
+      typeof candidate.weiboCardShowTimestamp === 'boolean'
+        ? candidate.weiboCardShowTimestamp
+        : DEFAULT_FLAT_APP_SETTINGS.weiboCardShowTimestamp,
+    weiboCardShowPublishInfo:
+      typeof candidate.weiboCardShowPublishInfo === 'boolean'
+        ? candidate.weiboCardShowPublishInfo
+        : DEFAULT_FLAT_APP_SETTINGS.weiboCardShowPublishInfo,
+    weiboCardShowTitleBadge:
+      typeof candidate.weiboCardShowTitleBadge === 'boolean'
+        ? candidate.weiboCardShowTitleBadge
+        : DEFAULT_FLAT_APP_SETTINGS.weiboCardShowTitleBadge,
+    weiboCardShowInteractionCounts:
+      typeof candidate.weiboCardShowInteractionCounts === 'boolean'
+        ? candidate.weiboCardShowInteractionCounts
+        : DEFAULT_FLAT_APP_SETTINGS.weiboCardShowInteractionCounts,
+    weiboCardCollapsedMediaTypes: normalizeWeiboCardCollapsedMediaTypes(
+      candidate.weiboCardCollapsedMediaTypes,
+    ),
+    weiboCardSingleImageMaxWidth: normalizeSteppedNumber(
+      candidate.weiboCardSingleImageMaxWidth,
+      WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_MIN,
+      WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_MAX,
+      WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_STEP,
+      DEFAULT_FLAT_APP_SETTINGS.weiboCardSingleImageMaxWidth,
+    ),
+    weiboCardSingleVideoMaxWidth: normalizeSteppedNumber(
+      candidate.weiboCardSingleVideoMaxWidth,
+      WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_MIN,
+      WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_MAX,
+      WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_STEP,
+      DEFAULT_FLAT_APP_SETTINGS.weiboCardSingleVideoMaxWidth,
+    ),
+    weiboCardMultiMediaLayout: isWeiboCardMultiMediaLayout(candidate.weiboCardMultiMediaLayout)
+      ? candidate.weiboCardMultiMediaLayout
+      : DEFAULT_FLAT_APP_SETTINGS.weiboCardMultiMediaLayout,
+    weiboCardMultiMediaGridLimit: isWeiboCardMultiMediaGridLimit(
+      candidate.weiboCardMultiMediaGridLimit,
+    )
+      ? candidate.weiboCardMultiMediaGridLimit
+      : DEFAULT_FLAT_APP_SETTINGS.weiboCardMultiMediaGridLimit,
+    weiboCardMultiMediaGridMaxWidth: normalizeSteppedNumber(
+      candidate.weiboCardMultiMediaGridMaxWidth,
+      WEIBO_CARD_MULTI_MEDIA_GRID_MAX_WIDTH_MIN,
+      WEIBO_CARD_MULTI_MEDIA_GRID_MAX_WIDTH_MAX,
+      WEIBO_CARD_MULTI_MEDIA_GRID_MAX_WIDTH_STEP,
+      DEFAULT_FLAT_APP_SETTINGS.weiboCardMultiMediaGridMaxWidth,
+    ),
+    weiboCardMultiMediaStripHeight: normalizeSteppedNumber(
+      candidate.weiboCardMultiMediaStripHeight,
+      WEIBO_CARD_MULTI_MEDIA_STRIP_HEIGHT_MIN,
+      WEIBO_CARD_MULTI_MEDIA_STRIP_HEIGHT_MAX,
+      WEIBO_CARD_MULTI_MEDIA_STRIP_HEIGHT_STEP,
+      DEFAULT_FLAT_APP_SETTINGS.weiboCardMultiMediaStripHeight,
+    ),
+  }
+}
+
+export function normalizeCommentCardSettings(
+  value: unknown,
+): Pick<
+  FlatAppSettings,
+  | 'commentDensity'
+  | 'commentCardShowAvatar'
+  | 'commentCardShowTimestamp'
+  | 'commentCardShowPublishInfo'
+  | 'commentCardShowAuthorBadge'
+  | 'commentCardShowLikeCount'
+  | 'commentCardShowThreadLine'
+  | 'commentCardImageDisplay'
+  | 'commentCardCollapseRepliesByDefault'
+> {
+  const candidate =
+    value && typeof value === 'object'
+      ? (value as Partial<FlatAppSettings>)
+      : ({} as Partial<FlatAppSettings>)
+  return {
+    commentDensity: isContentDensity(candidate.commentDensity)
+      ? candidate.commentDensity
+      : DEFAULT_FLAT_APP_SETTINGS.commentDensity,
+    commentCardShowAvatar:
+      typeof candidate.commentCardShowAvatar === 'boolean'
+        ? candidate.commentCardShowAvatar
+        : DEFAULT_FLAT_APP_SETTINGS.commentCardShowAvatar,
+    commentCardShowTimestamp:
+      typeof candidate.commentCardShowTimestamp === 'boolean'
+        ? candidate.commentCardShowTimestamp
+        : DEFAULT_FLAT_APP_SETTINGS.commentCardShowTimestamp,
+    commentCardShowPublishInfo:
+      typeof candidate.commentCardShowPublishInfo === 'boolean'
+        ? candidate.commentCardShowPublishInfo
+        : DEFAULT_FLAT_APP_SETTINGS.commentCardShowPublishInfo,
+    commentCardShowAuthorBadge:
+      typeof candidate.commentCardShowAuthorBadge === 'boolean'
+        ? candidate.commentCardShowAuthorBadge
+        : DEFAULT_FLAT_APP_SETTINGS.commentCardShowAuthorBadge,
+    commentCardShowLikeCount:
+      typeof candidate.commentCardShowLikeCount === 'boolean'
+        ? candidate.commentCardShowLikeCount
+        : DEFAULT_FLAT_APP_SETTINGS.commentCardShowLikeCount,
+    commentCardShowThreadLine:
+      typeof candidate.commentCardShowThreadLine === 'boolean'
+        ? candidate.commentCardShowThreadLine
+        : DEFAULT_FLAT_APP_SETTINGS.commentCardShowThreadLine,
+    commentCardImageDisplay: isContentDisplay(candidate.commentCardImageDisplay)
+      ? candidate.commentCardImageDisplay
+      : DEFAULT_FLAT_APP_SETTINGS.commentCardImageDisplay,
+    commentCardCollapseRepliesByDefault:
+      typeof candidate.commentCardCollapseRepliesByDefault === 'boolean'
+        ? candidate.commentCardCollapseRepliesByDefault
+        : DEFAULT_FLAT_APP_SETTINGS.commentCardCollapseRepliesByDefault,
+  }
+}
+
+export function normalizePlaybackSessionSettings(
+  value: unknown,
+): Pick<FlatAppSettings, 'rememberPlaybackRate' | 'playbackRate' | 'videoQualityPreference'> {
+  const candidate =
+    value && typeof value === 'object'
+      ? (value as Partial<FlatAppSettings>)
+      : ({} as Partial<FlatAppSettings>)
+  return {
+    rememberPlaybackRate:
+      typeof candidate.rememberPlaybackRate === 'boolean'
+        ? candidate.rememberPlaybackRate
+        : DEFAULT_FLAT_APP_SETTINGS.rememberPlaybackRate,
+    playbackRate: normalizePlaybackRate(candidate.playbackRate),
+    videoQualityPreference: normalizeVideoQualityPreference(candidate.videoQualityPreference),
+  }
+}
+
+export function normalizeNavigationSettings(value: unknown): NavigationSettings {
+  const result = normalizeFlatAppSettings(value)
+  return {
+    columnWidth: result.columnWidth,
+    customColumnWidth: result.customColumnWidth,
+    showExplore: result.showExplore,
+    showFavorites: result.showFavorites,
+    showHistory: result.showHistory,
+    showNotifications: result.showNotifications,
+    showDMs: result.showDMs,
+    showProfile: result.showProfile,
+    showCompose: result.showCompose,
+    xbEntryCollapsed: result.xbEntryCollapsed,
+    sidebarCollapsed: result.sidebarCollapsed,
+  }
+}
+
+function normalizeFlatAppSettings(value: unknown): FlatAppSettings {
   if (!value || typeof value !== 'object') {
-    return { ...DEFAULT_APP_SETTINGS }
+    return { ...DEFAULT_FLAT_APP_SETTINGS }
   }
 
-  const candidate = value as Partial<AppSettings>
-  const legacyCandidate = value as Record<string, unknown>
+  const raw = value as Record<string, unknown>
+  const candidate = {
+    ...raw,
+    ...(raw.appearance && typeof raw.appearance === 'object' ? raw.appearance : {}),
+    ...(raw.navigation && typeof raw.navigation === 'object' ? raw.navigation : {}),
+    ...(raw.feed && typeof raw.feed === 'object' ? raw.feed : {}),
+    ...(raw.imageGen && typeof raw.imageGen === 'object' ? raw.imageGen : {}),
+    ...(raw.home && typeof raw.home === 'object' ? raw.home : {}),
+    ...(raw.features && typeof raw.features === 'object' ? raw.features : {}),
+    ...(raw.media && typeof raw.media === 'object' ? raw.media : {}),
+    ...(raw.themes && typeof raw.themes === 'object' ? raw.themes : {}),
+  } as Partial<FlatAppSettings>
+  const legacyCandidate = raw
 
   return {
-    contentWidth: isContentWidth(candidate.contentWidth)
-      ? candidate.contentWidth
-      : DEFAULT_APP_SETTINGS.contentWidth,
-    customContentWidth: normalizeCustomContentWidth(candidate.customContentWidth),
-    theme: isAppTheme(candidate.theme) ? candidate.theme : DEFAULT_APP_SETTINGS.theme,
+    columnWidth: isColumnWidth(candidate.columnWidth)
+      ? candidate.columnWidth
+      : DEFAULT_FLAT_APP_SETTINGS.columnWidth,
+    customColumnWidth: normalizeSteppedNumber(
+      candidate.customColumnWidth,
+      CUSTOM_COLUMN_WIDTH_MIN,
+      CUSTOM_COLUMN_WIDTH_MAX,
+      CUSTOM_COLUMN_WIDTH_STEP,
+      DEFAULT_FLAT_APP_SETTINGS.customColumnWidth,
+    ),
+    theme: isAppTheme(candidate.theme) ? candidate.theme : DEFAULT_FLAT_APP_SETTINGS.theme,
     rewriteEnabled:
       typeof candidate.rewriteEnabled === 'boolean'
         ? candidate.rewriteEnabled
-        : DEFAULT_APP_SETTINGS.rewriteEnabled,
+        : DEFAULT_FLAT_APP_SETTINGS.rewriteEnabled,
     uiFontSize: normalizeUiFontSize(candidate.uiFontSize),
     contentFontSize: normalizeContentFontSize(
       candidate.contentFontSize,
@@ -684,222 +1067,112 @@ export function normalizeAppSettings(value: unknown): AppSettings {
     showExplore:
       typeof candidate.showExplore === 'boolean'
         ? candidate.showExplore
-        : DEFAULT_APP_SETTINGS.showExplore,
+        : DEFAULT_FLAT_APP_SETTINGS.showExplore,
     showFavorites:
       typeof candidate.showFavorites === 'boolean'
         ? candidate.showFavorites
-        : DEFAULT_APP_SETTINGS.showFavorites,
+        : DEFAULT_FLAT_APP_SETTINGS.showFavorites,
     showHistory:
       typeof candidate.showHistory === 'boolean'
         ? candidate.showHistory
-        : DEFAULT_APP_SETTINGS.showHistory,
+        : DEFAULT_FLAT_APP_SETTINGS.showHistory,
     showNotifications:
       typeof candidate.showNotifications === 'boolean'
         ? candidate.showNotifications
-        : DEFAULT_APP_SETTINGS.showNotifications,
+        : DEFAULT_FLAT_APP_SETTINGS.showNotifications,
     showDMs:
-      typeof candidate.showDMs === 'boolean' ? candidate.showDMs : DEFAULT_APP_SETTINGS.showDMs,
+      typeof candidate.showDMs === 'boolean'
+        ? candidate.showDMs
+        : DEFAULT_FLAT_APP_SETTINGS.showDMs,
     showProfile:
       typeof candidate.showProfile === 'boolean'
         ? candidate.showProfile
-        : DEFAULT_APP_SETTINGS.showProfile,
+        : DEFAULT_FLAT_APP_SETTINGS.showProfile,
     showCompose:
       typeof candidate.showCompose === 'boolean'
         ? candidate.showCompose
-        : DEFAULT_APP_SETTINGS.showCompose,
-    showRightRail:
-      typeof candidate.showRightRail === 'boolean'
-        ? candidate.showRightRail
-        : DEFAULT_APP_SETTINGS.showRightRail,
-    showHotSearchCard:
-      typeof candidate.showHotSearchCard === 'boolean'
-        ? candidate.showHotSearchCard
-        : DEFAULT_APP_SETTINGS.showHotSearchCard,
+        : DEFAULT_FLAT_APP_SETTINGS.showCompose,
     xbEntryCollapsed:
       typeof candidate.xbEntryCollapsed === 'boolean'
         ? candidate.xbEntryCollapsed
-        : DEFAULT_APP_SETTINGS.xbEntryCollapsed,
-    showFollowedSuperTopicsCard:
-      typeof candidate.showFollowedSuperTopicsCard === 'boolean'
-        ? candidate.showFollowedSuperTopicsCard
-        : DEFAULT_APP_SETTINGS.showFollowedSuperTopicsCard,
+        : DEFAULT_FLAT_APP_SETTINGS.xbEntryCollapsed,
     sidebarCollapsed:
       typeof candidate.sidebarCollapsed === 'boolean'
         ? candidate.sidebarCollapsed
-        : DEFAULT_APP_SETTINGS.sidebarCollapsed,
-    immersiveMode:
-      typeof candidate.immersiveMode === 'boolean'
-        ? candidate.immersiveMode
-        : DEFAULT_APP_SETTINGS.immersiveMode,
+        : DEFAULT_FLAT_APP_SETTINGS.sidebarCollapsed,
     motionPreference: isMotionPreference(candidate.motionPreference)
       ? candidate.motionPreference
-      : DEFAULT_APP_SETTINGS.motionPreference,
+      : DEFAULT_FLAT_APP_SETTINGS.motionPreference,
     replyChainDisplay: isReplyChainDisplay(candidate.replyChainDisplay)
       ? candidate.replyChainDisplay
-      : DEFAULT_APP_SETTINGS.replyChainDisplay,
+      : DEFAULT_FLAT_APP_SETTINGS.replyChainDisplay,
     darkModeImageDim:
       typeof candidate.darkModeImageDim === 'boolean'
         ? candidate.darkModeImageDim
-        : DEFAULT_APP_SETTINGS.darkModeImageDim,
+        : DEFAULT_FLAT_APP_SETTINGS.darkModeImageDim,
     autoLoadLongText:
       typeof candidate.autoLoadLongText === 'boolean'
         ? candidate.autoLoadLongText
-        : DEFAULT_APP_SETTINGS.autoLoadLongText,
+        : DEFAULT_FLAT_APP_SETTINGS.autoLoadLongText,
     feedDensity: isContentDensity(candidate.feedDensity)
       ? candidate.feedDensity
-      : DEFAULT_APP_SETTINGS.feedDensity,
-    weiboCardShowAvatar:
-      typeof candidate.weiboCardShowAvatar === 'boolean'
-        ? candidate.weiboCardShowAvatar
-        : DEFAULT_APP_SETTINGS.weiboCardShowAvatar,
-    weiboCardShowTimestamp:
-      typeof candidate.weiboCardShowTimestamp === 'boolean'
-        ? candidate.weiboCardShowTimestamp
-        : DEFAULT_APP_SETTINGS.weiboCardShowTimestamp,
-    weiboCardShowPublishInfo:
-      typeof candidate.weiboCardShowPublishInfo === 'boolean'
-        ? candidate.weiboCardShowPublishInfo
-        : DEFAULT_APP_SETTINGS.weiboCardShowPublishInfo,
-    weiboCardShowTitleBadge:
-      typeof candidate.weiboCardShowTitleBadge === 'boolean'
-        ? candidate.weiboCardShowTitleBadge
-        : DEFAULT_APP_SETTINGS.weiboCardShowTitleBadge,
-    weiboCardShowInteractionCounts:
-      typeof candidate.weiboCardShowInteractionCounts === 'boolean'
-        ? candidate.weiboCardShowInteractionCounts
-        : DEFAULT_APP_SETTINGS.weiboCardShowInteractionCounts,
-    weiboCardCollapsedMediaTypes: normalizeWeiboCardCollapsedMediaTypes(
-      candidate.weiboCardCollapsedMediaTypes,
-    ),
-    weiboCardSingleImageMaxWidth: normalizeSteppedNumber(
-      candidate.weiboCardSingleImageMaxWidth,
-      WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_MIN,
-      WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_MAX,
-      WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_STEP,
-      DEFAULT_APP_SETTINGS.weiboCardSingleImageMaxWidth,
-    ),
-    weiboCardSingleVideoMaxWidth: normalizeSteppedNumber(
-      candidate.weiboCardSingleVideoMaxWidth,
-      WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_MIN,
-      WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_MAX,
-      WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_STEP,
-      DEFAULT_APP_SETTINGS.weiboCardSingleVideoMaxWidth,
-    ),
-    weiboCardMultiMediaLayout: isWeiboCardMultiMediaLayout(candidate.weiboCardMultiMediaLayout)
-      ? candidate.weiboCardMultiMediaLayout
-      : DEFAULT_APP_SETTINGS.weiboCardMultiMediaLayout,
-    weiboCardMultiMediaGridLimit: isWeiboCardMultiMediaGridLimit(
-      candidate.weiboCardMultiMediaGridLimit,
-    )
-      ? candidate.weiboCardMultiMediaGridLimit
-      : DEFAULT_APP_SETTINGS.weiboCardMultiMediaGridLimit,
-    weiboCardMultiMediaGridMaxWidth: normalizeSteppedNumber(
-      candidate.weiboCardMultiMediaGridMaxWidth,
-      WEIBO_CARD_MULTI_MEDIA_GRID_MAX_WIDTH_MIN,
-      WEIBO_CARD_MULTI_MEDIA_GRID_MAX_WIDTH_MAX,
-      WEIBO_CARD_MULTI_MEDIA_GRID_MAX_WIDTH_STEP,
-      DEFAULT_APP_SETTINGS.weiboCardMultiMediaGridMaxWidth,
-    ),
-    weiboCardMultiMediaStripHeight: normalizeSteppedNumber(
-      candidate.weiboCardMultiMediaStripHeight,
-      WEIBO_CARD_MULTI_MEDIA_STRIP_HEIGHT_MIN,
-      WEIBO_CARD_MULTI_MEDIA_STRIP_HEIGHT_MAX,
-      WEIBO_CARD_MULTI_MEDIA_STRIP_HEIGHT_STEP,
-      DEFAULT_APP_SETTINGS.weiboCardMultiMediaStripHeight,
-    ),
-    commentDensity: isContentDensity(candidate.commentDensity)
-      ? candidate.commentDensity
-      : DEFAULT_APP_SETTINGS.commentDensity,
-    commentCardShowAvatar:
-      typeof candidate.commentCardShowAvatar === 'boolean'
-        ? candidate.commentCardShowAvatar
-        : DEFAULT_APP_SETTINGS.commentCardShowAvatar,
-    commentCardShowTimestamp:
-      typeof candidate.commentCardShowTimestamp === 'boolean'
-        ? candidate.commentCardShowTimestamp
-        : DEFAULT_APP_SETTINGS.commentCardShowTimestamp,
-    commentCardShowPublishInfo:
-      typeof candidate.commentCardShowPublishInfo === 'boolean'
-        ? candidate.commentCardShowPublishInfo
-        : DEFAULT_APP_SETTINGS.commentCardShowPublishInfo,
-    commentCardShowAuthorBadge:
-      typeof candidate.commentCardShowAuthorBadge === 'boolean'
-        ? candidate.commentCardShowAuthorBadge
-        : DEFAULT_APP_SETTINGS.commentCardShowAuthorBadge,
-    commentCardShowLikeCount:
-      typeof candidate.commentCardShowLikeCount === 'boolean'
-        ? candidate.commentCardShowLikeCount
-        : DEFAULT_APP_SETTINGS.commentCardShowLikeCount,
-    commentCardShowThreadLine:
-      typeof candidate.commentCardShowThreadLine === 'boolean'
-        ? candidate.commentCardShowThreadLine
-        : DEFAULT_APP_SETTINGS.commentCardShowThreadLine,
-    commentCardImageDisplay: isContentDisplay(candidate.commentCardImageDisplay)
-      ? candidate.commentCardImageDisplay
-      : DEFAULT_APP_SETTINGS.commentCardImageDisplay,
-    commentCardCollapseRepliesByDefault:
-      typeof candidate.commentCardCollapseRepliesByDefault === 'boolean'
-        ? candidate.commentCardCollapseRepliesByDefault
-        : DEFAULT_APP_SETTINGS.commentCardCollapseRepliesByDefault,
+      : DEFAULT_FLAT_APP_SETTINGS.feedDensity,
+    ...normalizeWeiboCardSettings(candidate),
+    ...normalizeCommentCardSettings(candidate),
     lightModeBgColor: isLightBgColorPreset(candidate.lightModeBgColor)
       ? candidate.lightModeBgColor
-      : DEFAULT_APP_SETTINGS.lightModeBgColor,
+      : DEFAULT_FLAT_APP_SETTINGS.lightModeBgColor,
     darkModeBgColor: isDarkBgColorPreset(candidate.darkModeBgColor)
       ? candidate.darkModeBgColor
-      : DEFAULT_APP_SETTINGS.darkModeBgColor,
+      : DEFAULT_FLAT_APP_SETTINGS.darkModeBgColor,
     imageGenShowDataArea:
       typeof candidate.imageGenShowDataArea === 'boolean'
         ? candidate.imageGenShowDataArea
-        : DEFAULT_APP_SETTINGS.imageGenShowDataArea,
+        : DEFAULT_FLAT_APP_SETTINGS.imageGenShowDataArea,
     imageGenShowFullImages:
       typeof candidate.imageGenShowFullImages === 'boolean'
         ? candidate.imageGenShowFullImages
-        : DEFAULT_APP_SETTINGS.imageGenShowFullImages,
+        : DEFAULT_FLAT_APP_SETTINGS.imageGenShowFullImages,
     imageGenShowWeiboLink:
       typeof candidate.imageGenShowWeiboLink === 'boolean'
         ? candidate.imageGenShowWeiboLink
-        : DEFAULT_APP_SETTINGS.imageGenShowWeiboLink,
+        : DEFAULT_FLAT_APP_SETTINGS.imageGenShowWeiboLink,
     imageGenTheme:
       candidate.imageGenTheme === 'light' || candidate.imageGenTheme === 'dark'
         ? candidate.imageGenTheme
-        : DEFAULT_APP_SETTINGS.imageGenTheme,
+        : DEFAULT_FLAT_APP_SETTINGS.imageGenTheme,
     imageGenCardStyle:
       typeof candidate.imageGenCardStyle === 'string'
         ? candidate.imageGenCardStyle
-        : DEFAULT_APP_SETTINGS.imageGenCardStyle,
+        : DEFAULT_FLAT_APP_SETTINGS.imageGenCardStyle,
     hotSearchType: isHotSearchType(candidate.hotSearchType)
       ? candidate.hotSearchType
-      : DEFAULT_APP_SETTINGS.hotSearchType,
+      : DEFAULT_FLAT_APP_SETTINGS.hotSearchType,
     feedInteractionMode: isFeedInteractionMode(candidate.feedInteractionMode)
       ? candidate.feedInteractionMode
       : typeof legacyCandidate.xLayoutEnabled === 'boolean'
         ? legacyCandidate.xLayoutEnabled
           ? 'x'
           : 'weibo'
-        : DEFAULT_APP_SETTINGS.feedInteractionMode,
+        : DEFAULT_FLAT_APP_SETTINGS.feedInteractionMode,
     feedPrimaryActionOrder: normalizeFeedPrimaryActionOrder(candidate.feedPrimaryActionOrder),
     feedToolbarButtonIds: normalizeFeedToolbarButtonIds(candidate.feedToolbarButtonIds),
     browsingHistoryLimit: isBrowsingHistoryLimit(candidate.browsingHistoryLimit)
       ? candidate.browsingHistoryLimit
-      : DEFAULT_APP_SETTINGS.browsingHistoryLimit,
+      : DEFAULT_FLAT_APP_SETTINGS.browsingHistoryLimit,
     xbTopicPage:
       typeof candidate.xbTopicPage === 'boolean'
         ? candidate.xbTopicPage
-        : DEFAULT_APP_SETTINGS.xbTopicPage,
+        : DEFAULT_FLAT_APP_SETTINGS.xbTopicPage,
     ratingEnabled:
       typeof candidate.ratingEnabled === 'boolean'
         ? candidate.ratingEnabled
-        : DEFAULT_APP_SETTINGS.ratingEnabled,
-    rememberPlaybackRate:
-      typeof candidate.rememberPlaybackRate === 'boolean'
-        ? candidate.rememberPlaybackRate
-        : DEFAULT_APP_SETTINGS.rememberPlaybackRate,
-    playbackRate: normalizePlaybackRate(candidate.playbackRate),
-    videoQualityPreference: normalizeVideoQualityPreference(candidate.videoQualityPreference),
+        : DEFAULT_FLAT_APP_SETTINGS.ratingEnabled,
+    ...normalizePlaybackSessionSettings(candidate),
     firstLoadRedirect: isHomeTab(candidate.firstLoadRedirect)
       ? candidate.firstLoadRedirect
-      : DEFAULT_APP_SETTINGS.firstLoadRedirect,
-    homeTab: isHomeTab(candidate.homeTab) ? candidate.homeTab : DEFAULT_APP_SETTINGS.homeTab,
+      : DEFAULT_FLAT_APP_SETTINGS.firstLoadRedirect,
+    homeTab: isHomeTab(candidate.homeTab) ? candidate.homeTab : DEFAULT_FLAT_APP_SETTINGS.homeTab,
     homeGroupId:
       typeof candidate.homeGroupId === 'string' && candidate.homeGroupId.trim()
         ? candidate.homeGroupId
@@ -907,16 +1180,16 @@ export function normalizeAppSettings(value: unknown): AppSettings {
     customThemeLightCss:
       typeof candidate.customThemeLightCss === 'string'
         ? candidate.customThemeLightCss
-        : DEFAULT_APP_SETTINGS.customThemeLightCss,
+        : DEFAULT_FLAT_APP_SETTINGS.customThemeLightCss,
     customThemeDarkCss:
       typeof candidate.customThemeDarkCss === 'string'
         ? candidate.customThemeDarkCss
-        : DEFAULT_APP_SETTINGS.customThemeDarkCss,
+        : DEFAULT_FLAT_APP_SETTINGS.customThemeDarkCss,
     selectedThemeType: isSelectedThemeType(candidate.selectedThemeType)
       ? candidate.selectedThemeType
       : (candidate as Record<string, unknown>).customThemeEnabled === true
         ? 'custom'
-        : DEFAULT_APP_SETTINGS.selectedThemeType,
+        : DEFAULT_FLAT_APP_SETTINGS.selectedThemeType,
     selectedThemeId:
       typeof candidate.selectedThemeId === 'string' && candidate.selectedThemeId.length > 0
         ? candidate.selectedThemeId === 'mono'
@@ -924,7 +1197,7 @@ export function normalizeAppSettings(value: unknown): AppSettings {
           : candidate.selectedThemeId
         : typeof (candidate as Record<string, unknown>).customThemePreset === 'string'
           ? normalizeCustomThemePreset((candidate as Record<string, unknown>).customThemePreset)
-          : DEFAULT_APP_SETTINGS.selectedThemeId,
+          : DEFAULT_FLAT_APP_SETTINGS.selectedThemeId,
     userThemes: Array.isArray(candidate.userThemes)
       ? candidate.userThemes.filter(
           (t: unknown): t is UserTheme =>
@@ -933,11 +1206,102 @@ export function normalizeAppSettings(value: unknown): AppSettings {
             typeof (t as UserTheme).id === 'string' &&
             typeof (t as UserTheme).name === 'string',
         )
-      : DEFAULT_APP_SETTINGS.userThemes,
+      : DEFAULT_FLAT_APP_SETTINGS.userThemes,
     photoLoopEnabled:
       typeof candidate.photoLoopEnabled === 'boolean'
         ? candidate.photoLoopEnabled
-        : DEFAULT_APP_SETTINGS.photoLoopEnabled,
+        : DEFAULT_FLAT_APP_SETTINGS.photoLoopEnabled,
+  }
+}
+
+export function normalizeAppSettings(value: unknown): AppSettings {
+  const flat = normalizeFlatAppSettings(value)
+  return {
+    appearance: {
+      theme: flat.theme,
+      rewriteEnabled: flat.rewriteEnabled,
+      uiFontSize: flat.uiFontSize,
+      contentFontSize: flat.contentFontSize,
+      fontWeightClass: flat.fontWeightClass,
+      letterSpacingClass: flat.letterSpacingClass,
+      lineHeightClass: flat.lineHeightClass,
+      fontFamilyClass: flat.fontFamilyClass,
+      fontApplyScope: flat.fontApplyScope,
+      motionPreference: flat.motionPreference,
+      darkModeImageDim: flat.darkModeImageDim,
+      lightModeBgColor: flat.lightModeBgColor,
+      darkModeBgColor: flat.darkModeBgColor,
+    },
+    navigation: {
+      columnWidth: flat.columnWidth,
+      customColumnWidth: flat.customColumnWidth,
+      showExplore: flat.showExplore,
+      showFavorites: flat.showFavorites,
+      showHistory: flat.showHistory,
+      showNotifications: flat.showNotifications,
+      showDMs: flat.showDMs,
+      showProfile: flat.showProfile,
+      showCompose: flat.showCompose,
+      xbEntryCollapsed: flat.xbEntryCollapsed,
+      sidebarCollapsed: flat.sidebarCollapsed,
+    },
+    feed: {
+      replyChainDisplay: flat.replyChainDisplay,
+      autoLoadLongText: flat.autoLoadLongText,
+      feedDensity: flat.feedDensity,
+      weiboCardShowAvatar: flat.weiboCardShowAvatar,
+      weiboCardShowTimestamp: flat.weiboCardShowTimestamp,
+      weiboCardShowPublishInfo: flat.weiboCardShowPublishInfo,
+      weiboCardShowTitleBadge: flat.weiboCardShowTitleBadge,
+      weiboCardShowInteractionCounts: flat.weiboCardShowInteractionCounts,
+      weiboCardCollapsedMediaTypes: flat.weiboCardCollapsedMediaTypes,
+      weiboCardSingleImageMaxWidth: flat.weiboCardSingleImageMaxWidth,
+      weiboCardSingleVideoMaxWidth: flat.weiboCardSingleVideoMaxWidth,
+      weiboCardMultiMediaLayout: flat.weiboCardMultiMediaLayout,
+      weiboCardMultiMediaGridLimit: flat.weiboCardMultiMediaGridLimit,
+      weiboCardMultiMediaGridMaxWidth: flat.weiboCardMultiMediaGridMaxWidth,
+      weiboCardMultiMediaStripHeight: flat.weiboCardMultiMediaStripHeight,
+      commentDensity: flat.commentDensity,
+      commentCardShowAvatar: flat.commentCardShowAvatar,
+      commentCardShowTimestamp: flat.commentCardShowTimestamp,
+      commentCardShowPublishInfo: flat.commentCardShowPublishInfo,
+      commentCardShowAuthorBadge: flat.commentCardShowAuthorBadge,
+      commentCardShowLikeCount: flat.commentCardShowLikeCount,
+      commentCardShowThreadLine: flat.commentCardShowThreadLine,
+      commentCardImageDisplay: flat.commentCardImageDisplay,
+      commentCardCollapseRepliesByDefault: flat.commentCardCollapseRepliesByDefault,
+      hotSearchType: flat.hotSearchType,
+      feedInteractionMode: flat.feedInteractionMode,
+      feedPrimaryActionOrder: flat.feedPrimaryActionOrder,
+      feedToolbarButtonIds: flat.feedToolbarButtonIds,
+      browsingHistoryLimit: flat.browsingHistoryLimit,
+    },
+    imageGen: {
+      imageGenShowDataArea: flat.imageGenShowDataArea,
+      imageGenShowFullImages: flat.imageGenShowFullImages,
+      imageGenShowWeiboLink: flat.imageGenShowWeiboLink,
+      imageGenTheme: flat.imageGenTheme,
+      imageGenCardStyle: flat.imageGenCardStyle,
+    },
+    home: {
+      firstLoadRedirect: flat.firstLoadRedirect,
+      homeTab: flat.homeTab,
+      homeGroupId: flat.homeGroupId,
+    },
+    features: { xbTopicPage: flat.xbTopicPage, ratingEnabled: flat.ratingEnabled },
+    media: {
+      rememberPlaybackRate: flat.rememberPlaybackRate,
+      playbackRate: flat.playbackRate,
+      videoQualityPreference: flat.videoQualityPreference,
+      photoLoopEnabled: flat.photoLoopEnabled,
+    },
+    themes: {
+      customThemeLightCss: flat.customThemeLightCss,
+      customThemeDarkCss: flat.customThemeDarkCss,
+      selectedThemeType: flat.selectedThemeType,
+      selectedThemeId: flat.selectedThemeId,
+      userThemes: flat.userThemes,
+    },
   }
 }
 

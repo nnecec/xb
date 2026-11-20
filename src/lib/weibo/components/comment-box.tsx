@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { cn } from 'cn'
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -6,12 +7,12 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { cn } from '@/lib/utils'
 import { EmoticonPicker } from '@/lib/weibo/components/emoticon-picker'
 import { submitComposeAction } from '@/lib/weibo/data/weibo-data'
 import type { ComposeTarget } from '@/lib/weibo/models/compose'
 import {
   optimisticallyIncrementStatusComments,
+  refreshStatusCommentLists,
   restoreStatusCacheMutation,
 } from '@/lib/weibo/queries/status-cache'
 
@@ -48,15 +49,7 @@ export function CommentBox({
       setText('')
       setAlsoSecondaryAction(false)
       if (target.mode === 'comment') {
-        void queryClient.invalidateQueries({
-          queryKey: ['weibo', 'status-comments', target.statusId],
-        })
-        void queryClient.invalidateQueries({
-          queryKey: ['weibo', 'feed-comments', target.statusId],
-        })
-        void queryClient.invalidateQueries({
-          queryKey: ['weibo', 'nested-comments'],
-        })
+        refreshStatusCommentLists(queryClient, target.statusId)
       }
       onSubmitSuccess?.()
     },

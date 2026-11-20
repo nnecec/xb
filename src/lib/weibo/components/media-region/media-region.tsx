@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { AspectRatio } from '@/components/ui/aspect-ratio'
 import { useAppSettings, useShallow } from '@/lib/app-settings-store'
@@ -10,6 +10,14 @@ import type { FeedItem, FeedMedia } from '@/lib/weibo/models/feed'
 import { AudioPlayerComponent } from '../media-player/audio-player'
 import { VideoPlayback } from '../media-player/video-playback'
 import { InlineVideoPanel } from './inline-video-panel'
+import {
+  backToMediaRegionOverview,
+  createMediaRegionFocus,
+  focusMediaRegionAsset,
+  rememberMediaRegionOverviewAsset,
+  setMediaRegionPictureInPicture,
+  type MediaRegionFocus,
+} from './media-region-focus'
 import {
   buildMediaRegionModel,
   getMediaRegionCollapseType,
@@ -118,47 +126,36 @@ export function MediaRegion({
 }) {
   const { collapsedMediaTypes, singleImageMaxWidth, singleVideoMaxWidth } = useAppSettings(
     useShallow((settings) => ({
-      collapsedMediaTypes: settings.weiboCardCollapsedMediaTypes,
-      singleImageMaxWidth: settings.weiboCardSingleImageMaxWidth,
-      singleVideoMaxWidth: settings.weiboCardSingleVideoMaxWidth,
+      collapsedMediaTypes: settings.feed.weiboCardCollapsedMediaTypes,
+      singleImageMaxWidth: settings.feed.weiboCardSingleImageMaxWidth,
+      singleVideoMaxWidth: settings.feed.weiboCardSingleVideoMaxWidth,
     })),
   )
   const region = useMemo(
     () => buildMediaRegionModel(item, { singleImageMaxWidth, singleVideoMaxWidth }),
     [item, singleImageMaxWidth, singleVideoMaxWidth],
   )
-  const [activeVideo, setActiveVideo] = useState<VideoCollectionItem | null>(null)
-  const [focusedViewVisible, setFocusedViewVisible] = useState(false)
-  const focusedViewVisibleRef = useRef(false)
-  const pictureInPictureActiveRef = useRef(false)
-  const visibleItemIdRef = useRef<string | undefined>(undefined)
+  const [focus, setFocus] = useState<MediaRegionFocus>(createMediaRegionFocus)
   const rootRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    setActiveVideo(null)
-    setFocusedViewVisible(false)
-    focusedViewVisibleRef.current = false
-    pictureInPictureActiveRef.current = false
-    visibleItemIdRef.current = undefined
-  }, [region?.key])
+  const regionKey = region?.key
+  const [trackedRegionKey, setTrackedRegionKey] = useState(regionKey)
+  if (regionKey !== trackedRegionKey) {
+    setTrackedRegionKey(regionKey)
+    setFocus(createMediaRegionFocus())
+  }
 
   const handleVisibleItemChange = useCallback((itemId: string) => {
-    visibleItemIdRef.current = itemId
+    setFocus((current) => rememberMediaRegionOverviewAsset(current, itemId))
   }, [])
 
   const handleItemActivate = useCallback((mediaItem: MediaCollectionItem) => {
     if (mediaItem.kind !== 'video' || !mediaItem.playable) return
-    visibleItemIdRef.current = mediaItem.id
-    setActiveVideo(mediaItem)
-    focusedViewVisibleRef.current = true
-    setFocusedViewVisible(true)
+    setFocus((current) => focusMediaRegionAsset(current, mediaItem.id))
   }, [])
 
   const handleBack = useCallback(() => {
-    const videoId = activeVideo?.id
-    focusedViewVisibleRef.current = false
-    setFocusedViewVisible(false)
-    if (!pictureInPictureActiveRef.current) setActiveVideo(null)
+    const videoId = focus.focusedAssetId
+    setFocus((current) => backToMediaRegionOverview(current))
     requestAnimationFrame(() => {
       if (!videoId) return
       const triggers = rootRef.current?.querySelectorAll<HTMLElement>('[data-media-video-id]')
@@ -167,22 +164,26 @@ export function MediaRegion({
       )
       trigger?.focus()
     })
-  }, [activeVideo?.id])
+  }, [focus.focusedAssetId])
 
   const handlePictureInPictureChange = useCallback((active: boolean) => {
-    pictureInPictureActiveRef.current = active
-    if (!active && !focusedViewVisibleRef.current) setActiveVideo(null)
+    setFocus((current) => setMediaRegionPictureInPicture(current, active))
   }, [])
 
   if (!region) return null
 
+  const galleryItems = region.assets.filter(
+    (asset): asset is MediaCollectionItem => asset.kind === 'image' || asset.kind === 'video',
+  )
+  const activeVideo =
+    galleryItems.find(
+      (asset): asset is VideoCollectionItem =>
+        asset.kind === 'video' && asset.id === focus.focusedAssetId,
+    ) ?? null
   const collapseType = getMediaRegionCollapseType(region)
   const display =
     collapseType && collapsedMediaTypes.includes(collapseType) ? 'collapsed' : 'expanded'
 
-  const galleryItems = region.assets.filter(
-    (asset): asset is MediaCollectionItem => asset.kind === 'image' || asset.kind === 'video',
-  )
   const standaloneAssets = region.assets.filter(
     (asset): asset is Extract<MediaAsset, { kind: 'standalone' }> => asset.kind === 'standalone',
   )
@@ -205,12 +206,12 @@ export function MediaRegion({
             {activeVideo ? (
               <div
                 className={
-                  focusedViewVisible
-                    ? undefined
-                    : 'pointer-events-none absolute size-px overflow-hidden opacity-0'
+                  focus.showsOverview
+                    ? 'pointer-events-none absolute size-px overflow-hidden opacity-0'
+                    : undefined
                 }
-                aria-hidden={focusedViewVisible ? undefined : true}
-                data-media-playback-retained={focusedViewVisible ? undefined : ''}
+                aria-hidden={focus.showsOverview ? true : undefined}
+                data-media-playback-retained={focus.showsOverview ? '' : undefined}
               >
                 <InlineVideoPanel
                   video={activeVideo.video}
@@ -222,7 +223,7 @@ export function MediaRegion({
                 />
               </div>
             ) : null}
-            {!focusedViewVisible ? (
+            {focus.showsOverview ? (
               <div className="flex flex-col gap-2">
                 {standaloneAssets.map((asset) => (
                   <StandaloneMedia
@@ -240,7 +241,7 @@ export function MediaRegion({
                     onOpen={onOpen}
                     singleMediaMaxWidth={region.singleMediaMaxWidth}
                     presentation="card"
-                    initialItemId={visibleItemIdRef.current}
+                    initialItemId={focus.overviewAssetId ?? undefined}
                     onVisibleItemChange={handleVisibleItemChange}
                     onItemActivate={handleItemActivate}
                   />

@@ -1,9 +1,10 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { HomeTab } from '@/lib/app-settings'
 import { useAppSettings } from '@/lib/app-settings-store'
 import { useAppShellContext } from '@/lib/weibo/app/app-shell-layout'
+import { usePageRuntime } from '@/lib/weibo/app/page-runtime'
 import { InfiniteFeedList } from '@/lib/weibo/components/infinite-feed-list'
 import { NewPostsBubble } from '@/lib/weibo/components/new-posts-bubble'
 import {
@@ -22,9 +23,13 @@ import {
   getHomeTabForDefaultFollowGroupId,
 } from '@/lib/weibo/models/explore-utils'
 import type { FeedItem, TimelinePage } from '@/lib/weibo/models/feed'
-import { useWeiboPage } from '@/lib/weibo/route/use-weibo-page'
+import { homeTimelinePathFromTab } from '@/lib/weibo/route/home-timeline-path'
 
 type HomeTimelineMenuValue = `tab:${HomeTab}` | `group:${string}`
+
+export interface HomeTimelinePageProps {
+  source?: { tab: HomeTab; groupId?: string }
+}
 
 function tabMenuValue(tab: HomeTab): HomeTimelineMenuValue {
   return `tab:${tab}`
@@ -56,13 +61,14 @@ function getTimelineErrorMessage(error: unknown, phase: 'initial' | 'load-more')
     : '暂时无法加载更多微博，请稍后重试。'
 }
 
-export function HomeTimelinePage() {
+export function HomeTimelinePage({ source }: HomeTimelinePageProps = {}) {
   const ctx = useAppShellContext()
-  const page = useWeiboPage()
-  const rewriteEnabled = useAppSettings((s) => s.rewriteEnabled)
+  const runtime = usePageRuntime()
+  const page = source ? { kind: 'home' as const, ...source } : runtime.page
+  const rewriteEnabled = useAppSettings((s) => s.appearance.rewriteEnabled)
 
   const pageTab = page.kind === 'home' ? page.tab : 'for-you'
-  const isEnabled = rewriteEnabled && page.kind === 'home'
+  const isEnabled = rewriteEnabled && (source !== undefined || page.kind === 'home')
 
   const groupIdFromUrl = page.kind === 'home' && page.groupId ? page.groupId : null
   const selectedGroupGid = groupIdFromUrl ?? 'default'
@@ -119,8 +125,10 @@ export function HomeTimelinePage() {
     refetchOnWindowFocus: true,
   })
 
-  const dismissedNewPostsCheckAtByGroup = useRef<Record<string, number>>({})
-  const dismissedForGroup = dismissedNewPostsCheckAtByGroup.current[followingNewPostsGroupKey] ?? 0
+  const [dismissedNewPostsCheckAtByGroup, setDismissedNewPostsCheckAtByGroup] = useState<
+    Record<string, number>
+  >({})
+  const dismissedForGroup = dismissedNewPostsCheckAtByGroup[followingNewPostsGroupKey] ?? 0
   const showNewPostsBubble =
     activeTab === 'following' &&
     Boolean(newPostsCheckQuery.data) &&
@@ -133,13 +141,16 @@ export function HomeTimelinePage() {
   const wasRefreshingRef = useRef(false)
   useEffect(() => {
     if (wasRefreshingRef.current && !isRefreshing) {
-      ctx.scrollMainToTop()
+      runtime.scrollToTop()
     }
     wasRefreshingRef.current = isRefreshing
-  }, [isRefreshing, ctx])
+  }, [isRefreshing, runtime])
 
   const handleTimelineRefresh = useCallback(() => {
-    dismissedNewPostsCheckAtByGroup.current[followingNewPostsGroupKey] = Date.now()
+    setDismissedNewPostsCheckAtByGroup((current) => ({
+      ...current,
+      [followingNewPostsGroupKey]: Date.now(),
+    }))
     void timelineQuery.refetch()
   }, [timelineQuery, followingNewPostsGroupKey])
 
@@ -149,17 +160,25 @@ export function HomeTimelinePage() {
       if (value.startsWith('group:')) {
         const gid = value.slice('group:'.length)
         if (gid === selectedGroupGid) return
-        ctx.onFollowGroupChange(gid)
-        resetMainScrollAfterRouteChange(ctx.resetMainScroll)
+        if (runtime.navigationMode === 'column') {
+          runtime.navigate(`/mygroups?gid=${gid}`, { replace: true })
+        } else {
+          ctx.onFollowGroupChange(gid)
+        }
+        resetMainScrollAfterRouteChange(runtime.resetScroll)
         return
       }
 
       const tab = value.slice('tab:'.length) as HomeTab
       if (!isCustomGroupRoute && tab === activeTab) return
-      ctx.onHomeTabChange(tab)
-      resetMainScrollAfterRouteChange(ctx.resetMainScroll)
+      if (runtime.navigationMode === 'column') {
+        runtime.navigate(homeTimelinePathFromTab(tab, defaultGroups), { replace: true })
+      } else {
+        ctx.onHomeTabChange(tab)
+      }
+      resetMainScrollAfterRouteChange(runtime.resetScroll)
     },
-    [activeTab, ctx, isCustomGroupRoute, selectedGroupGid],
+    [activeTab, ctx, defaultGroups, isCustomGroupRoute, runtime, selectedGroupGid],
   )
 
   const groups = groupsQuery.data?.groups ?? []
@@ -212,6 +231,7 @@ export function HomeTimelinePage() {
 
       <div className="flex flex-col">
         <InfiniteFeedList
+          scrollRootRef={runtime.scrollRootRef}
           pages={timelineQuery.data?.pages as TimelinePage[] | undefined}
           emptyLabel="此时间线暂无内容"
           loadingLabel="正在加载微博时间线…"

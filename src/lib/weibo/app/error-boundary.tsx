@@ -26,7 +26,9 @@ export class AppErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorB
 
   handleExitXb = async () => {
     const store = getAppSettingsStore()
-    await store.getState().updateSettings({ rewriteEnabled: false })
+    await store.getState().updateSettings({
+      appearance: { rewriteEnabled: false },
+    })
     window.location.reload()
   }
 
@@ -37,7 +39,7 @@ export class AppErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorB
           <Card className="max-w-md">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <AlertTriangleIcon className="text-destructive size-5" />
+                <AlertTriangleIcon className="text-destructive" />
                 xb 暂时无法显示页面
               </CardTitle>
               <CardAction>

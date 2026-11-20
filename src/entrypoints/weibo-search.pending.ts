@@ -18,9 +18,9 @@ export default defineContentScript({
 
     const applyState = () => {
       const settings = settingsStore.getState()
-      const isDark = resolveIsDarkMode(settings.theme, mediaQuery.matches)
+      const isDark = resolveIsDarkMode(settings.appearance.theme, mediaQuery.matches)
 
-      if (settings.rewriteEnabled) {
+      if (settings.appearance.rewriteEnabled) {
         document.documentElement.classList.toggle('dark', isDark)
         markWeiboPageReady()
       } else {

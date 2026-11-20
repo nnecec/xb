@@ -1,3 +1,4 @@
+import { normalizeCursor } from '@/lib/weibo/data/io/cursor'
 import type { NotificationsPage } from '@/lib/weibo/models/notification'
 
 // Shape of a single attitude (like) entry returned from Weibo's /ajax/message/attitudes
@@ -58,13 +59,6 @@ export interface WeiboLikesPayload {
     next_cursor?: number | string
   }
   msg?: string
-}
-
-function normalizeCursor(value: number | string | undefined): string | null {
-  if (value === undefined || value === null || value === '' || String(value) === '0') {
-    return null
-  }
-  return String(value)
 }
 
 function parseWeiboDate(dateStr: string | undefined): string {

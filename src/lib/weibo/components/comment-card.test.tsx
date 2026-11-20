@@ -105,7 +105,9 @@ describe('CommentCard', () => {
   })
 
   it('uses the configured single image maximum width for one comment image', () => {
-    getAppSettingsStore().setState({ weiboCardSingleImageMaxWidth: 620 })
+    getAppSettingsStore().setState({
+      feed: { ...getAppSettingsStore().getState().feed, weiboCardSingleImageMaxWidth: 620 },
+    })
     const queryClient = new QueryClient()
     const item: CommentItem = {
       id: 'c1',
@@ -130,7 +132,9 @@ describe('CommentCard', () => {
   })
 
   it('hides reply-to preview and keeps publish info for replies', () => {
-    getAppSettingsStore().setState({ commentCardShowPublishInfo: true })
+    getAppSettingsStore().setState({
+      feed: { ...getAppSettingsStore().getState().feed, commentCardShowPublishInfo: true },
+    })
     const queryClient = new QueryClient()
     const item: CommentItem = {
       id: 'c1',
@@ -249,12 +253,15 @@ describe('CommentCard', () => {
 
   it('applies comment metadata and image display settings', () => {
     getAppSettingsStore().setState({
-      commentCardShowAvatar: false,
-      commentCardShowTimestamp: false,
-      commentCardShowPublishInfo: true,
-      commentCardShowAuthorBadge: false,
-      commentCardShowLikeCount: false,
-      commentCardImageDisplay: 'collapsed',
+      feed: {
+        ...getAppSettingsStore().getState().feed,
+        commentCardShowAvatar: false,
+        commentCardShowTimestamp: false,
+        commentCardShowPublishInfo: true,
+        commentCardShowAuthorBadge: false,
+        commentCardShowLikeCount: false,
+        commentCardImageDisplay: 'collapsed',
+      },
     })
     const queryClient = new QueryClient()
     const item: CommentItem = {
@@ -292,7 +299,9 @@ describe('CommentCard', () => {
   })
 
   it('collapses nested replies by default and allows a temporary reveal', () => {
-    getAppSettingsStore().setState({ commentCardCollapseRepliesByDefault: true })
+    getAppSettingsStore().setState({
+      feed: { ...getAppSettingsStore().getState().feed, commentCardCollapseRepliesByDefault: true },
+    })
     const queryClient = new QueryClient()
     const item: CommentItem = {
       id: 'c1',

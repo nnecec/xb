@@ -1,4 +1,16 @@
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
+import {
   Select,
   SelectContent,
   SelectGroup,
@@ -6,19 +18,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
 import {
-  CUSTOM_CONTENT_WIDTH_MAX,
-  CUSTOM_CONTENT_WIDTH_MIN,
-  CUSTOM_CONTENT_WIDTH_STEP,
-  type AppSettings,
-  type ContentWidth,
+  CUSTOM_COLUMN_WIDTH_MAX,
+  CUSTOM_COLUMN_WIDTH_MIN,
+  CUSTOM_COLUMN_WIDTH_STEP,
+  type FlatAppSettings,
+  type ColumnWidth,
   type MotionPreference,
 } from '@/lib/app-settings'
 import { type AppSettingsStoreState, useAppSettings, useShallow } from '@/lib/app-settings-store'
+import { useWorkspace } from '@/lib/weibo/workspace/workspace-store'
 
 import {
+  CommitSlider,
   defaultsFor,
   Field,
   OptionPills,
@@ -27,11 +40,79 @@ import {
 } from './settings-dialog-ui'
 
 const DISPLAY_SETTING_KEYS = [
-  'contentWidth',
-  'customContentWidth',
+  'columnWidth',
+  'customColumnWidth',
   'motionPreference',
   'darkModeImageDim',
-] as const satisfies readonly (keyof AppSettings)[]
+] as const satisfies readonly (keyof FlatAppSettings)[]
+
+const WIDTH_OPTIONS = [
+  { value: 'narrower', label: '更窄' },
+  { value: 'narrow', label: '窄' },
+  { value: 'standard', label: '标准' },
+  { value: 'wide', label: '宽' },
+  { value: 'wider', label: '更宽' },
+  { value: 'custom', label: '自定义' },
+] as const
+
+function WidthControl({
+  label,
+  description,
+  value,
+  customValue,
+  customMin,
+  customMax,
+  customStep,
+  customLabel,
+  onValueChange,
+  onCustomValueChange,
+}: {
+  label: string
+  description: string
+  value: string
+  customValue: number
+  customMin: number
+  customMax: number
+  customStep: number
+  customLabel: string
+  onValueChange: (value: string) => void
+  onCustomValueChange: (value: number) => void
+}) {
+  return (
+    <Field label={label} description={description}>
+      <div
+        className={`flex min-w-0 flex-col items-end gap-2 ${value === 'custom' ? 'w-72' : 'w-fit'}`}
+      >
+        <Select value={value} onValueChange={onValueChange}>
+          <SelectTrigger className="w-fit" aria-label={label}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {WIDTH_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+        {value === 'custom' ? (
+          <div className="w-full pt-1">
+            <CommitSlider
+              label={customLabel}
+              value={customValue}
+              min={customMin}
+              max={customMax}
+              step={customStep}
+              onCommit={onCustomValueChange}
+            />
+          </div>
+        ) : null}
+      </div>
+    </Field>
+  )
+}
 
 export function SettingsDisplaySection({
   updateSettings,
@@ -40,60 +121,62 @@ export function SettingsDisplaySection({
 }) {
   const settings = useAppSettings(
     useShallow((state) => ({
-      contentWidth: state.contentWidth,
-      customContentWidth: state.customContentWidth,
-      motionPreference: state.motionPreference,
-      darkModeImageDim: state.darkModeImageDim,
+      columnWidth: state.navigation.columnWidth,
+      customColumnWidth: state.navigation.customColumnWidth,
+      motionPreference: state.appearance.motionPreference,
+      darkModeImageDim: state.appearance.darkModeImageDim,
     })),
   )
-
+  const hasCustomColumnWidths = useWorkspace(
+    (state) =>
+      state.auxiliaryColumns.some((column) => column.width !== undefined) ||
+      Object.keys(state.columnWidths).length > 0,
+  )
+  const resetColumnWidths = useWorkspace((state) => state.resetColumnWidths)
   return (
     <div className="flex flex-col">
       <SettingsPanel>
-        <Field label="内容宽度" description="调整应用内容区域在大屏幕上的宽度">
-          <div
-            className={`flex min-w-0 flex-col items-end gap-2 ${
-              settings.contentWidth === 'custom' ? 'w-72' : 'w-fit'
-            }`}
-          >
-            <Select
-              value={settings.contentWidth}
-              onValueChange={(value) =>
-                void updateSettings({ contentWidth: value as ContentWidth })
-              }
-            >
-              <SelectTrigger className="w-fit" aria-label="内容宽度">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="narrower">更窄</SelectItem>
-                  <SelectItem value="narrow">窄</SelectItem>
-                  <SelectItem value="standard">标准</SelectItem>
-                  <SelectItem value="wide">宽</SelectItem>
-                  <SelectItem value="wider">更宽</SelectItem>
-                  <SelectItem value="custom">自定义</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            {settings.contentWidth === 'custom' ? (
-              <div className="flex w-full items-center gap-3 pt-1">
-                <Slider
-                  min={CUSTOM_CONTENT_WIDTH_MIN}
-                  max={CUSTOM_CONTENT_WIDTH_MAX}
-                  step={CUSTOM_CONTENT_WIDTH_STEP}
-                  value={[settings.customContentWidth]}
-                  aria-label="自定义内容宽度"
-                  onValueChange={([value]) => {
-                    if (value !== undefined) void updateSettings({ customContentWidth: value })
-                  }}
-                />
-                <output className="text-muted-foreground w-16 shrink-0 text-right font-mono text-xs tabular-nums">
-                  {settings.customContentWidth}px
-                </output>
-              </div>
-            ) : null}
-          </div>
+        <WidthControl
+          label="列宽度"
+          description="调整多列模式下每一列的宽度"
+          value={settings.columnWidth}
+          customValue={settings.customColumnWidth}
+          customMin={CUSTOM_COLUMN_WIDTH_MIN}
+          customMax={CUSTOM_COLUMN_WIDTH_MAX}
+          customStep={CUSTOM_COLUMN_WIDTH_STEP}
+          customLabel="自定义列宽度"
+          onValueChange={(value) =>
+            void updateSettings({
+              navigation: { columnWidth: value as ColumnWidth },
+            })
+          }
+          onCustomValueChange={(value) =>
+            void updateSettings({
+              navigation: { customColumnWidth: value },
+            })
+          }
+        />
+
+        <Field label="重置列宽" description="忘记拖动调整过的列宽，改用上面的列宽度">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button type="button" variant="outline" size="sm" disabled={!hasCustomColumnWidths}>
+                重置
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>重置列宽度？</AlertDialogTitle>
+                <AlertDialogDescription>
+                  拖动调整过的列宽会被忘记，所有列改用当前的列宽度设置。
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>取消</AlertDialogCancel>
+                <AlertDialogAction onClick={() => void resetColumnWidths()}>重置</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </Field>
 
         <Field label="动态效果" description="控制 xb 动画是否跟随系统的减少动态效果设置">
@@ -106,7 +189,9 @@ export function SettingsDisplaySection({
               { value: 'reduced', label: '减少' },
             ]}
             onChange={(value) =>
-              void updateSettings({ motionPreference: value as MotionPreference })
+              void updateSettings({
+                appearance: { motionPreference: value as MotionPreference },
+              })
             }
           />
         </Field>
@@ -115,7 +200,11 @@ export function SettingsDisplaySection({
           <Switch
             aria-label="暗色模式降低图片亮度"
             checked={settings.darkModeImageDim}
-            onCheckedChange={(checked) => void updateSettings({ darkModeImageDim: checked })}
+            onCheckedChange={(checked) =>
+              void updateSettings({
+                appearance: { darkModeImageDim: checked },
+              })
+            }
           />
         </Field>
 

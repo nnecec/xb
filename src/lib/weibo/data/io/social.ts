@@ -1,15 +1,33 @@
+import { adaptCommentsResponse, type WeiboCommentsPayload } from '@/lib/weibo/data/io/comments'
+import { adaptLikes, type WeiboLikesPayload } from '@/lib/weibo/data/io/likes'
+import { adaptMentionsResponse, type WeiboMentionsPayload } from '@/lib/weibo/data/io/mentions'
 import type { NotificationsPage } from '@/lib/weibo/models/notification'
 import type { RelationPage, WeiboFriendsPayload } from '@/lib/weibo/models/user-relation'
-import {
-  adaptCommentsResponse,
-  type WeiboCommentsPayload,
-} from '@/lib/weibo/services/adapters/comments'
-import { adaptFriendsResponse } from '@/lib/weibo/services/adapters/friends'
-import { adaptLikes, type WeiboLikesPayload } from '@/lib/weibo/services/adapters/likes'
-import {
-  adaptMentionsResponse,
-  type WeiboMentionsPayload,
-} from '@/lib/weibo/services/adapters/mentions'
+function adaptFriendsResponse(payload: WeiboFriendsPayload): RelationPage {
+  return {
+    items: (payload.users ?? []).map((raw) => ({
+      id: raw.idstr,
+      name: raw.name,
+      screenName: raw.screen_name,
+      avatarUrl: raw.profile_image_url,
+      avatarLarge: raw.avatar_large,
+      description: raw.description,
+      followersCount: raw.followers_count,
+      followersCountStr: raw.followers_count_str,
+      friendsCount: raw.friends_count,
+      following: raw.following,
+      followMe: raw.follow_me,
+      verified: raw.verified,
+      verifiedType: raw.verified_type,
+      verifiedReason: raw.verified_reason,
+      location: raw.location,
+      createdAt: raw.created_at,
+    })),
+    nextPage: payload.next_cursor > 0 ? payload.next_cursor : null,
+    totalNumber: payload.total_number,
+    errorMsg: payload.ok === 0 ? payload.msg : undefined,
+  }
+}
 import { wbGet } from '@/lib/weibo/services/client'
 import { WEIBO_ENDPOINTS } from '@/lib/weibo/services/endpoints'
 import { mweiboFetch } from '@/lib/weibo/services/m-weibo-client'

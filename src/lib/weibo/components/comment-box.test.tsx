@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { CommentBox } from '@/lib/weibo/components/comment-box'
 import type { ComposeTarget } from '@/lib/weibo/models/compose'
+import type { FeedItem } from '@/lib/weibo/models/feed'
 
 vi.mock('sonner', () => ({
   toast: {
@@ -27,16 +28,6 @@ vi.mock('@/lib/weibo/data/weibo-io', async () => {
   }
 })
 
-const { optimisticallyIncrementStatusComments, restoreStatusCacheMutation } = vi.hoisted(() => ({
-  optimisticallyIncrementStatusComments: vi.fn(() => ({ rollbacks: [] })),
-  restoreStatusCacheMutation: vi.fn(),
-}))
-
-vi.mock('@/lib/weibo/queries/status-cache', () => ({
-  optimisticallyIncrementStatusComments,
-  restoreStatusCacheMutation,
-}))
-
 const commentTarget: ComposeTarget = {
   kind: 'status',
   mode: 'comment',
@@ -46,16 +37,38 @@ const commentTarget: ComposeTarget = {
   excerpt: 'hello',
 }
 
+function createFeedItem(): FeedItem {
+  return {
+    id: 'status-1',
+    mblogId: 'mblog-1',
+    isLongText: false,
+    liked: false,
+    favorited: false,
+    author: { id: 'user-1', name: 'Alice', avatarUrl: null },
+    text: 'hello',
+    createdAt: '',
+    createdAtLabel: '',
+    stats: { likes: 0, comments: 2, reposts: 0 },
+    images: [],
+    media: null,
+  }
+}
+
 function renderCommentBox(target: ComposeTarget = commentTarget) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
+  queryClient.setQueryData(['weibo', 'timeline'], { pages: [{ items: [createFeedItem()] }] })
+  queryClient.setQueryData(['weibo', 'status-comments', 'status-1'], { pages: [{ items: [] }] })
 
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <CommentBox target={target} />
-    </QueryClientProvider>,
-  )
+  return {
+    queryClient,
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <CommentBox target={target} />
+      </QueryClientProvider>,
+    ),
+  }
 }
 
 describe('CommentBox', () => {
@@ -77,7 +90,8 @@ describe('CommentBox', () => {
     const { toast } = await import('sonner')
     vi.mocked(submitComposeAction).mockResolvedValueOnce(undefined)
 
-    renderCommentBox()
+    const { queryClient } = renderCommentBox()
+    const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries')
 
     const textarea = screen.getByRole('textbox', { name: '评论内容' })
     fireEvent.change(textarea, { target: { value: 'nice post' } })
@@ -93,10 +107,16 @@ describe('CommentBox', () => {
         expect.anything(),
       )
     })
-    expect(optimisticallyIncrementStatusComments).toHaveBeenCalled()
+    expect(
+      queryClient.getQueryData<{ pages: Array<{ items: FeedItem[] }> }>(['weibo', 'timeline'])
+        ?.pages[0]?.items[0]?.stats.comments,
+    ).toBe(3)
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith('评论已发布')
       expect(textarea).toHaveValue('')
+      expect(invalidateQueries).toHaveBeenCalledWith({
+        queryKey: ['weibo', 'status-comments', 'status-1'],
+      })
     })
   })
 
@@ -105,7 +125,7 @@ describe('CommentBox', () => {
     const { toast } = await import('sonner')
     vi.mocked(submitComposeAction).mockRejectedValueOnce(new Error('compose failed'))
 
-    renderCommentBox()
+    const { queryClient } = renderCommentBox()
 
     fireEvent.change(screen.getByRole('textbox', { name: '评论内容' }), {
       target: { value: 'nice post' },
@@ -113,8 +133,11 @@ describe('CommentBox', () => {
     fireEvent.click(screen.getByRole('button', { name: '发布评论' }))
 
     await waitFor(() => {
-      expect(restoreStatusCacheMutation).toHaveBeenCalled()
       expect(toast.error).toHaveBeenCalledWith('compose failed')
+      expect(
+        queryClient.getQueryData<{ pages: Array<{ items: FeedItem[] }> }>(['weibo', 'timeline'])
+          ?.pages[0]?.items[0]?.stats.comments,
+      ).toBe(2)
     })
   })
 })

@@ -3,11 +3,29 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   APP_SETTINGS_STORAGE_KEY,
   DEFAULT_APP_SETTINGS,
+  type AppSettings,
+  type FlatAppSettings,
   loadAppSettings,
   normalizeAppSettings,
+  normalizeCommentCardSettings,
+  normalizePlaybackSessionSettings,
+  normalizeWeiboCardSettings,
   persistAppSettings,
   resolveIsDarkMode,
 } from '@/lib/app-settings'
+
+function flattenSettings(settings: AppSettings): FlatAppSettings {
+  return {
+    ...settings.appearance,
+    ...settings.navigation,
+    ...settings.feed,
+    ...settings.imageGen,
+    ...settings.home,
+    ...settings.features,
+    ...settings.media,
+    ...settings.themes,
+  }
+}
 
 function createStorageArea(initialValue?: unknown) {
   let stored = initialValue
@@ -25,6 +43,56 @@ function createStorageArea(initialValue?: unknown) {
   }
 }
 
+describe('卡片设置', () => {
+  it('损坏的微博卡片和评论卡片各自回到默认', () => {
+    expect(
+      normalizeWeiboCardSettings({
+        weiboCardShowAvatar: 'yes',
+        weiboCardCollapsedMediaTypes: ['image', 'poster'],
+      }),
+    ).toMatchObject({
+      weiboCardShowAvatar: DEFAULT_APP_SETTINGS.feed.weiboCardShowAvatar,
+      weiboCardCollapsedMediaTypes: ['image'],
+    })
+    expect(
+      normalizeCommentCardSettings({
+        commentCardShowAvatar: 1,
+        commentCardImageDisplay: 'invalid',
+      }),
+    ).toMatchObject({
+      commentCardShowAvatar: DEFAULT_APP_SETTINGS.feed.commentCardShowAvatar,
+      commentCardImageDisplay: DEFAULT_APP_SETTINGS.feed.commentCardImageDisplay,
+    })
+  })
+})
+
+describe('播放会话设置', () => {
+  it('损坏的倍速和清晰度回到默认', () => {
+    expect(
+      normalizePlaybackSessionSettings({
+        playbackRate: 1.1,
+        rememberPlaybackRate: 'yes',
+        videoQualityPreference: '  ',
+      }),
+    ).toEqual({
+      playbackRate: DEFAULT_APP_SETTINGS.media.playbackRate,
+      rememberPlaybackRate: DEFAULT_APP_SETTINGS.media.rememberPlaybackRate,
+      videoQualityPreference: null,
+    })
+    expect(
+      normalizePlaybackSessionSettings({
+        playbackRate: 1.5,
+        rememberPlaybackRate: true,
+        videoQualityPreference: ' 1080P ',
+      }),
+    ).toEqual({
+      playbackRate: 1.5,
+      rememberPlaybackRate: true,
+      videoQualityPreference: '1080p',
+    })
+  })
+})
+
 describe('app-settings', () => {
   it('normalizes invalid values to the defaults', () => {
     expect(normalizeAppSettings(null)).toEqual(DEFAULT_APP_SETTINGS)
@@ -40,23 +108,25 @@ describe('app-settings', () => {
     expect(
       normalizeAppSettings({
         customThemePreset: 'modern-minimal' as never,
-      }).selectedThemeId,
+      }).themes.selectedThemeId,
     ).toBe('modern')
   })
 
   it('migrates the old x layout setting to the feed interaction mode', () => {
-    expect(normalizeAppSettings({ xLayoutEnabled: true }).feedInteractionMode).toBe('x')
-    expect(normalizeAppSettings({ xLayoutEnabled: false }).feedInteractionMode).toBe('weibo')
+    expect(normalizeAppSettings({ xLayoutEnabled: true }).feed.feedInteractionMode).toBe('x')
+    expect(normalizeAppSettings({ xLayoutEnabled: false }).feed.feedInteractionMode).toBe('weibo')
   })
 
   it('normalizes the merged reply-chain display setting and omits deleted settings', () => {
-    expect(normalizeAppSettings({ replyChainDisplay: 'plain' }).replyChainDisplay).toBe('plain')
-    expect(normalizeAppSettings({ replyChainDisplay: 'collapsed' }).replyChainDisplay).toBe(
+    expect(normalizeAppSettings({ replyChainDisplay: 'plain' }).feed.replyChainDisplay).toBe(
+      'plain',
+    )
+    expect(normalizeAppSettings({ replyChainDisplay: 'collapsed' }).feed.replyChainDisplay).toBe(
       'collapsed',
     )
-    expect(normalizeAppSettings({ replyChainDisplay: 'unknown' as never }).replyChainDisplay).toBe(
-      'expanded',
-    )
+    expect(
+      normalizeAppSettings({ replyChainDisplay: 'unknown' as never }).feed.replyChainDisplay,
+    ).toBe('expanded')
 
     const normalized = normalizeAppSettings({
       renderReplyChainEnabled: false,
@@ -64,7 +134,7 @@ describe('app-settings', () => {
       forceRedirectToFollowing: true,
       imageGenEnabled: true,
     })
-    expect(normalized.replyChainDisplay).toBe('expanded')
+    expect(normalized.feed.replyChainDisplay).toBe('expanded')
     expect(normalized).not.toHaveProperty('renderReplyChainEnabled')
     expect(normalized).not.toHaveProperty('collapseRepliesEnabled')
     expect(normalized).not.toHaveProperty('forceRedirectToFollowing')
@@ -72,35 +142,40 @@ describe('app-settings', () => {
   })
 
   it('migrates legacy font options to reading-scale defaults', () => {
-    expect(normalizeAppSettings({ fontSizeClass: 'text-xs' }).contentFontSize).toBe(14)
-    expect(normalizeAppSettings({ fontSizeClass: 'text-4xl' }).contentFontSize).toBe(24)
-    expect(normalizeAppSettings({ uiFontSize: 20 }).uiFontSize).toBe(20)
-    expect(normalizeAppSettings({ uiFontSize: 13 as never }).uiFontSize).toBe(14)
-    expect(normalizeAppSettings({ contentFontSize: 32 }).contentFontSize).toBe(32)
-    expect(normalizeAppSettings({ contentFontSize: 30 as never }).contentFontSize).toBe(16)
-    expect(normalizeAppSettings({ fontWeightClass: 'font-thin' as never }).fontWeightClass).toBe(
-      'font-normal',
-    )
-    expect(normalizeAppSettings({ fontWeightClass: 'font-black' as never }).fontWeightClass).toBe(
-      'font-bold',
+    expect(normalizeAppSettings({ fontSizeClass: 'text-xs' }).appearance.contentFontSize).toBe(14)
+    expect(normalizeAppSettings({ fontSizeClass: 'text-4xl' }).appearance.contentFontSize).toBe(24)
+    expect(normalizeAppSettings({ uiFontSize: 20 }).appearance.uiFontSize).toBe(20)
+    expect(normalizeAppSettings({ uiFontSize: 13 as never }).appearance.uiFontSize).toBe(14)
+    expect(normalizeAppSettings({ contentFontSize: 32 }).appearance.contentFontSize).toBe(32)
+    expect(normalizeAppSettings({ contentFontSize: 30 as never }).appearance.contentFontSize).toBe(
+      16,
     )
     expect(
-      normalizeAppSettings({ letterSpacingClass: 'tracking-widest' as never }).letterSpacingClass,
+      normalizeAppSettings({ fontWeightClass: 'font-thin' as never }).appearance.fontWeightClass,
+    ).toBe('font-normal')
+    expect(
+      normalizeAppSettings({ fontWeightClass: 'font-black' as never }).appearance.fontWeightClass,
+    ).toBe('font-bold')
+    expect(
+      normalizeAppSettings({ letterSpacingClass: 'tracking-widest' as never }).appearance
+        .letterSpacingClass,
     ).toBe('tracking-wide')
-    expect(normalizeAppSettings({ lineHeightClass: 'leading-none' as never }).lineHeightClass).toBe(
-      'leading-snug',
-    )
     expect(
-      normalizeAppSettings({ fontFamilyClass: 'font-canger-jinkai' as never }).fontFamilyClass,
+      normalizeAppSettings({ lineHeightClass: 'leading-none' as never }).appearance.lineHeightClass,
+    ).toBe('leading-snug')
+    expect(
+      normalizeAppSettings({ fontFamilyClass: 'font-canger-jinkai' as never }).appearance
+        .fontFamilyClass,
     ).toBe('font-sans')
     expect(
-      normalizeAppSettings({ fontFamilyClass: 'font-lxgw-neo-xihei' as never }).fontFamilyClass,
+      normalizeAppSettings({ fontFamilyClass: 'font-lxgw-neo-xihei' as never }).appearance
+        .fontFamilyClass,
     ).toBe('font-lxgw-neo-xihei')
-    expect(normalizeAppSettings({}).fontApplyScope).toBe('content')
-    expect(normalizeAppSettings({ fontApplyScope: 'app' }).fontApplyScope).toBe('app')
-    expect(normalizeAppSettings({ fontApplyScope: 'unknown' as never }).fontApplyScope).toBe(
-      'content',
-    )
+    expect(normalizeAppSettings({}).appearance.fontApplyScope).toBe('content')
+    expect(normalizeAppSettings({ fontApplyScope: 'app' }).appearance.fontApplyScope).toBe('app')
+    expect(
+      normalizeAppSettings({ fontApplyScope: 'unknown' as never }).appearance.fontApplyScope,
+    ).toBe('content')
   })
 
   it('normalizes feed toolbar settings', () => {
@@ -108,18 +183,18 @@ describe('app-settings', () => {
       normalizeAppSettings({
         feedPrimaryActionOrder: ['like', 'comment', 'repost'],
         feedToolbarButtonIds: ['copy-text', 'unknown', 'favorite', 'favorite'],
-      }).feedPrimaryActionOrder,
+      }).feed.feedPrimaryActionOrder,
     ).toEqual(['like', 'comment', 'repost'])
     expect(
       normalizeAppSettings({
         feedPrimaryActionOrder: ['like', 'comment'],
         feedToolbarButtonIds: ['copy-text', 'unknown', 'favorite', 'favorite'],
-      }).feedPrimaryActionOrder,
-    ).toEqual(DEFAULT_APP_SETTINGS.feedPrimaryActionOrder)
+      }).feed.feedPrimaryActionOrder,
+    ).toEqual(DEFAULT_APP_SETTINGS.feed.feedPrimaryActionOrder)
     expect(
       normalizeAppSettings({
         feedToolbarButtonIds: ['copy-text', 'unknown', 'favorite', 'favorite'],
-      }).feedToolbarButtonIds,
+      }).feed.feedToolbarButtonIds,
     ).toEqual(['copy-text', 'favorite'])
   })
 
@@ -134,244 +209,60 @@ describe('app-settings', () => {
     })
 
     expect(await loadAppSettings(storage)).toEqual({
-      contentWidth: 'standard',
-      customContentWidth: 1200,
-      theme: 'dark',
-      rewriteEnabled: false,
-      uiFontSize: 14,
-      contentFontSize: 14,
-      fontWeightClass: 'font-normal',
-      letterSpacingClass: 'tracking-normal',
-      lineHeightClass: 'leading-relaxed',
-      fontFamilyClass: 'font-serif',
-      fontApplyScope: 'content',
-      showHotSearchCard: false,
-      showFollowedSuperTopicsCard: false,
-      showExplore: true,
-      showFavorites: true,
-      showHistory: true,
-      showNotifications: true,
-      showDMs: true,
-      showProfile: true,
-      showCompose: true,
-      showRightRail: true,
-      xbEntryCollapsed: false,
-      sidebarCollapsed: false,
-      immersiveMode: false,
-      motionPreference: 'system',
-      replyChainDisplay: 'expanded',
-      darkModeImageDim: false,
-      autoLoadLongText: false,
-      feedDensity: 'standard',
-      weiboCardShowAvatar: true,
-      weiboCardShowTimestamp: true,
-      weiboCardShowPublishInfo: true,
-      weiboCardShowTitleBadge: true,
-      weiboCardShowInteractionCounts: true,
-      weiboCardCollapsedMediaTypes: [],
-      weiboCardSingleImageMaxWidth: 450,
-      weiboCardSingleVideoMaxWidth: 650,
-      weiboCardMultiMediaLayout: 'grid',
-      weiboCardMultiMediaGridLimit: 9,
-      weiboCardMultiMediaGridMaxWidth: 650,
-      weiboCardMultiMediaStripHeight: 360,
-      commentDensity: 'standard',
-      commentCardShowAvatar: true,
-      commentCardShowTimestamp: true,
-      commentCardShowPublishInfo: true,
-      commentCardShowAuthorBadge: true,
-      commentCardShowLikeCount: true,
-      commentCardShowThreadLine: true,
-      commentCardImageDisplay: 'expanded',
-      commentCardCollapseRepliesByDefault: false,
-      lightModeBgColor: 'white',
-      darkModeBgColor: 'near-black',
-      imageGenShowDataArea: true,
-      imageGenShowFullImages: false,
-      imageGenShowWeiboLink: false,
-      imageGenTheme: 'light',
-      imageGenCardStyle: 'default',
-      hotSearchType: 'hot',
-      feedInteractionMode: 'x',
-      feedPrimaryActionOrder: ['comment', 'repost', 'like'],
-      feedToolbarButtonIds: [],
-      browsingHistoryLimit: 200,
-      xbTopicPage: true,
-      ratingEnabled: false,
-      rememberPlaybackRate: false,
-      playbackRate: 1,
-      videoQualityPreference: null,
-      firstLoadRedirect: 'for-you',
-      homeTab: 'for-you',
-      homeGroupId: null,
-      customThemeLightCss: '',
-      customThemeDarkCss: '',
-      selectedThemeType: 'preset',
-      selectedThemeId: 'default',
-      userThemes: [],
-      photoLoopEnabled: true,
+      ...DEFAULT_APP_SETTINGS,
+      appearance: {
+        ...DEFAULT_APP_SETTINGS.appearance,
+        theme: 'dark',
+        rewriteEnabled: false,
+        uiFontSize: 14,
+        contentFontSize: 14,
+        fontFamilyClass: 'font-serif',
+      },
     })
 
-    await persistAppSettings(
-      {
-        contentWidth: 'standard',
-        customContentWidth: 1200,
-        theme: 'light',
-        rewriteEnabled: true,
-        uiFontSize: 18,
-        contentFontSize: 28,
-        fontWeightClass: 'font-medium',
-        letterSpacingClass: 'tracking-wide',
-        lineHeightClass: 'leading-loose',
-        fontFamilyClass: 'font-serif',
-        fontApplyScope: 'app',
-        showHotSearchCard: true,
-        showFollowedSuperTopicsCard: false,
-        showExplore: true,
-        showFavorites: true,
-        showHistory: true,
-        showNotifications: true,
-        showDMs: true,
-        showProfile: true,
-        showCompose: true,
-        showRightRail: true,
-        xbEntryCollapsed: false,
-        sidebarCollapsed: false,
-        immersiveMode: true,
-        motionPreference: 'reduced',
-        replyChainDisplay: 'expanded',
-        darkModeImageDim: false,
-        autoLoadLongText: false,
-        feedDensity: 'compact',
-        weiboCardShowAvatar: false,
-        weiboCardShowTimestamp: true,
-        weiboCardShowPublishInfo: false,
-        weiboCardShowTitleBadge: true,
-        weiboCardShowInteractionCounts: false,
-        weiboCardCollapsedMediaTypes: ['image', 'multiple'],
-        weiboCardSingleImageMaxWidth: 520,
-        weiboCardSingleVideoMaxWidth: 760,
-        weiboCardMultiMediaLayout: 'horizontal',
-        weiboCardMultiMediaGridLimit: 12,
-        weiboCardMultiMediaGridMaxWidth: 800,
-        weiboCardMultiMediaStripHeight: 480,
-        commentDensity: 'relaxed',
-        commentCardShowAvatar: false,
-        commentCardShowTimestamp: true,
-        commentCardShowPublishInfo: true,
-        commentCardShowAuthorBadge: false,
-        commentCardShowLikeCount: false,
-        commentCardShowThreadLine: false,
-        commentCardImageDisplay: 'collapsed',
-        commentCardCollapseRepliesByDefault: true,
-        lightModeBgColor: 'paper',
-        darkModeBgColor: 'dark-gray',
-        imageGenShowDataArea: true,
-        imageGenShowFullImages: false,
-        imageGenShowWeiboLink: false,
-        imageGenTheme: 'light',
-        imageGenCardStyle: 'default',
-        hotSearchType: 'mine',
-        feedInteractionMode: 'x',
-        feedPrimaryActionOrder: ['comment', 'repost', 'like'],
-        feedToolbarButtonIds: [],
-        browsingHistoryLimit: 300,
-        xbTopicPage: true,
-        ratingEnabled: true,
-        rememberPlaybackRate: false,
-        playbackRate: 1,
-        videoQualityPreference: '1080p',
-        firstLoadRedirect: 'for-you',
-        homeTab: 'for-you',
-        homeGroupId: null,
-        customThemeLightCss: '--primary: #1d9bf0;',
-        customThemeDarkCss: '--primary: #1d9bf0;',
-        selectedThemeType: 'preset',
-        selectedThemeId: 'default',
-        userThemes: [],
-        photoLoopEnabled: true,
-      },
-      storage,
-    )
-
-    expect(storage.read()).toEqual({
-      contentWidth: 'standard',
-      customContentWidth: 1200,
-      theme: 'light',
-      rewriteEnabled: true,
-      uiFontSize: 18,
-      contentFontSize: 28,
-      fontWeightClass: 'font-medium',
-      letterSpacingClass: 'tracking-wide',
-      lineHeightClass: 'leading-loose',
-      fontFamilyClass: 'font-serif',
-      fontApplyScope: 'app',
-      showHotSearchCard: true,
-      showFollowedSuperTopicsCard: false,
-      showExplore: true,
-      showFavorites: true,
-      showHistory: true,
-      showNotifications: true,
-      showDMs: true,
-      showProfile: true,
-      showCompose: true,
-      showRightRail: true,
-      xbEntryCollapsed: false,
-      sidebarCollapsed: false,
-      immersiveMode: true,
-      motionPreference: 'reduced',
-      replyChainDisplay: 'expanded',
-      darkModeImageDim: false,
-      autoLoadLongText: false,
-      feedDensity: 'compact',
+    const nextSettings = normalizeAppSettings({
+      ...flattenSettings(DEFAULT_APP_SETTINGS),
+      columnWidth: 'custom' as const,
+      customColumnWidth: 500,
+      theme: 'light' as const,
+      uiFontSize: 18 as const,
+      contentFontSize: 28 as const,
+      fontWeightClass: 'font-medium' as const,
+      letterSpacingClass: 'tracking-wide' as const,
+      lineHeightClass: 'leading-loose' as const,
+      fontFamilyClass: 'font-serif' as const,
+      fontApplyScope: 'app' as const,
+      motionPreference: 'reduced' as const,
+      feedDensity: 'compact' as const,
       weiboCardShowAvatar: false,
-      weiboCardShowTimestamp: true,
       weiboCardShowPublishInfo: false,
-      weiboCardShowTitleBadge: true,
       weiboCardShowInteractionCounts: false,
-      weiboCardCollapsedMediaTypes: ['image', 'multiple'],
+      weiboCardCollapsedMediaTypes: ['image', 'multiple'] as ('image' | 'multiple')[],
       weiboCardSingleImageMaxWidth: 520,
       weiboCardSingleVideoMaxWidth: 760,
-      weiboCardMultiMediaLayout: 'horizontal',
-      weiboCardMultiMediaGridLimit: 12,
+      weiboCardMultiMediaLayout: 'horizontal' as const,
+      weiboCardMultiMediaGridLimit: 12 as const,
       weiboCardMultiMediaGridMaxWidth: 800,
       weiboCardMultiMediaStripHeight: 480,
-      commentDensity: 'relaxed',
+      commentDensity: 'relaxed' as const,
       commentCardShowAvatar: false,
-      commentCardShowTimestamp: true,
-      commentCardShowPublishInfo: true,
       commentCardShowAuthorBadge: false,
       commentCardShowLikeCount: false,
       commentCardShowThreadLine: false,
-      commentCardImageDisplay: 'collapsed',
+      commentCardImageDisplay: 'collapsed' as const,
       commentCardCollapseRepliesByDefault: true,
-      lightModeBgColor: 'paper',
-      darkModeBgColor: 'dark-gray',
-      imageGenShowDataArea: true,
-      imageGenShowFullImages: false,
-      imageGenShowWeiboLink: false,
-      imageGenTheme: 'light',
-      imageGenCardStyle: 'default',
-      hotSearchType: 'mine',
-      feedInteractionMode: 'x',
-      feedPrimaryActionOrder: ['comment', 'repost', 'like'],
-      feedToolbarButtonIds: [],
-      browsingHistoryLimit: 300,
-      xbTopicPage: true,
+      lightModeBgColor: 'paper' as const,
+      darkModeBgColor: 'dark-gray' as const,
+      hotSearchType: 'mine' as const,
+      browsingHistoryLimit: 300 as const,
       ratingEnabled: true,
-      rememberPlaybackRate: false,
-      playbackRate: 1,
       videoQualityPreference: '1080p',
-      firstLoadRedirect: 'for-you',
-      homeTab: 'for-you',
-      homeGroupId: null,
       customThemeLightCss: '--primary: #1d9bf0;',
       customThemeDarkCss: '--primary: #1d9bf0;',
-      selectedThemeType: 'preset',
-      selectedThemeId: 'default',
-      userThemes: [],
-      photoLoopEnabled: true,
     })
+
+    await persistAppSettings(nextSettings, storage)
+    expect(storage.read()).toEqual(nextSettings)
   })
 
   it('resolves dark mode from theme preference', () => {
@@ -382,100 +273,132 @@ describe('app-settings', () => {
   })
 
   it('normalizes playback rate and remember switch values', () => {
-    expect(normalizeAppSettings({ playbackRate: 0.5 }).playbackRate).toBe(0.5)
-    expect(normalizeAppSettings({ playbackRate: 1.5 }).playbackRate).toBe(1.5)
-    expect(normalizeAppSettings({ playbackRate: 2 }).playbackRate).toBe(2)
+    expect(normalizeAppSettings({ playbackRate: 0.5 }).media.playbackRate).toBe(0.5)
+    expect(normalizeAppSettings({ playbackRate: 1.5 }).media.playbackRate).toBe(1.5)
+    expect(normalizeAppSettings({ playbackRate: 2 }).media.playbackRate).toBe(2)
 
-    expect(normalizeAppSettings({ playbackRate: 1.1 }).playbackRate).toBe(1)
-    expect(normalizeAppSettings({ playbackRate: 3 }).playbackRate).toBe(1)
-    expect(normalizeAppSettings({ playbackRate: 0 }).playbackRate).toBe(1)
-    expect(normalizeAppSettings({ playbackRate: 'fast' as never }).playbackRate).toBe(1)
-    expect(normalizeAppSettings({ playbackRate: null as never }).playbackRate).toBe(1)
-    expect(normalizeAppSettings({ playbackRate: Number.NaN as never }).playbackRate).toBe(1)
+    expect(normalizeAppSettings({ playbackRate: 1.1 }).media.playbackRate).toBe(1)
+    expect(normalizeAppSettings({ playbackRate: 3 }).media.playbackRate).toBe(1)
+    expect(normalizeAppSettings({ playbackRate: 0 }).media.playbackRate).toBe(1)
+    expect(normalizeAppSettings({ playbackRate: 'fast' as never }).media.playbackRate).toBe(1)
+    expect(normalizeAppSettings({ playbackRate: null as never }).media.playbackRate).toBe(1)
+    expect(normalizeAppSettings({ playbackRate: Number.NaN as never }).media.playbackRate).toBe(1)
 
-    expect(normalizeAppSettings({ rememberPlaybackRate: true }).rememberPlaybackRate).toBe(true)
-    expect(
-      normalizeAppSettings({ rememberPlaybackRate: 'yes' as never }).rememberPlaybackRate,
-    ).toBe(false)
-    expect(normalizeAppSettings({ videoQualityPreference: ' 1080P ' }).videoQualityPreference).toBe(
-      '1080p',
+    expect(normalizeAppSettings({ rememberPlaybackRate: true }).media.rememberPlaybackRate).toBe(
+      true,
     )
-    expect(normalizeAppSettings({ videoQualityPreference: '' }).videoQualityPreference).toBeNull()
+    expect(
+      normalizeAppSettings({ rememberPlaybackRate: 'yes' as never }).media.rememberPlaybackRate,
+    ).toBe(false)
+    expect(
+      normalizeAppSettings({ videoQualityPreference: ' 1080P ' }).media.videoQualityPreference,
+    ).toBe('1080p')
+    expect(
+      normalizeAppSettings({ videoQualityPreference: '' }).media.videoQualityPreference,
+    ).toBeNull()
   })
 
-  it('normalizes reading preferences and custom content widths', () => {
-    expect(normalizeAppSettings({ autoLoadLongText: true }).autoLoadLongText).toBe(true)
-    expect(normalizeAppSettings({ motionPreference: 'reduced' }).motionPreference).toBe('reduced')
-    expect(normalizeAppSettings({ motionPreference: 'unknown' as never }).motionPreference).toBe(
-      'system',
+  it('normalizes reading preferences and multi-column widths', () => {
+    expect(normalizeAppSettings({ autoLoadLongText: true }).feed.autoLoadLongText).toBe(true)
+    expect(normalizeAppSettings({ motionPreference: 'reduced' }).appearance.motionPreference).toBe(
+      'reduced',
     )
-    expect(normalizeAppSettings({ feedDensity: 'compact' }).feedDensity).toBe('compact')
-    expect(normalizeAppSettings({ commentDensity: 'relaxed' }).commentDensity).toBe('relaxed')
+    expect(
+      normalizeAppSettings({ motionPreference: 'unknown' as never }).appearance.motionPreference,
+    ).toBe('system')
+    expect(normalizeAppSettings({ feedDensity: 'compact' }).feed.feedDensity).toBe('compact')
+    expect(normalizeAppSettings({ commentDensity: 'relaxed' }).feed.commentDensity).toBe('relaxed')
     expect(
       normalizeAppSettings({
         weiboCardCollapsedMediaTypes: ['audio', 'image', 'audio', 'unknown'],
-      }).weiboCardCollapsedMediaTypes,
+      }).feed.weiboCardCollapsedMediaTypes,
     ).toEqual(['image', 'audio'])
     expect(
-      normalizeAppSettings({ weiboCardMediaDisplay: 'collapsed' } as never)
+      normalizeAppSettings({ weiboCardMediaDisplay: 'collapsed' } as never).feed
         .weiboCardCollapsedMediaTypes,
     ).toEqual([])
     expect(
-      normalizeAppSettings({ weiboCardMultiMediaLayout: 'horizontal' }).weiboCardMultiMediaLayout,
+      normalizeAppSettings({ weiboCardMultiMediaLayout: 'horizontal' }).feed
+        .weiboCardMultiMediaLayout,
     ).toBe('horizontal')
     expect(
-      normalizeAppSettings({ weiboCardMultiMediaLayout: 'masonry' as never })
+      normalizeAppSettings({ weiboCardMultiMediaLayout: 'masonry' as never }).feed
         .weiboCardMultiMediaLayout,
     ).toBe('grid')
     expect(
-      normalizeAppSettings({ weiboCardMultiMediaGridLimit: 12 }).weiboCardMultiMediaGridLimit,
+      normalizeAppSettings({ weiboCardMultiMediaGridLimit: 12 }).feed.weiboCardMultiMediaGridLimit,
     ).toBe(12)
     expect(
-      normalizeAppSettings({ weiboCardMultiMediaGridLimit: 8 as never })
+      normalizeAppSettings({ weiboCardMultiMediaGridLimit: 8 as never }).feed
         .weiboCardMultiMediaGridLimit,
     ).toBe(9)
     expect(
-      normalizeAppSettings({ weiboCardMultiMediaGridMaxWidth: 874 })
+      normalizeAppSettings({ weiboCardMultiMediaGridMaxWidth: 874 }).feed
         .weiboCardMultiMediaGridMaxWidth,
     ).toBe(850)
     expect(
-      normalizeAppSettings({ weiboCardSingleImageMaxWidth: 155 }).weiboCardSingleImageMaxWidth,
+      normalizeAppSettings({ weiboCardSingleImageMaxWidth: 155 }).feed.weiboCardSingleImageMaxWidth,
     ).toBe(160)
     expect(
-      normalizeAppSettings({ weiboCardSingleImageMaxWidth: 456 }).weiboCardSingleImageMaxWidth,
+      normalizeAppSettings({ weiboCardSingleImageMaxWidth: 456 }).feed.weiboCardSingleImageMaxWidth,
     ).toBe(460)
     expect(
-      normalizeAppSettings({ weiboCardSingleVideoMaxWidth: 1400 }).weiboCardSingleVideoMaxWidth,
+      normalizeAppSettings({ weiboCardSingleVideoMaxWidth: 1400 }).feed
+        .weiboCardSingleVideoMaxWidth,
     ).toBe(1200)
     expect(
-      normalizeAppSettings({ weiboCardMultiMediaGridMaxWidth: 1000 })
+      normalizeAppSettings({ weiboCardMultiMediaGridMaxWidth: 1000 }).feed
         .weiboCardMultiMediaGridMaxWidth,
     ).toBe(900)
     expect(
-      normalizeAppSettings({ weiboCardMultiMediaStripHeight: 391 }).weiboCardMultiMediaStripHeight,
+      normalizeAppSettings({ weiboCardMultiMediaStripHeight: 391 }).feed
+        .weiboCardMultiMediaStripHeight,
     ).toBe(400)
     expect(
-      normalizeAppSettings({ weiboCardMultiMediaStripHeight: 100 }).weiboCardMultiMediaStripHeight,
+      normalizeAppSettings({ weiboCardMultiMediaStripHeight: 100 }).feed
+        .weiboCardMultiMediaStripHeight,
     ).toBe(200)
     expect(
-      normalizeAppSettings({ commentCardImageDisplay: 'invalid' as never }).commentCardImageDisplay,
+      normalizeAppSettings({ commentCardImageDisplay: 'invalid' as never }).feed
+        .commentCardImageDisplay,
     ).toBe('expanded')
-    expect(normalizeAppSettings({ weiboCardShowAvatar: false }).weiboCardShowAvatar).toBe(false)
-    expect(
-      normalizeAppSettings({ commentCardShowPublishInfo: true }).commentCardShowPublishInfo,
-    ).toBe(true)
-    expect(normalizeAppSettings({ customContentWidth: 801 }).customContentWidth).toBe(800)
-    expect(normalizeAppSettings({ customContentWidth: 1511 }).customContentWidth).toBe(1520)
-    expect(normalizeAppSettings({ customContentWidth: 2000 }).customContentWidth).toBe(2000)
-    expect(normalizeAppSettings({ customContentWidth: 2400 }).customContentWidth).toBe(2000)
-    expect(normalizeAppSettings({ customContentWidth: 0 }).customContentWidth).toBe(800)
-    expect(normalizeAppSettings({ customContentWidth: 'wide' as never }).customContentWidth).toBe(
-      1200,
+    expect(normalizeAppSettings({ weiboCardShowAvatar: false }).feed.weiboCardShowAvatar).toBe(
+      false,
     )
-    expect(normalizeAppSettings({ contentWidth: 'narrower' }).contentWidth).toBe('narrower')
-    expect(normalizeAppSettings({ contentWidth: 'narrow' }).contentWidth).toBe('narrow')
-    expect(normalizeAppSettings({ contentWidth: 'custom' }).contentWidth).toBe('custom')
-    expect(normalizeAppSettings({ immersiveMode: true }).immersiveMode).toBe(true)
-    expect(normalizeAppSettings({ immersiveMode: 'yes' as never }).immersiveMode).toBe(false)
+    expect(
+      normalizeAppSettings({ commentCardShowPublishInfo: true }).feed.commentCardShowPublishInfo,
+    ).toBe(true)
+    expect(normalizeAppSettings({ columnWidth: 'narrower' }).navigation.columnWidth).toBe(
+      'narrower',
+    )
+    expect(normalizeAppSettings({ columnWidth: 'narrow' }).navigation.columnWidth).toBe('narrow')
+    expect(normalizeAppSettings({ columnWidth: 'custom' }).navigation.columnWidth).toBe('custom')
+    expect(normalizeAppSettings({ columnWidth: 'wider' }).navigation.columnWidth).toBe('wider')
+    expect(normalizeAppSettings({ columnWidth: 'custom' }).navigation.columnWidth).toBe('custom')
+    expect(normalizeAppSettings({ columnWidth: 'huge' as never }).navigation.columnWidth).toBe(
+      'standard',
+    )
+    expect(normalizeAppSettings({ customColumnWidth: 301 }).navigation.customColumnWidth).toBe(300)
+    expect(normalizeAppSettings({ customColumnWidth: 311 }).navigation.customColumnWidth).toBe(320)
+    expect(normalizeAppSettings({ customColumnWidth: 720 }).navigation.customColumnWidth).toBe(720)
+    expect(normalizeAppSettings({ customColumnWidth: 800 }).navigation.customColumnWidth).toBe(720)
+    expect(normalizeAppSettings({ customColumnWidth: 0 }).navigation.customColumnWidth).toBe(300)
+    expect(
+      normalizeAppSettings({ customColumnWidth: 'wide' as never }).navigation.customColumnWidth,
+    ).toBe(480)
+    const normalized = normalizeAppSettings({
+      contentWidth: 'wide',
+      customContentWidth: 1600,
+      showRightRail: false,
+      showHotSearchCard: false,
+      showFollowedSuperTopicsCard: true,
+      immersiveMode: true,
+    } as never)
+    expect(normalized).not.toHaveProperty('contentWidth')
+    expect(normalized).not.toHaveProperty('customContentWidth')
+    expect(normalized).not.toHaveProperty('showRightRail')
+    expect(normalized).not.toHaveProperty('showHotSearchCard')
+    expect(normalized).not.toHaveProperty('showFollowedSuperTopicsCard')
+    expect(normalized).not.toHaveProperty('immersiveMode')
   })
 })

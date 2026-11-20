@@ -1,7 +1,6 @@
+import { cn } from 'cn'
 import type { HTMLAttributes } from 'react'
 import { forwardRef } from 'react'
-
-import { cn } from '@/lib/utils'
 
 interface CogIconProps extends HTMLAttributes<HTMLDivElement> {
   size?: number

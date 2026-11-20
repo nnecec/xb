@@ -1,17 +1,17 @@
 import type { TimelinePage, TopicChannel, TopicHeadData } from '@/lib/weibo/models/feed'
+import {
+  type WeiboPicInfo,
+  type WeiboPageInfo,
+  type WeiboStatus,
+  type WeiboStatusUser,
+} from '@/lib/weibo/models/weibo-api'
 import { mweiboFetch } from '@/lib/weibo/services/m-weibo-client'
 import {
   MweiboCaptchaError,
   MweiboUnavailableError,
   type MweiboUnavailableReason,
 } from '@/lib/weibo/services/mweibo-errors'
-import {
-  type WeiboPicInfo,
-  type WeiboPageInfo,
-  type WeiboStatus,
-  type WeiboStatusUser,
-  toFeedItem,
-} from '@/lib/weibo/utils/transform'
+import { toFeedItem } from '@/lib/weibo/utils/transform'
 
 // ─── m.weibo.cn payload types ────────────────────────────────────────────────
 

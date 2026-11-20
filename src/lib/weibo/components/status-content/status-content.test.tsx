@@ -67,11 +67,11 @@ describe('StatusText', () => {
     })
     store.setState({
       ...store.getState(),
-      replyChainDisplay: 'expanded',
       isHydrated: true,
+      feed: { ...getAppSettingsStore().getState().feed, replyChainDisplay: 'expanded' },
     })
   })
-  it('renders topic_struct topics as encoded search links', () => {
+  it('opens topic_struct topics inside xb when xb topic pages are enabled', () => {
     const { container } = renderWithProviders(
       <StatusText
         item={{
@@ -90,7 +90,30 @@ describe('StatusText', () => {
     const link = view.getByRole('link', { name: '#天才卡丁车装修进度#' })
     expect(link).toHaveAttribute(
       'href',
-      'https://s.weibo.com/weibo?q=%23%E5%A4%A9%E6%89%8D%E5%8D%A1%E4%B8%81%E8%BD%A6%E8%A3%85%E4%BF%AE%E8%BF%9B%E5%BA%A6%23',
+      '/topic?q=%E5%A4%A9%E6%89%8D%E5%8D%A1%E4%B8%81%E8%BD%A6%E8%A3%85%E4%BF%AE%E8%BF%9B%E5%BA%A6',
+    )
+  })
+
+  it('opens topic_struct topics on weibo search when xb topic pages are disabled', () => {
+    getAppSettingsStore().setState({
+      features: { ...getAppSettingsStore().getState().features, xbTopicPage: false },
+    })
+    const { container } = renderWithProviders(
+      <StatusText
+        item={{
+          topicEntities: [{ title: '话题', url: '/topic?q=%E8%AF%9D%E9%A2%98' }],
+        }}
+        text="#话题#"
+      />,
+    )
+
+    expect(within(container).getByRole('link', { name: '#话题#' })).toHaveAttribute(
+      'href',
+      'https://s.weibo.com/weibo?q=%23%E8%AF%9D%E9%A2%98%23',
+    )
+    expect(within(container).getByRole('link', { name: '#话题#' })).toHaveAttribute(
+      'target',
+      '_blank',
     )
   })
 
@@ -191,7 +214,7 @@ describe('StatusText', () => {
     expect(view.getByRole('img', { name: '[赞]' })).toBeInTheDocument()
     expect(view.getByRole('link', { name: '#话题#' })).toHaveAttribute(
       'href',
-      'https://s.weibo.com/weibo?q=%23%E8%AF%9D%E9%A2%98%23',
+      '/topic?q=%E8%AF%9D%E9%A2%98',
     )
     expect(view.getByRole('link', { name: '真实链接' })).toHaveAttribute(
       'href',
@@ -265,7 +288,7 @@ describe('StatusText', () => {
     const view = within(container)
     expect(view.getByRole('link', { name: '#话题#' })).toHaveAttribute(
       'href',
-      'https://s.weibo.com/weibo?q=%23%E8%AF%9D%E9%A2%98%23',
+      '/topic?q=%E8%AF%9D%E9%A2%98',
     )
     expect(view.getByRole('link', { name: '真实链接' })).toHaveAttribute(
       'href',
@@ -353,7 +376,9 @@ describe('StatusText', () => {
   })
 
   it('renders an inline image carousel after the text when the short_url lives outside any reply chain', () => {
-    getAppSettingsStore().setState({ weiboCardSingleImageMaxWidth: 620 })
+    getAppSettingsStore().setState({
+      feed: { ...getAppSettingsStore().getState().feed, weiboCardSingleImageMaxWidth: 620 },
+    })
 
     const { container } = renderWithProviders(
       <StatusText
@@ -459,16 +484,18 @@ describe('StatusText reply-chain collapsible', () => {
   afterEach(() => {
     const store = getAppSettingsStore()
     store.setState({
-      replyChainDisplay: 'expanded',
+      feed: { ...getAppSettingsStore().getState().feed, replyChainDisplay: 'expanded' },
     })
   })
 
-  const setupStore = (overrides = {}) => {
+  const setupStore = (overrides: { replyChainDisplay?: 'expanded' | 'collapsed' } = {}) => {
     const store = getAppSettingsStore()
     store.setState({
-      replyChainDisplay: 'expanded',
       isHydrated: true,
-      ...overrides,
+      feed: {
+        ...getAppSettingsStore().getState().feed,
+        replyChainDisplay: overrides.replyChainDisplay ?? 'expanded',
+      },
     })
   }
 

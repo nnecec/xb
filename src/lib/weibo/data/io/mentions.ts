@@ -1,6 +1,8 @@
+import { normalizeCursor } from '@/lib/weibo/data/io/cursor'
 import type { NotificationsPage } from '@/lib/weibo/models/notification'
+import type { WeiboStatus } from '@/lib/weibo/models/weibo-api'
 
-import { type WeiboStatus, toFeedItem } from '../../utils/transform'
+import { toFeedItem } from '../../utils/transform'
 
 export interface WeiboMentionsPayload {
   ok?: number
@@ -16,13 +18,6 @@ export interface WeiboMentionsPayload {
     statuses?: Array<WeiboStatus | null | undefined>
   }
   msg?: string
-}
-
-function normalizeCursor(value: number | string | undefined): string | null {
-  if (value === undefined || value === null || value === '' || String(value) === '0') {
-    return null
-  }
-  return String(value)
 }
 
 function getMentionsStatuses(payload: WeiboMentionsPayload): Array<WeiboStatus> {

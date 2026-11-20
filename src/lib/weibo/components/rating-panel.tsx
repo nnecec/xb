@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
+import { cn } from 'cn'
 import { StarIcon } from 'lucide-react'
 import { useState, type FocusEvent } from 'react'
 
 import { Rating } from '@/components/ui/rating'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { cn } from '@/lib/utils'
 import {
   myUserRatingQueryOptions,
   useRateUser,

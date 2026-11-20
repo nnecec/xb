@@ -73,8 +73,8 @@ describe('TopicPage', () => {
     })
     store.setState({
       ...store.getState(),
-      rewriteEnabled: true,
       isHydrated: true,
+      appearance: { ...getAppSettingsStore().getState().appearance, rewriteEnabled: true },
     })
   })
 

@@ -3,9 +3,9 @@
  */
 
 import type { FeedImage } from '@/lib/weibo/models/feed'
+import type { WeiboPicInfo, WeiboStatus } from '@/lib/weibo/models/weibo-api'
 
 import { pickNonEmptyUrl, stripUrlQuery, uniqueNonEmptyUrls } from './helpers'
-import type { WeiboPicInfo, WeiboStatus } from './types'
 
 function pickLivePhotoVideoUrl(info: WeiboPicInfo | undefined): string | undefined {
   if (!info) return undefined

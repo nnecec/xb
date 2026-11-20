@@ -4,6 +4,7 @@
  */
 
 import type { CommentItem } from '@/lib/weibo/models/status'
+import type { WeiboStatus } from '@/lib/weibo/models/weibo-api'
 import { formatCreatedAt } from '@/lib/weibo/services/utils/date'
 
 import { getStatusAuthor } from './author'
@@ -11,7 +12,6 @@ import { extractEmoticonsFromHtml, stripEntityTokens, stripHtmlTags } from './he
 import { getImageUrlStructs, toCommentImages } from './images'
 import { toFeedItem } from './status'
 import { getStatusId, getStatusText, toUrlEntities } from './text-entities'
-import type { WeiboStatus } from './types'
 
 /**
  * Converts Weibo comment to CommentItem format.

@@ -37,10 +37,10 @@ export function CardDefault({
           />
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <div className="flex flex-wrap items-center gap-2">
-              <CardTitle className="truncate text-base">{data.author.name}</CardTitle>
+              <CardTitle className="truncate">{data.author.name}</CardTitle>
               <span className="text-muted-foreground text-xs">{formatDate(data.createdAt)}</span>
             </div>
-            <CardDescription className="text-xs">
+            <CardDescription>
               {data.source ? `${data.source}` : ''} {data.regionName ? `${data.regionName}` : ''}
             </CardDescription>
           </div>

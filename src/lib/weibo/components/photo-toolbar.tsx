@@ -1,9 +1,9 @@
+import { cn } from 'cn'
 import { Repeat, RotateCcw, RotateCw, ZoomIn, ZoomOut } from 'lucide-react'
 import type { OverlayRenderProps } from 'react-photo-view/dist/types'
 
 import { Button } from '@/components/ui/button'
 import { useAppSettings } from '@/lib/app-settings-store'
-import { cn } from '@/lib/utils'
 
 interface PhotoToolbarProps {
   overlayProps: OverlayRenderProps
@@ -16,7 +16,7 @@ const MAX_ZOOM = 3
 export function PhotoToolbar({ overlayProps }: PhotoToolbarProps) {
   const { scale, onScale, rotate, onRotate } = overlayProps
 
-  const photoLoopEnabled = useAppSettings((s) => s.photoLoopEnabled)
+  const photoLoopEnabled = useAppSettings((s) => s.media.photoLoopEnabled)
   const updateSettings = useAppSettings((s) => s.updateSettings)
 
   const handleZoomIn = () => {
@@ -38,7 +38,9 @@ export function PhotoToolbar({ overlayProps }: PhotoToolbarProps) {
   }
 
   const handleToggleLoop = () => {
-    updateSettings({ photoLoopEnabled: !photoLoopEnabled })
+    updateSettings({
+      media: { photoLoopEnabled: !photoLoopEnabled },
+    })
   }
 
   const canZoomIn = scale < MAX_ZOOM
@@ -54,7 +56,7 @@ export function PhotoToolbar({ overlayProps }: PhotoToolbarProps) {
         aria-label={photoLoopEnabled ? '关闭循环播放' : '开启循环播放'}
         className={cn(!photoLoopEnabled && 'opacity-50')}
       >
-        <Repeat className="size-4" />
+        <Repeat />
       </Button>
       <Button
         type="button"
@@ -63,7 +65,7 @@ export function PhotoToolbar({ overlayProps }: PhotoToolbarProps) {
         onClick={handleRotateCcw}
         aria-label="逆时针旋转"
       >
-        <RotateCcw className="size-4" />
+        <RotateCcw />
       </Button>
 
       <Button
@@ -73,7 +75,7 @@ export function PhotoToolbar({ overlayProps }: PhotoToolbarProps) {
         onClick={handleRotateCw}
         aria-label="顺时针旋转"
       >
-        <RotateCw className="size-4" />
+        <RotateCw />
       </Button>
 
       <Button
@@ -84,7 +86,7 @@ export function PhotoToolbar({ overlayProps }: PhotoToolbarProps) {
         disabled={!canZoomOut}
         aria-label="缩小"
       >
-        <ZoomOut className="size-4" />
+        <ZoomOut />
       </Button>
 
       <Button
@@ -95,7 +97,7 @@ export function PhotoToolbar({ overlayProps }: PhotoToolbarProps) {
         disabled={!canZoomIn}
         aria-label="放大"
       >
-        <ZoomIn className="size-4" />
+        <ZoomIn />
       </Button>
     </div>
   )

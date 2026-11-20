@@ -9,6 +9,7 @@ import {
   normalizeAppSettings,
   persistAppSettings,
   type AppSettings,
+  type AppSettingsPatch,
   type AppSettingsStorageArea,
   type UserTheme,
 } from '@/lib/app-settings'
@@ -17,7 +18,7 @@ import { CUSTOM_THEME_PRESETS } from '@/lib/custom-theme'
 export interface AppSettingsStoreState extends AppSettings {
   isHydrated: boolean
   hydrate: () => Promise<void>
-  updateSettings: (patch: Partial<AppSettings>) => Promise<void>
+  updateSettings: (patch: AppSettingsPatch) => Promise<void>
   addUserTheme: (theme: UserTheme) => Promise<void>
   deleteUserTheme: (id: string) => Promise<void>
   updateUserTheme: (
@@ -39,12 +40,23 @@ export function createAppSettingsStore(
   return createStore<AppSettingsStoreState>((set, get) => {
     let persistQueue: Promise<unknown> = Promise.resolve()
 
-    async function updateAndPersist(patch: Partial<AppSettings>) {
-      set(patch)
+    async function updateAndPersist(patch: AppSettingsPatch) {
+      const merge = (latest: AppSettings): AppSettings => ({
+        appearance: { ...latest.appearance, ...patch.appearance },
+        navigation: { ...latest.navigation, ...patch.navigation },
+        feed: { ...latest.feed, ...patch.feed },
+        imageGen: { ...latest.imageGen, ...patch.imageGen },
+        home: { ...latest.home, ...patch.home },
+        features: { ...latest.features, ...patch.features },
+        media: { ...latest.media, ...patch.media },
+        themes: { ...latest.themes, ...patch.themes },
+      })
+      const next = merge(get())
+      set(next)
       const persistTask = persistQueue.then(async () => {
         // 读取最新快照后只合并本次 patch，避免旧标签页覆盖其他标签页刚保存的字段。
         const latest = await loadAppSettings(storageArea)
-        return persistAppSettings({ ...latest, ...patch }, storageArea)
+        return persistAppSettings(merge(latest), storageArea)
       })
       persistQueue = persistTask.catch(() => {})
       await persistTask
@@ -57,49 +69,53 @@ export function createAppSettingsStore(
         const settings = await loadAppSettings(storageArea)
 
         if (
-          settings.selectedThemeType === 'preset' &&
-          !settings.customThemeLightCss.trim() &&
-          !settings.customThemeDarkCss.trim()
+          settings.themes.selectedThemeType === 'preset' &&
+          !settings.themes.customThemeLightCss.trim() &&
+          !settings.themes.customThemeDarkCss.trim()
         ) {
-          const preset = CUSTOM_THEME_PRESETS.find((p) => p.key === settings.selectedThemeId)
+          const preset = CUSTOM_THEME_PRESETS.find((p) => p.key === settings.themes.selectedThemeId)
           if (preset) {
-            settings.customThemeLightCss = preset.lightCss
-            settings.customThemeDarkCss = preset.darkCss
+            settings.themes.customThemeLightCss = preset.lightCss
+            settings.themes.customThemeDarkCss = preset.darkCss
           }
         }
 
-        set({
-          ...settings,
-          isHydrated: true,
-        })
+        set({ ...settings, isHydrated: true })
       },
       updateSettings: updateAndPersist,
       async addUserTheme(theme) {
         const current = get()
         await updateAndPersist({
-          userThemes: current.userThemes.some((item) => item.id === theme.id)
-            ? current.userThemes
-            : [...current.userThemes, theme],
+          themes: {
+            userThemes: current.themes.userThemes.some((item) => item.id === theme.id)
+              ? current.themes.userThemes
+              : [...current.themes.userThemes, theme],
+          },
         })
       },
       async deleteUserTheme(id) {
         const current = get()
         await updateAndPersist({
-          userThemes: current.userThemes.filter((t) => t.id !== id),
+          themes: { userThemes: current.themes.userThemes.filter((t) => t.id !== id) },
         })
       },
       async updateUserTheme(id, updates) {
         const current = get()
         await updateAndPersist({
-          userThemes: current.userThemes.map((t) => (t.id === id ? { ...t, ...updates } : t)),
-          ...(current.selectedThemeType === 'custom' && current.selectedThemeId === id
-            ? {
-                ...(updates.lightCss === undefined
-                  ? {}
-                  : { customThemeLightCss: updates.lightCss }),
-                ...(updates.darkCss === undefined ? {} : { customThemeDarkCss: updates.darkCss }),
-              }
-            : {}),
+          themes: {
+            userThemes: current.themes.userThemes.map((t) =>
+              t.id === id ? { ...t, ...updates } : t,
+            ),
+            ...(current.themes.selectedThemeType === 'custom' &&
+            current.themes.selectedThemeId === id
+              ? {
+                  ...(updates.lightCss === undefined
+                    ? {}
+                    : { customThemeLightCss: updates.lightCss }),
+                  ...(updates.darkCss === undefined ? {} : { customThemeDarkCss: updates.darkCss }),
+                }
+              : {}),
+          },
         })
       },
     }

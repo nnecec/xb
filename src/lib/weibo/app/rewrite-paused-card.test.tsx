@@ -30,8 +30,8 @@ describe('RewritePausedCard', () => {
     })
     store.setState({
       ...store.getState(),
-      xbEntryCollapsed: false,
       isHydrated: true,
+      navigation: { ...store.getState().navigation, xbEntryCollapsed: false },
     })
   })
 
@@ -66,13 +66,16 @@ describe('RewritePausedCard', () => {
     await user.click(screen.getByTestId('xb-corner-collapse'))
 
     await waitFor(() => {
-      expect(getAppSettingsStore().getState().xbEntryCollapsed).toBe(true)
+      expect(getAppSettingsStore().getState().navigation.xbEntryCollapsed).toBe(true)
     })
   })
 
   it('renders collapsed on mount when the persisted state is collapsed', () => {
     const store = getAppSettingsStore()
-    store.setState({ ...store.getState(), xbEntryCollapsed: true })
+    store.setState({
+      ...store.getState(),
+      navigation: { ...store.getState().navigation, xbEntryCollapsed: true },
+    })
 
     render(<RewritePausedCard onResume={vi.fn()} />)
 

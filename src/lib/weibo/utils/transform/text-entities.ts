@@ -2,9 +2,10 @@
  * Text entity extraction utilities for Weibo data.
  */
 
+import type { WeiboStatus } from '@/lib/weibo/models/weibo-api'
+
 import { normalizeSafeExternalUrl } from '../safe-url'
 import { decodeHtmlEntities, normalizeMarkdownText } from './helpers'
-import type { WeiboStatus } from './types'
 
 /**
  * Gets status ID from various ID fields.

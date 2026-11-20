@@ -1,15 +1,4 @@
 import type { HotSearchType } from '@/lib/app-settings'
-import type { ExploreGroup } from '@/lib/weibo/models/explore'
-import type { TimelinePage } from '@/lib/weibo/models/feed'
-import type { SuperTopicPage } from '@/lib/weibo/models/super-topic'
-import {
-  adaptExploreHotResponse,
-  type ExploreHotPayload,
-} from '@/lib/weibo/services/adapters/explore'
-import {
-  adaptExploreGroupsResponse,
-  type ExploreGroupsPayload,
-} from '@/lib/weibo/services/adapters/explore-groups'
 import {
   adaptEntertainmentBandResponse,
   adaptHotSearchResponse,
@@ -22,18 +11,24 @@ import {
   type LifeBandPayload,
   type MineBandPayload,
   type SocialBandPayload,
-} from '@/lib/weibo/services/adapters/hotsearch'
+} from '@/lib/weibo/data/io/hotsearch'
 import {
   adaptSearchResponse,
   type SearchPayload,
   type SearchResult,
-} from '@/lib/weibo/services/adapters/search'
-import {
-  adaptSuperTopicResponse,
-  type SuperTopicPayload,
-} from '@/lib/weibo/services/adapters/super-topic'
+} from '@/lib/weibo/data/io/search'
+import { adaptSuperTopicResponse, type SuperTopicPayload } from '@/lib/weibo/data/io/super-topic'
+import type { ExploreGroup } from '@/lib/weibo/models/explore'
+import type { TimelinePage } from '@/lib/weibo/models/feed'
+import type { SuperTopicPage } from '@/lib/weibo/models/super-topic'
 import { wbGet } from '@/lib/weibo/services/client'
 import { WEIBO_ENDPOINTS } from '@/lib/weibo/services/endpoints'
+
+import {
+  adaptTimelineResponse,
+  type ExploreGroupsPayload,
+  type WeiboTimelinePayload,
+} from './timeline'
 
 export async function loadHotSearchByType(type: HotSearchType = 'hot'): Promise<HotSearchPage> {
   switch (type) {
@@ -82,7 +77,7 @@ export interface LoadExploreHotOptions {
 export async function loadExploreHot(options: LoadExploreHotOptions = {}): Promise<TimelinePage> {
   const isFirstPage = !options.cursor
 
-  const payload = await wbGet<ExploreHotPayload>(WEIBO_ENDPOINTS.exploreHot, {
+  const payload = await wbGet<WeiboTimelinePayload>(WEIBO_ENDPOINTS.exploreHot, {
     refresh: isFirstPage ? 0 : 2,
     group_id: options.groupId ?? '102803',
     containerid: options.containerid ?? '102803',
@@ -90,7 +85,15 @@ export async function loadExploreHot(options: LoadExploreHotOptions = {}): Promi
     max_id: isFirstPage ? 0 : options.cursor,
     count: 10,
   })
-  return adaptExploreHotResponse(payload)
+  return adaptTimelineResponse(payload)
+}
+
+export function adaptExploreGroupsResponse(payload: ExploreGroupsPayload): ExploreGroup[] {
+  const groups = payload.groups?.find((item) => item.title === '我的频道')?.group ?? []
+  return groups.filter(
+    (group): group is typeof group & { gid: string; title: string; containerid: string } =>
+      Boolean(group.gid && group.title && group.containerid),
+  ) as ExploreGroup[]
 }
 
 export async function loadExploreGroups(): Promise<ExploreGroup[]> {

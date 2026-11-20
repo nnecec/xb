@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -68,8 +68,8 @@ describe('NavigationRail', () => {
     })
     store.setState({
       ...store.getState(),
-      homeTab: 'for-you',
       isHydrated: true,
+      home: { ...store.getState().home, homeTab: 'for-you' },
     })
   })
   afterEach(() => {
@@ -80,14 +80,10 @@ describe('NavigationRail', () => {
     pageKind = 'home',
     viewingProfileUserId = null,
     rewriteEnabled = false,
-    immersiveMode = false,
-    onImmersiveModeChange = vi.fn(),
   }: {
     pageKind?: 'home' | 'profile' | 'status' | 'unsupported'
     viewingProfileUserId?: string | null
     rewriteEnabled?: boolean
-    immersiveMode?: boolean
-    onImmersiveModeChange?: (enabled: boolean) => void
   } = {}) {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
@@ -106,8 +102,6 @@ describe('NavigationRail', () => {
             onSettingsOpen={vi.fn()}
             onComposeOpen={vi.fn()}
             onSidebarCollapsedChange={vi.fn()}
-            immersiveMode={immersiveMode}
-            onImmersiveModeChange={onImmersiveModeChange}
           />
         </MemoryRouter>
       </QueryClientProvider>,
@@ -172,22 +166,14 @@ describe('NavigationRail', () => {
     )
   })
 
-  it('shows only the exit control while immersive mode is active', () => {
-    const onImmersiveModeChange = vi.fn()
-    renderNavigationRail({ immersiveMode: true, onImmersiveModeChange })
-
-    expect(screen.queryByRole('navigation', { name: '主导航' })).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: '退出沉浸模式' }))
-    expect(onImmersiveModeChange).toHaveBeenCalledWith(false)
-  })
-
   it('uses expanded bottom control width without relying on the CSS xl breakpoint', () => {
     mockMatchMedia(true)
     renderNavigationRail()
 
     const rewriteLabel = screen.getByText('返回原模式')
-    expect(rewriteLabel.parentElement).toHaveClass('justify-between')
-    expect(screen.getByRole('complementary')).toHaveClass('w-[204px]', 'overflow-y-auto')
+    expect(rewriteLabel.parentElement).toHaveClass('justify-end')
+    expect(screen.getByRole('complementary')).toHaveClass('overflow-y-auto')
+    expect(screen.getByRole('complementary')).toHaveStyle({ width: '204px' })
   })
 
   it('announces unread navigation entries in addition to showing their badge', async () => {
@@ -207,8 +193,11 @@ describe('NavigationRail', () => {
   it('does not poll unread counts when notifications and DMs are hidden', async () => {
     getAppSettingsStore().setState({
       ...getAppSettingsStore().getState(),
-      showNotifications: false,
-      showDMs: false,
+      navigation: {
+        ...getAppSettingsStore().getState().navigation,
+        showNotifications: false,
+        showDMs: false,
+      },
     })
 
     renderNavigationRail()
@@ -221,8 +210,11 @@ describe('NavigationRail', () => {
   it('polls unread counts when either notification entry point is visible', async () => {
     getAppSettingsStore().setState({
       ...getAppSettingsStore().getState(),
-      showNotifications: false,
-      showDMs: true,
+      navigation: {
+        ...getAppSettingsStore().getState().navigation,
+        showNotifications: false,
+        showDMs: true,
+      },
     })
 
     renderNavigationRail()

@@ -15,8 +15,8 @@ import {
 } from '@/lib/weibo/rating/xb-rating'
 
 vi.mock('@/lib/app-settings-store', () => ({
-  useAppSettings: (selector: (state: { ratingEnabled: boolean }) => unknown) =>
-    selector({ ratingEnabled: true }),
+  useAppSettings: (selector: (state: { features: { ratingEnabled: boolean } }) => unknown) =>
+    selector({ features: { ratingEnabled: true } }),
 }))
 
 vi.mock('@/lib/weibo/platform/current-user', () => ({

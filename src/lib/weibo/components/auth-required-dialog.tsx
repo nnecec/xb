@@ -21,7 +21,7 @@ export function AuthRequiredDialog({ open, onLogin }: AuthRequiredDialogProps) {
       <DialogContent showCloseButton={false} onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <LogIn className="size-5" />
+            <LogIn />
             需要登录微博
           </DialogTitle>
           <DialogDescription>

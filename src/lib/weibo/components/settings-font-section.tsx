@@ -10,7 +10,7 @@ import {
 import {
   CONTENT_FONT_SIZE_OPTIONS,
   UI_FONT_SIZE_OPTIONS,
-  type AppSettings,
+  type FlatAppSettings,
   type ContentFontSize,
   type FontApplyScope,
   type FontWeightClass,
@@ -32,7 +32,7 @@ const FONT_SETTING_KEYS = [
   'lineHeightClass',
   'fontFamilyClass',
   'fontApplyScope',
-] as const satisfies readonly (keyof AppSettings)[]
+] as const satisfies readonly (keyof FlatAppSettings)[]
 
 export function SettingsFontSection({
   fontFamilyLoading,
@@ -45,13 +45,13 @@ export function SettingsFontSection({
 }) {
   const settings = useAppSettings(
     useShallow((state) => ({
-      uiFontSize: state.uiFontSize,
-      contentFontSize: state.contentFontSize,
-      fontWeightClass: state.fontWeightClass,
-      letterSpacingClass: state.letterSpacingClass,
-      lineHeightClass: state.lineHeightClass,
-      fontFamilyClass: state.fontFamilyClass,
-      fontApplyScope: state.fontApplyScope,
+      uiFontSize: state.appearance.uiFontSize,
+      contentFontSize: state.appearance.contentFontSize,
+      fontWeightClass: state.appearance.fontWeightClass,
+      letterSpacingClass: state.appearance.letterSpacingClass,
+      lineHeightClass: state.appearance.lineHeightClass,
+      fontFamilyClass: state.appearance.fontFamilyClass,
+      fontApplyScope: state.appearance.fontApplyScope,
     })),
   )
 
@@ -107,7 +107,9 @@ export function SettingsFontSection({
           <Select
             value={settings.fontApplyScope}
             onValueChange={(value) =>
-              void updateSettings({ fontApplyScope: value as FontApplyScope })
+              void updateSettings({
+                appearance: { fontApplyScope: value as FontApplyScope },
+              })
             }
           >
             <SelectTrigger className="w-36" aria-label="字体应用范围">
@@ -126,7 +128,9 @@ export function SettingsFontSection({
           <Select
             value={String(settings.uiFontSize)}
             onValueChange={(value) =>
-              void updateSettings({ uiFontSize: Number(value) as UiFontSize })
+              void updateSettings({
+                appearance: { uiFontSize: Number(value) as UiFontSize },
+              })
             }
           >
             <SelectTrigger className="w-28" aria-label="界面字号">
@@ -148,7 +152,9 @@ export function SettingsFontSection({
           <Select
             value={String(settings.contentFontSize)}
             onValueChange={(value) =>
-              void updateSettings({ contentFontSize: Number(value) as ContentFontSize })
+              void updateSettings({
+                appearance: { contentFontSize: Number(value) as ContentFontSize },
+              })
             }
           >
             <SelectTrigger className="w-28" aria-label="正文字号">
@@ -170,7 +176,9 @@ export function SettingsFontSection({
           <Select
             value={settings.fontWeightClass}
             onValueChange={(value) =>
-              void updateSettings({ fontWeightClass: value as FontWeightClass })
+              void updateSettings({
+                appearance: { fontWeightClass: value as FontWeightClass },
+              })
             }
           >
             <SelectTrigger className="w-32" aria-label="字体粗细">
@@ -190,7 +198,9 @@ export function SettingsFontSection({
           <Select
             value={settings.letterSpacingClass}
             onValueChange={(value) =>
-              void updateSettings({ letterSpacingClass: value as LetterSpacingClass })
+              void updateSettings({
+                appearance: { letterSpacingClass: value as LetterSpacingClass },
+              })
             }
           >
             <SelectTrigger className="w-28" aria-label="字间距">
@@ -209,7 +219,9 @@ export function SettingsFontSection({
           <Select
             value={settings.lineHeightClass}
             onValueChange={(value) =>
-              void updateSettings({ lineHeightClass: value as LineHeightClass })
+              void updateSettings({
+                appearance: { lineHeightClass: value as LineHeightClass },
+              })
             }
           >
             <SelectTrigger className="w-32" aria-label="行高">

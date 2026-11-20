@@ -1,3 +1,4 @@
+import { cn } from 'cn'
 import { useEffect, useState } from 'react'
 
 import type {
@@ -9,33 +10,33 @@ import type {
 } from '@/lib/app-settings'
 import { useAppSettings } from '@/lib/app-settings-store'
 import { isRemoteFont, loadFont, type RemoteFontFamily } from '@/lib/font-loader'
-import { cn } from '@/lib/utils'
 
 export type FontLoadStatus = 'idle' | 'loading' | 'ready' | 'error'
 
 export function useFontSettings() {
-  const contentFontSize = useAppSettings((s) => s.contentFontSize) as ContentFontSize
-  const fontWeightClass = useAppSettings((s) => s.fontWeightClass) as FontWeightClass
-  const letterSpacingClass = useAppSettings((s) => s.letterSpacingClass) as LetterSpacingClass
-  const lineHeightClass = useAppSettings((s) => s.lineHeightClass) as LineHeightClass
-  const fontFamilyClass = useAppSettings((s) => s.fontFamilyClass) as FontFamilyClass
+  const contentFontSize = useAppSettings((s) => s.appearance.contentFontSize) as ContentFontSize
+  const fontWeightClass = useAppSettings((s) => s.appearance.fontWeightClass) as FontWeightClass
+  const letterSpacingClass = useAppSettings(
+    (s) => s.appearance.letterSpacingClass,
+  ) as LetterSpacingClass
+  const lineHeightClass = useAppSettings((s) => s.appearance.lineHeightClass) as LineHeightClass
+  const fontFamilyClass = useAppSettings((s) => s.appearance.fontFamilyClass) as FontFamilyClass
 
-  const [loadStatus, setLoadStatus] = useState<FontLoadStatus>(() =>
-    isRemoteFont(fontFamilyClass) ? 'loading' : 'idle',
-  )
+  const [trackedFont, setTrackedFont] = useState(fontFamilyClass)
+  const [remoteStatus, setRemoteStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+  if (trackedFont !== fontFamilyClass) {
+    setTrackedFont(fontFamilyClass)
+    if (isRemoteFont(fontFamilyClass)) setRemoteStatus('loading')
+  }
+  const loadStatus: FontLoadStatus = isRemoteFont(fontFamilyClass) ? remoteStatus : 'idle'
 
   useEffect(() => {
-    if (!isRemoteFont(fontFamilyClass)) {
-      setLoadStatus('idle')
-      return
-    }
+    if (!isRemoteFont(fontFamilyClass)) return
 
     let cancelled = false
-    setLoadStatus('loading')
-
     void loadFont(fontFamilyClass as RemoteFontFamily).then((ok) => {
       if (cancelled) return
-      setLoadStatus(ok ? 'ready' : 'error')
+      setRemoteStatus(ok ? 'ready' : 'error')
     })
 
     return () => {

@@ -1,8 +1,8 @@
+import { cn } from 'cn'
 import { ArrowLeft } from 'lucide-react'
 
 import { AspectRatio } from '@/components/ui/aspect-ratio'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 import type { FeedMixMediaItem } from '@/lib/weibo/models/feed'
 
 import { VideoPlayback } from '../media-player/video-playback'
