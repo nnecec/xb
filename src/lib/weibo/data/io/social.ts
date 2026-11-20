@@ -1,15 +1,9 @@
+import { adaptCommentsResponse, type WeiboCommentsPayload } from '@/lib/weibo/data/io/comments'
+import { adaptLikes, type WeiboLikesPayload } from '@/lib/weibo/data/io/likes'
+import { adaptMentionsResponse, type WeiboMentionsPayload } from '@/lib/weibo/data/io/mentions'
 import type { NotificationsPage } from '@/lib/weibo/models/notification'
 import type { RelationPage, WeiboFriendsPayload } from '@/lib/weibo/models/user-relation'
-import {
-  adaptCommentsResponse,
-  type WeiboCommentsPayload,
-} from '@/lib/weibo/services/adapters/comments'
 import { adaptFriendsResponse } from '@/lib/weibo/services/adapters/friends'
-import { adaptLikes, type WeiboLikesPayload } from '@/lib/weibo/services/adapters/likes'
-import {
-  adaptMentionsResponse,
-  type WeiboMentionsPayload,
-} from '@/lib/weibo/services/adapters/mentions'
 import { wbGet } from '@/lib/weibo/services/client'
 import { WEIBO_ENDPOINTS } from '@/lib/weibo/services/endpoints'
 import { mweiboFetch } from '@/lib/weibo/services/m-weibo-client'
