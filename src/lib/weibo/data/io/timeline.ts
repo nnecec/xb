@@ -128,11 +128,7 @@ export async function loadHomeTimeline(
   })
 }
 
-export async function loadFollowGroups(): Promise<FollowGroups> {
-  const payload = await wbGet<ExploreGroupsPayload>(WEIBO_ENDPOINTS.exploreGroups, {
-    is_new_segment: 1,
-    fetch_hot: 1,
-  })
+export function adaptFollowGroupsResponse(payload: ExploreGroupsPayload): FollowGroups {
   return {
     groups:
       (payload.groups ?? [])
@@ -145,6 +141,14 @@ export async function loadFollowGroups(): Promise<FollowGroups> {
       friendCircle: getDefaultFollowGroup(payload, '互相关注'),
     },
   }
+}
+
+export async function loadFollowGroups(): Promise<FollowGroups> {
+  const payload = await wbGet<ExploreGroupsPayload>(WEIBO_ENDPOINTS.exploreGroups, {
+    is_new_segment: 1,
+    fetch_hot: 1,
+  })
+  return adaptFollowGroupsResponse(payload)
 }
 
 async function loadHomeTimelineDefaultGroupId(
