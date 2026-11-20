@@ -1,17 +1,45 @@
+import { normalizeCursor } from '@/lib/weibo/data/io/cursor'
 import type { WeiboEmoticonConfig } from '@/lib/weibo/models/emoticon'
 import type { CommentItem, StatusCommentsPage } from '@/lib/weibo/models/status'
 import type { StatusDetail } from '@/lib/weibo/models/status'
+import type { CommentFilterOption } from '@/lib/weibo/models/status'
+import type { WeiboStatus } from '@/lib/weibo/models/weibo-api'
+import type { WeiboLongTextData } from '@/lib/weibo/models/weibo-api'
 import {
   adaptEmoticonConfigResponse,
   type WeiboEmoticonPayload,
 } from '@/lib/weibo/services/adapters/emoticon'
-import {
-  adaptStatusCommentsResponse,
-  adaptStatusDetailResponse,
-} from '@/lib/weibo/services/adapters/status'
 import { wbGet } from '@/lib/weibo/services/client'
 import { WEIBO_ENDPOINTS } from '@/lib/weibo/services/endpoints'
-import type { WeiboLongTextData } from '@/lib/weibo/utils/transform'
+import { toCommentItem, toFeedItem } from '@/lib/weibo/utils/transform'
+
+interface StatusCommentsPayload {
+  data?: WeiboStatus[]
+  max_id?: string | number
+  filter_group?: CommentFilterOption[]
+  total_number?: number
+}
+
+function isWeiboStatusLike(value: unknown): value is WeiboStatus {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+  const object = value as Record<string, unknown>
+  return 'user' in object || typeof object.idstr === 'string' || 'retweeted_status' in object
+}
+
+function adaptStatusDetailResponse(payload: unknown): StatusDetail {
+  const root = payload as Record<string, unknown> | null
+  const data = root && typeof root.data === 'object' && root.data !== null ? root.data : payload
+  return { status: toFeedItem(isWeiboStatusLike(data) ? data : ({} as WeiboStatus)) }
+}
+
+function adaptStatusCommentsResponse(payload: StatusCommentsPayload): StatusCommentsPage {
+  return {
+    items: Array.isArray(payload.data) ? payload.data.map(toCommentItem) : [],
+    nextCursor: normalizeCursor(payload.max_id),
+    filterGroup: payload.filter_group,
+    total: payload.total_number,
+  }
+}
 
 export async function loadStatusDetail(statusId: string): Promise<StatusDetail> {
   const payload = await wbGet<unknown>(WEIBO_ENDPOINTS.statusDetail, {
