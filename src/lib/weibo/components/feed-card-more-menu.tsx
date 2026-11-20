@@ -84,14 +84,14 @@ export function FeedCardMoreMenu({
             type="button"
             variant="ghost"
             size="icon"
-            className={cn('size-8 shrink-0', className)}
+            className={cn('shrink-0', className)}
             aria-label="更多操作"
             onClick={(event) => {
               event.preventDefault()
               event.stopPropagation()
             }}
           >
-            <MoreHorizontal className="size-4" />
+            <MoreHorizontal />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
@@ -106,7 +106,7 @@ export function FeedCardMoreMenu({
                 openGenImage(item!)
               }}
             >
-              <Image className="mr-2 size-4" />
+              <Image />
               生图
             </DropdownMenuItem>
           ) : null}
@@ -118,7 +118,7 @@ export function FeedCardMoreMenu({
               }}
               disabled={downloadLoading}
             >
-              <Download className="mr-2 size-4" />
+              <Download />
               批量下载
             </DropdownMenuItem>
           )}
@@ -139,7 +139,7 @@ export function FeedCardMoreMenu({
               }}
               disabled={favoriteLoading}
             >
-              <Bookmark className="mr-2 size-4" fill={favorited ? 'currentColor' : 'none'} />
+              <Bookmark fill={favorited ? 'currentColor' : 'none'} />
               {favorited ? '取消收藏' : '收藏'}
             </DropdownMenuItem>
           )}
@@ -158,7 +158,7 @@ export function FeedCardMoreMenu({
                   })
               }}
             >
-              <Link className="mr-2 size-4" />
+              <Link />
               复制链接
             </DropdownMenuItem>
           )}
@@ -169,7 +169,7 @@ export function FeedCardMoreMenu({
                 onCopyText?.()
               }}
             >
-              <Copy className="mr-2 size-4" />
+              <Copy />
               复制内容
             </DropdownMenuItem>
           )}
@@ -181,7 +181,7 @@ export function FeedCardMoreMenu({
                 setConfirmOpen(true)
               }}
             >
-              <Trash className="mr-2 size-4" />
+              <Trash />
               删除
             </DropdownMenuItem>
           )}

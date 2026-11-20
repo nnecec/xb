@@ -177,8 +177,8 @@ export function UserHoverCard(props: UserHoverCardProps) {
               />
 
               <Link to={`/n/${encodeURIComponent(profile.name)}`}>
-                <Button variant="outline" className="w-full flex-1 gap-1.5 py-2">
-                  <UserRound className="size-3.5" />
+                <Button variant="outline" className="w-full flex-1">
+                  <UserRound data-icon="inline-start" />
                   主页
                 </Button>
               </Link>

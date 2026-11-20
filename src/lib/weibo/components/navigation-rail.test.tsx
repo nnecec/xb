@@ -171,8 +171,9 @@ describe('NavigationRail', () => {
     renderNavigationRail()
 
     const rewriteLabel = screen.getByText('返回原模式')
-    expect(rewriteLabel.parentElement).toHaveClass('justify-between')
-    expect(screen.getByRole('complementary')).toHaveClass('w-[204px]', 'overflow-y-auto')
+    expect(rewriteLabel.parentElement).toHaveClass('justify-end')
+    expect(screen.getByRole('complementary')).toHaveClass('overflow-y-auto')
+    expect(screen.getByRole('complementary')).toHaveStyle({ width: '204px' })
   })
 
   it('announces unread navigation entries in addition to showing their badge', async () => {

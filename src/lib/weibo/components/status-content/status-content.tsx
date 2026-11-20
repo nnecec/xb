@@ -407,10 +407,13 @@ function ReplyChainView({
                 type="button"
                 size="xs"
                 variant="ghost"
-                className="group mt-2 flex w-fit items-center gap-1"
+                className="group mt-2 w-fit"
                 onClick={(event) => event.stopPropagation()}
               >
-                <ChevronRightIcon className="size-3 transition-transform group-data-[state=open]:rotate-90" />
+                <ChevronRightIcon
+                  data-icon="inline-start"
+                  className="transition-transform group-data-[state=open]:rotate-90"
+                />
                 <span className="text-xs">{content.chain.middle.length} 条引用</span>
               </Button>
             </CollapsibleTrigger>

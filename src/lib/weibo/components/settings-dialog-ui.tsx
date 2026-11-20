@@ -66,7 +66,7 @@ export function DialogContentMaybeForced({
             aria-label="关闭"
             className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring/50 absolute top-3 right-3 rounded-md p-2 transition-colors focus-visible:ring-3 focus-visible:outline-none"
           >
-            <XIcon aria-hidden="true" className="size-4" />
+            <XIcon aria-hidden="true" />
             <span className="sr-only">关闭</span>
           </DialogPrimitive.Close>
         </DialogPrimitive.Content>
@@ -94,9 +94,9 @@ export function SidebarItem({
       static
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
-      className="w-full justify-start gap-2.5 px-3"
+      className="w-full justify-start"
     >
-      <Icon aria-hidden="true" className="size-4 shrink-0" />
+      <Icon aria-hidden="true" data-icon="inline-start" />
       {label}
     </Button>
   )

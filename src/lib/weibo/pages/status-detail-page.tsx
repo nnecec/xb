@@ -198,7 +198,7 @@ function StatusDetailTopBar({
                 className="shrink-0"
                 onClick={onBack}
               >
-                <ArrowLeft className="size-4" />
+                <ArrowLeft />
               </Button>
             ) : null}
             <div className="relative min-w-0 flex-1 overflow-hidden">

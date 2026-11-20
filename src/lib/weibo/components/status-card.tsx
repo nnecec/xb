@@ -574,7 +574,7 @@ function StatusCardView({ status, role }: { status: FeedItem; role: StatusCardRo
                 void controller.unfavorite(resolvedItem.id)
               }}
             >
-              <Bookmark className="mr-1 size-3" />
+              <Bookmark data-icon="inline-start" />
               取消收藏
             </Button>
           ) : null}

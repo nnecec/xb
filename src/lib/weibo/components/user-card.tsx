@@ -20,11 +20,9 @@ export function UserCard({ user, showFollowButton = true }: UserCardProps) {
       onClick={() => runtime.navigate(`/u/${user.id}`)}
     >
       <div className="flex items-start gap-3">
-        <Avatar className="size-12 shrink-0">
+        <Avatar size="lg">
           <AvatarImage src={user.avatarLarge} alt={user.name} />
-          <AvatarFallback className="text-sm font-semibold">
-            {user.name?.slice(0, 1).toUpperCase() || '?'}
-          </AvatarFallback>
+          <AvatarFallback>{user.name?.slice(0, 1).toUpperCase() || '?'}</AvatarFallback>
         </Avatar>
 
         <div className="flex min-w-0 flex-1 flex-col gap-1">

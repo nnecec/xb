@@ -13,15 +13,9 @@ export function FontPreviewCard() {
         <div className="flex min-w-0 flex-1 items-center gap-1.5">
           <span className="truncate text-sm font-semibold">用户名称</span>
           <Badge variant="secondary">22:00</Badge>
-          {isRemote && loadStatus === 'loading' ? (
-            <Badge variant="outline" className="text-muted-foreground">
-              加载中
-            </Badge>
-          ) : null}
+          {isRemote && loadStatus === 'loading' ? <Badge variant="outline">加载中</Badge> : null}
           {isRemote && loadStatus === 'error' ? (
-            <Badge variant="outline" className="text-destructive">
-              加载失败
-            </Badge>
+            <Badge variant="destructive">加载失败</Badge>
           ) : null}
         </div>
       </div>

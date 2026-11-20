@@ -168,11 +168,11 @@ export const CommentCard = memo(function CommentCard({
               type="button"
               variant="ghost"
               size="icon-sm"
-              className={cn('text-muted-foreground size-8 shrink-0', HIT_TARGET)}
+              className={cn('text-muted-foreground shrink-0', HIT_TARGET)}
               aria-label="删除评论"
               onClick={() => setConfirmDeleteOpen(true)}
             >
-              <Trash2 className="size-3.5" />
+              <Trash2 />
             </Button>
           </div>
         ) : null}
@@ -222,13 +222,13 @@ export const CommentCard = memo(function CommentCard({
             aria-label="回复评论"
             aria-expanded={showInlineReply}
             className={cn(
-              'text-muted-foreground size-8',
+              'text-muted-foreground',
               HIT_TARGET,
               'hover:bg-sky-500/10 hover:text-sky-500',
             )}
             onClick={handleReplyClick}
           >
-            <MessageCircleIcon className="size-3.5" />
+            <MessageCircleIcon />
           </Button>
           <Button
             type="button"

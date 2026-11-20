@@ -125,7 +125,7 @@ export function ColumnToolbarMenuButton() {
           data-column-control
           onPointerDown={(event) => event.stopPropagation()}
         >
-          <MoreHorizontal className="size-4" />
+          <MoreHorizontal />
         </Button>
       </DropdownMenuPrimitive.Trigger>
       <DropdownMenuPrimitive.Portal container={getUiPortalContainer()}>

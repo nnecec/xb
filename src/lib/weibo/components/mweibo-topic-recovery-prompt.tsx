@@ -17,11 +17,11 @@ export function MweiboTopicRecoveryPrompt({
   return (
     <Card className="mx-4 my-6 rounded-none border-x-0 bg-transparent shadow-none">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
+        <CardTitle className="flex items-center gap-2">
           {captcha ? (
-            <ShieldAlertIcon aria-hidden="true" className="size-4 text-amber-500" />
+            <ShieldAlertIcon aria-hidden="true" className="text-amber-500" />
           ) : (
-            <TriangleAlertIcon aria-hidden="true" className="size-4 text-amber-500" />
+            <TriangleAlertIcon aria-hidden="true" className="text-amber-500" />
           )}
           {captcha ? '需要人机验证' : '话题内容暂时不可用'}
         </CardTitle>

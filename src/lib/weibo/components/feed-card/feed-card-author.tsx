@@ -75,7 +75,7 @@ export function StatusCardAuthor({
           ) : null}
         </div>
         {showPublishInfo && (item.source || item.regionName) ? (
-          <CardDescription className="text-xs">
+          <CardDescription>
             {[item.source, item.regionName].filter(Boolean).join(' ')}
           </CardDescription>
         ) : null}

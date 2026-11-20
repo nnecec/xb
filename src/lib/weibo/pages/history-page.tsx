@@ -179,11 +179,7 @@ export function HistoryPage({ onOpenEntry }: { onOpenEntry?: (entry: HistoryEntr
               </Popover>
               <Dialog open={clearConfirmOpen} onOpenChange={setClearConfirmOpen}>
                 <DialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-muted-foreground hover:text-destructive"
-                  >
+                  <Button variant="ghost" size="icon" className="text-muted-foreground">
                     <BrushCleaning />
                   </Button>
                 </DialogTrigger>
@@ -230,9 +226,7 @@ export function HistoryPage({ onOpenEntry }: { onOpenEntry?: (entry: HistoryEntr
           {groupedEntries.map((group) => (
             <div key={group.label}>
               <ItemHeader className="px-4 py-2">
-                <ItemTitle className="text-muted-foreground text-xs font-medium">
-                  {group.label}
-                </ItemTitle>
+                <ItemTitle className="text-muted-foreground">{group.label}</ItemTitle>
               </ItemHeader>
               {group.entries.map((entry) => {
                 const to =
@@ -242,11 +236,9 @@ export function HistoryPage({ onOpenEntry }: { onOpenEntry?: (entry: HistoryEntr
                 const content = (
                   <>
                     <ItemMedia variant="image">
-                      <Avatar className="size-9">
+                      <Avatar>
                         {entry.authorAvatar && <AvatarImage src={entry.authorAvatar} />}
-                        <AvatarFallback className="text-xs">
-                          {entry.authorName.charAt(0)}
-                        </AvatarFallback>
+                        <AvatarFallback>{entry.authorName.charAt(0)}</AvatarFallback>
                       </Avatar>
                     </ItemMedia>
                     <ItemContent>
@@ -262,7 +254,7 @@ export function HistoryPage({ onOpenEntry }: { onOpenEntry?: (entry: HistoryEntr
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="size-7"
+                        className="shrink-0"
                         onClick={(e) => {
                           e.preventDefault()
                           e.stopPropagation()
@@ -270,7 +262,7 @@ export function HistoryPage({ onOpenEntry }: { onOpenEntry?: (entry: HistoryEntr
                         }}
                         aria-label="移除"
                       >
-                        <Trash2 className="size-3.5" />
+                        <Trash2 />
                       </Button>
                     </ItemActions>
                   </>

@@ -58,8 +58,8 @@ export function FeedCommentsExpanded({ id, item, onCollapse }: FeedCommentsExpan
           <div className="flex gap-2">
             {totalNumber > 0 && (
               <Link to={`/${item.author.id}/${item.mblogId}`} className="flex-1">
-                <Button variant="ghost" className="text-primary w-full gap-2">
-                  <MessageCircle className="size-3.5" />
+                <Button variant="ghost" className="w-full">
+                  <MessageCircle data-icon="inline-start" />
                   查看全部 {totalNumber} 条评论
                 </Button>
               </Link>
@@ -67,14 +67,14 @@ export function FeedCommentsExpanded({ id, item, onCollapse }: FeedCommentsExpan
             {onCollapse && (
               <Button
                 variant="ghost"
-                className="text-muted-foreground gap-2"
+                className="text-muted-foreground"
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
                   onCollapse()
                 }}
               >
-                <ChevronUp className="size-3.5" />
+                <ChevronUp data-icon="inline-start" />
                 收起评论
               </Button>
             )}

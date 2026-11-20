@@ -56,7 +56,7 @@ function NotificationHeader({
               </UserHoverCard>
               <CreatedAtBadge label={createdAtLabel} />
             </div>
-            <CardDescription className="text-xs">{source ?? ''}</CardDescription>
+            <CardDescription>{source ?? ''}</CardDescription>
           </div>
         </div>
       </div>

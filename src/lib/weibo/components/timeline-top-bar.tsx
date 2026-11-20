@@ -99,7 +99,7 @@ export function TimelineTopBar<TitleValue extends string = string>({
                 className="shrink-0"
                 onClick={runtime.back}
               >
-                <ArrowLeft className="size-4" />
+                <ArrowLeft />
               </Button>
             ) : null}
             {showMenu ? (
@@ -112,7 +112,7 @@ export function TimelineTopBar<TitleValue extends string = string>({
                     onPointerDown={(event) => event.stopPropagation()}
                   >
                     <span className="text-foreground truncate text-lg font-semibold">{title}</span>
-                    <ChevronDown className="text-muted-foreground size-4 shrink-0" />
+                    <ChevronDown data-icon="inline-end" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-56">
@@ -132,9 +132,7 @@ export function TimelineTopBar<TitleValue extends string = string>({
                             className="justify-between"
                           >
                             <span className="truncate">{option.label}</span>
-                            {option.value === activeTitleValue ? (
-                              <Check className="size-4" />
-                            ) : null}
+                            {option.value === activeTitleValue ? <Check /> : null}
                           </DropdownMenuItem>
                         ))}
                       </DropdownMenuGroup>

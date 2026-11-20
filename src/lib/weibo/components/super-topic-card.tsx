@@ -16,7 +16,7 @@ function SuperTopicItemLink({ item }: { item: SuperTopicItem }) {
     'group hover:bg-accent/80 focus-visible:bg-accent/80 focus-visible:ring-ring/50 flex min-w-0 items-center gap-2 rounded-lg px-2 py-2 transition-colors focus-visible:ring-2 focus-visible:outline-none'
   const content = (
     <>
-      <Avatar size="sm" className="size-8">
+      <Avatar size="sm">
         <AvatarImage src={item.pic} alt={item.title} />
         <AvatarFallback>{fallback}</AvatarFallback>
       </Avatar>
