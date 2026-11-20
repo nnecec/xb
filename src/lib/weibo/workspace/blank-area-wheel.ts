@@ -13,7 +13,7 @@ function isVerticalWheel(event: WheelEvent): boolean {
 }
 
 function hasVerticalOverflow(element: HTMLElement): boolean {
-  const { overflowY } = getComputedStyle(element)
+  const overflowY = element.style.overflowY || getComputedStyle(element).overflowY
   if (overflowY !== 'auto' && overflowY !== 'scroll' && overflowY !== 'overlay') return false
   return element.scrollHeight - element.clientHeight > 1
 }
