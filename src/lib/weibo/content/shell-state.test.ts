@@ -47,7 +47,8 @@ describe('bindShellState', () => {
     expect(container.classList.contains('dark')).toBe(true)
     expect(container.style.colorScheme).toBe('dark')
     expect(appRoot.getAttribute('data-xb-hidden')).toBeNull()
-    expect(document.documentElement.style.overflow).toBe('auto')
+    expect(document.documentElement.style.overflowY).toBe('auto')
+    expect(document.documentElement.style.overflowX).toBe('')
 
     cleanup()
   })
@@ -133,7 +134,7 @@ describe('bindShellState', () => {
     expect(container.classList.contains('dark')).toBe(false)
     expect(container.style.colorScheme).toBe('')
     expect(appRoot.getAttribute('data-xb-hidden')).toBeNull()
-    expect(document.documentElement.style.overflow).toBe('auto')
+    expect(document.documentElement.style.overflowY).toBe('auto')
     expect(document.documentElement.style.overflowX).toBe('scroll')
     expect(document.body.style.overflowX).toBe('auto')
   })

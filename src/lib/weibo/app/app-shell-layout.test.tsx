@@ -156,7 +156,7 @@ describe('ShellFrame', () => {
     expect(contentMain).toHaveAttribute('tabindex', '-1')
   })
 
-  it('keeps one fixed back-to-top button when the right rail is hidden', () => {
+  it('hides the right rail without adding a floating back-to-top button', () => {
     const mainRef = createRef<HTMLDivElement>()
     render(
       <QueryClientProvider client={queryClient}>
@@ -179,34 +179,7 @@ describe('ShellFrame', () => {
     )
 
     expect(screen.queryByTestId('right-rail')).not.toBeInTheDocument()
-    const backToTopButtons = screen.getAllByRole('button', { name: '返回顶部' })
-    expect(backToTopButtons).toHaveLength(1)
-    expect(backToTopButtons[0]).toHaveClass('fixed', 'right-4', 'bottom-4')
-  })
-
-  it('keeps the back-to-top button available in the workspace', () => {
-    const mainRef = createRef<HTMLDivElement>()
-    render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
-          <ShellFrame
-            pageKind="home"
-            viewingProfileUserId={null}
-            rewriteEnabled
-            theme="system"
-            onRewriteEnabledChange={vi.fn()}
-            onThemeChange={vi.fn()}
-            onSettingsOpen={vi.fn()}
-            onComposeOpen={vi.fn()}
-            mainRef={mainRef}
-          >
-            <div>center content</div>
-          </ShellFrame>
-        </MemoryRouter>
-      </QueryClientProvider>,
-    )
-
-    expect(screen.getByRole('button', { name: '返回顶部' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '返回顶部' })).not.toBeInTheDocument()
   })
 
   it('scrolls the main column when the pointer is over blank workspace space', () => {

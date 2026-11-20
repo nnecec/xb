@@ -228,8 +228,8 @@ export function bindShellState({
           document.documentElement.style.overflow || '',
         )
       }
-      document.documentElement.style.overflow = 'hidden'
       lockDocumentHorizontalOverflow()
+      document.documentElement.style.overflow = 'hidden'
       applyPageTakeover(appRoot)
       return
     }
