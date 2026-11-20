@@ -1,3 +1,4 @@
+import { adaptTimelineResponse, type WeiboTimelinePayload } from '@/lib/weibo/data/io/timeline'
 import type { TimelinePage } from '@/lib/weibo/models/feed'
 import type { ProfileFollowGroup, UserProfile } from '@/lib/weibo/models/profile'
 import type { ProfileSearchFilters } from '@/lib/weibo/route/profile-search-params'
@@ -7,8 +8,6 @@ import {
   type ProfileDetailPayload,
   type ProfileInfoPayload,
 } from '@/lib/weibo/services/adapters/profile'
-import type { WeiboTimelinePayload } from '@/lib/weibo/services/adapters/timeline'
-import { adaptTimelineResponse } from '@/lib/weibo/services/adapters/timeline'
 import { wbGet } from '@/lib/weibo/services/client'
 import { wbPostForm } from '@/lib/weibo/services/client'
 import { WEIBO_ENDPOINTS } from '@/lib/weibo/services/endpoints'
