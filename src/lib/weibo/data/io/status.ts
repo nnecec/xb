@@ -1,14 +1,38 @@
 import { normalizeCursor } from '@/lib/weibo/data/io/cursor'
-import type { WeiboEmoticonConfig } from '@/lib/weibo/models/emoticon'
+import type {
+  WeiboEmoticonConfig,
+  WeiboEmoticonGroup,
+  WeiboEmoticonItem,
+} from '@/lib/weibo/models/emoticon'
 import type { CommentItem, StatusCommentsPage } from '@/lib/weibo/models/status'
 import type { StatusDetail } from '@/lib/weibo/models/status'
 import type { CommentFilterOption } from '@/lib/weibo/models/status'
 import type { WeiboStatus } from '@/lib/weibo/models/weibo-api'
 import type { WeiboLongTextData } from '@/lib/weibo/models/weibo-api'
-import {
-  adaptEmoticonConfigResponse,
-  type WeiboEmoticonPayload,
-} from '@/lib/weibo/services/adapters/emoticon'
+
+interface WeiboEmoticonPayload {
+  data?: { emoticon?: Record<string, Record<string, Array<{ phrase?: string; url?: string }>>> }
+  emoticon?: Record<string, Record<string, Array<{ phrase?: string; url?: string }>>>
+}
+
+function adaptEmoticonConfigResponse(payload: WeiboEmoticonPayload): WeiboEmoticonConfig {
+  const root = payload.data?.emoticon ?? payload.emoticon ?? {}
+  const locale = root.ZH_CN ?? Object.values(root)[0] ?? {}
+  const groups: WeiboEmoticonGroup[] = []
+  const phraseMap: Record<string, WeiboEmoticonItem> = {}
+  for (const [title, entries] of Object.entries(locale)) {
+    const items = entries
+      .map((entry) => {
+        const phrase = entry.phrase?.trim() ?? ''
+        const url = entry.url?.trim() ?? ''
+        return phrase && url ? { phrase, url } : null
+      })
+      .filter((item): item is WeiboEmoticonItem => item !== null)
+    groups.push({ title, items })
+    for (const item of items) phraseMap[item.phrase] = item
+  }
+  return { groups, phraseMap }
+}
 import { wbGet } from '@/lib/weibo/services/client'
 import { WEIBO_ENDPOINTS } from '@/lib/weibo/services/endpoints'
 import { toCommentItem, toFeedItem } from '@/lib/weibo/utils/transform'
