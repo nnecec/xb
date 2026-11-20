@@ -3,14 +3,6 @@ import type { ExploreGroup } from '@/lib/weibo/models/explore'
 import type { TimelinePage } from '@/lib/weibo/models/feed'
 import type { SuperTopicPage } from '@/lib/weibo/models/super-topic'
 import {
-  adaptExploreHotResponse,
-  type ExploreHotPayload,
-} from '@/lib/weibo/services/adapters/explore'
-import {
-  adaptExploreGroupsResponse,
-  type ExploreGroupsPayload,
-} from '@/lib/weibo/services/adapters/explore-groups'
-import {
   adaptEntertainmentBandResponse,
   adaptHotSearchResponse,
   adaptLifeBandResponse,
@@ -34,6 +26,8 @@ import {
 } from '@/lib/weibo/services/adapters/super-topic'
 import { wbGet } from '@/lib/weibo/services/client'
 import { WEIBO_ENDPOINTS } from '@/lib/weibo/services/endpoints'
+
+import { adaptTimelineResponse, type WeiboTimelinePayload } from './timeline'
 
 export async function loadHotSearchByType(type: HotSearchType = 'hot'): Promise<HotSearchPage> {
   switch (type) {
@@ -82,7 +76,7 @@ export interface LoadExploreHotOptions {
 export async function loadExploreHot(options: LoadExploreHotOptions = {}): Promise<TimelinePage> {
   const isFirstPage = !options.cursor
 
-  const payload = await wbGet<ExploreHotPayload>(WEIBO_ENDPOINTS.exploreHot, {
+  const payload = await wbGet<WeiboTimelinePayload>(WEIBO_ENDPOINTS.exploreHot, {
     refresh: isFirstPage ? 0 : 2,
     group_id: options.groupId ?? '102803',
     containerid: options.containerid ?? '102803',
@@ -90,7 +84,26 @@ export async function loadExploreHot(options: LoadExploreHotOptions = {}): Promi
     max_id: isFirstPage ? 0 : options.cursor,
     count: 10,
   })
-  return adaptExploreHotResponse(payload)
+  return adaptTimelineResponse(payload)
+}
+
+interface ExploreGroupsPayload {
+  groups?: Array<{
+    group?: Array<{ gid?: string; title?: string; containerid?: string }>
+    title?: string
+  }>
+}
+
+export function adaptExploreGroupsResponse(payload: ExploreGroupsPayload): ExploreGroup[] {
+  return (
+    payload.groups
+      ?.find((item) => item.title === '我的频道')
+      ?.group?.flatMap((group) =>
+        group.gid && group.title && group.containerid
+          ? [{ gid: group.gid, title: group.title, containerid: group.containerid }]
+          : [],
+      ) ?? []
+  )
 }
 
 export async function loadExploreGroups(): Promise<ExploreGroup[]> {
