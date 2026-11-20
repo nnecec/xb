@@ -129,7 +129,7 @@ export function ShellFrame({
     locationRef.current = location
   }, [location])
   const columnWidthPx = useAppSettings((state) =>
-    resolveColumnWidthPx(state.columnWidth, state.customColumnWidth),
+    resolveColumnWidthPx(state.navigation.columnWidth, state.navigation.customColumnWidth),
   )
   const shouldReduceMotion = useReducedMotion()
   const contentMainRef = useRef<HTMLElement | null>(null)
@@ -257,7 +257,7 @@ export function ShellFrame({
 }
 
 export function RewritePausedCard({ onResume }: { onResume: () => void }) {
-  const collapsed = useAppSettings((state) => state.xbEntryCollapsed)
+  const collapsed = useAppSettings((state) => state.navigation.xbEntryCollapsed)
   const updateSettings = useAppSettings((state) => state.updateSettings)
   const shouldReduceMotion = useReducedMotion()
   const bodyTransition = shouldReduceMotion
@@ -266,7 +266,9 @@ export function RewritePausedCard({ onResume }: { onResume: () => void }) {
 
   const toggleCollapsed = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation()
-    void updateSettings({ xbEntryCollapsed: !collapsed })
+    void updateSettings({
+      navigation: { xbEntryCollapsed: !collapsed },
+    })
   }
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {

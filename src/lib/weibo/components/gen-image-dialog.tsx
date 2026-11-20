@@ -181,11 +181,11 @@ export function GenImageDialog() {
     updateSettings,
   } = useAppSettings(
     useShallow((s) => ({
-      imageGenTheme: s.imageGenTheme,
-      imageGenShowDataArea: s.imageGenShowDataArea,
-      imageGenShowFullImages: s.imageGenShowFullImages,
-      imageGenShowWeiboLink: s.imageGenShowWeiboLink,
-      imageGenCardStyle: s.imageGenCardStyle,
+      imageGenTheme: s.imageGen.imageGenTheme,
+      imageGenShowDataArea: s.imageGen.imageGenShowDataArea,
+      imageGenShowFullImages: s.imageGen.imageGenShowFullImages,
+      imageGenShowWeiboLink: s.imageGen.imageGenShowWeiboLink,
+      imageGenCardStyle: s.imageGen.imageGenCardStyle,
       updateSettings: s.updateSettings,
     })),
   )
@@ -243,7 +243,9 @@ export function GenImageDialog() {
                     <Select
                       value={imageGenCardStyle}
                       onValueChange={(value) =>
-                        void updateSettings({ imageGenCardStyle: value as CardStyle })
+                        void updateSettings({
+                          imageGen: { imageGenCardStyle: value as CardStyle },
+                        })
                       }
                     >
                       <SelectTrigger className="w-[180px]">
@@ -269,7 +271,9 @@ export function GenImageDialog() {
                   <Switch
                     checked={imageGenShowDataArea}
                     onCheckedChange={(checked) =>
-                      void updateSettings({ imageGenShowDataArea: checked })
+                      void updateSettings({
+                        imageGen: { imageGenShowDataArea: checked },
+                      })
                     }
                   />
                 </ItemActions>
@@ -283,7 +287,9 @@ export function GenImageDialog() {
                   <Switch
                     checked={imageGenShowFullImages}
                     onCheckedChange={(checked) =>
-                      void updateSettings({ imageGenShowFullImages: checked })
+                      void updateSettings({
+                        imageGen: { imageGenShowFullImages: checked },
+                      })
                     }
                   />
                 </ItemActions>
@@ -297,7 +303,9 @@ export function GenImageDialog() {
                   <Switch
                     checked={imageGenShowWeiboLink}
                     onCheckedChange={(checked) =>
-                      void updateSettings({ imageGenShowWeiboLink: checked })
+                      void updateSettings({
+                        imageGen: { imageGenShowWeiboLink: checked },
+                      })
                     }
                   />
                 </ItemActions>
@@ -310,7 +318,9 @@ export function GenImageDialog() {
                   <Switch
                     checked={imageGenTheme === 'dark'}
                     onCheckedChange={(checked) =>
-                      void updateSettings({ imageGenTheme: checked ? 'dark' : 'light' })
+                      void updateSettings({
+                        imageGen: { imageGenTheme: checked ? 'dark' : 'light' },
+                      })
                     }
                   />
                 </ItemActions>

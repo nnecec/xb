@@ -112,9 +112,12 @@ describe('StatusDetailPage', () => {
     })
     store.setState({
       ...store.getState(),
-      theme: 'system',
-      rewriteEnabled: true,
       isHydrated: true,
+      appearance: {
+        ...getAppSettingsStore().getState().appearance,
+        theme: 'system',
+        rewriteEnabled: true,
+      },
     })
     vi.mocked(loadStatusDetail).mockResolvedValue({
       status: {

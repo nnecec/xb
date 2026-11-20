@@ -167,7 +167,7 @@ export function bindShellState({
 
   const applyShellState = () => {
     const settings = settingsStore.getState()
-    const isDark = resolveIsDarkMode(settings.theme, mediaQuery.matches)
+    const isDark = resolveIsDarkMode(settings.appearance.theme, mediaQuery.matches)
 
     container.classList.toggle('dark', isDark)
     container.style.colorScheme = isDark ? 'dark' : 'light'
@@ -175,15 +175,17 @@ export function bindShellState({
 
     // Apply background color preset CSS variables
     const preset = isDark
-      ? DARK_BG_PRESETS.find((p) => p.key === settings.darkModeBgColor)
-      : LIGHT_BG_PRESETS.find((p) => p.key === settings.lightModeBgColor)
+      ? DARK_BG_PRESETS.find((p) => p.key === settings.appearance.darkModeBgColor)
+      : LIGHT_BG_PRESETS.find((p) => p.key === settings.appearance.lightModeBgColor)
 
     if (preset) {
       container.style.setProperty('--background', preset.background)
       container.style.setProperty('--card', preset.card)
     }
 
-    const customThemeCss = isDark ? settings.customThemeDarkCss : settings.customThemeLightCss
+    const customThemeCss = isDark
+      ? settings.themes.customThemeDarkCss
+      : settings.themes.customThemeLightCss
     if (customThemeCss.trim()) {
       const variables = parseCustomThemeVariables(customThemeCss)
       for (const [name, value] of Object.entries(variables)) {
@@ -192,8 +194,16 @@ export function bindShellState({
     }
 
     // 用户字体设置优先于主题 --font-*（在主题变量之后写入）
-    applyAppFontFamily(container, settings.fontFamilyClass, settings.fontApplyScope)
-    applyTypographyVariables(container, settings.uiFontSize, settings.contentFontSize)
+    applyAppFontFamily(
+      container,
+      settings.appearance.fontFamilyClass,
+      settings.appearance.fontApplyScope,
+    )
+    applyTypographyVariables(
+      container,
+      settings.appearance.uiFontSize,
+      settings.appearance.contentFontSize,
+    )
 
     // When route is unsupported, release the host page and hide xb UI
     // so Weibo's native UI is visible and functional.
@@ -211,7 +221,7 @@ export function bindShellState({
     // Route is supported — make sure xb container is visible
     container.style.removeProperty('display')
 
-    if (settings.rewriteEnabled) {
+    if (settings.appearance.rewriteEnabled) {
       if (!document.documentElement.hasAttribute(OVERFLOW_STORAGE_KEY)) {
         document.documentElement.setAttribute(
           OVERFLOW_STORAGE_KEY,

@@ -16,7 +16,7 @@ const MAX_ZOOM = 3
 export function PhotoToolbar({ overlayProps }: PhotoToolbarProps) {
   const { scale, onScale, rotate, onRotate } = overlayProps
 
-  const photoLoopEnabled = useAppSettings((s) => s.photoLoopEnabled)
+  const photoLoopEnabled = useAppSettings((s) => s.media.photoLoopEnabled)
   const updateSettings = useAppSettings((s) => s.updateSettings)
 
   const handleZoomIn = () => {
@@ -38,7 +38,9 @@ export function PhotoToolbar({ overlayProps }: PhotoToolbarProps) {
   }
 
   const handleToggleLoop = () => {
-    updateSettings({ photoLoopEnabled: !photoLoopEnabled })
+    updateSettings({
+      media: { photoLoopEnabled: !photoLoopEnabled },
+    })
   }
 
   const canZoomIn = scale < MAX_ZOOM

@@ -37,7 +37,7 @@ import {
   WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_MAX,
   WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_MIN,
   WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_STEP,
-  type AppSettings,
+  type FlatAppSettings,
   type FeedInteractionMode,
   type FeedPrimaryActionId,
   type FeedToolbarButtonId,
@@ -68,14 +68,14 @@ const MEDIA_SETTING_KEYS = [
   'weiboCardMultiMediaStripHeight',
   'rememberPlaybackRate',
   'playbackRate',
-] as const satisfies readonly (keyof AppSettings)[]
+] as const satisfies readonly (keyof FlatAppSettings)[]
 
 const ACTION_SETTING_KEYS = [
   'feedInteractionMode',
   'weiboCardShowInteractionCounts',
   'feedPrimaryActionOrder',
   'feedToolbarButtonIds',
-] as const satisfies readonly (keyof AppSettings)[]
+] as const satisfies readonly (keyof FlatAppSettings)[]
 
 const MEDIA_COLLAPSE_OPTIONS: Array<{
   id: WeiboCardMediaCollapseType
@@ -132,16 +132,29 @@ export function SettingsMediaSection({
 }: {
   updateSettings: AppSettingsStoreState['updateSettings']
 }) {
-  const settings = useAppSettings(useShallow((state) => state))
+  const settings = useAppSettings(
+    useShallow((state) => ({
+      weiboCardCollapsedMediaTypes: state.feed.weiboCardCollapsedMediaTypes,
+      weiboCardMultiMediaLayout: state.feed.weiboCardMultiMediaLayout,
+      weiboCardSingleImageMaxWidth: state.feed.weiboCardSingleImageMaxWidth,
+      weiboCardSingleVideoMaxWidth: state.feed.weiboCardSingleVideoMaxWidth,
+      weiboCardMultiMediaGridLimit: state.feed.weiboCardMultiMediaGridLimit,
+      weiboCardMultiMediaGridMaxWidth: state.feed.weiboCardMultiMediaGridMaxWidth,
+      weiboCardMultiMediaStripHeight: state.feed.weiboCardMultiMediaStripHeight,
+      rememberPlaybackRate: state.media.rememberPlaybackRate,
+    })),
+  )
 
   function handleMediaCollapseTypeToggle(type: WeiboCardMediaCollapseType, checked: boolean) {
     const selected = new Set(settings.weiboCardCollapsedMediaTypes)
     if (checked) selected.add(type)
     else selected.delete(type)
     void updateSettings({
-      weiboCardCollapsedMediaTypes: WEIBO_CARD_MEDIA_COLLAPSE_TYPES.filter((id) =>
-        selected.has(id),
-      ),
+      feed: {
+        weiboCardCollapsedMediaTypes: WEIBO_CARD_MEDIA_COLLAPSE_TYPES.filter((id) =>
+          selected.has(id),
+        ),
+      },
     })
   }
 
@@ -185,7 +198,7 @@ export function SettingsMediaSection({
           ]}
           onChange={(value) =>
             void updateSettings({
-              weiboCardMultiMediaLayout: value as WeiboCardMultiMediaLayout,
+              feed: { weiboCardMultiMediaLayout: value as WeiboCardMultiMediaLayout },
             })
           }
         />
@@ -197,8 +210,8 @@ export function SettingsMediaSection({
           checked={settings.rememberPlaybackRate}
           onCheckedChange={(checked) =>
             void updateSettings({
-              rememberPlaybackRate: checked,
               ...(checked ? {} : { playbackRate: 1 }),
+              media: { rememberPlaybackRate: checked },
             })
           }
         />
@@ -212,7 +225,11 @@ export function SettingsMediaSection({
           min={WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_MIN}
           max={WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_MAX}
           step={WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_STEP}
-          onChange={(value) => void updateSettings({ weiboCardSingleImageMaxWidth: value })}
+          onChange={(value) =>
+            void updateSettings({
+              feed: { weiboCardSingleImageMaxWidth: value },
+            })
+          }
         />
         <SliderSetting
           label="单视频最大宽度"
@@ -221,7 +238,11 @@ export function SettingsMediaSection({
           min={WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_MIN}
           max={WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_MAX}
           step={WEIBO_CARD_SINGLE_MEDIA_MAX_WIDTH_STEP}
-          onChange={(value) => void updateSettings({ weiboCardSingleVideoMaxWidth: value })}
+          onChange={(value) =>
+            void updateSettings({
+              feed: { weiboCardSingleVideoMaxWidth: value },
+            })
+          }
         />
         {settings.weiboCardMultiMediaLayout === 'grid' ? (
           <>
@@ -230,7 +251,9 @@ export function SettingsMediaSection({
                 value={String(settings.weiboCardMultiMediaGridLimit)}
                 onValueChange={(value) =>
                   void updateSettings({
-                    weiboCardMultiMediaGridLimit: Number(value) as WeiboCardMultiMediaGridLimit,
+                    feed: {
+                      weiboCardMultiMediaGridLimit: Number(value) as WeiboCardMultiMediaGridLimit,
+                    },
                   })
                 }
               >
@@ -254,7 +277,11 @@ export function SettingsMediaSection({
               min={WEIBO_CARD_MULTI_MEDIA_GRID_MAX_WIDTH_MIN}
               max={WEIBO_CARD_MULTI_MEDIA_GRID_MAX_WIDTH_MAX}
               step={WEIBO_CARD_MULTI_MEDIA_GRID_MAX_WIDTH_STEP}
-              onChange={(value) => void updateSettings({ weiboCardMultiMediaGridMaxWidth: value })}
+              onChange={(value) =>
+                void updateSettings({
+                  feed: { weiboCardMultiMediaGridMaxWidth: value },
+                })
+              }
             />
           </>
         ) : (
@@ -265,7 +292,11 @@ export function SettingsMediaSection({
             min={WEIBO_CARD_MULTI_MEDIA_STRIP_HEIGHT_MIN}
             max={WEIBO_CARD_MULTI_MEDIA_STRIP_HEIGHT_MAX}
             step={WEIBO_CARD_MULTI_MEDIA_STRIP_HEIGHT_STEP}
-            onChange={(value) => void updateSettings({ weiboCardMultiMediaStripHeight: value })}
+            onChange={(value) =>
+              void updateSettings({
+                feed: { weiboCardMultiMediaStripHeight: value },
+              })
+            }
           />
         )}
       </FineTuning>
@@ -284,14 +315,23 @@ export function SettingsActionsSection({
 }: {
   updateSettings: AppSettingsStoreState['updateSettings']
 }) {
-  const settings = useAppSettings(useShallow((state) => state))
+  const settings = useAppSettings(
+    useShallow((state) => ({
+      feedToolbarButtonIds: state.feed.feedToolbarButtonIds,
+      feedInteractionMode: state.feed.feedInteractionMode,
+      weiboCardShowInteractionCounts: state.feed.weiboCardShowInteractionCounts,
+      feedPrimaryActionOrder: state.feed.feedPrimaryActionOrder,
+    })),
+  )
 
   function handleToolbarButtonToggle(id: FeedToolbarButtonId, checked: boolean) {
     const selected = new Set(settings.feedToolbarButtonIds)
     if (checked) selected.add(id)
     else selected.delete(id)
     void updateSettings({
-      feedToolbarButtonIds: FEED_TOOLBAR_BUTTON_IDS.filter((buttonId) => selected.has(buttonId)),
+      feed: {
+        feedToolbarButtonIds: FEED_TOOLBAR_BUTTON_IDS.filter((buttonId) => selected.has(buttonId)),
+      },
     })
   }
 
@@ -302,7 +342,9 @@ export function SettingsActionsSection({
           aria-label="微博卡片行为"
           value={settings.feedInteractionMode}
           onValueChange={(value) =>
-            void updateSettings({ feedInteractionMode: value as FeedInteractionMode })
+            void updateSettings({
+              feed: { feedInteractionMode: value as FeedInteractionMode },
+            })
           }
           className="grid grid-cols-1 gap-2 sm:grid-cols-2"
         >
@@ -335,7 +377,9 @@ export function SettingsActionsSection({
           aria-label="显示微博互动数字"
           checked={settings.weiboCardShowInteractionCounts}
           onCheckedChange={(checked) =>
-            void updateSettings({ weiboCardShowInteractionCounts: checked })
+            void updateSettings({
+              feed: { weiboCardShowInteractionCounts: checked },
+            })
           }
         />
       </Field>
@@ -345,7 +389,11 @@ export function SettingsActionsSection({
           <Reorder.Group
             axis="x"
             values={settings.feedPrimaryActionOrder}
-            onReorder={(value) => void updateSettings({ feedPrimaryActionOrder: value })}
+            onReorder={(value) =>
+              void updateSettings({
+                feed: { feedPrimaryActionOrder: value },
+              })
+            }
             className="grid grid-cols-1 gap-2 sm:grid-cols-3"
           >
             {settings.feedPrimaryActionOrder.map((id) => {

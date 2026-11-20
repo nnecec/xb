@@ -65,7 +65,7 @@ export function HomeTimelinePage({ source }: HomeTimelinePageProps = {}) {
   const ctx = useAppShellContext()
   const runtime = usePageRuntime()
   const page = source ? { kind: 'home' as const, ...source } : runtime.page
-  const rewriteEnabled = useAppSettings((s) => s.rewriteEnabled)
+  const rewriteEnabled = useAppSettings((s) => s.appearance.rewriteEnabled)
 
   const pageTab = page.kind === 'home' ? page.tab : 'for-you'
   const isEnabled = rewriteEnabled && (source !== undefined || page.kind === 'home')

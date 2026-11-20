@@ -68,8 +68,8 @@ describe('ShellFrame', () => {
     })
     store.setState({
       ...store.getState(),
-      homeTab: 'for-you',
       isHydrated: true,
+      home: { ...store.getState().home, homeTab: 'for-you' },
     })
   })
 

@@ -25,7 +25,7 @@ export interface ExplorePageProps {
 export function ExplorePage({ source }: ExplorePageProps = {}) {
   const runtime = usePageRuntime()
   const page = source ? { kind: 'explore' as const, ...source } : runtime.page
-  const rewriteEnabled = useAppSettings((s) => s.rewriteEnabled)
+  const rewriteEnabled = useAppSettings((s) => s.appearance.rewriteEnabled)
 
   const groupId = page.kind === 'explore' ? page.groupId : '102803'
   const isEnabled = rewriteEnabled && (source !== undefined || page.kind === 'explore')

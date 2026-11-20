@@ -70,8 +70,8 @@ export function useVideoPlaybackSession({
 
   const { rememberPlaybackRate, savedPlaybackRate, updateSettings } = useAppSettings(
     useShallow((settings) => ({
-      rememberPlaybackRate: settings.rememberPlaybackRate,
-      savedPlaybackRate: settings.playbackRate,
+      rememberPlaybackRate: settings.media.rememberPlaybackRate,
+      savedPlaybackRate: settings.media.playbackRate,
       updateSettings: settings.updateSettings,
     })),
   )
@@ -208,7 +208,9 @@ export function useVideoPlaybackSession({
       if (!Number.isFinite(next) || next <= 0) return
       if (Math.abs(next - lastWrittenPlaybackRateRef.current) < 0.001) return
       lastWrittenPlaybackRateRef.current = next
-      void updateSettings({ playbackRate: next })
+      void updateSettings({
+        media: { playbackRate: next },
+      })
     }
     const handleEnterPictureInPicture = () => {
       isInPictureInPictureRef.current = true

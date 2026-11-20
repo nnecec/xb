@@ -22,7 +22,7 @@ export function FavoritesPage({
 } = {}) {
   const runtime = usePageRuntime()
   const page = runtime.page
-  const rewriteEnabled = useAppSettings((s) => s.rewriteEnabled)
+  const rewriteEnabled = useAppSettings((s) => s.appearance.rewriteEnabled)
 
   const uid = source?.uid ?? (page.kind === 'favorites' ? page.uid : '')
   const isEnabled = rewriteEnabled && (source !== undefined || page.kind === 'favorites')

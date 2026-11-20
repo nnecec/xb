@@ -23,7 +23,7 @@ import {
   CUSTOM_COLUMN_WIDTH_MAX,
   CUSTOM_COLUMN_WIDTH_MIN,
   CUSTOM_COLUMN_WIDTH_STEP,
-  type AppSettings,
+  type FlatAppSettings,
   type ColumnWidth,
   type MotionPreference,
 } from '@/lib/app-settings'
@@ -44,7 +44,7 @@ const DISPLAY_SETTING_KEYS = [
   'customColumnWidth',
   'motionPreference',
   'darkModeImageDim',
-] as const satisfies readonly (keyof AppSettings)[]
+] as const satisfies readonly (keyof FlatAppSettings)[]
 
 const WIDTH_OPTIONS = [
   { value: 'narrower', label: '更窄' },
@@ -121,10 +121,10 @@ export function SettingsDisplaySection({
 }) {
   const settings = useAppSettings(
     useShallow((state) => ({
-      columnWidth: state.columnWidth,
-      customColumnWidth: state.customColumnWidth,
-      motionPreference: state.motionPreference,
-      darkModeImageDim: state.darkModeImageDim,
+      columnWidth: state.navigation.columnWidth,
+      customColumnWidth: state.navigation.customColumnWidth,
+      motionPreference: state.appearance.motionPreference,
+      darkModeImageDim: state.appearance.darkModeImageDim,
     })),
   )
   const hasCustomColumnWidths = useWorkspace(
@@ -145,8 +145,16 @@ export function SettingsDisplaySection({
           customMax={CUSTOM_COLUMN_WIDTH_MAX}
           customStep={CUSTOM_COLUMN_WIDTH_STEP}
           customLabel="自定义列宽度"
-          onValueChange={(value) => void updateSettings({ columnWidth: value as ColumnWidth })}
-          onCustomValueChange={(value) => void updateSettings({ customColumnWidth: value })}
+          onValueChange={(value) =>
+            void updateSettings({
+              navigation: { columnWidth: value as ColumnWidth },
+            })
+          }
+          onCustomValueChange={(value) =>
+            void updateSettings({
+              navigation: { customColumnWidth: value },
+            })
+          }
         />
 
         <Field label="重置列宽" description="忘记拖动调整过的列宽，改用上面的列宽度">
@@ -181,7 +189,9 @@ export function SettingsDisplaySection({
               { value: 'reduced', label: '减少' },
             ]}
             onChange={(value) =>
-              void updateSettings({ motionPreference: value as MotionPreference })
+              void updateSettings({
+                appearance: { motionPreference: value as MotionPreference },
+              })
             }
           />
         </Field>
@@ -190,7 +200,11 @@ export function SettingsDisplaySection({
           <Switch
             aria-label="暗色模式降低图片亮度"
             checked={settings.darkModeImageDim}
-            onCheckedChange={(checked) => void updateSettings({ darkModeImageDim: checked })}
+            onCheckedChange={(checked) =>
+              void updateSettings({
+                appearance: { darkModeImageDim: checked },
+              })
+            }
           />
         </Field>
 

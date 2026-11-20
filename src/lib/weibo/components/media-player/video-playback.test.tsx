@@ -18,14 +18,12 @@ vi.mock('@reactuses/core', () => ({
 vi.mock('@/lib/app-settings-store', () => ({
   useAppSettings: (
     selector: (state: {
-      rememberPlaybackRate: boolean
-      playbackRate: number
+      media: { rememberPlaybackRate: boolean; playbackRate: number }
       updateSettings: ReturnType<typeof vi.fn>
     }) => unknown,
   ) =>
     selector({
-      rememberPlaybackRate: false,
-      playbackRate: 1,
+      media: { rememberPlaybackRate: false, playbackRate: 1 },
       updateSettings: vi.fn(),
     }),
   useShallow: (selector: unknown) => selector,
@@ -171,9 +169,9 @@ describe('VideoPlayback', () => {
           value: '1',
           setValue,
           options: [
-            { value: '0.5', rate: 0.5, label: '0.5x', disabled: false },
-            { value: '1', rate: 1, label: '1x', disabled: false },
-            { value: '2', rate: 2, label: '2x', disabled: false },
+            { value: '0.5', rate: 0.5, label: '0.5x', disabled: false, custom: false },
+            { value: '1', rate: 1, label: '1x', disabled: false, custom: false },
+            { value: '2', rate: 2, label: '2x', disabled: false, custom: false },
           ],
         }}
       />,

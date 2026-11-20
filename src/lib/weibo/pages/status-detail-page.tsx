@@ -251,7 +251,7 @@ function StatusDetailTopBar({
 export function StatusDetailPage() {
   const runtime = usePageRuntime()
   const page = runtime.page
-  const rewriteEnabled = useAppSettings((state) => state.rewriteEnabled)
+  const rewriteEnabled = useAppSettings((state) => state.appearance.rewriteEnabled)
   const statusArticleRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {

@@ -62,7 +62,7 @@ export async function mountWeiboHostShell({
   await Promise.all([settingsStore.getState().hydrate(), workspaceStore.getState().hydrate()])
 
   // 首次加载跳转：当 window.history.length <= 2 且当前在首页时，重定向到用户选择的页面
-  const { firstLoadRedirect } = settingsStore.getState()
+  const { firstLoadRedirect } = settingsStore.getState().home
   if (
     shouldRedirectInitialHomePage({
       firstLoadRedirect,

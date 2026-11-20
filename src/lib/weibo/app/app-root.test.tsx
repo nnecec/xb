@@ -14,7 +14,7 @@ vi.mock('@/lib/weibo/app/error-boundary', () => ({
 }))
 
 vi.mock('@/lib/app-settings-store', () => ({
-  useAppSettings: vi.fn((selector) => selector({ motionPreference: 'system' })),
+  useAppSettings: vi.fn((selector) => selector({ appearance: { motionPreference: 'system' } })),
 }))
 
 vi.mock('@/lib/weibo/data/weibo-io', async () => {

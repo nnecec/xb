@@ -126,9 +126,9 @@ export function MediaRegion({
 }) {
   const { collapsedMediaTypes, singleImageMaxWidth, singleVideoMaxWidth } = useAppSettings(
     useShallow((settings) => ({
-      collapsedMediaTypes: settings.weiboCardCollapsedMediaTypes,
-      singleImageMaxWidth: settings.weiboCardSingleImageMaxWidth,
-      singleVideoMaxWidth: settings.weiboCardSingleVideoMaxWidth,
+      collapsedMediaTypes: settings.feed.weiboCardCollapsedMediaTypes,
+      singleImageMaxWidth: settings.feed.weiboCardSingleImageMaxWidth,
+      singleVideoMaxWidth: settings.feed.weiboCardSingleVideoMaxWidth,
     })),
   )
   const region = useMemo(

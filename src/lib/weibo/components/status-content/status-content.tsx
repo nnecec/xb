@@ -74,7 +74,7 @@ function xbTopicPath(title: string) {
 }
 
 function TopicLink({ entity, topicKey }: { entity: FeedTopicEntity; topicKey: string }) {
-  const xbTopicPage = useAppSettings((s) => s.xbTopicPage)
+  const xbTopicPage = useAppSettings((s) => s.features.xbTopicPage)
 
   if (!xbTopicPage) {
     return (
@@ -487,7 +487,7 @@ export function StatusText({
   collapsedMediaTypes?: WeiboCardMediaCollapseType[]
 }) {
   const emoticonQuery = useEmoticonConfigQuery()
-  const replyChainDisplay = useAppSettings((s) => s.replyChainDisplay)
+  const replyChainDisplay = useAppSettings((s) => s.feed.replyChainDisplay)
   const phraseMap = {
     ...emoticonQuery.data?.phraseMap,
     ...item.emoticons,

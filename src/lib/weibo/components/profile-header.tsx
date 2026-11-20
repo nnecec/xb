@@ -141,7 +141,7 @@ function ProfileHeaderMutualFollowers({ profile }: { profile: UserProfile }) {
 }
 
 export function ProfileHeader({ profile }: { profile: UserProfile }) {
-  const ratingEnabled = useAppSettings((s) => s.ratingEnabled)
+  const ratingEnabled = useAppSettings((s) => s.features.ratingEnabled)
   return (
     <div className="overflow-hidden border-b">
       <div>

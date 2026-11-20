@@ -42,7 +42,7 @@ function saveToStorage(entries: HistoryEntry[]) {
 }
 
 function getBrowsingHistoryLimit(): number {
-  return getAppSettingsStore().getState().browsingHistoryLimit
+  return getAppSettingsStore().getState().feed.browsingHistoryLimit
 }
 
 function trimEntries(entries: HistoryEntry[], limit: number): HistoryEntry[] {

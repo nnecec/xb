@@ -103,7 +103,7 @@ function NotificationTabContent({
 export function NotificationsPage({ source }: { source?: { tab: NotificationTab } } = {}) {
   const runtime = usePageRuntime()
   const page = runtime.page
-  const rewriteEnabled = useAppSettings((s) => s.rewriteEnabled)
+  const rewriteEnabled = useAppSettings((s) => s.appearance.rewriteEnabled)
   const activeTab = source?.tab ?? (page.kind === 'notifications' ? page.tab : 'mentions')
   const isEnabled = rewriteEnabled && (source !== undefined || page.kind === 'notifications')
 

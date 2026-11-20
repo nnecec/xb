@@ -24,7 +24,11 @@ import {
 import { getUiPortalContainer } from '@/components/ui/portal'
 import { Slider } from '@/components/ui/slider'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { type AppSettings, DEFAULT_APP_SETTINGS } from '@/lib/app-settings'
+import {
+  DEFAULT_FLAT_APP_SETTINGS,
+  type FlatAppSettings,
+  type AppSettingsPatch,
+} from '@/lib/app-settings'
 
 const DIALOG_CONTENT_CLASSES =
   'fixed bottom-4 left-4 z-50 flex h-[min(560px,80vh)] w-[min(720px,84vw)] max-w-none flex-col gap-0 overflow-hidden rounded-lg border bg-background p-0 shadow-lg outline-none'
@@ -253,7 +257,7 @@ export function ResetSectionButton({
   onReset,
 }: {
   label: string
-  keys: readonly (keyof AppSettings)[]
+  keys: readonly (keyof FlatAppSettings)[]
   onReset: () => void
 }) {
   return (
@@ -281,10 +285,99 @@ export function ResetSectionButton({
   )
 }
 
-export function defaultsFor(keys: readonly (keyof AppSettings)[]): Partial<AppSettings> {
-  return Object.fromEntries(
-    keys.map((key) => [key, DEFAULT_APP_SETTINGS[key]]),
-  ) as Partial<AppSettings>
+const SETTING_GROUPS = {
+  appearance: new Set([
+    'theme',
+    'rewriteEnabled',
+    'uiFontSize',
+    'contentFontSize',
+    'fontWeightClass',
+    'letterSpacingClass',
+    'lineHeightClass',
+    'fontFamilyClass',
+    'fontApplyScope',
+    'motionPreference',
+    'darkModeImageDim',
+    'lightModeBgColor',
+    'darkModeBgColor',
+  ]),
+  navigation: new Set([
+    'columnWidth',
+    'customColumnWidth',
+    'showExplore',
+    'showFavorites',
+    'showHistory',
+    'showNotifications',
+    'showDMs',
+    'showProfile',
+    'showCompose',
+    'xbEntryCollapsed',
+    'sidebarCollapsed',
+  ]),
+  feed: new Set([
+    'replyChainDisplay',
+    'autoLoadLongText',
+    'feedDensity',
+    'weiboCardShowAvatar',
+    'weiboCardShowTimestamp',
+    'weiboCardShowPublishInfo',
+    'weiboCardShowTitleBadge',
+    'weiboCardShowInteractionCounts',
+    'weiboCardCollapsedMediaTypes',
+    'weiboCardSingleImageMaxWidth',
+    'weiboCardSingleVideoMaxWidth',
+    'weiboCardMultiMediaLayout',
+    'weiboCardMultiMediaGridLimit',
+    'weiboCardMultiMediaGridMaxWidth',
+    'weiboCardMultiMediaStripHeight',
+    'commentDensity',
+    'commentCardShowAvatar',
+    'commentCardShowTimestamp',
+    'commentCardShowPublishInfo',
+    'commentCardShowAuthorBadge',
+    'commentCardShowLikeCount',
+    'commentCardShowThreadLine',
+    'commentCardImageDisplay',
+    'commentCardCollapseRepliesByDefault',
+    'hotSearchType',
+    'feedInteractionMode',
+    'feedPrimaryActionOrder',
+    'feedToolbarButtonIds',
+    'browsingHistoryLimit',
+  ]),
+  imageGen: new Set([
+    'imageGenShowDataArea',
+    'imageGenShowFullImages',
+    'imageGenShowWeiboLink',
+    'imageGenTheme',
+    'imageGenCardStyle',
+  ]),
+  home: new Set(['firstLoadRedirect', 'homeTab', 'homeGroupId']),
+  features: new Set(['xbTopicPage', 'ratingEnabled']),
+  media: new Set([
+    'rememberPlaybackRate',
+    'playbackRate',
+    'videoQualityPreference',
+    'photoLoopEnabled',
+  ]),
+  themes: new Set([
+    'customThemeLightCss',
+    'customThemeDarkCss',
+    'selectedThemeType',
+    'selectedThemeId',
+    'userThemes',
+  ]),
+} as const
+
+export function defaultsFor(keys: readonly (keyof FlatAppSettings)[]): AppSettingsPatch {
+  const patch: AppSettingsPatch = {}
+  for (const key of keys) {
+    const group = (Object.keys(SETTING_GROUPS) as (keyof typeof SETTING_GROUPS)[]).find((name) =>
+      SETTING_GROUPS[name].has(key),
+    )
+    if (group) patch[group] = { ...patch[group], [key]: DEFAULT_FLAT_APP_SETTINGS[key] } as never
+  }
+  return patch
 }
 
 export function IllustrationPlaceholder({ children }: { children: React.ReactNode }) {

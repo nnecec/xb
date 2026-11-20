@@ -101,11 +101,14 @@ describe('StatusCard module', () => {
     })
     store.setState({
       ...store.getState(),
-      feedInteractionMode: 'x',
-      feedPrimaryActionOrder: ['comment', 'repost', 'like'],
-      feedToolbarButtonIds: [],
-      autoLoadLongText: false,
       isHydrated: true,
+      feed: {
+        ...getAppSettingsStore().getState().feed,
+        feedInteractionMode: 'x',
+        feedPrimaryActionOrder: ['comment', 'repost', 'like'],
+        feedToolbarButtonIds: [],
+        autoLoadLongText: false,
+      },
     })
   })
 
@@ -193,7 +196,9 @@ describe('StatusCard module', () => {
   })
 
   it('opens a quoted comment in Weibo mode without changing the root target', () => {
-    getAppSettingsStore().setState({ feedInteractionMode: 'weibo' })
+    getAppSettingsStore().setState({
+      feed: { ...getAppSettingsStore().getState().feed, feedInteractionMode: 'weibo' },
+    })
     const host = { openStatus: vi.fn(), composeStatus: vi.fn() }
     const quoted = createStatus('quoted')
     renderCard(createStatus('root', { retweetedStatus: quoted }), host)
@@ -232,7 +237,9 @@ describe('StatusCard module', () => {
   })
 
   it('keeps inline comments local to root cards in Weibo mode', () => {
-    getAppSettingsStore().setState({ feedInteractionMode: 'weibo' })
+    getAppSettingsStore().setState({
+      feed: { ...getAppSettingsStore().getState().feed, feedInteractionMode: 'weibo' },
+    })
     renderCard(createStatus('root'))
 
     const button = screen.getByRole('button', { name: '展开精选评论，2 条评论' })

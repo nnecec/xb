@@ -68,8 +68,8 @@ describe('NavigationRail', () => {
     })
     store.setState({
       ...store.getState(),
-      homeTab: 'for-you',
       isHydrated: true,
+      home: { ...store.getState().home, homeTab: 'for-you' },
     })
   })
   afterEach(() => {
@@ -192,8 +192,11 @@ describe('NavigationRail', () => {
   it('does not poll unread counts when notifications and DMs are hidden', async () => {
     getAppSettingsStore().setState({
       ...getAppSettingsStore().getState(),
-      showNotifications: false,
-      showDMs: false,
+      navigation: {
+        ...getAppSettingsStore().getState().navigation,
+        showNotifications: false,
+        showDMs: false,
+      },
     })
 
     renderNavigationRail()
@@ -206,8 +209,11 @@ describe('NavigationRail', () => {
   it('polls unread counts when either notification entry point is visible', async () => {
     getAppSettingsStore().setState({
       ...getAppSettingsStore().getState(),
-      showNotifications: false,
-      showDMs: true,
+      navigation: {
+        ...getAppSettingsStore().getState().navigation,
+        showNotifications: false,
+        showDMs: true,
+      },
     })
 
     renderNavigationRail()

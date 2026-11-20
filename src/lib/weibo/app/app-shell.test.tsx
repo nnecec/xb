@@ -149,9 +149,8 @@ describe('AppShell', () => {
 
     store.setState({
       ...store.getState(),
-      theme: 'system',
-      rewriteEnabled: true,
       isHydrated: true,
+      appearance: { ...store.getState().appearance, theme: 'system', rewriteEnabled: true },
     })
     const workspaceStore = getWorkspaceStore({
       get: async () => ({}),
@@ -177,8 +176,11 @@ describe('AppShell', () => {
   it('renders primary and auxiliary columns at the configured column width', async () => {
     const user = userEvent.setup()
     getAppSettingsStore().setState({
-      columnWidth: 'custom',
-      customColumnWidth: 500,
+      navigation: {
+        ...getAppSettingsStore().getState().navigation,
+        columnWidth: 'custom',
+        customColumnWidth: 500,
+      },
     })
     getWorkspaceStore().setState({
       isHydrated: true,

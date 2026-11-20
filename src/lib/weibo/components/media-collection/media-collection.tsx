@@ -67,13 +67,13 @@ export const MediaCollection = memo(function MediaCollection({
   onItemActivate,
 }: MediaCollectionProps) {
   const container = useMemo(() => getUiPortalContainer(), [])
-  const darkModeImageDim = useAppSettings((s) => s.darkModeImageDim)
-  const photoLoopEnabled = useAppSettings((s) => s.photoLoopEnabled)
-  const defaultSingleImageMaxWidth = useAppSettings((s) => s.weiboCardSingleImageMaxWidth)
-  const cardLayout = useAppSettings((s) => s.weiboCardMultiMediaLayout)
-  const cardGridLimit = useAppSettings((s) => s.weiboCardMultiMediaGridLimit)
-  const cardGridMaxWidth = useAppSettings((s) => s.weiboCardMultiMediaGridMaxWidth)
-  const cardStripHeight = useAppSettings((s) => s.weiboCardMultiMediaStripHeight)
+  const darkModeImageDim = useAppSettings((s) => s.appearance.darkModeImageDim)
+  const photoLoopEnabled = useAppSettings((s) => s.media.photoLoopEnabled)
+  const defaultSingleImageMaxWidth = useAppSettings((s) => s.feed.weiboCardSingleImageMaxWidth)
+  const cardLayout = useAppSettings((s) => s.feed.weiboCardMultiMediaLayout)
+  const cardGridLimit = useAppSettings((s) => s.feed.weiboCardMultiMediaGridLimit)
+  const cardGridMaxWidth = useAppSettings((s) => s.feed.weiboCardMultiMediaGridMaxWidth)
+  const cardStripHeight = useAppSettings((s) => s.feed.weiboCardMultiMediaStripHeight)
   const reducedMotion = useReducedMotion()
   const motionEnabled = reducedMotion === false
   const usesCardLayout = presentation === 'card' && items.length > 1

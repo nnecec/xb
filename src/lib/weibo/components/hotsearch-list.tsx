@@ -48,7 +48,7 @@ function getRankClassName(index: number): string {
 
 function HotSearchItemComponent({ item, index }: { item: HotSearchListData; index: number }) {
   const word = normalizeWord(item.word)
-  const xbTopicPage = useAppSettings((s) => s.xbTopicPage)
+  const xbTopicPage = useAppSettings((s) => s.features.xbTopicPage)
 
   const className =
     'group hover:bg-accent/80 focus-visible:bg-accent/80 focus-visible:ring-ring/50 flex w-full min-w-0 items-center gap-2 px-2 py-2 transition-colors focus-visible:ring-2 focus-visible:outline-none'
@@ -98,7 +98,7 @@ export function HotSearchCard({
 }: HotSearchCardProps) {
   const { hotSearchType, updateSettings } = useAppSettings(
     useShallow((s) => ({
-      hotSearchType: s.hotSearchType,
+      hotSearchType: s.feed.hotSearchType,
       updateSettings: s.updateSettings,
     })),
   )
@@ -137,7 +137,9 @@ export function HotSearchCard({
               <Select
                 value={selectedType}
                 onValueChange={(value) =>
-                  void updateSettings({ hotSearchType: value as HotSearchType })
+                  void updateSettings({
+                    feed: { hotSearchType: value as HotSearchType },
+                  })
                 }
               >
                 <SelectTrigger size="sm" className="w-fit">

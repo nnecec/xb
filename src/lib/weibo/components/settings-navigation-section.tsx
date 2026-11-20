@@ -7,7 +7,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { type AppSettings, type HomeTab } from '@/lib/app-settings'
+import { type FlatAppSettings, type HomeTab } from '@/lib/app-settings'
 import { type AppSettingsStoreState, useAppSettings, useShallow } from '@/lib/app-settings-store'
 
 import {
@@ -26,12 +26,12 @@ const LEFT_NAVIGATION_ITEMS = [
   { key: 'showDMs', label: '私信' },
   { key: 'showProfile', label: '我的' },
   { key: 'showCompose', label: '发微博' },
-] as const satisfies ReadonlyArray<{ key: keyof AppSettings; label: string }>
+] as const satisfies ReadonlyArray<{ key: keyof FlatAppSettings; label: string }>
 
 const NAVIGATION_SETTING_KEYS = [
   ...LEFT_NAVIGATION_ITEMS.map((item) => item.key),
   'firstLoadRedirect',
-] as const satisfies readonly (keyof AppSettings)[]
+] as const satisfies readonly (keyof FlatAppSettings)[]
 
 export function SettingsNavigationSection({
   updateSettings,
@@ -40,19 +40,19 @@ export function SettingsNavigationSection({
 }) {
   const settings = useAppSettings(
     useShallow((state) => ({
-      showExplore: state.showExplore,
-      showFavorites: state.showFavorites,
-      showHistory: state.showHistory,
-      showNotifications: state.showNotifications,
-      showDMs: state.showDMs,
-      showProfile: state.showProfile,
-      showCompose: state.showCompose,
-      firstLoadRedirect: state.firstLoadRedirect,
+      showExplore: state.navigation.showExplore,
+      showFavorites: state.navigation.showFavorites,
+      showHistory: state.navigation.showHistory,
+      showNotifications: state.navigation.showNotifications,
+      showDMs: state.navigation.showDMs,
+      showProfile: state.navigation.showProfile,
+      showCompose: state.navigation.showCompose,
+      firstLoadRedirect: state.home.firstLoadRedirect,
     })),
   )
 
-  function updateBooleanSetting(key: keyof AppSettings, checked: boolean) {
-    void updateSettings({ [key]: checked } as Partial<AppSettings>)
+  function updateBooleanSetting(key: keyof FlatAppSettings, checked: boolean) {
+    void updateSettings({ navigation: { [key]: checked } } as never)
   }
 
   return (
@@ -63,7 +63,9 @@ export function SettingsNavigationSection({
             <Select
               value={settings.firstLoadRedirect}
               onValueChange={(value) =>
-                void updateSettings({ firstLoadRedirect: value as HomeTab })
+                void updateSettings({
+                  home: { firstLoadRedirect: value as HomeTab },
+                })
               }
             >
               <SelectTrigger className="w-36" aria-label="首页默认时间线">

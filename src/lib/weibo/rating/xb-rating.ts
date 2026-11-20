@@ -210,7 +210,7 @@ function seedUserRatingSummaries(
 /** Batch-fetch rating summaries per feed page and seed per-uid query cache. */
 export function useFeedRatingBatchSync(pages: Array<{ items: FeedItem[] }> | undefined) {
   const queryClient = useQueryClient()
-  const ratingEnabled = useAppSettings((s) => s.ratingEnabled)
+  const ratingEnabled = useAppSettings((s) => s.features.ratingEnabled)
   const loggedIn = getCurrentUserUid() !== null
 
   const pageUidLists = useMemo(

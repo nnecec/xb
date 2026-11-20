@@ -28,7 +28,7 @@ export function SearchCard({ className }: SearchCardProps) {
   const [activeQuery, setActiveQuery] = useState('')
   const [open, setOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const xbTopicPage = useAppSettings((s) => s.xbTopicPage)
+  const xbTopicPage = useAppSettings((s) => s.features.xbTopicPage)
 
   const searchQuery = useQuery(searchQueryOptions(activeQuery))
 

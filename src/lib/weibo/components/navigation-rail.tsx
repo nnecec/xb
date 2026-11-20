@@ -241,16 +241,16 @@ export function NavigationRail({
     sidebarCollapsed,
   } = useAppSettings(
     useShallow((state) => ({
-      homeTab: state.homeTab,
-      homeGroupId: state.homeGroupId,
-      showExplore: state.showExplore,
-      showFavorites: state.showFavorites,
-      showHistory: state.showHistory,
-      showNotifications: state.showNotifications,
-      showDMs: state.showDMs,
-      showProfile: state.showProfile,
-      showCompose: state.showCompose,
-      sidebarCollapsed: state.sidebarCollapsed,
+      homeTab: state.home.homeTab,
+      homeGroupId: state.home.homeGroupId,
+      showExplore: state.navigation.showExplore,
+      showFavorites: state.navigation.showFavorites,
+      showHistory: state.navigation.showHistory,
+      showNotifications: state.navigation.showNotifications,
+      showDMs: state.navigation.showDMs,
+      showProfile: state.navigation.showProfile,
+      showCompose: state.navigation.showCompose,
+      sidebarCollapsed: state.navigation.sidebarCollapsed,
     })),
   )
   const currentUserUid = useMemo(() => getCurrentUserUid(), [])

@@ -86,7 +86,7 @@ function formatReadAt(timestamp: number): string {
 
 export function HistoryPage({ onOpenEntry }: { onOpenEntry?: (entry: HistoryEntry) => void } = {}) {
   const entries = useBrowsingHistory((s) => s.entries)
-  const browsingHistoryLimit = useAppSettings((s) => s.browsingHistoryLimit)
+  const browsingHistoryLimit = useAppSettings((s) => s.feed.browsingHistoryLimit)
   const removeEntry = browsingHistoryStore.getState().removeEntry
   const clearHistory = browsingHistoryStore.getState().clearHistory
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false)

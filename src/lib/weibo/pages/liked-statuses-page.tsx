@@ -21,7 +21,7 @@ export function LikedStatusesPage({
 } = {}) {
   const runtime = usePageRuntime()
   const page = runtime.page
-  const rewriteEnabled = useAppSettings((s) => s.rewriteEnabled)
+  const rewriteEnabled = useAppSettings((s) => s.appearance.rewriteEnabled)
 
   const uid = source?.uid ?? (page.kind === 'liked' ? page.uid : '')
   const isEnabled = rewriteEnabled && (source !== undefined || page.kind === 'liked')

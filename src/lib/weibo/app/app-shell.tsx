@@ -59,8 +59,8 @@ export function AppShell() {
 
   const { theme, rewriteEnabled, updateSettings } = useAppSettings(
     useShallow((state) => ({
-      theme: state.theme,
-      rewriteEnabled: state.rewriteEnabled,
+      theme: state.appearance.theme,
+      rewriteEnabled: state.appearance.rewriteEnabled,
       updateSettings: state.updateSettings,
     })),
   )
@@ -112,26 +112,34 @@ export function AppShell() {
     (tab: HomeTab) => {
       const requestId = ++homeTabNavigationRequestRef.current
       if (tab === 'special-follow' || tab === 'friend-circle') {
-        void updateSettings({ homeTab: tab, homeGroupId: null })
+        void updateSettings({
+          home: { homeTab: tab, homeGroupId: null },
+        })
         void queryClient
           .ensureQueryData(followGroupsQueryOptions)
           .then((groups) => {
             if (requestId === homeTabNavigationRequestRef.current) {
               const group = getDefaultFollowGroupForHomeTab(groups.defaultGroups, tab)
-              void updateSettings({ homeTab: tab, homeGroupId: group?.gid ?? null })
+              void updateSettings({
+                home: { homeTab: tab, homeGroupId: group?.gid ?? null },
+              })
               navigate(group ? `/mygroups?gid=${group.gid}` : '/mygroups')
             }
           })
           .catch(() => {
             if (requestId === homeTabNavigationRequestRef.current) {
-              void updateSettings({ homeTab: tab, homeGroupId: null })
+              void updateSettings({
+                home: { homeTab: tab, homeGroupId: null },
+              })
               navigate(homeTimelinePathFromTab(tab))
             }
           })
         return
       }
 
-      void updateSettings({ homeTab: tab, homeGroupId: null })
+      void updateSettings({
+        home: { homeTab: tab, homeGroupId: null },
+      })
       navigate(homeTimelinePathFromTab(tab))
     },
     [navigate, queryClient, updateSettings],
@@ -140,7 +148,9 @@ export function AppShell() {
   const onFollowGroupChange = useCallback(
     (gid: string | null) => {
       ++homeTabNavigationRequestRef.current
-      void updateSettings({ homeTab: 'following', homeGroupId: gid })
+      void updateSettings({
+        home: { homeTab: 'following', homeGroupId: gid },
+      })
       if (gid) {
         navigate('/mygroups?gid=' + gid)
       } else {
@@ -186,7 +196,13 @@ export function AppShell() {
   if (!rewriteEnabled) {
     return (
       <>
-        <RewritePausedCard onResume={() => void updateSettings({ rewriteEnabled: true })} />
+        <RewritePausedCard
+          onResume={() =>
+            void updateSettings({
+              appearance: { rewriteEnabled: true },
+            })
+          }
+        />
         {composeModal}
         <ComposeDialog open={composeOpen} onOpenChange={setComposeOpen} />
       </>
@@ -209,23 +225,35 @@ export function AppShell() {
             rewriteEnabled={rewriteEnabled}
             theme={theme}
             onRewriteEnabledChange={(enabled: boolean) => {
-              void updateSettings({ rewriteEnabled: enabled })
+              void updateSettings({
+                appearance: { rewriteEnabled: enabled },
+              })
               if (!enabled) {
                 window.location.reload()
               }
             }}
-            onThemeChange={(nextTheme: typeof theme) => void updateSettings({ theme: nextTheme })}
+            onThemeChange={(nextTheme: typeof theme) =>
+              void updateSettings({
+                appearance: { theme: nextTheme },
+              })
+            }
             onSettingsOpen={() => setSettingsOpen(true)}
             onComposeOpen={() => setComposeOpen(true)}
             onSidebarCollapsedChange={(collapsed) =>
-              void updateSettings({ sidebarCollapsed: collapsed })
+              void updateSettings({
+                navigation: { sidebarCollapsed: collapsed },
+              })
             }
             auxiliaryColumns={auxiliaryColumns}
             onColumnPickerOpen={() => setColumnPickerOpen(true)}
             onRemoveAuxiliaryColumn={(columnId) => persistWorkspaceChange(removeColumn(columnId))}
             onMoveAuxiliaryColumn={(columnId, targetIndex) => moveColumn(columnId, targetIndex)}
             onWidthAuxiliaryColumn={(columnId, width) => setColumnWidth(columnId, width)}
-            onMainWidthChange={(width) => updateSettings({ customColumnWidth: width })}
+            onMainWidthChange={(width) =>
+              updateSettings({
+                navigation: { customColumnWidth: width },
+              })
+            }
             onFocusAuxiliaryColumn={(columnId) => persistWorkspaceChange(focusColumn(columnId))}
             focusedColumnId={focusedColumnId}
             canvasScrollLeft={canvasScrollLeft}
@@ -244,7 +272,9 @@ export function AppShell() {
             <AuthRequiredDialog
               open={authDialogOpen}
               onLogin={async () => {
-                await updateSettings({ rewriteEnabled: false })
+                await updateSettings({
+                  appearance: { rewriteEnabled: false },
+                })
                 window.location.assign('https://weibo.com/newlogin')
               }}
             />

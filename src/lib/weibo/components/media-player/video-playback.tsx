@@ -201,7 +201,7 @@ function PlayableVideoPlayback({
   const qualityOptions = getVideoQualityOptions(media)
   const { videoQualityPreference, updateSettings } = useAppSettings(
     useShallow((settings) => ({
-      videoQualityPreference: settings.videoQualityPreference,
+      videoQualityPreference: settings.media.videoQualityPreference,
       updateSettings: settings.updateSettings,
     })),
   )
@@ -221,7 +221,10 @@ function PlayableVideoPlayback({
       }
       setQualitySelection({ key: qualityKey, id: nextQualityId })
       const option = qualityOptions.find((candidate) => candidate.id === nextQualityId)
-      if (option) void updateSettings({ videoQualityPreference: option.preferenceKey })
+      if (option)
+        void updateSettings({
+          media: { videoQualityPreference: option.preferenceKey },
+        })
     },
     [media, qualityKey, qualityOptions, resolvedQualityId, session, updateSettings],
   )

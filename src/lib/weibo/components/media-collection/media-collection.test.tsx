@@ -180,7 +180,9 @@ describe('MediaCollection', () => {
 
   it('uses the configured single image maximum width for inline media', () => {
     const store = getAppSettingsStore()
-    store.setState({ weiboCardSingleImageMaxWidth: 720 })
+    store.setState({
+      feed: { ...getAppSettingsStore().getState().feed, weiboCardSingleImageMaxWidth: 720 },
+    })
 
     const { container } = render(<MediaCollection items={createItems(1)} />)
 
@@ -189,7 +191,9 @@ describe('MediaCollection', () => {
 
   it('prefers an explicitly provided single media maximum width', () => {
     const store = getAppSettingsStore()
-    store.setState({ weiboCardSingleImageMaxWidth: 640 })
+    store.setState({
+      feed: { ...getAppSettingsStore().getState().feed, weiboCardSingleImageMaxWidth: 640 },
+    })
 
     const { container } = render(
       <MediaCollection items={createItems(1)} presentation="card" singleMediaMaxWidth={720} />,
@@ -243,9 +247,12 @@ describe('MediaCollection', () => {
   it('limits card grids while keeping every item mounted for lightbox navigation', () => {
     const store = getAppSettingsStore()
     store.setState({
-      weiboCardMultiMediaLayout: 'grid',
-      weiboCardMultiMediaGridLimit: 6,
-      weiboCardMultiMediaGridMaxWidth: 800,
+      feed: {
+        ...getAppSettingsStore().getState().feed,
+        weiboCardMultiMediaLayout: 'grid',
+        weiboCardMultiMediaGridLimit: 6,
+        weiboCardMultiMediaGridMaxWidth: 800,
+      },
     })
 
     const { container } = render(<MediaCollection items={createItems(12)} presentation="card" />)
@@ -262,8 +269,11 @@ describe('MediaCollection', () => {
   it('keeps shared inline media on the legacy grid', () => {
     const store = getAppSettingsStore()
     store.setState({
-      weiboCardMultiMediaLayout: 'horizontal',
-      weiboCardMultiMediaGridLimit: 4,
+      feed: {
+        ...getAppSettingsStore().getState().feed,
+        weiboCardMultiMediaLayout: 'horizontal',
+        weiboCardMultiMediaGridLimit: 4,
+      },
     })
 
     const { container } = render(<MediaCollection items={createItems(10)} />)
@@ -277,8 +287,11 @@ describe('MediaCollection', () => {
   it('configures Embla for a keyboard-accessible, variable-width horizontal strip', () => {
     const store = getAppSettingsStore()
     store.setState({
-      weiboCardMultiMediaLayout: 'horizontal',
-      weiboCardMultiMediaStripHeight: 480,
+      feed: {
+        ...getAppSettingsStore().getState().feed,
+        weiboCardMultiMediaLayout: 'horizontal',
+        weiboCardMultiMediaStripHeight: 480,
+      },
     })
 
     render(
@@ -331,7 +344,9 @@ describe('MediaCollection', () => {
 
   it('announces the Embla-selected media item after select and reInit', () => {
     const store = getAppSettingsStore()
-    store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
+    store.setState({
+      feed: { ...getAppSettingsStore().getState().feed, weiboCardMultiMediaLayout: 'horizontal' },
+    })
     render(<MediaCollection presentation="card" items={createItems(2)} />)
 
     act(() => {
@@ -349,7 +364,9 @@ describe('MediaCollection', () => {
 
   it('uses stable item ids for initial position and preserves the visible item after reordering', () => {
     const store = getAppSettingsStore()
-    store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
+    store.setState({
+      feed: { ...getAppSettingsStore().getState().feed, weiboCardMultiMediaLayout: 'horizontal' },
+    })
     const onVisibleItemChange = vi.fn()
     const items = createItems(2)
     const { rerender } = render(
@@ -386,7 +403,9 @@ describe('MediaCollection', () => {
 
   it('draws a visible focus ring around the keyboard-scrollable gallery', () => {
     const store = getAppSettingsStore()
-    store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
+    store.setState({
+      feed: { ...getAppSettingsStore().getState().feed, weiboCardMultiMediaLayout: 'horizontal' },
+    })
 
     render(<MediaCollection presentation="card" items={createItems(2)} />)
 
@@ -396,7 +415,9 @@ describe('MediaCollection', () => {
 
   it('keeps the legacy grid image structure free of horizontal press feedback', () => {
     const store = getAppSettingsStore()
-    store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
+    store.setState({
+      feed: { ...getAppSettingsStore().getState().feed, weiboCardMultiMediaLayout: 'horizontal' },
+    })
     render(<MediaCollection items={createItems(2)} />)
 
     expect(screen.queryByTestId('media-strip-pressable')).not.toBeInTheDocument()
@@ -461,7 +482,9 @@ describe('MediaCollection', () => {
   it('keeps drag-free inertia when reduced motion is requested', () => {
     reducedMotionState.current = true
     const store = getAppSettingsStore()
-    store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
+    store.setState({
+      feed: { ...getAppSettingsStore().getState().feed, weiboCardMultiMediaLayout: 'horizontal' },
+    })
 
     render(<MediaCollection presentation="card" items={createItems(2)} />)
 
@@ -478,7 +501,9 @@ describe('MediaCollection', () => {
 
   it('normalizes Shift plus vertical wheel input for the Embla wheel gesture plugin', () => {
     const store = getAppSettingsStore()
-    store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
+    store.setState({
+      feed: { ...getAppSettingsStore().getState().feed, weiboCardMultiMediaLayout: 'horizontal' },
+    })
     render(<MediaCollection presentation="card" items={createItems(2)} />)
 
     const strip = screen.getByRole('region', { name: '横向媒体画廊，共 2 项' })
@@ -505,7 +530,9 @@ describe('MediaCollection', () => {
 
   it('keeps Embla options stable when the selected item is echoed back as initialItemId', () => {
     const store = getAppSettingsStore()
-    store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
+    store.setState({
+      feed: { ...getAppSettingsStore().getState().feed, weiboCardMultiMediaLayout: 'horizontal' },
+    })
     const items = createItems(3)
 
     function StripHarness() {
@@ -545,7 +572,9 @@ describe('MediaCollection', () => {
 
   it('leaves drag-versus-click judgement to Embla so a plain click opens the lightbox once', () => {
     const store = getAppSettingsStore()
-    store.setState({ weiboCardMultiMediaLayout: 'horizontal' })
+    store.setState({
+      feed: { ...getAppSettingsStore().getState().feed, weiboCardMultiMediaLayout: 'horizontal' },
+    })
     render(<MediaCollection presentation="card" items={createItems(2)} />)
 
     const photoView = screen.getAllByTestId('photo-view')[0]!

@@ -63,15 +63,15 @@ export const CommentCard = memo(function CommentCard({
     commentCardCollapseRepliesByDefault,
   } = useAppSettings(
     useShallow((settings) => ({
-      commentDensity: settings.commentDensity,
-      commentCardShowAvatar: settings.commentCardShowAvatar,
-      commentCardShowTimestamp: settings.commentCardShowTimestamp,
-      commentCardShowPublishInfo: settings.commentCardShowPublishInfo,
-      commentCardShowAuthorBadge: settings.commentCardShowAuthorBadge,
-      commentCardShowLikeCount: settings.commentCardShowLikeCount,
-      commentCardShowThreadLine: settings.commentCardShowThreadLine,
-      commentCardImageDisplay: settings.commentCardImageDisplay,
-      commentCardCollapseRepliesByDefault: settings.commentCardCollapseRepliesByDefault,
+      commentDensity: settings.feed.commentDensity,
+      commentCardShowAvatar: settings.feed.commentCardShowAvatar,
+      commentCardShowTimestamp: settings.feed.commentCardShowTimestamp,
+      commentCardShowPublishInfo: settings.feed.commentCardShowPublishInfo,
+      commentCardShowAuthorBadge: settings.feed.commentCardShowAuthorBadge,
+      commentCardShowLikeCount: settings.feed.commentCardShowLikeCount,
+      commentCardShowThreadLine: settings.feed.commentCardShowThreadLine,
+      commentCardImageDisplay: settings.feed.commentCardImageDisplay,
+      commentCardCollapseRepliesByDefault: settings.feed.commentCardCollapseRepliesByDefault,
     })),
   )
   const [showNestedReplies, setShowNestedReplies] = useState(!commentCardCollapseRepliesByDefault)
