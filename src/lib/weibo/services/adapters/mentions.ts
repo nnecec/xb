@@ -1,7 +1,8 @@
 import { normalizeCursor } from '@/lib/weibo/data/io/cursor'
 import type { NotificationsPage } from '@/lib/weibo/models/notification'
+import type { WeiboStatus } from '@/lib/weibo/models/weibo-api'
 
-import { type WeiboStatus, toFeedItem } from '../../utils/transform'
+import { toFeedItem } from '../../utils/transform'
 
 export interface WeiboMentionsPayload {
   ok?: number

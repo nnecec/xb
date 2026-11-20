@@ -4,6 +4,7 @@
  */
 
 import type { FeedEmoticon, FeedImage, FeedItem } from '@/lib/weibo/models/feed'
+import type { WeiboLongTextData, WeiboStatus } from '@/lib/weibo/models/weibo-api'
 import { formatCreatedAt } from '@/lib/weibo/services/utils/date'
 
 import { getStatusAuthor } from './author'
@@ -17,7 +18,6 @@ import {
   toTopicEntities,
   toUrlEntities,
 } from './text-entities'
-import type { WeiboLongTextData, WeiboStatus } from './types'
 
 /**
  * Picks value from analysis_extra field.

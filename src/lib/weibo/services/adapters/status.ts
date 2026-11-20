@@ -4,8 +4,9 @@ import type {
   StatusCommentsPage,
   StatusDetail,
 } from '@/lib/weibo/models/status'
+import type { WeiboStatus } from '@/lib/weibo/models/weibo-api'
 
-import { type WeiboStatus, toCommentItem, toFeedItem } from '../../utils/transform'
+import { toCommentItem, toFeedItem } from '../../utils/transform'
 
 interface StatusCommentsPayload {
   data?: WeiboStatus[]

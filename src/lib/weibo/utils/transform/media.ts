@@ -4,10 +4,10 @@
  */
 
 import type { FeedDashQuality, FeedDashSource, FeedMixMediaItem } from '@/lib/weibo/models/feed'
+import type { WeiboMediaInfo, WeiboStatus } from '@/lib/weibo/models/weibo-api'
 
 import { pickNonEmptyUrl, uniqueNonEmptyUrls } from './helpers'
 import { toImagesFromParts } from './images'
-import type { WeiboMediaInfo, WeiboStatus } from './types'
 
 /**
  * Gets MPD XML from media info.

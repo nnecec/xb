@@ -1,7 +1,8 @@
 import { normalizeCursor } from '@/lib/weibo/data/io/cursor'
 import type { TimelinePage } from '@/lib/weibo/models/feed'
+import type { WeiboStatus } from '@/lib/weibo/models/weibo-api'
 
-import { type WeiboStatus, toFeedItem } from '../../utils/transform'
+import { toFeedItem } from '../../utils/transform'
 
 export interface WeiboTimelinePayload {
   data?: {
