@@ -51,12 +51,53 @@ const CAPTURE_FAILED_IMAGE_PLACEHOLDER =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=='
 
 /**
- * Sina 图床会校验 Referer；无 Referer 时 `fetch` 常返回 HTML 错误页但仍为 200，
- * 被当成 JPEG 转成 data URL 后触发 `img` `error`（第一次失败），并污染 html-to-image 的全局缓存。
+ * Sina 图床会校验 Referer；无 Referer 时 `fetch` 常返回 HTML 错误页但仍为 200。
+ * html-to-image 还会按 URL 扩展名猜测 MIME，微博地址经常没有扩展名，猜错后画布会丢掉这张图。
  */
 const WEIBO_CAPTURE_FETCH_INIT: RequestInit = {
   referrer: 'https://weibo.com/',
   referrerPolicy: 'unsafe-url',
+}
+
+function readDataUrlMime(dataUrl: string): string | null {
+  const match = /^data:([^;,]+)/.exec(dataUrl)
+  return match?.[1] ?? null
+}
+
+async function fetchImageAsDataUrl(url: string): Promise<string | null> {
+  const response = await fetch(url, WEIBO_CAPTURE_FETCH_INIT)
+  if (!response.ok) return null
+
+  const blob = await response.blob()
+  const mime = blob.type
+  if (!mime.startsWith('image/')) return null
+
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = () => reject(reader.error)
+    reader.onloadend = () => resolve(String(reader.result))
+    reader.readAsDataURL(blob)
+  })
+
+  return readDataUrlMime(dataUrl) === mime ? dataUrl : null
+}
+
+async function inlineCardImages(root: HTMLElement): Promise<Map<string, string>> {
+  const inlined = new Map<string, string>()
+  const images = [...root.querySelectorAll('img')]
+  await Promise.all(
+    images.map(async (img) => {
+      const source = img.currentSrc || img.src
+      if (!source || source.startsWith('data:') || inlined.has(source)) return
+      try {
+        const dataUrl = await fetchImageAsDataUrl(source)
+        if (dataUrl) inlined.set(source, dataUrl)
+      } catch {
+        // 留在原地址，交给 html-to-image 再试一次
+      }
+    }),
+  )
+  return inlined
 }
 
 async function waitForCardImages(root: HTMLElement): Promise<void> {
@@ -112,21 +153,32 @@ async function captureCardAsBlob(
   if (!cardRef.current) return null
 
   await waitForCardImages(cardRef.current)
+  const inlinedImages = await inlineCardImages(cardRef.current)
+  const previousSrc = new Map<HTMLImageElement, string>()
+  for (const img of cardRef.current.querySelectorAll('img')) {
+    const dataUrl = inlinedImages.get(img.currentSrc || img.src)
+    if (!dataUrl) continue
+    previousSrc.set(img, img.src)
+    img.src = dataUrl
+  }
 
-  const blob = await toBlob(cardRef.current, {
-    pixelRatio: 2,
-    cacheBust: true,
-    fontEmbedCSS: '',
-    imagePlaceholder: CAPTURE_FAILED_IMAGE_PLACEHOLDER,
-    fetchRequestInit: WEIBO_CAPTURE_FETCH_INIT,
-    filter: (node) => {
-      if (node.nodeName === 'LINK' && node.getAttribute('rel') === 'stylesheet') {
-        return false
-      }
-      return true
-    },
-  })
-  return blob
+  try {
+    return await toBlob(cardRef.current, {
+      pixelRatio: 2,
+      cacheBust: true,
+      fontEmbedCSS: '',
+      imagePlaceholder: CAPTURE_FAILED_IMAGE_PLACEHOLDER,
+      fetchRequestInit: WEIBO_CAPTURE_FETCH_INIT,
+      filter: (node) => {
+        if (node.nodeName === 'LINK' && node.getAttribute('rel') === 'stylesheet') {
+          return false
+        }
+        return true
+      },
+    })
+  } finally {
+    for (const [img, src] of previousSrc) img.src = src
+  }
 }
 
 async function copyBlobToClipboard(blob: Blob): Promise<void> {
