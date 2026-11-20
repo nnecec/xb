@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { adaptSuperTopicResponse } from '@/lib/weibo/services/adapters/super-topic'
+import { adaptSuperTopicResponse } from '@/lib/weibo/data/io/super-topic'
 
 describe('adaptSuperTopicResponse', () => {
   it('normalizes protocol-relative super-topic links', () => {

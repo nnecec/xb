@@ -1,7 +1,4 @@
 import type { HotSearchType } from '@/lib/app-settings'
-import type { ExploreGroup } from '@/lib/weibo/models/explore'
-import type { TimelinePage } from '@/lib/weibo/models/feed'
-import type { SuperTopicPage } from '@/lib/weibo/models/super-topic'
 import {
   adaptEntertainmentBandResponse,
   adaptHotSearchResponse,
@@ -14,16 +11,16 @@ import {
   type LifeBandPayload,
   type MineBandPayload,
   type SocialBandPayload,
-} from '@/lib/weibo/services/adapters/hotsearch'
+} from '@/lib/weibo/data/io/hotsearch'
 import {
   adaptSearchResponse,
   type SearchPayload,
   type SearchResult,
-} from '@/lib/weibo/services/adapters/search'
-import {
-  adaptSuperTopicResponse,
-  type SuperTopicPayload,
-} from '@/lib/weibo/services/adapters/super-topic'
+} from '@/lib/weibo/data/io/search'
+import { adaptSuperTopicResponse, type SuperTopicPayload } from '@/lib/weibo/data/io/super-topic'
+import type { ExploreGroup } from '@/lib/weibo/models/explore'
+import type { TimelinePage } from '@/lib/weibo/models/feed'
+import type { SuperTopicPage } from '@/lib/weibo/models/super-topic'
 import { wbGet } from '@/lib/weibo/services/client'
 import { WEIBO_ENDPOINTS } from '@/lib/weibo/services/endpoints'
 
