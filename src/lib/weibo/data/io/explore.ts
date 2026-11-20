@@ -27,7 +27,11 @@ import {
 import { wbGet } from '@/lib/weibo/services/client'
 import { WEIBO_ENDPOINTS } from '@/lib/weibo/services/endpoints'
 
-import { adaptTimelineResponse, type WeiboTimelinePayload } from './timeline'
+import {
+  adaptTimelineResponse,
+  type ExploreGroupsPayload,
+  type WeiboTimelinePayload,
+} from './timeline'
 
 export async function loadHotSearchByType(type: HotSearchType = 'hot'): Promise<HotSearchPage> {
   switch (type) {
@@ -87,23 +91,12 @@ export async function loadExploreHot(options: LoadExploreHotOptions = {}): Promi
   return adaptTimelineResponse(payload)
 }
 
-interface ExploreGroupsPayload {
-  groups?: Array<{
-    group?: Array<{ gid?: string; title?: string; containerid?: string }>
-    title?: string
-  }>
-}
-
 export function adaptExploreGroupsResponse(payload: ExploreGroupsPayload): ExploreGroup[] {
-  return (
-    payload.groups
-      ?.find((item) => item.title === '我的频道')
-      ?.group?.flatMap((group) =>
-        group.gid && group.title && group.containerid
-          ? [{ gid: group.gid, title: group.title, containerid: group.containerid }]
-          : [],
-      ) ?? []
-  )
+  const groups = payload.groups?.find((item) => item.title === '我的频道')?.group ?? []
+  return groups.filter(
+    (group): group is typeof group & { gid: string; title: string; containerid: string } =>
+      Boolean(group.gid && group.title && group.containerid),
+  ) as ExploreGroup[]
 }
 
 export async function loadExploreGroups(): Promise<ExploreGroup[]> {

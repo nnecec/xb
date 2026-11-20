@@ -26,9 +26,9 @@ export interface WeiboTimelinePayload {
   statuses?: Array<WeiboStatus | null | undefined>
 }
 
-interface ExploreGroupsPayload {
+export interface ExploreGroupsPayload {
   groups?: Array<{
-    group?: Array<{ gid?: string; title?: string }>
+    group?: Array<{ gid?: string; title?: string; containerid?: string }>
     title?: string
   }>
 }
