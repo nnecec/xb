@@ -17,9 +17,11 @@ class TestIntersectionObserver {
   static instances: TestIntersectionObserver[] = []
 
   readonly callback: IntersectionObserverCallback
+  readonly options?: IntersectionObserverInit
 
-  constructor(callback: IntersectionObserverCallback) {
+  constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
     this.callback = callback
+    this.options = options
     TestIntersectionObserver.instances.push(this)
   }
 
@@ -144,6 +146,27 @@ describe('InfiniteFeedList', () => {
     )
 
     expect(fetchNextPage).toHaveBeenCalledTimes(1)
+  })
+
+  it('observes pagination within the page runtime scroll root', () => {
+    const scrollRoot = document.createElement('div')
+    const scrollRootRef = { current: scrollRoot }
+
+    render(
+      <InfiniteFeedList
+        pages={[{ items: [createFeedItem('1', '第一条')] }]}
+        emptyLabel="暂无内容"
+        loadingLabel="加载中"
+        errorMessage={null}
+        isLoading={false}
+        hasNextPage={true}
+        isFetchingNextPage={false}
+        fetchNextPage={vi.fn()}
+        scrollRootRef={scrollRootRef}
+      />,
+    )
+
+    expect(TestIntersectionObserver.instances[0]?.options?.root).toBe(scrollRoot)
   })
 
   it('does not fetch the next page while a next page is already loading', () => {

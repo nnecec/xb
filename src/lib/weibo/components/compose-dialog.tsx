@@ -79,7 +79,7 @@ function ComposeForm({ onClose }: { onClose: () => void }) {
         <div className="flex items-center justify-between">
           <EmoticonPicker onSelect={(item) => setText((value) => `${value}${item.phrase}`)} />
           <Button type="button" size="sm" variant="ghost" onClick={openVideoUpload}>
-            上传视频 <ArrowUpRightIcon className="size-3" />
+            上传视频 <ArrowUpRightIcon data-icon="inline-end" />
           </Button>
         </div>
       </div>

@@ -48,6 +48,8 @@ export {
 
 // ─── Public re-exports of load* / mutations / IO types (implementation: weibo-io) ───
 
+export type { SearchHotQueryItem, SearchResult, SearchUserItem } from '@/lib/weibo/data/io/search'
+
 export type {
   FeedCommentsResult,
   HomeTimelineTab,

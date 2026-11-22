@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import type { FeedItem } from '@/lib/weibo/models/feed'
 import type { CommentItem } from '@/lib/weibo/models/status'
@@ -9,6 +9,9 @@ import {
   optimisticallyToggleCommentLike,
   optimisticallyToggleStatusFavorite,
   optimisticallyToggleStatusLike,
+  refreshStatusCommentLists,
+  refreshStatusFavoriteLists,
+  refreshStatusLikeLists,
   restoreStatusCacheMutation,
   shouldCancelWeiboQueryForStatusMutation,
 } from '@/lib/weibo/queries/status-cache'
@@ -249,6 +252,28 @@ describe('status-cache', () => {
     expect(feedComments?.items[0]?.comments[0]?.likeCount).toBe(5)
     expect(nestedComments?.items[0]?.liked).toBe(true)
     expect(nestedComments?.items[0]?.likeCount).toBe(5)
+  })
+})
+
+describe('互动列表刷新', () => {
+  it('点赞和收藏各自刷新对应的列表', () => {
+    const queryClient = new QueryClient()
+    const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries')
+
+    refreshStatusLikeLists(queryClient)
+    refreshStatusFavoriteLists(queryClient)
+
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['weibo', 'liked-statuses'] })
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['weibo', 'favorites'] })
+
+    refreshStatusCommentLists(queryClient, 'status-1')
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['weibo', 'status-comments', 'status-1'],
+    })
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['weibo', 'feed-comments', 'status-1'],
+    })
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['weibo', 'nested-comments'] })
   })
 })
 

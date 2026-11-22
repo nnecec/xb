@@ -4,6 +4,13 @@ import type { RefObject } from 'react'
 
 import { useAppSettings, useShallow } from '@/lib/app-settings-store'
 
+import {
+  capturePlaybackContinuity,
+  isValidMediaDuration,
+  restorePlaybackContinuity,
+  restoreSavedPlaybackPosition,
+  type PlaybackContinuity,
+} from './playback-continuity'
 import { getPlaybackPositionStore } from './video-playback-position-store'
 import {
   exitVideoPictureInPicture,
@@ -18,12 +25,6 @@ import {
 
 export type VideoPlaybackMode = 'video' | 'replay' | 'live'
 
-interface PlaybackContinuity {
-  currentTime: number
-  playbackRate: number
-  shouldResume: boolean
-}
-
 interface UseVideoPlaybackSessionOptions {
   mediaRef: RefObject<HTMLVideoElement | null>
   sessionId: string
@@ -33,7 +34,7 @@ interface UseVideoPlaybackSessionOptions {
 }
 
 function isValidDuration(video: HTMLVideoElement) {
-  return Number.isFinite(video.duration) && video.duration > 0
+  return isValidMediaDuration(video.duration)
 }
 
 function savePlaybackPosition(sessionId: string, video: HTMLVideoElement) {
@@ -50,20 +51,28 @@ export function useVideoPlaybackSession({
 }: UseVideoPlaybackSessionOptions) {
   const resumable = mode !== 'live'
   const remembersRate = mode !== 'live'
+  const loadKey = `${mode}:${sessionId}`
+  const [trackedLoadKey, setTrackedLoadKey] = useState(loadKey)
   const [shouldLoad, setShouldLoad] = useState(mode === 'replay')
+  if (trackedLoadKey !== loadKey) {
+    setTrackedLoadKey(loadKey)
+    setShouldLoad(mode === 'replay')
+  }
   const pendingContinuityRef = useRef<PlaybackContinuity | null>(null)
   const isInPictureInPictureRef = useRef(false)
   const appliedPlaybackRateRef = useRef(false)
   const onPlayRef = useRef(onPlay)
   const onPictureInPictureChangeRef = useRef(onPictureInPictureChange)
 
-  onPlayRef.current = onPlay
-  onPictureInPictureChangeRef.current = onPictureInPictureChange
+  useEffect(() => {
+    onPlayRef.current = onPlay
+    onPictureInPictureChangeRef.current = onPictureInPictureChange
+  }, [onPictureInPictureChange, onPlay])
 
   const { rememberPlaybackRate, savedPlaybackRate, updateSettings } = useAppSettings(
     useShallow((settings) => ({
-      rememberPlaybackRate: settings.rememberPlaybackRate,
-      savedPlaybackRate: settings.playbackRate,
+      rememberPlaybackRate: settings.media.rememberPlaybackRate,
+      savedPlaybackRate: settings.media.playbackRate,
       updateSettings: settings.updateSettings,
     })),
   )
@@ -84,7 +93,6 @@ export function useVideoPlaybackSession({
     pendingContinuityRef.current = null
     appliedPlaybackRateRef.current = false
     isInPictureInPictureRef.current = false
-    setShouldLoad(mode === 'replay')
   }, [mode, sessionId])
 
   const ensureLoaded = useCallback(() => {
@@ -102,11 +110,7 @@ export function useVideoPlaybackSession({
   const prepareSourceChange = useCallback(() => {
     const video = mediaRef.current
     if (!video) return
-    pendingContinuityRef.current = {
-      currentTime: video.currentTime,
-      playbackRate: video.playbackRate,
-      shouldResume: !video.paused && !video.ended,
-    }
+    pendingContinuityRef.current = capturePlaybackContinuity(video)
   }, [mediaRef])
 
   const handleLoadedMetadata = useCallback(() => {
@@ -120,8 +124,7 @@ export function useVideoPlaybackSession({
     if (!pendingContinuity) {
       const savedPosition = getPlaybackPositionStore().getState().getPosition(sessionId)
       if (savedPosition && savedPosition.currentTime > 1 && isValidDuration(video)) {
-        const seekTo = Math.min(savedPosition.currentTime, Math.max(video.duration - 0.5, 0))
-        if (seekTo > 1) video.currentTime = seekTo
+        restoreSavedPlaybackPosition(video, savedPosition.currentTime)
       }
 
       if (
@@ -139,19 +142,8 @@ export function useVideoPlaybackSession({
       return
     }
 
-    if (Number.isFinite(pendingContinuity.currentTime)) {
-      const latestTime = isValidDuration(video)
-        ? Math.max(video.duration - 0.25, 0)
-        : pendingContinuity.currentTime
-      video.currentTime = Math.min(pendingContinuity.currentTime, latestTime)
-    }
-    if (Number.isFinite(pendingContinuity.playbackRate) && pendingContinuity.playbackRate > 0) {
-      lastWrittenPlaybackRateRef.current = pendingContinuity.playbackRate
-      video.playbackRate = pendingContinuity.playbackRate
-    }
-    if (pendingContinuity.shouldResume) {
-      void video.play().catch(() => {})
-    }
+    lastWrittenPlaybackRateRef.current = pendingContinuity.playbackRate
+    restorePlaybackContinuity(video, pendingContinuity)
     pendingContinuityRef.current = null
   }, [mediaRef, remembersRate, resumable, sessionId])
 
@@ -201,7 +193,9 @@ export function useVideoPlaybackSession({
       if (!Number.isFinite(next) || next <= 0) return
       if (Math.abs(next - lastWrittenPlaybackRateRef.current) < 0.001) return
       lastWrittenPlaybackRateRef.current = next
-      void updateSettings({ playbackRate: next })
+      void updateSettings({
+        media: { playbackRate: next },
+      })
     }
     const handleEnterPictureInPicture = () => {
       isInPictureInPictureRef.current = true

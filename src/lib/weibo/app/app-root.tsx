@@ -111,7 +111,7 @@ function AppRootBootstrap() {
 }
 
 export function AppRoot() {
-  const motionPreference = useAppSettings((state) => state.motionPreference)
+  const motionPreference = useAppSettings((state) => state.appearance.motionPreference)
   const reducedMotion =
     motionPreference === 'reduced' ? 'always' : motionPreference === 'full' ? 'never' : 'user'
 

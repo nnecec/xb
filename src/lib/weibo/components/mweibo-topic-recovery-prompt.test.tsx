@@ -36,7 +36,7 @@ describe('MweiboTopicRecoveryPrompt', () => {
 
     expect(screen.getByText('话题内容暂时不可用')).toBeInTheDocument()
     expect(screen.getByText(/访问限制或登录状态失效/)).toBeInTheDocument()
-    expect(screen.getByText(/关闭「话题页打开方式」/)).toBeInTheDocument()
+    expect(screen.getByText(/关闭「使用 xb 打开话题页」/)).toBeInTheDocument()
   })
 
   it('calls onRetry when the retry button is clicked', async () => {

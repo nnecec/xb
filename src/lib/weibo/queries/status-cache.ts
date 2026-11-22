@@ -3,6 +3,8 @@ import type { QueryClient, QueryKey } from '@tanstack/react-query'
 import type { FeedItem } from '@/lib/weibo/models/feed'
 import type { CommentItem } from '@/lib/weibo/models/status'
 
+import { createStatusCacheCoordinator } from './status-cache-coordinator'
+
 export interface StatusCacheMutationContext {
   rollbacks: Array<(queryClient: QueryClient) => void>
 }
@@ -181,19 +183,7 @@ function updateStatusEverywhere(
   statusId: string,
   update: (item: FeedItem) => FeedItem,
 ): QueryKey[] {
-  const changedQueryKeys: QueryKey[] = []
-
-  for (const [queryKey, data] of queryClient.getQueriesData({ queryKey: ['weibo'] })) {
-    const result = updateStatusInData(data, statusId, update)
-    if (!result.changed) {
-      continue
-    }
-
-    queryClient.setQueryData(queryKey, result.data)
-    changedQueryKeys.push(queryKey)
-  }
-
-  return changedQueryKeys
+  return createStatusCacheCoordinator(queryClient).updateStatus(statusId, update)
 }
 
 function restoreRemovedFavoriteItem(
@@ -301,6 +291,20 @@ async function prepareMutation(queryClient: QueryClient): Promise<StatusCacheMut
     predicate: (query) => shouldCancelWeiboQueryForStatusMutation(query.queryKey),
   })
   return createStatusCacheMutationContext()
+}
+
+export function refreshStatusLikeLists(queryClient: QueryClient) {
+  void queryClient.invalidateQueries({ queryKey: ['weibo', 'liked-statuses'] })
+}
+
+export function refreshStatusFavoriteLists(queryClient: QueryClient) {
+  void queryClient.invalidateQueries({ queryKey: ['weibo', 'favorites'] })
+}
+
+export function refreshStatusCommentLists(queryClient: QueryClient, statusId: string) {
+  void queryClient.invalidateQueries({ queryKey: ['weibo', 'status-comments', statusId] })
+  void queryClient.invalidateQueries({ queryKey: ['weibo', 'feed-comments', statusId] })
+  void queryClient.invalidateQueries({ queryKey: ['weibo', 'nested-comments'] })
 }
 
 export async function optimisticallyToggleStatusLike(
@@ -482,19 +486,7 @@ function updateCommentEverywhere(
   commentId: string,
   update: (comment: CommentItem) => CommentItem,
 ): QueryKey[] {
-  const changedQueryKeys: QueryKey[] = []
-
-  for (const [queryKey, data] of queryClient.getQueriesData({ queryKey: ['weibo'] })) {
-    const result = updateCommentInData(data, commentId, update)
-    if (!result.changed) {
-      continue
-    }
-
-    queryClient.setQueryData(queryKey, result.data)
-    changedQueryKeys.push(queryKey)
-  }
-
-  return changedQueryKeys
+  return createStatusCacheCoordinator(queryClient).updateComment(commentId, update)
 }
 
 export async function optimisticallyToggleCommentLike(

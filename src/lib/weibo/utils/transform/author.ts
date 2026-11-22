@@ -3,9 +3,9 @@
  */
 
 import type { FeedAuthor } from '@/lib/weibo/models/feed'
+import type { WeiboStatusUser } from '@/lib/weibo/models/weibo-api'
 
 import { stripUrlQuery } from './helpers'
-import type { WeiboStatusUser } from './types'
 
 /**
  * Converts Weibo user data to FeedAuthor format.

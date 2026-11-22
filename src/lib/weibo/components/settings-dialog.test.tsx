@@ -1,10 +1,31 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { useStore } from 'zustand'
 
 import { DEFAULT_APP_SETTINGS, type AppSettings } from '@/lib/app-settings'
+import {
+  createWorkspaceStore,
+  resetWorkspaceStoreForTest,
+  WORKSPACE_STORAGE_KEY,
+  type WorkspaceStoreState,
+} from '@/lib/weibo/workspace/workspace-store'
 
 import { SettingsDialog } from './settings-dialog'
+
+const workspaceStorage = {
+  stored: undefined as unknown,
+  get: vi.fn(async () => ({
+    [WORKSPACE_STORAGE_KEY]: workspaceStorage.stored,
+  })),
+  set: vi.fn(async (items: Record<string, unknown>) => {
+    workspaceStorage.stored = items[WORKSPACE_STORAGE_KEY]
+  }),
+}
+let workspaceStore = createWorkspaceStore({
+  get: workspaceStorage.get,
+  set: workspaceStorage.set,
+})
 
 const mockUpdateSettings = vi.fn().mockResolvedValue(undefined)
 const mockSettings: AppSettings & {
@@ -14,6 +35,14 @@ const mockSettings: AppSettings & {
   updateUserTheme: ReturnType<typeof vi.fn>
 } = {
   ...DEFAULT_APP_SETTINGS,
+  appearance: { ...DEFAULT_APP_SETTINGS.appearance },
+  navigation: { ...DEFAULT_APP_SETTINGS.navigation },
+  feed: { ...DEFAULT_APP_SETTINGS.feed },
+  imageGen: { ...DEFAULT_APP_SETTINGS.imageGen },
+  home: { ...DEFAULT_APP_SETTINGS.home },
+  features: { ...DEFAULT_APP_SETTINGS.features },
+  media: { ...DEFAULT_APP_SETTINGS.media },
+  themes: { ...DEFAULT_APP_SETTINGS.themes },
   updateSettings: mockUpdateSettings,
   addUserTheme: vi.fn().mockResolvedValue(undefined),
   deleteUserTheme: vi.fn().mockResolvedValue(undefined),
@@ -25,10 +54,36 @@ vi.mock('@/lib/app-settings-store', () => ({
   useShallow: vi.fn((selector) => selector),
 }))
 
+vi.mock('@/lib/weibo/workspace/workspace-store', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/weibo/workspace/workspace-store')>(
+    '@/lib/weibo/workspace/workspace-store',
+  )
+  return {
+    ...actual,
+    getWorkspaceStore: () => workspaceStore,
+    useWorkspace: <T,>(selector: (state: WorkspaceStoreState) => T) =>
+      useStore(workspaceStore, selector),
+  }
+})
+
 describe('SettingsDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    resetWorkspaceStoreForTest()
+    workspaceStorage.stored = undefined
+    workspaceStore = createWorkspaceStore({
+      get: workspaceStorage.get,
+      set: workspaceStorage.set,
+    })
     Object.assign(mockSettings, DEFAULT_APP_SETTINGS)
+    mockSettings.appearance = { ...DEFAULT_APP_SETTINGS.appearance }
+    mockSettings.navigation = { ...DEFAULT_APP_SETTINGS.navigation }
+    mockSettings.feed = { ...DEFAULT_APP_SETTINGS.feed }
+    mockSettings.imageGen = { ...DEFAULT_APP_SETTINGS.imageGen }
+    mockSettings.home = { ...DEFAULT_APP_SETTINGS.home }
+    mockSettings.features = { ...DEFAULT_APP_SETTINGS.features }
+    mockSettings.media = { ...DEFAULT_APP_SETTINGS.media }
+    mockSettings.themes = { ...DEFAULT_APP_SETTINGS.themes }
     mockUpdateSettings.mockResolvedValue(undefined)
   })
 
@@ -69,15 +124,68 @@ describe('SettingsDialog', () => {
     expect(screen.queryByText('设置搜索')).not.toBeInTheDocument()
   })
 
-  it('shows display settings by default and reveals the custom width slider', () => {
-    mockSettings.contentWidth = 'custom'
-    mockSettings.customContentWidth = 1340
+  it('always shows multi-column width settings and reveals the custom slider', () => {
+    mockSettings.navigation.columnWidth = 'custom'
+    mockSettings.navigation.customColumnWidth = 500
 
     render(<SettingsDialog open onOpenChange={() => {}} />)
 
     expect(screen.getByRole('button', { name: '显示' })).toHaveAttribute('aria-current', 'page')
-    expect(screen.getByRole('slider', { name: '自定义内容宽度' })).toHaveValue(1340)
-    expect(screen.getByText('1340px')).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: '列宽度' })).toHaveTextContent('自定义')
+    expect(screen.getByRole('slider', { name: '自定义列宽度' })).toHaveValue(500)
+    expect(screen.getByText('500px')).toBeInTheDocument()
+    expect(screen.queryByRole('switch', { name: '启用多列模式' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: '内容宽度' })).not.toBeInTheDocument()
+  })
+
+  it('forgets dragged column widths after confirming reset', async () => {
+    const user = userEvent.setup()
+    workspaceStore = createWorkspaceStore(
+      {
+        get: workspaceStorage.get,
+        set: workspaceStorage.set,
+      },
+      { createId: () => 'explore-column' },
+    )
+    await workspaceStore.getState().addColumn({ kind: 'explore' })
+    await workspaceStore.getState().setColumnWidth('explore-column', 640)
+
+    render(<SettingsDialog open onOpenChange={() => {}} />)
+
+    const resetButton = screen.getByRole('button', { name: '重置' })
+    expect(resetButton).toBeEnabled()
+    await user.click(resetButton)
+    expect(screen.getByRole('alertdialog', { name: '重置列宽度？' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '取消' }))
+    expect(workspaceStore.getState().auxiliaryColumns[0]).toMatchObject({ width: 640 })
+
+    await user.click(resetButton)
+    await user.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: '重置' }))
+
+    await waitFor(() => {
+      expect(workspaceStore.getState().columnWidths).toEqual({})
+      expect(workspaceStore.getState().auxiliaryColumns[0]).not.toHaveProperty('width')
+    })
+    expect(resetButton).toBeDisabled()
+  })
+
+  it('resets display settings without changing the workspace mode', async () => {
+    const user = userEvent.setup()
+    render(<SettingsDialog open onOpenChange={() => {}} />)
+
+    await user.click(screen.getByRole('button', { name: '恢复默认设置' }))
+    await user.click(screen.getByRole('button', { name: '恢复默认' }))
+
+    expect(mockUpdateSettings).toHaveBeenCalledWith({
+      navigation: {
+        columnWidth: DEFAULT_APP_SETTINGS.navigation.columnWidth,
+        customColumnWidth: DEFAULT_APP_SETTINGS.navigation.customColumnWidth,
+      },
+      appearance: {
+        motionPreference: DEFAULT_APP_SETTINGS.appearance.motionPreference,
+        darkModeImageDim: DEFAULT_APP_SETTINGS.appearance.darkModeImageDim,
+      },
+    })
   })
 
   it('switches modules and remembers the active module while the dialog stays mounted', async () => {
@@ -153,23 +261,26 @@ describe('SettingsDialog', () => {
     await user.click(screen.getByRole('tab', { name: '微博' }))
     expect(screen.getByText('转发链样式')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '折叠卡片' }))
-    expect(mockUpdateSettings).toHaveBeenCalledWith({ replyChainDisplay: 'collapsed' })
+    expect(mockUpdateSettings).toHaveBeenCalledWith({ feed: { replyChainDisplay: 'collapsed' } })
 
     await user.click(screen.getByRole('tab', { name: '评论' }))
     expect(screen.getByText('评论密度')).toBeInTheDocument()
     expect(screen.getByText('默认折叠回复')).toBeInTheDocument()
   })
 
-  it('separates media and action controls and progressively discloses fine tuning', async () => {
+  it('shows media and action fine-tuning controls by default', async () => {
     const user = userEvent.setup()
     render(<SettingsDialog open onOpenChange={() => {}} />)
 
     await user.click(screen.getByRole('button', { name: '媒体' }))
-    expect(screen.queryByRole('slider', { name: '单图最大宽度' })).not.toBeInTheDocument()
-
-    await user.click(screen.getByRole('button', { name: '精细调整' }))
     expect(screen.getByRole('slider', { name: '单图最大宽度' })).toHaveValue(450)
     expect(screen.getByRole('slider', { name: '单视频最大宽度' })).toHaveValue(650)
+
+    const imageWidth = screen.getByRole('slider', { name: '单图最大宽度' })
+    imageWidth.focus()
+    await user.keyboard('{ArrowRight}')
+    expect(mockUpdateSettings).toHaveBeenCalledWith({ feed: { weiboCardSingleImageMaxWidth: 460 } })
+    expect(screen.queryByRole('button', { name: '精细调整' })).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: '操作' }))
     expect(screen.getByRole('radio', { name: /X 风格/ })).toBeInTheDocument()
@@ -178,9 +289,8 @@ describe('SettingsDialog', () => {
     expect(screen.queryByRole('button', { name: /向前移动|向后移动/ })).not.toBeInTheDocument()
   })
 
-  it('uses a flat navigation model and disables right-rail children with the parent', async () => {
+  it('keeps navigation settings focused on the first page and left rail', async () => {
     const user = userEvent.setup()
-    mockSettings.showRightRail = false
     render(<SettingsDialog open onOpenChange={() => {}} />)
 
     await user.click(screen.getByRole('button', { name: '导航布局' }))
@@ -188,10 +298,11 @@ describe('SettingsDialog', () => {
     const firstOpen = screen.getByText('首次打开')
     const leftNavigation = screen.getByText('左侧导航')
     expect(firstOpen.compareDocumentPosition(leftNavigation)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
-    expect(screen.getByRole('switch', { name: '显示右侧栏' })).not.toBeChecked()
-    expect(screen.getByRole('switch', { name: '显示热搜卡片' })).toBeDisabled()
-    expect(screen.getByRole('switch', { name: '显示超话卡片' })).toBeDisabled()
     expect(screen.getByRole('combobox', { name: '首页默认时间线' })).toBeInTheDocument()
+    expect(screen.queryByText('右侧栏')).not.toBeInTheDocument()
+    expect(screen.queryByRole('switch', { name: '显示右侧栏' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('switch', { name: '显示热搜卡片' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('switch', { name: '显示超话卡片' })).not.toBeInTheDocument()
   })
 
   it('confirms and resets only the active tab group', async () => {
@@ -204,8 +315,10 @@ describe('SettingsDialog', () => {
     await user.click(screen.getByRole('button', { name: '恢复默认' }))
 
     expect(mockUpdateSettings).toHaveBeenCalledWith({
-      feedDensity: DEFAULT_APP_SETTINGS.feedDensity,
-      autoLoadLongText: DEFAULT_APP_SETTINGS.autoLoadLongText,
+      feed: {
+        feedDensity: DEFAULT_APP_SETTINGS.feed.feedDensity,
+        autoLoadLongText: DEFAULT_APP_SETTINGS.feed.autoLoadLongText,
+      },
     })
   })
 

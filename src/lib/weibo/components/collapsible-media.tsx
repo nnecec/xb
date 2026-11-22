@@ -1,5 +1,5 @@
 import { Eye } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import type { ContentDisplay } from '@/lib/app-settings'
@@ -14,10 +14,11 @@ export function CollapsibleMedia({
   children: React.ReactNode
 }) {
   const [temporarilyExpanded, setTemporarilyExpanded] = useState(false)
-
-  useEffect(() => {
+  const [expandedDisplay, setExpandedDisplay] = useState(display)
+  if (display !== expandedDisplay) {
+    setExpandedDisplay(display)
     setTemporarilyExpanded(false)
-  }, [display])
+  }
 
   if (display === 'expanded' || temporarilyExpanded) {
     return children

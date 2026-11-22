@@ -16,6 +16,8 @@ import {
 import { parseWeiboUrl } from '@/lib/weibo/route/parse-weibo-url'
 
 const OVERFLOW_STORAGE_KEY = 'data-xb-previous-overflow'
+const ROOT_OVERFLOW_X_STORAGE_KEY = 'data-xb-previous-root-overflow-x'
+const BODY_OVERFLOW_X_STORAGE_KEY = 'data-xb-previous-body-overflow-x'
 const DEFAULT_UI_FONT_SIZE: UiFontSize = 14
 const UI_TEXT_SIZES = {
   '--text-xs': 12,
@@ -56,6 +58,37 @@ function clearCustomThemeVariables(container: HTMLElement) {
   for (const variable of CUSTOM_THEME_VARIABLE_NAMES) {
     container.style.removeProperty(variable)
   }
+}
+
+function lockDocumentHorizontalOverflow() {
+  const root = document.documentElement
+  const body = document.body
+
+  if (!root.hasAttribute(ROOT_OVERFLOW_X_STORAGE_KEY)) {
+    root.setAttribute(ROOT_OVERFLOW_X_STORAGE_KEY, root.style.overflowX)
+  }
+  if (body && !root.hasAttribute(BODY_OVERFLOW_X_STORAGE_KEY)) {
+    root.setAttribute(BODY_OVERFLOW_X_STORAGE_KEY, body.style.overflowX)
+  }
+
+  root.style.overflowX = 'hidden'
+  root.scrollLeft = 0
+  if (body) {
+    body.style.overflowX = 'hidden'
+    body.scrollLeft = 0
+  }
+}
+
+function restoreDocumentHorizontalOverflow() {
+  const root = document.documentElement
+  const previousRootOverflowX = root.getAttribute(ROOT_OVERFLOW_X_STORAGE_KEY)
+  const previousBodyOverflowX = root.getAttribute(BODY_OVERFLOW_X_STORAGE_KEY)
+  const body = document.body
+
+  if (previousRootOverflowX !== null) root.style.overflowX = previousRootOverflowX
+  if (previousBodyOverflowX !== null && body) body.style.overflowX = previousBodyOverflowX
+  root.removeAttribute(ROOT_OVERFLOW_X_STORAGE_KEY)
+  root.removeAttribute(BODY_OVERFLOW_X_STORAGE_KEY)
 }
 
 function clearTypographyVariables(container: HTMLElement) {
@@ -134,22 +167,25 @@ export function bindShellState({
 
   const applyShellState = () => {
     const settings = settingsStore.getState()
-    const isDark = resolveIsDarkMode(settings.theme, mediaQuery.matches)
+    const isDark = resolveIsDarkMode(settings.appearance.theme, mediaQuery.matches)
 
     container.classList.toggle('dark', isDark)
+    container.style.colorScheme = isDark ? 'dark' : 'light'
     clearCustomThemeVariables(container)
 
     // Apply background color preset CSS variables
     const preset = isDark
-      ? DARK_BG_PRESETS.find((p) => p.key === settings.darkModeBgColor)
-      : LIGHT_BG_PRESETS.find((p) => p.key === settings.lightModeBgColor)
+      ? DARK_BG_PRESETS.find((p) => p.key === settings.appearance.darkModeBgColor)
+      : LIGHT_BG_PRESETS.find((p) => p.key === settings.appearance.lightModeBgColor)
 
     if (preset) {
       container.style.setProperty('--background', preset.background)
       container.style.setProperty('--card', preset.card)
     }
 
-    const customThemeCss = isDark ? settings.customThemeDarkCss : settings.customThemeLightCss
+    const customThemeCss = isDark
+      ? settings.themes.customThemeDarkCss
+      : settings.themes.customThemeLightCss
     if (customThemeCss.trim()) {
       const variables = parseCustomThemeVariables(customThemeCss)
       for (const [name, value] of Object.entries(variables)) {
@@ -158,8 +194,16 @@ export function bindShellState({
     }
 
     // 用户字体设置优先于主题 --font-*（在主题变量之后写入）
-    applyAppFontFamily(container, settings.fontFamilyClass, settings.fontApplyScope)
-    applyTypographyVariables(container, settings.uiFontSize, settings.contentFontSize)
+    applyAppFontFamily(
+      container,
+      settings.appearance.fontFamilyClass,
+      settings.appearance.fontApplyScope,
+    )
+    applyTypographyVariables(
+      container,
+      settings.appearance.uiFontSize,
+      settings.appearance.contentFontSize,
+    )
 
     // When route is unsupported, release the host page and hide xb UI
     // so Weibo's native UI is visible and functional.
@@ -169,6 +213,7 @@ export function bindShellState({
       document.documentElement.style.overflow =
         previousOverflow !== null && previousOverflow !== '' ? previousOverflow : 'auto'
       document.documentElement.removeAttribute(OVERFLOW_STORAGE_KEY)
+      restoreDocumentHorizontalOverflow()
       clearPageTakeover(appRoot)
       return
     }
@@ -176,13 +221,14 @@ export function bindShellState({
     // Route is supported — make sure xb container is visible
     container.style.removeProperty('display')
 
-    if (settings.rewriteEnabled) {
+    if (settings.appearance.rewriteEnabled) {
       if (!document.documentElement.hasAttribute(OVERFLOW_STORAGE_KEY)) {
         document.documentElement.setAttribute(
           OVERFLOW_STORAGE_KEY,
           document.documentElement.style.overflow || '',
         )
       }
+      lockDocumentHorizontalOverflow()
       document.documentElement.style.overflow = 'hidden'
       applyPageTakeover(appRoot)
       return
@@ -192,6 +238,7 @@ export function bindShellState({
     document.documentElement.style.overflow =
       previousOverflow !== null && previousOverflow !== '' ? previousOverflow : 'auto'
     document.documentElement.removeAttribute(OVERFLOW_STORAGE_KEY)
+    restoreDocumentHorizontalOverflow()
     clearPageTakeover(appRoot)
   }
 
@@ -202,17 +249,22 @@ export function bindShellState({
   const onUrlChange = () => applyShellState()
   window.addEventListener('popstate', onUrlChange)
 
-  // Also detect pushState/replaceState navigations by patching History methods.
-  const originalPushState = history.pushState.bind(history)
-  const originalReplaceState = history.replaceState.bind(history)
+  // The page-context history bridge may already own these methods. Call through
+  // the current implementation, then re-apply shell state only when the URL moves.
+  const originalPushState = history.pushState
+  const originalReplaceState = history.replaceState
 
   history.pushState = function (...args: Parameters<typeof history.pushState>) {
-    originalPushState(...args)
-    onUrlChange()
+    const before = window.location.href
+    const result = originalPushState.apply(history, args)
+    if (window.location.href !== before) onUrlChange()
+    return result
   }
   history.replaceState = function (...args: Parameters<typeof history.replaceState>) {
-    originalReplaceState(...args)
-    onUrlChange()
+    const before = window.location.href
+    const result = originalReplaceState.apply(history, args)
+    if (window.location.href !== before) onUrlChange()
+    return result
   }
 
   applyShellState()
@@ -226,6 +278,7 @@ export function bindShellState({
     history.pushState = originalPushState
     history.replaceState = originalReplaceState
     container.classList.remove('dark')
+    container.style.removeProperty('color-scheme')
     clearCustomThemeVariables(container)
     clearAppFontFamily(container)
     clearTypographyVariables(container)
@@ -237,6 +290,7 @@ export function bindShellState({
     document.documentElement.style.overflow =
       previousOverflow !== null && previousOverflow !== '' ? previousOverflow : 'auto'
     document.documentElement.removeAttribute(OVERFLOW_STORAGE_KEY)
+    restoreDocumentHorizontalOverflow()
     clearPageTakeover(appRoot)
   }
 }

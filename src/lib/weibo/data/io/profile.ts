@@ -1,19 +1,113 @@
+import { adaptTimelineResponse, type WeiboTimelinePayload } from '@/lib/weibo/data/io/timeline'
 import type { TimelinePage } from '@/lib/weibo/models/feed'
 import type { ProfileFollowGroup, UserProfile } from '@/lib/weibo/models/profile'
 import type { ProfileSearchFilters } from '@/lib/weibo/route/profile-search-params'
-import {
-  adaptProfileInfoResponse,
-  mergeProfileDetail,
-  type ProfileDetailPayload,
-  type ProfileInfoPayload,
-} from '@/lib/weibo/services/adapters/profile'
-import type { WeiboTimelinePayload } from '@/lib/weibo/services/adapters/timeline'
-import { adaptTimelineResponse } from '@/lib/weibo/services/adapters/timeline'
 import { wbGet } from '@/lib/weibo/services/client'
 import { wbPostForm } from '@/lib/weibo/services/client'
 import { WEIBO_ENDPOINTS } from '@/lib/weibo/services/endpoints'
 
 import { isWeiboMutationSuccess, type WeiboMutationResponse } from './shared'
+
+interface ProfileUserPayload {
+  avatar_hd?: string
+  cover_image_phone?: string
+  description?: string
+  followers_count?: number
+  followers_count_str?: string
+  friends_count?: number
+  id?: number | string
+  idstr?: string
+  location?: string
+  profile_image_url?: string
+  screen_name?: string
+  statuses_count?: number
+  verified?: boolean
+  verified_reason?: string
+  following?: boolean
+  follow_me?: boolean
+  special_follow?: boolean
+}
+
+export interface ProfileInfoPayload {
+  data?: { user?: ProfileUserPayload }
+  user?: ProfileUserPayload
+}
+
+interface ProfileDetailFollowerUser {
+  screen_name?: string
+  avatar_large?: string
+}
+
+export interface ProfileDetailPayload {
+  data?: {
+    desc_text?: string
+    description?: string
+    created_at?: string
+    ip_location?: string
+    followers?: {
+      total_number?: number
+      users?: ProfileDetailFollowerUser[]
+    }
+  }
+}
+
+function stripUrlQuery(url: string | null | undefined): string | null {
+  if (!url) return null
+  return url.split('?')[0] ?? null
+}
+
+export function adaptProfileInfoResponse(payload: ProfileInfoPayload): UserProfile {
+  const user = payload.data?.user ?? payload.user ?? {}
+  return {
+    id: String(user.idstr ?? user.id ?? ''),
+    name: user.screen_name ?? '',
+    bio: user.description ?? '',
+    avatarUrl: stripUrlQuery(user.avatar_hd) ?? stripUrlQuery(user.profile_image_url) ?? null,
+    bannerUrl:
+      user.cover_image_phone?.split(';')[0]?.replace('crop.0.0.640.640.640', 'mw2000') ?? null,
+    followersCount: user.followers_count ?? null,
+    followersCountStr: user.followers_count_str ?? null,
+    friendsCount: user.friends_count ?? null,
+    statusesCount: user.statuses_count ?? null,
+    location: user.location ?? null,
+    ipLocation: null,
+    verified: user.verified ?? false,
+    verifiedReason: user.verified_reason ?? null,
+    descText: user.verified_reason ?? null,
+    createdAt: null,
+    mutualFollowers: [],
+    mutualFollowerTotal: null,
+    following: user.following ?? false,
+    followMe: user.follow_me ?? false,
+    specialFollow: user.special_follow ?? false,
+  }
+}
+
+function formatCreatedAtDate(raw: string | undefined): string | null {
+  if (!raw) return null
+  const date = new Date(raw)
+  if (Number.isNaN(date.getTime())) return null
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+export function mergeProfileDetail(
+  profile: UserProfile,
+  detail: ProfileDetailPayload,
+): UserProfile {
+  const data = detail.data
+  return {
+    ...profile,
+    descText: data?.desc_text ?? profile.verifiedReason,
+    bio: data?.description?.trim() || profile.bio,
+    ipLocation: data?.ip_location ?? null,
+    createdAt: formatCreatedAtDate(data?.created_at),
+    mutualFollowers: (data?.followers?.users ?? []).map((user) => ({
+      screenName: user.screen_name ?? '',
+      avatarUrl: stripUrlQuery(user.avatar_large) ?? '',
+    })),
+    mutualFollowerTotal: data?.followers?.total_number ?? null,
+  }
+}
 
 type ProfileLookup = { uid: string } | { screenName: string }
 

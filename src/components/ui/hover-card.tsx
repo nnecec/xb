@@ -1,8 +1,8 @@
+import { cn } from 'cn'
 import { HoverCard as HoverCardPrimitive } from 'radix-ui'
 import * as React from 'react'
 
 import { getUiPortalContainer } from '@/components/ui/portal'
-import { cn } from '@/lib/utils'
 
 function HoverCard({
   openDelay = 300,

@@ -2,6 +2,18 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
+/* Undo WXT `:host { all: initial !important }` so preflight/layout survive. */
+:host {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif) !important;
+  line-height: 1.5 !important;
+  -webkit-text-size-adjust: 100% !important;
+  tab-size: 4 !important;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @property --background {
@@ -79,7 +91,9 @@
   --font-fz-kai: 'FZKai-Z03', 'FZ Kai-Z-03', KaiTi, STKaiti, serif;
 }
 
-:root {
+:root,
+:host {
+  color-scheme: light;
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -114,7 +128,9 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-.dark {
+.dark,
+:host(.dark) {
+  color-scheme: dark;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -152,6 +168,8 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* `:host > *` is the WXT mount (shadow equivalent of `body`). */
+  :host > *,
   body {
     @apply bg-background text-foreground;
     transition:
@@ -237,6 +255,12 @@
 
   .xb-feed-card--compact {
     contain-intrinsic-size: auto 420px;
+  }
+
+  /* 多列滚动条保持细轨，避免挤占列宽。 */
+  .xb-column-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklch, var(--foreground) 32%, transparent) transparent;
   }
 }
 

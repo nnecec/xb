@@ -85,16 +85,14 @@ describe('app-settings-store', () => {
 
   it('hydrates persisted settings into the store', async () => {
     const storage = createStorageArea({
-      theme: 'dark',
-      rewriteEnabled: false,
+      appearance: { ...DEFAULT_APP_SETTINGS.appearance, theme: 'dark', rewriteEnabled: false },
     })
     const store = createAppSettingsStore(storage)
 
     await store.getState().hydrate()
 
     expect(store.getState()).toMatchObject({
-      theme: 'dark',
-      rewriteEnabled: false,
+      appearance: { ...DEFAULT_APP_SETTINGS.appearance, theme: 'dark', rewriteEnabled: false },
       isHydrated: true,
     })
   })
@@ -103,12 +101,12 @@ describe('app-settings-store', () => {
     const storage = createStorageArea()
     const store = createAppSettingsStore(storage)
 
-    await store.getState().updateSettings({ rewriteEnabled: false })
+    await store.getState().updateSettings({ appearance: { rewriteEnabled: false } })
 
-    expect(store.getState().rewriteEnabled).toBe(false)
+    expect(store.getState().appearance.rewriteEnabled).toBe(false)
     expect(storage.read()).toEqual({
       ...DEFAULT_APP_SETTINGS,
-      rewriteEnabled: false,
+      appearance: { ...DEFAULT_APP_SETTINGS.appearance, rewriteEnabled: false },
     })
   })
 
@@ -116,10 +114,10 @@ describe('app-settings-store', () => {
     const storage = createDelayedStorageArea()
     const store = createAppSettingsStore(storage)
 
-    const first = store.getState().updateSettings({ theme: 'dark' })
+    const first = store.getState().updateSettings({ appearance: { theme: 'dark' } })
     await vi.waitFor(() => expect(storage.pendingSets).toHaveLength(1))
 
-    const second = store.getState().updateSettings({ rewriteEnabled: false })
+    const second = store.getState().updateSettings({ appearance: { rewriteEnabled: false } })
     expect(storage.pendingSets).toHaveLength(1)
 
     storage.pendingSets[0]!.deferred.resolve()
@@ -131,8 +129,7 @@ describe('app-settings-store', () => {
 
     expect(storage.read()).toEqual({
       ...DEFAULT_APP_SETTINGS,
-      theme: 'dark',
-      rewriteEnabled: false,
+      appearance: { ...DEFAULT_APP_SETTINGS.appearance, theme: 'dark', rewriteEnabled: false },
     })
   })
 
@@ -149,7 +146,7 @@ describe('app-settings-store', () => {
     const first = store.getState().addUserTheme(theme)
     await vi.waitFor(() => expect(storage.pendingSets).toHaveLength(1))
 
-    const second = store.getState().updateSettings({ theme: 'dark' })
+    const second = store.getState().updateSettings({ appearance: { theme: 'dark' } })
     expect(storage.pendingSets).toHaveLength(1)
 
     storage.pendingSets[0]!.deferred.resolve()
@@ -161,8 +158,8 @@ describe('app-settings-store', () => {
 
     expect(storage.read()).toEqual({
       ...DEFAULT_APP_SETTINGS,
-      theme: 'dark',
-      userThemes: [theme],
+      appearance: { ...DEFAULT_APP_SETTINGS.appearance, theme: 'dark' },
+      themes: { ...DEFAULT_APP_SETTINGS.themes, userThemes: [theme] },
     })
   })
 
@@ -178,22 +175,28 @@ describe('app-settings-store', () => {
 
     await store.getState().addUserTheme(theme)
     await store.getState().addUserTheme(theme)
-    expect(store.getState().userThemes).toEqual([theme])
+    expect(store.getState().themes.userThemes).toEqual([theme])
 
     await store.getState().updateSettings({
-      selectedThemeType: 'custom',
-      selectedThemeId: theme.id,
-      customThemeLightCss: theme.lightCss,
-      customThemeDarkCss: theme.darkCss,
+      themes: {
+        ...store.getState().themes,
+        selectedThemeType: 'custom',
+        selectedThemeId: theme.id,
+        customThemeLightCss: theme.lightCss,
+        customThemeDarkCss: theme.darkCss,
+      },
     })
     await store.getState().updateUserTheme(theme.id, {
       lightCss: ':root { --background: ivory; }',
     })
 
     expect(storage.read()).toMatchObject({
-      userThemes: [{ ...theme, lightCss: ':root { --background: ivory; }' }],
-      customThemeLightCss: ':root { --background: ivory; }',
-      customThemeDarkCss: theme.darkCss,
+      themes: {
+        ...store.getState().themes,
+        userThemes: [{ ...theme, lightCss: ':root { --background: ivory; }' }],
+        customThemeLightCss: ':root { --background: ivory; }',
+        customThemeDarkCss: theme.darkCss,
+      },
     })
   })
 
@@ -203,13 +206,12 @@ describe('app-settings-store', () => {
     const staleStore = createAppSettingsStore(storage)
 
     await Promise.all([firstStore.getState().hydrate(), staleStore.getState().hydrate()])
-    await firstStore.getState().updateSettings({ uiFontSize: 20 })
-    await staleStore.getState().updateSettings({ theme: 'dark' })
+    await firstStore.getState().updateSettings({ appearance: { uiFontSize: 20 } })
+    await staleStore.getState().updateSettings({ appearance: { theme: 'dark' } })
 
     expect(storage.read()).toEqual({
       ...DEFAULT_APP_SETTINGS,
-      uiFontSize: 20,
-      theme: 'dark',
+      appearance: { ...DEFAULT_APP_SETTINGS.appearance, uiFontSize: 20, theme: 'dark' },
     })
   })
 
@@ -227,7 +229,7 @@ describe('app-settings-store', () => {
         },
       },
     })
-    expect(store.getState()).toMatchObject({ uiFontSize: 20, contentFontSize: 32 })
+    expect(store.getState()).toMatchObject({ appearance: { uiFontSize: 20, contentFontSize: 32 } })
 
     storageChanges.emit(
       {
@@ -235,13 +237,13 @@ describe('app-settings-store', () => {
       },
       'sync',
     )
-    expect(store.getState().uiFontSize).toBe(20)
+    expect(store.getState().appearance.uiFontSize).toBe(20)
 
     cleanup()
     expect(storageChanges.removeListener).toHaveBeenCalledTimes(1)
     storageChanges.emit({
       [APP_SETTINGS_STORAGE_KEY]: { newValue: { uiFontSize: 12 } },
     })
-    expect(store.getState().uiFontSize).toBe(20)
+    expect(store.getState().appearance.uiFontSize).toBe(20)
   })
 })

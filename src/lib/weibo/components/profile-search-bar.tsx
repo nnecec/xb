@@ -1,20 +1,14 @@
+import { cn } from 'cn'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-import { CalendarDays, ChevronDown, Search, X } from 'lucide-react'
+import { CalendarDays, Search, SlidersHorizontal, X } from 'lucide-react'
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { cn } from '@/lib/utils'
 import {
   beijingDateStartTimestamp,
   beijingInclusiveEndDateTimestamp,
@@ -46,9 +40,39 @@ function selectedFilterCount(filters: ProfileSearchFilters): number {
   return PROFILE_SEARCH_FILTER_KEYS.filter((key) => filters[key]).length
 }
 
-function filterButtonLabel(filters: ProfileSearchFilters): string {
-  const count = selectedFilterCount(filters)
-  return count === PROFILE_SEARCH_FILTER_KEYS.length ? '全部' : `${count}项`
+function DateFilterField({
+  label,
+  valueLabel,
+  open,
+  onOpenChange,
+  children,
+}: {
+  label: string
+  valueLabel: string
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-muted-foreground text-xs">{label}</span>
+      <Popover open={open} onOpenChange={onOpenChange}>
+        <PopoverTrigger asChild>
+          <Button type="button" variant="secondary" size="sm" aria-label={label}>
+            <CalendarDays data-icon="inline-start" />
+            <span>{valueLabel}</span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          align="end"
+          className="w-auto p-2"
+          onMouseDown={(event) => event.stopPropagation()}
+        >
+          {children}
+        </PopoverContent>
+      </Popover>
+    </div>
+  )
 }
 
 function resultLabel(isSearching: boolean, resultTotal: string | undefined): string {
@@ -108,9 +132,10 @@ export function ProfileSearchBar({
   const [filters, setFilters] = useState<ProfileSearchFilters>(state.params.filters)
   const [startDate, setStartDate] = useState<Date | undefined>(initialDates.startDate)
   const [endDate, setEndDate] = useState<Date>(initialDates.endDate)
-  const [startPickerOpen, setStartPickerOpen] = useState(false)
-  const [endPickerOpen, setEndPickerOpen] = useState(false)
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [openDateField, setOpenDateField] = useState<'start' | 'end' | null>(null)
   const count = selectedFilterCount(filters)
+  const allFiltersSelected = count === PROFILE_SEARCH_FILTER_KEYS.length
 
   const submitSearch = () => {
     onSubmit({
@@ -138,10 +163,7 @@ export function ProfileSearchBar({
 
   return (
     <form
-      className={cn(
-        'border-border/70 bg-card flex flex-col gap-2 rounded-xl border p-2',
-        state.active && 'bg-muted/35 border-foreground/15',
-      )}
+      className={cn('flex flex-col gap-2 border-b px-4 py-3', state.active && 'bg-muted/35')}
       onSubmit={(event) => {
         event.preventDefault()
         submitSearch()
@@ -159,127 +181,101 @@ export function ProfileSearchBar({
             className="border-0 pr-3 pl-9 shadow-none focus-visible:ring-0"
           />
         </div>
-        <div className="flex shrink-0 flex-wrap gap-1 p-1">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button type="button" variant="secondary" aria-label="筛选微博类型">
-                <span>{filterButtonLabel(filters)}</span>
-                <ChevronDown data-icon="inline-end" />
+        <div className="flex shrink-0 items-center gap-1 p-1">
+          <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
+            <PopoverTrigger asChild>
+              <Button type="button" variant="outline" size="icon" aria-label="高级筛选">
+                <SlidersHorizontal />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-36">
-              <DropdownMenuGroup>
-                {PROFILE_SEARCH_FILTER_KEYS.map((key) => (
-                  <DropdownMenuCheckboxItem
-                    key={key}
-                    checked={filters[key]}
-                    disabled={filters[key] && count <= 1}
-                    onCheckedChange={(checked) => toggleFilter(key, checked === true)}
-                    onSelect={(event) => event.preventDefault()}
-                  >
-                    {FILTER_LABELS[key]}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuGroup>
-              <DropdownMenuGroup>
-                <DropdownMenuCheckboxItem
-                  checked={count === PROFILE_SEARCH_FILTER_KEYS.length}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      resetFilters()
-                    }
-                  }}
-                  onSelect={(event) => event.preventDefault()}
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              className="w-auto p-3"
+              onOpenAutoFocus={(event) => event.preventDefault()}
+              onCloseAutoFocus={(event) => event.preventDefault()}
+              onInteractOutside={(event) => {
+                const target = event.target
+                if (target instanceof Element && target.closest('[data-slot="popover-content"]')) {
+                  event.preventDefault()
+                }
+              }}
+            >
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2">
+                  <p className="text-muted-foreground text-xs">类型</p>
+                  <label className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={allFiltersSelected}
+                      onCheckedChange={(checked) => {
+                        if (checked) resetFilters()
+                      }}
+                    />
+                    全部
+                  </label>
+                  {PROFILE_SEARCH_FILTER_KEYS.map((key) => (
+                    <label key={key} className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={filters[key]}
+                        disabled={filters[key] && count <= 1}
+                        onCheckedChange={(checked) => toggleFilter(key, checked === true)}
+                      />
+                      {FILTER_LABELS[key]}
+                    </label>
+                  ))}
+                </div>
+                <DateFilterField
+                  label="开始时间"
+                  valueLabel={startDate ? formatDateLabel(startDate) : '不限'}
+                  open={openDateField === 'start'}
+                  onOpenChange={(open) => setOpenDateField(open ? 'start' : null)}
                 >
-                  全选
-                </DropdownMenuCheckboxItem>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <Popover open={startPickerOpen} onOpenChange={setStartPickerOpen}>
-            <PopoverTrigger asChild>
-              <Button type="button" variant="secondary" aria-label="选择开始日期">
-                <CalendarDays data-icon="inline-start" />
-                <span>{startDate ? formatDateLabel(startDate) : '不限'}</span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-auto p-2">
-              <div className="flex flex-col gap-2">
-                <div className="text-muted-foreground px-2 text-xs">开始日期</div>
-                <Calendar
-                  mode="single"
-                  selected={startDate}
-                  locale={zhCN}
-                  captionLayout="dropdown"
-                  disabled={(date) => date > endDate}
-                  onSelect={(date) => {
-                    setStartDate(date)
-                  }}
-                />
-                <div className="flex justify-end gap-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    disabled={!startDate}
-                    onClick={() => {
-                      setStartDate(undefined)
-                    }}
-                  >
-                    清除
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => {
-                      setStartPickerOpen(false)
-                    }}
-                  >
-                    完成
-                  </Button>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
-
-          <Popover open={endPickerOpen} onOpenChange={setEndPickerOpen}>
-            <PopoverTrigger asChild>
-              <Button type="button" variant="secondary" aria-label="选择结束日期">
-                <CalendarDays data-icon="inline-start" />
-                <span>{formatDateLabel(endDate)}</span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-auto p-2">
-              <div className="flex flex-col gap-2">
-                <div className="text-muted-foreground px-2 text-xs">结束日期</div>
-                <Calendar
-                  mode="single"
-                  selected={endDate}
-                  locale={zhCN}
-                  captionLayout="dropdown"
-                  disabled={(date) => (startDate ? date < startDate : false)}
-                  onSelect={(date) => {
-                    if (date) {
+                  <div className="flex flex-col gap-2">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      locale={zhCN}
+                      captionLayout="dropdown"
+                      disabled={(date) => date > endDate}
+                      onSelect={(date) => {
+                        setStartDate(date)
+                        setOpenDateField(null)
+                      }}
+                    />
+                    <div className="flex justify-end">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={!startDate}
+                        onClick={() => setStartDate(undefined)}
+                      >
+                        清除
+                      </Button>
+                    </div>
+                  </div>
+                </DateFilterField>
+                <DateFilterField
+                  label="结束时间"
+                  valueLabel={formatDateLabel(endDate)}
+                  open={openDateField === 'end'}
+                  onOpenChange={(open) => setOpenDateField(open ? 'end' : null)}
+                >
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    locale={zhCN}
+                    captionLayout="dropdown"
+                    disabled={(date) => (startDate ? date < startDate : false)}
+                    onSelect={(date) => {
+                      if (!date) return
                       setEndDate(date)
-                    }
-                  }}
-                />
-                <div className="flex justify-end">
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => {
-                      setEndPickerOpen(false)
+                      setOpenDateField(null)
                     }}
-                  >
-                    完成
-                  </Button>
-                </div>
+                  />
+                </DateFilterField>
               </div>
             </PopoverContent>
           </Popover>
-
           <Button type="submit" disabled={isSearching}>
             搜索
           </Button>

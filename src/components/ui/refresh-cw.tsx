@@ -1,7 +1,6 @@
+import { cn } from 'cn'
 import type { SVGAttributes } from 'react'
 import { forwardRef } from 'react'
-
-import { cn } from '@/lib/utils'
 
 interface RefreshCWIconProps extends SVGAttributes<SVGSVGElement> {
   size?: number

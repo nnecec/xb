@@ -10,8 +10,7 @@ import {
 
 const { mockedAppSettings } = vi.hoisted(() => ({
   mockedAppSettings: {
-    rememberPlaybackRate: false,
-    playbackRate: 1,
+    media: { rememberPlaybackRate: false, playbackRate: 1 },
     updateSettings: vi.fn(),
   },
 }))
@@ -24,8 +23,7 @@ vi.mock('@reactuses/core', () => ({
 vi.mock('@/lib/app-settings-store', () => ({
   useAppSettings: (
     selector: (state: {
-      rememberPlaybackRate: boolean
-      playbackRate: number
+      media: { rememberPlaybackRate: boolean; playbackRate: number }
       updateSettings: ReturnType<typeof vi.fn>
     }) => unknown,
   ) => selector(mockedAppSettings),
@@ -56,8 +54,8 @@ function PlaybackSessionProbe({ sessionId, mode }: { sessionId: string; mode: Vi
 describe('useVideoPlaybackSession', () => {
   beforeEach(() => {
     resetPlaybackPositionStoreForTest()
-    mockedAppSettings.rememberPlaybackRate = false
-    mockedAppSettings.playbackRate = 1
+    mockedAppSettings.media.rememberPlaybackRate = false
+    mockedAppSettings.media.playbackRate = 1
     mockedAppSettings.updateSettings.mockReset()
   })
 
@@ -140,8 +138,8 @@ describe('useVideoPlaybackSession', () => {
   })
 
   it('restores and remembers the selected playback rate for on-demand video', () => {
-    mockedAppSettings.rememberPlaybackRate = true
-    mockedAppSettings.playbackRate = 1.5
+    mockedAppSettings.media.rememberPlaybackRate = true
+    mockedAppSettings.media.playbackRate = 1.5
     const { getByTestId } = render(<PlaybackSessionProbe sessionId="speed-memory" mode="video" />)
     const video = getByTestId('speed-memory') as HTMLVideoElement
     let playbackRate = 1
@@ -161,6 +159,8 @@ describe('useVideoPlaybackSession', () => {
 
     playbackRate = 2
     fireEvent.rateChange(video)
-    expect(mockedAppSettings.updateSettings).toHaveBeenLastCalledWith({ playbackRate: 2 })
+    expect(mockedAppSettings.updateSettings).toHaveBeenLastCalledWith({
+      media: { playbackRate: 2 },
+    })
   })
 })

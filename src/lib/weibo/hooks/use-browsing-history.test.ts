@@ -9,7 +9,7 @@ const { browsingHistoryLimit } = vi.hoisted(() => ({
 vi.mock('@/lib/app-settings-store', () => ({
   getAppSettingsStore: () => ({
     getState: () => ({
-      browsingHistoryLimit: browsingHistoryLimit.value,
+      feed: { browsingHistoryLimit: browsingHistoryLimit.value },
     }),
   }),
 }))

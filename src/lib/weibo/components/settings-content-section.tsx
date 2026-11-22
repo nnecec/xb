@@ -1,7 +1,7 @@
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
-  type AppSettings,
+  type FlatAppSettings,
   type ContentDensity,
   type ContentDisplay,
   type ReplyChainDisplay,
@@ -19,7 +19,7 @@ import {
 const FEED_SETTING_KEYS = [
   'feedDensity',
   'autoLoadLongText',
-] as const satisfies readonly (keyof AppSettings)[]
+] as const satisfies readonly (keyof FlatAppSettings)[]
 
 const WEIBO_SETTING_KEYS = [
   'weiboCardShowAvatar',
@@ -27,7 +27,7 @@ const WEIBO_SETTING_KEYS = [
   'weiboCardShowPublishInfo',
   'weiboCardShowTitleBadge',
   'replyChainDisplay',
-] as const satisfies readonly (keyof AppSettings)[]
+] as const satisfies readonly (keyof FlatAppSettings)[]
 
 const COMMENT_SETTING_KEYS = [
   'commentDensity',
@@ -39,7 +39,7 @@ const COMMENT_SETTING_KEYS = [
   'commentCardShowThreadLine',
   'commentCardImageDisplay',
   'commentCardCollapseRepliesByDefault',
-] as const satisfies readonly (keyof AppSettings)[]
+] as const satisfies readonly (keyof FlatAppSettings)[]
 
 export function SettingsFeedSection({
   updateSettings,
@@ -48,8 +48,8 @@ export function SettingsFeedSection({
 }) {
   const settings = useAppSettings(
     useShallow((state) => ({
-      feedDensity: state.feedDensity,
-      autoLoadLongText: state.autoLoadLongText,
+      feedDensity: state.feed.feedDensity,
+      autoLoadLongText: state.feed.autoLoadLongText,
     })),
   )
 
@@ -64,14 +64,22 @@ export function SettingsFeedSection({
             { value: 'standard', label: '标准' },
             { value: 'compact', label: '紧凑' },
           ]}
-          onChange={(value) => void updateSettings({ feedDensity: value as ContentDensity })}
+          onChange={(value) =>
+            void updateSettings({
+              feed: { feedDensity: value as ContentDensity },
+            })
+          }
         />
       </Field>
       <Field label="自动查看全文" description="长微博进入视口时自动加载完整内容">
         <Switch
           aria-label="自动查看全文"
           checked={settings.autoLoadLongText}
-          onCheckedChange={(checked) => void updateSettings({ autoLoadLongText: checked })}
+          onCheckedChange={(checked) =>
+            void updateSettings({
+              feed: { autoLoadLongText: checked },
+            })
+          }
         />
       </Field>
       <ResetSectionButton
@@ -90,7 +98,24 @@ export function SettingsCardsSection({
   scrollContainerRef: React.RefObject<HTMLElement | null>
   updateSettings: AppSettingsStoreState['updateSettings']
 }) {
-  const settings = useAppSettings(useShallow((state) => state))
+  const settings = useAppSettings(
+    useShallow((state) => ({
+      weiboCardShowAvatar: state.feed.weiboCardShowAvatar,
+      weiboCardShowTimestamp: state.feed.weiboCardShowTimestamp,
+      weiboCardShowPublishInfo: state.feed.weiboCardShowPublishInfo,
+      weiboCardShowTitleBadge: state.feed.weiboCardShowTitleBadge,
+      replyChainDisplay: state.feed.replyChainDisplay,
+      commentDensity: state.feed.commentDensity,
+      commentCardShowAvatar: state.feed.commentCardShowAvatar,
+      commentCardShowTimestamp: state.feed.commentCardShowTimestamp,
+      commentCardShowPublishInfo: state.feed.commentCardShowPublishInfo,
+      commentCardShowAuthorBadge: state.feed.commentCardShowAuthorBadge,
+      commentCardImageDisplay: state.feed.commentCardImageDisplay,
+      commentCardShowLikeCount: state.feed.commentCardShowLikeCount,
+      commentCardShowThreadLine: state.feed.commentCardShowThreadLine,
+      commentCardCollapseRepliesByDefault: state.feed.commentCardCollapseRepliesByDefault,
+    })),
+  )
 
   function handleTabChange() {
     scrollContainerRef.current?.scrollTo?.({ top: 0, behavior: 'instant' })
@@ -111,7 +136,11 @@ export function SettingsCardsSection({
             <Switch
               aria-label="显示微博头像"
               checked={settings.weiboCardShowAvatar}
-              onCheckedChange={(checked) => void updateSettings({ weiboCardShowAvatar: checked })}
+              onCheckedChange={(checked) =>
+                void updateSettings({
+                  feed: { weiboCardShowAvatar: checked },
+                })
+              }
             />
           </Field>
           <Field label="显示发布时间">
@@ -119,7 +148,9 @@ export function SettingsCardsSection({
               aria-label="显示微博发布时间"
               checked={settings.weiboCardShowTimestamp}
               onCheckedChange={(checked) =>
-                void updateSettings({ weiboCardShowTimestamp: checked })
+                void updateSettings({
+                  feed: { weiboCardShowTimestamp: checked },
+                })
               }
             />
           </Field>
@@ -128,7 +159,9 @@ export function SettingsCardsSection({
               aria-label="显示微博发布信息"
               checked={settings.weiboCardShowPublishInfo}
               onCheckedChange={(checked) =>
-                void updateSettings({ weiboCardShowPublishInfo: checked })
+                void updateSettings({
+                  feed: { weiboCardShowPublishInfo: checked },
+                })
               }
             />
           </Field>
@@ -137,7 +170,9 @@ export function SettingsCardsSection({
               aria-label="显示微博标题徽章"
               checked={settings.weiboCardShowTitleBadge}
               onCheckedChange={(checked) =>
-                void updateSettings({ weiboCardShowTitleBadge: checked })
+                void updateSettings({
+                  feed: { weiboCardShowTitleBadge: checked },
+                })
               }
             />
           </Field>
@@ -151,7 +186,9 @@ export function SettingsCardsSection({
                 { value: 'collapsed', label: '折叠卡片' },
               ]}
               onChange={(value) =>
-                void updateSettings({ replyChainDisplay: value as ReplyChainDisplay })
+                void updateSettings({
+                  feed: { replyChainDisplay: value as ReplyChainDisplay },
+                })
               }
             />
           </Field>
@@ -174,14 +211,22 @@ export function SettingsCardsSection({
                 { value: 'standard', label: '标准' },
                 { value: 'compact', label: '紧凑' },
               ]}
-              onChange={(value) => void updateSettings({ commentDensity: value as ContentDensity })}
+              onChange={(value) =>
+                void updateSettings({
+                  feed: { commentDensity: value as ContentDensity },
+                })
+              }
             />
           </Field>
           <Field label="显示头像">
             <Switch
               aria-label="显示评论头像"
               checked={settings.commentCardShowAvatar}
-              onCheckedChange={(checked) => void updateSettings({ commentCardShowAvatar: checked })}
+              onCheckedChange={(checked) =>
+                void updateSettings({
+                  feed: { commentCardShowAvatar: checked },
+                })
+              }
             />
           </Field>
           <Field label="显示发布时间">
@@ -189,7 +234,9 @@ export function SettingsCardsSection({
               aria-label="显示评论发布时间"
               checked={settings.commentCardShowTimestamp}
               onCheckedChange={(checked) =>
-                void updateSettings({ commentCardShowTimestamp: checked })
+                void updateSettings({
+                  feed: { commentCardShowTimestamp: checked },
+                })
               }
             />
           </Field>
@@ -198,7 +245,9 @@ export function SettingsCardsSection({
               aria-label="显示评论发布信息"
               checked={settings.commentCardShowPublishInfo}
               onCheckedChange={(checked) =>
-                void updateSettings({ commentCardShowPublishInfo: checked })
+                void updateSettings({
+                  feed: { commentCardShowPublishInfo: checked },
+                })
               }
             />
           </Field>
@@ -207,7 +256,9 @@ export function SettingsCardsSection({
               aria-label="显示评论博主徽章"
               checked={settings.commentCardShowAuthorBadge}
               onCheckedChange={(checked) =>
-                void updateSettings({ commentCardShowAuthorBadge: checked })
+                void updateSettings({
+                  feed: { commentCardShowAuthorBadge: checked },
+                })
               }
             />
           </Field>
@@ -220,7 +271,9 @@ export function SettingsCardsSection({
                 { value: 'collapsed', label: '默认折叠' },
               ]}
               onChange={(value) =>
-                void updateSettings({ commentCardImageDisplay: value as ContentDisplay })
+                void updateSettings({
+                  feed: { commentCardImageDisplay: value as ContentDisplay },
+                })
               }
             />
           </Field>
@@ -229,7 +282,9 @@ export function SettingsCardsSection({
               aria-label="显示评论点赞数字"
               checked={settings.commentCardShowLikeCount}
               onCheckedChange={(checked) =>
-                void updateSettings({ commentCardShowLikeCount: checked })
+                void updateSettings({
+                  feed: { commentCardShowLikeCount: checked },
+                })
               }
             />
           </Field>
@@ -238,7 +293,9 @@ export function SettingsCardsSection({
               aria-label="显示评论回复线程引导线"
               checked={settings.commentCardShowThreadLine}
               onCheckedChange={(checked) =>
-                void updateSettings({ commentCardShowThreadLine: checked })
+                void updateSettings({
+                  feed: { commentCardShowThreadLine: checked },
+                })
               }
             />
           </Field>
@@ -247,7 +304,9 @@ export function SettingsCardsSection({
               aria-label="默认折叠评论回复"
               checked={settings.commentCardCollapseRepliesByDefault}
               onCheckedChange={(checked) =>
-                void updateSettings({ commentCardCollapseRepliesByDefault: checked })
+                void updateSettings({
+                  feed: { commentCardCollapseRepliesByDefault: checked },
+                })
               }
             />
           </Field>

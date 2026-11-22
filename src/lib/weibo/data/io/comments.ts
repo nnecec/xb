@@ -1,3 +1,4 @@
+import { normalizeCursor } from '@/lib/weibo/data/io/cursor'
 import type { NotificationsPage } from '@/lib/weibo/models/notification'
 
 interface WeiboComment {
@@ -42,13 +43,6 @@ export interface WeiboCommentsPayload {
     comments?: Array<WeiboComment | null | undefined>
   }
   msg?: string
-}
-
-function normalizeCursor(value: number | string | undefined): string | null {
-  if (value === undefined || value === null || value === '' || String(value) === '0') {
-    return null
-  }
-  return String(value)
 }
 
 function parseWeiboDate(dateStr: string | undefined): string {

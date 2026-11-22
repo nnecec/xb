@@ -1,8 +1,8 @@
+import { cn } from 'cn'
 import { useState, type MouseEvent } from 'react'
 
 import { Button } from '@/components/ui/button'
 import type { ContentDisplay, WeiboCardMediaCollapseType } from '@/lib/app-settings'
-import { cn } from '@/lib/utils'
 import { StatusText } from '@/lib/weibo/components/status-text'
 import { useFontSettings } from '@/lib/weibo/hooks/use-font-settings'
 import type { FeedItem } from '@/lib/weibo/models/feed'

@@ -10,7 +10,7 @@ export type {
   WeiboPicInfo,
   WeiboStatus,
   WeiboLongTextData,
-} from './types'
+} from '@/lib/weibo/models/weibo-api'
 
 // Media transformation
 export { toMedia } from './media'

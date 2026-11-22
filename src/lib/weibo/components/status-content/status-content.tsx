@@ -1,3 +1,4 @@
+import { cn } from 'cn'
 import { ChevronRightIcon } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { Link } from 'react-router'
@@ -16,7 +17,6 @@ import {
 } from '@/components/ui/table'
 import type { ContentDisplay, WeiboCardMediaCollapseType } from '@/lib/app-settings'
 import { useAppSettings } from '@/lib/app-settings-store'
-import { cn } from '@/lib/utils'
 import { useEmoticonConfigQuery } from '@/lib/weibo/app/emoticon-query'
 import { CollapsibleMedia } from '@/lib/weibo/components/collapsible-media'
 import { buildMediaCollectionItems, MediaCollection } from '@/lib/weibo/components/media-collection'
@@ -68,8 +68,13 @@ function renderInlineEmoticon(emoticon: WeiboEmoticonItem, key: string) {
   )
 }
 
+function xbTopicPath(title: string) {
+  const topic = title.replace(/^#/, '').replace(/#$/, '').trim()
+  return `/topic?q=${encodeURIComponent(topic)}`
+}
+
 function TopicLink({ entity, topicKey }: { entity: FeedTopicEntity; topicKey: string }) {
-  const xbTopicPage = useAppSettings((s) => s.xbTopicPage)
+  const xbTopicPage = useAppSettings((s) => s.features.xbTopicPage)
 
   if (!xbTopicPage) {
     return (
@@ -86,7 +91,7 @@ function TopicLink({ entity, topicKey }: { entity: FeedTopicEntity; topicKey: st
   }
 
   return (
-    <Link key={topicKey} to={entity.url} className={LINK_TEXT_CLASS_NAME}>
+    <Link key={topicKey} to={xbTopicPath(entity.title)} className={LINK_TEXT_CLASS_NAME}>
       #{entity.title}#
     </Link>
   )
@@ -402,10 +407,13 @@ function ReplyChainView({
                 type="button"
                 size="xs"
                 variant="ghost"
-                className="group mt-2 flex w-fit items-center gap-1"
+                className="group mt-2 w-fit"
                 onClick={(event) => event.stopPropagation()}
               >
-                <ChevronRightIcon className="size-3 transition-transform group-data-[state=open]:rotate-90" />
+                <ChevronRightIcon
+                  data-icon="inline-start"
+                  className="transition-transform group-data-[state=open]:rotate-90"
+                />
                 <span className="text-xs">{content.chain.middle.length} 条引用</span>
               </Button>
             </CollapsibleTrigger>
@@ -482,7 +490,7 @@ export function StatusText({
   collapsedMediaTypes?: WeiboCardMediaCollapseType[]
 }) {
   const emoticonQuery = useEmoticonConfigQuery()
-  const replyChainDisplay = useAppSettings((s) => s.replyChainDisplay)
+  const replyChainDisplay = useAppSettings((s) => s.feed.replyChainDisplay)
   const phraseMap = {
     ...emoticonQuery.data?.phraseMap,
     ...item.emoticons,

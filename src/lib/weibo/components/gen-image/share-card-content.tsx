@@ -1,8 +1,8 @@
+import { cn } from 'cn'
 import { Heart, MessageCircle, Repeat2 } from 'lucide-react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
 import { StatusText } from '@/lib/weibo/components/status-text'
 
 import type { ShareCardProps } from './types'

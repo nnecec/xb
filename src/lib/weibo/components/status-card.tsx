@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { cn } from 'cn'
 import { Bookmark } from 'lucide-react'
 import {
   createContext,
@@ -13,7 +14,6 @@ import {
   type KeyboardEvent,
   type MouseEvent,
 } from 'react'
-import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
 
 import { Badge } from '@/components/ui/badge'
@@ -28,7 +28,7 @@ import {
   type WeiboCardMediaCollapseType,
 } from '@/lib/app-settings'
 import { useAppSettings, useShallow } from '@/lib/app-settings-store'
-import { cn } from '@/lib/utils'
+import { usePageRuntime } from '@/lib/weibo/app/page-runtime'
 import { FeedCardMoreMenu } from '@/lib/weibo/components/feed-card-more-menu'
 import { FeedCommentsExpanded } from '@/lib/weibo/components/feed-comments-expanded'
 import { useGenImageDialog } from '@/lib/weibo/components/gen-image-dialog-context'
@@ -51,6 +51,8 @@ import {
   optimisticallyRemoveStatusFromFavorites,
   optimisticallyToggleStatusFavorite,
   optimisticallyToggleStatusLike,
+  refreshStatusFavoriteLists,
+  refreshStatusLikeLists,
   restoreStatusCacheMutation,
 } from '@/lib/weibo/queries/status-cache'
 
@@ -135,8 +137,8 @@ export const StatusCard = memo(function StatusCard({ status }: { status: FeedIte
 })
 
 export const DetailStatusCard = memo(function DetailStatusCard({ status }: { status: FeedItem }) {
-  const navigate = useNavigate()
-  const handleRootDeleted = useCallback(() => navigate(-1), [navigate])
+  const runtime = usePageRuntime()
+  const handleRootDeleted = useCallback(() => runtime.back(), [runtime])
   return <StatusCardRoot status={status} surface="detail" onRootDeleted={handleRootDeleted} />
 })
 
@@ -165,18 +167,18 @@ function StatusCardRoot({
     weiboCardCollapsedMediaTypes,
   } = useAppSettings(
     useShallow((s) => ({
-      feedInteractionMode: s.feedInteractionMode,
-      feedPrimaryActionOrder: s.feedPrimaryActionOrder,
-      feedToolbarButtonIds: s.feedToolbarButtonIds,
-      ratingEnabled: s.ratingEnabled,
-      autoLoadLongText: s.autoLoadLongText,
-      feedDensity: s.feedDensity,
-      weiboCardShowAvatar: s.weiboCardShowAvatar,
-      weiboCardShowTimestamp: s.weiboCardShowTimestamp,
-      weiboCardShowPublishInfo: s.weiboCardShowPublishInfo,
-      weiboCardShowTitleBadge: s.weiboCardShowTitleBadge,
-      weiboCardShowInteractionCounts: s.weiboCardShowInteractionCounts,
-      weiboCardCollapsedMediaTypes: s.weiboCardCollapsedMediaTypes,
+      feedInteractionMode: s.feed.feedInteractionMode,
+      feedPrimaryActionOrder: s.feed.feedPrimaryActionOrder,
+      feedToolbarButtonIds: s.feed.feedToolbarButtonIds,
+      ratingEnabled: s.features.ratingEnabled,
+      autoLoadLongText: s.feed.autoLoadLongText,
+      feedDensity: s.feed.feedDensity,
+      weiboCardShowAvatar: s.feed.weiboCardShowAvatar,
+      weiboCardShowTimestamp: s.feed.weiboCardShowTimestamp,
+      weiboCardShowPublishInfo: s.feed.weiboCardShowPublishInfo,
+      weiboCardShowTitleBadge: s.feed.weiboCardShowTitleBadge,
+      weiboCardShowInteractionCounts: s.feed.weiboCardShowInteractionCounts,
+      weiboCardCollapsedMediaTypes: s.feed.weiboCardCollapsedMediaTypes,
     })),
   )
   const queryClient = useQueryClient()
@@ -194,7 +196,7 @@ function StatusCardRoot({
     },
     onMutate: (target: FeedItem) => optimisticallyToggleStatusLike(queryClient, target),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['weibo', 'liked-statuses'] })
+      refreshStatusLikeLists(queryClient)
     },
     onError: (_error, _target, context) => {
       restoreStatusCacheMutation(queryClient, context)
@@ -228,6 +230,7 @@ function StatusCardRoot({
     },
     onMutate: (target: FeedItem) => optimisticallyToggleStatusFavorite(queryClient, target),
     onSuccess: (_data, target) => {
+      refreshStatusFavoriteLists(queryClient)
       toast.success(target.favorited ? '取消收藏成功' : '收藏成功')
     },
     onError: (_error, target, context) => {
@@ -240,6 +243,7 @@ function StatusCardRoot({
     mutationFn: (targetId: string) => destroyFavorite(targetId),
     onMutate: (targetId: string) => optimisticallyRemoveStatusFromFavorites(queryClient, targetId),
     onSuccess: () => {
+      refreshStatusFavoriteLists(queryClient)
       toast.success('取消收藏成功')
     },
     onError: (error, _targetId, context) => {
@@ -542,11 +546,16 @@ function StatusCardView({ status, role }: { status: FeedItem; role: StatusCardRo
       })
   }, [])
 
+  const flatInColumn = role === 'root' && (isTimeline || surface === 'detail')
+  const timelineCardClassName =
+    flatInColumn && 'rounded-none border-x-0 border-t-0 bg-transparent shadow-none'
+
   if (resolvedItem.deleted) {
     return (
       <Card
         className={cn(
           'xb-feed-card xb-feed-card--compact relative gap-4 py-4',
+          timelineCardClassName,
           role === 'quoted' &&
             '-mx-4 rounded-none border-0 bg-muted/55 shadow-none sm:mx-0 sm:rounded-xl',
         )}
@@ -565,7 +574,7 @@ function StatusCardView({ status, role }: { status: FeedItem; role: StatusCardRo
                 void controller.unfavorite(resolvedItem.id)
               }}
             >
-              <Bookmark className="mr-1 size-3" />
+              <Bookmark data-icon="inline-start" />
               取消收藏
             </Button>
           ) : null}
@@ -581,7 +590,7 @@ function StatusCardView({ status, role }: { status: FeedItem; role: StatusCardRo
       <Card
         className={cn(
           'xb-feed-card group/card relative',
-          surface === 'detail' && role === 'root' && 'border-border/55 bg-card/95',
+          timelineCardClassName,
           role === 'quoted' &&
             '-mx-4 rounded-none border-0 bg-muted/55 shadow-none sm:mx-0 sm:rounded-xl',
           effectiveDensity === 'compact' && 'gap-3 py-3',

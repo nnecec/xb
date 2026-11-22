@@ -1,6 +1,6 @@
 'use client'
 
-import { createPlayer } from '@videojs/react'
+import { Container, createPlayer } from '@videojs/react'
 import { Audio, AudioSkin, audioFeatures } from '@videojs/react/audio'
 
 import '@videojs/react/audio/skin.css'
@@ -13,12 +13,12 @@ const AudioPlayer = createPlayer({ features: audioFeatures })
 
 export function AudioPlayerComponent({ src }: AudioPlayerProps) {
   return (
-    <AudioPlayer.Provider>
-      <AudioPlayer.Container className="media-default-skin media-default-skin--audio">
+    <AudioPlayer.Player>
+      <Container className="media-default-skin media-default-skin--audio">
         {/* data-xb-media-* 用于外部脚本(如全局播放协调、shadow-root 查询)定位本扩展挂载的媒体元素 */}
         <Audio src={src} preload="metadata" data-xb-media-audio="true" data-xb-media-kind="audio" />
         <AudioSkin />
-      </AudioPlayer.Container>
-    </AudioPlayer.Provider>
+      </Container>
+    </AudioPlayer.Player>
   )
 }

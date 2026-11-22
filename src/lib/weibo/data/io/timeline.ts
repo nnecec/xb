@@ -1,21 +1,75 @@
+import { normalizeCursor } from '@/lib/weibo/data/io/cursor'
 import type { FollowGroups } from '@/lib/weibo/models/explore'
 import { getDefaultFollowGroupForHomeTab } from '@/lib/weibo/models/explore-utils'
 import type { TimelinePage } from '@/lib/weibo/models/feed'
-import {
-  adaptFollowGroupsDataResponse,
-  type ExploreGroupsPayload,
-} from '@/lib/weibo/services/adapters/explore-groups'
-import type { WeiboTimelinePayload } from '@/lib/weibo/services/adapters/timeline'
-import { adaptTimelineResponse } from '@/lib/weibo/services/adapters/timeline'
+import type { WeiboStatus } from '@/lib/weibo/models/weibo-api'
 import { wbGet } from '@/lib/weibo/services/client'
 import type { WeiboEndpointPath } from '@/lib/weibo/services/endpoints'
 import { WEIBO_ENDPOINTS } from '@/lib/weibo/services/endpoints'
+import { toFeedItem } from '@/lib/weibo/utils/transform'
 
 export type HomeTimelineTab = 'for-you' | 'following' | 'special-follow' | 'friend-circle'
 
 export interface LoadTimelineOptions {
   cursor?: string | null
   groupListId?: string | null
+}
+
+export interface WeiboTimelinePayload {
+  data?: {
+    list?: Array<WeiboStatus | null | undefined>
+    statuses?: Array<WeiboStatus | null | undefined>
+    status?: Array<WeiboStatus | null | undefined>
+    since_id?: number | string
+  }
+  max_id?: number | string
+  statuses?: Array<WeiboStatus | null | undefined>
+}
+
+export interface ExploreGroupsPayload {
+  groups?: Array<{
+    group?: Array<{ gid?: string; title?: string; containerid?: string }>
+    title?: string
+  }>
+}
+
+function getDefaultFollowGroup(payload: ExploreGroupsPayload, title: string) {
+  const group = payload.groups
+    ?.find((item) => item.title === '默认分组')
+    ?.group?.find((item) => item.title === title)
+  return group?.gid && group.title ? { gid: group.gid, title: group.title } : null
+}
+
+export function adaptTimelineResponse(
+  payload: WeiboTimelinePayload,
+  pageForCursor?: number,
+): TimelinePage {
+  const statuses = Array.isArray(payload.statuses)
+    ? payload.statuses
+    : Array.isArray(payload.data?.statuses)
+      ? payload.data.statuses
+      : Array.isArray(payload.data?.status)
+        ? payload.data.status
+        : Array.isArray(payload.data?.list)
+          ? payload.data.list
+          : []
+  const items = statuses
+    .filter(
+      (status): status is WeiboStatus =>
+        status !== null && typeof status === 'object' && status.isAd !== 1,
+    )
+    .map((status) => toFeedItem(status))
+    .filter((item) => item.id !== '')
+
+  return {
+    items,
+    nextCursor:
+      pageForCursor !== undefined
+        ? items.length > 0
+          ? String(pageForCursor + 1)
+          : null
+        : normalizeCursor(payload.max_id ?? payload.data?.since_id),
+  }
 }
 
 function getTimelinePath(tab: HomeTimelineTab): WeiboEndpointPath {
@@ -74,12 +128,27 @@ export async function loadHomeTimeline(
   })
 }
 
+export function adaptFollowGroupsResponse(payload: ExploreGroupsPayload): FollowGroups {
+  return {
+    groups:
+      (payload.groups ?? [])
+        .find((item) => item.title === '我的分组')
+        ?.group?.flatMap((group) =>
+          group.gid && group.title ? [{ gid: group.gid, title: group.title }] : [],
+        ) ?? [],
+    defaultGroups: {
+      specialFollow: getDefaultFollowGroup(payload, '特别关注'),
+      friendCircle: getDefaultFollowGroup(payload, '互相关注'),
+    },
+  }
+}
+
 export async function loadFollowGroups(): Promise<FollowGroups> {
   const payload = await wbGet<ExploreGroupsPayload>(WEIBO_ENDPOINTS.exploreGroups, {
     is_new_segment: 1,
     fetch_hot: 1,
   })
-  return adaptFollowGroupsDataResponse(payload)
+  return adaptFollowGroupsResponse(payload)
 }
 
 async function loadHomeTimelineDefaultGroupId(

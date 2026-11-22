@@ -50,7 +50,7 @@ export function ThemeModeToggle({
           aria-label={`主题模式：${current.label}`}
           title={`主题模式：${current.label}`}
         >
-          <span className="relative flex size-4 items-center justify-center">
+          <span className="relative flex items-center justify-center">
             <AnimatePresence initial={false} mode="popLayout">
               <motion.span
                 key={value}
@@ -60,7 +60,7 @@ export function ThemeModeToggle({
                 exit={iconMotion.exit}
                 transition={iconMotion.transition}
               >
-                <current.Icon className="size-4" />
+                <current.Icon />
               </motion.span>
             </AnimatePresence>
           </span>
@@ -75,9 +75,9 @@ export function ThemeModeToggle({
 
           return (
             <DropdownMenuItem key={theme} onClick={() => onChange(theme)}>
-              <Icon className="size-4" />
+              <Icon />
               <span className="flex-1">{label}</span>
-              {isActive ? <CheckIcon className="size-3" /> : null}
+              {isActive ? <CheckIcon /> : null}
             </DropdownMenuItem>
           )
         })}

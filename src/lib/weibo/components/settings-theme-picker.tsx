@@ -1,3 +1,4 @@
+import { cn } from 'cn'
 import { ArrowLeft, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 
@@ -20,7 +21,6 @@ import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 import type { SelectedThemeType, UserTheme } from '@/lib/app-settings'
 import { CUSTOM_THEME_PRESETS } from '@/lib/custom-theme'
-import { cn } from '@/lib/utils'
 
 import { StackedField } from './settings-dialog-ui'
 import { ThemeUiPreview } from './theme-ui-preview'
@@ -150,13 +150,19 @@ export function SettingsThemePicker({
 
   const editingTheme =
     editingThemeId === null ? null : userThemes.find((theme) => theme.id === editingThemeId)
-  useEffect(() => {
+  const editingSnapshot =
+    view === 'edit' && editingTheme
+      ? `${editingTheme.id}\0${editingTheme.name}\0${editingTheme.lightCss}\0${editingTheme.darkCss}`
+      : null
+  const [appliedSnapshot, setAppliedSnapshot] = useState<string | null>(null)
+  if (editingSnapshot !== appliedSnapshot) {
+    setAppliedSnapshot(editingSnapshot)
     if (view === 'edit' && editingTheme) {
       setThemeNameInput(editingTheme.name)
       setEditLightCss(editingTheme.lightCss)
       setEditDarkCss(editingTheme.darkCss)
     }
-  }, [view, editingTheme])
+  }
 
   useEffect(() => {
     if (view !== 'edit') return

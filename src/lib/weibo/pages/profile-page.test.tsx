@@ -111,9 +111,12 @@ describe('ProfilePage', () => {
     })
     store.setState({
       ...store.getState(),
-      theme: 'system',
-      rewriteEnabled: true,
       isHydrated: true,
+      appearance: {
+        ...getAppSettingsStore().getState().appearance,
+        theme: 'system',
+        rewriteEnabled: true,
+      },
     })
   })
 

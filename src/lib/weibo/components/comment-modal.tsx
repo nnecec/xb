@@ -19,6 +19,7 @@ import { submitComposeAction } from '@/lib/weibo/data/weibo-data'
 import type { ComposeTarget } from '@/lib/weibo/models/compose'
 import {
   optimisticallyIncrementStatusComments,
+  refreshStatusCommentLists,
   restoreStatusCacheMutation,
 } from '@/lib/weibo/queries/status-cache'
 
@@ -82,15 +83,7 @@ function CommentModalForm({
       toast.success(target.mode === 'repost' ? '微博已转发' : '评论已发布')
       onOpenChange(false)
       if (target.mode === 'comment') {
-        void queryClient.invalidateQueries({
-          queryKey: ['weibo', 'status-comments', target.statusId],
-        })
-        void queryClient.invalidateQueries({
-          queryKey: ['weibo', 'feed-comments', target.statusId],
-        })
-        void queryClient.invalidateQueries({
-          queryKey: ['weibo', 'nested-comments'],
-        })
+        refreshStatusCommentLists(queryClient, target.statusId)
       }
     },
     onError: (error, _vars, context) => {

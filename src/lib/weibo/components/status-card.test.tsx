@@ -57,6 +57,11 @@ vi.mock('@/lib/weibo/components/gen-image-dialog-context', async () => {
   }
 })
 
+vi.mock('@/lib/weibo/app/page-runtime', () => ({
+  usePageRuntime: () => ({ back: vi.fn() }),
+  PageRuntimeProvider: ({ children }: { children: React.ReactNode }) => children,
+}))
+
 function createStatus(id: string, overrides: Partial<FeedItem> = {}): FeedItem {
   return {
     id,
@@ -96,11 +101,14 @@ describe('StatusCard module', () => {
     })
     store.setState({
       ...store.getState(),
-      feedInteractionMode: 'x',
-      feedPrimaryActionOrder: ['comment', 'repost', 'like'],
-      feedToolbarButtonIds: [],
-      autoLoadLongText: false,
       isHydrated: true,
+      feed: {
+        ...getAppSettingsStore().getState().feed,
+        feedInteractionMode: 'x',
+        feedPrimaryActionOrder: ['comment', 'repost', 'like'],
+        feedToolbarButtonIds: [],
+        autoLoadLongText: false,
+      },
     })
   })
 
@@ -151,6 +159,12 @@ describe('StatusCard module', () => {
     expect(host.openStatus).toHaveBeenCalledWith(expect.objectContaining({ id: 'quoted' }))
     expect(host.openStatus).not.toHaveBeenCalledWith(expect.objectContaining({ id: 'root' }))
     expect(quotedCard).toHaveClass('border-0', 'shadow-none', 'bg-muted/55')
+    expect(screen.getAllByTestId('status-card-body')[0]).toHaveClass('border-x-0', 'bg-transparent')
+  })
+
+  it('keeps a detail status flush with the column', () => {
+    renderCard(createStatus('root'), { openStatus: vi.fn(), composeStatus: vi.fn() }, true)
+    expect(screen.getByTestId('status-card-body')).toHaveClass('border-x-0', 'bg-transparent')
   })
 
   it('composes against the action target', () => {
@@ -182,7 +196,9 @@ describe('StatusCard module', () => {
   })
 
   it('opens a quoted comment in Weibo mode without changing the root target', () => {
-    getAppSettingsStore().setState({ feedInteractionMode: 'weibo' })
+    getAppSettingsStore().setState({
+      feed: { ...getAppSettingsStore().getState().feed, feedInteractionMode: 'weibo' },
+    })
     const host = { openStatus: vi.fn(), composeStatus: vi.fn() }
     const quoted = createStatus('quoted')
     renderCard(createStatus('root', { retweetedStatus: quoted }), host)
@@ -221,7 +237,9 @@ describe('StatusCard module', () => {
   })
 
   it('keeps inline comments local to root cards in Weibo mode', () => {
-    getAppSettingsStore().setState({ feedInteractionMode: 'weibo' })
+    getAppSettingsStore().setState({
+      feed: { ...getAppSettingsStore().getState().feed, feedInteractionMode: 'weibo' },
+    })
     renderCard(createStatus('root'))
 
     const button = screen.getByRole('button', { name: '展开精选评论，2 条评论' })

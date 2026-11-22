@@ -1,4 +1,4 @@
-import { ChevronDown, XIcon } from 'lucide-react'
+import { XIcon } from 'lucide-react'
 import { Dialog as DialogPrimitive } from 'radix-ui'
 import React from 'react'
 
@@ -14,7 +14,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
   Field as UiField,
   FieldContent,
@@ -23,8 +22,13 @@ import {
   FieldTitle,
 } from '@/components/ui/field'
 import { getUiPortalContainer } from '@/components/ui/portal'
+import { Slider } from '@/components/ui/slider'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { type AppSettings, DEFAULT_APP_SETTINGS } from '@/lib/app-settings'
+import {
+  DEFAULT_FLAT_APP_SETTINGS,
+  type FlatAppSettings,
+  type AppSettingsPatch,
+} from '@/lib/app-settings'
 
 const DIALOG_CONTENT_CLASSES =
   'fixed bottom-4 left-4 z-50 flex h-[min(560px,80vh)] w-[min(720px,84vw)] max-w-none flex-col gap-0 overflow-hidden rounded-lg border bg-background p-0 shadow-lg outline-none'
@@ -62,7 +66,7 @@ export function DialogContentMaybeForced({
             aria-label="关闭"
             className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring/50 absolute top-3 right-3 rounded-md p-2 transition-colors focus-visible:ring-3 focus-visible:outline-none"
           >
-            <XIcon aria-hidden="true" className="size-4" />
+            <XIcon aria-hidden="true" />
             <span className="sr-only">关闭</span>
           </DialogPrimitive.Close>
         </DialogPrimitive.Content>
@@ -90,9 +94,9 @@ export function SidebarItem({
       static
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
-      className="w-full justify-start gap-2.5 px-3"
+      className="w-full justify-start"
     >
-      <Icon aria-hidden="true" className="size-4 shrink-0" />
+      <Icon aria-hidden="true" data-icon="inline-start" />
       {label}
     </Button>
   )
@@ -202,25 +206,49 @@ export function OptionPills<T extends string>({
   )
 }
 
-export function FineTuning({
-  children,
-  defaultOpen = false,
+export function CommitSlider({
+  label,
+  value,
+  min,
+  max,
+  step,
+  onCommit,
 }: {
-  children: React.ReactNode
-  defaultOpen?: boolean
+  label: string
+  value: number
+  min: number
+  max: number
+  step: number
+  onCommit: (value: number) => void
 }) {
+  const [draft, setDraft] = React.useState<number | null>(null)
+  const shown = draft ?? value
+
   return (
-    <Collapsible defaultOpen={defaultOpen} className="border-t py-3">
-      <CollapsibleTrigger className="group text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 flex min-h-8 w-full items-center justify-between rounded-md text-left text-xs font-medium focus-visible:ring-3 focus-visible:outline-none">
-        精细调整
-        <ChevronDown
-          aria-hidden="true"
-          className="size-4 transition-transform group-data-[state=open]:rotate-180"
-        />
-      </CollapsibleTrigger>
-      <CollapsibleContent className="pt-2">{children}</CollapsibleContent>
-    </Collapsible>
+    <div className="flex w-72 min-w-0 items-center gap-3">
+      <Slider
+        min={min}
+        max={max}
+        step={step}
+        value={[shown]}
+        aria-label={label}
+        onValueChange={([next]) => {
+          if (next !== undefined) setDraft(next)
+        }}
+        onValueCommit={([next]) => {
+          setDraft(null)
+          if (next !== undefined && next !== value) onCommit(next)
+        }}
+      />
+      <output className="text-muted-foreground w-16 shrink-0 text-right font-mono text-xs tabular-nums">
+        {shown}px
+      </output>
+    </div>
   )
+}
+
+export function FineTuning({ children }: { children: React.ReactNode }) {
+  return <div className="border-t py-3">{children}</div>
 }
 
 export function ResetSectionButton({
@@ -229,7 +257,7 @@ export function ResetSectionButton({
   onReset,
 }: {
   label: string
-  keys: readonly (keyof AppSettings)[]
+  keys: readonly (keyof FlatAppSettings)[]
   onReset: () => void
 }) {
   return (
@@ -257,10 +285,99 @@ export function ResetSectionButton({
   )
 }
 
-export function defaultsFor(keys: readonly (keyof AppSettings)[]): Partial<AppSettings> {
-  return Object.fromEntries(
-    keys.map((key) => [key, DEFAULT_APP_SETTINGS[key]]),
-  ) as Partial<AppSettings>
+const SETTING_GROUPS = {
+  appearance: new Set([
+    'theme',
+    'rewriteEnabled',
+    'uiFontSize',
+    'contentFontSize',
+    'fontWeightClass',
+    'letterSpacingClass',
+    'lineHeightClass',
+    'fontFamilyClass',
+    'fontApplyScope',
+    'motionPreference',
+    'darkModeImageDim',
+    'lightModeBgColor',
+    'darkModeBgColor',
+  ]),
+  navigation: new Set([
+    'columnWidth',
+    'customColumnWidth',
+    'showExplore',
+    'showFavorites',
+    'showHistory',
+    'showNotifications',
+    'showDMs',
+    'showProfile',
+    'showCompose',
+    'xbEntryCollapsed',
+    'sidebarCollapsed',
+  ]),
+  feed: new Set([
+    'replyChainDisplay',
+    'autoLoadLongText',
+    'feedDensity',
+    'weiboCardShowAvatar',
+    'weiboCardShowTimestamp',
+    'weiboCardShowPublishInfo',
+    'weiboCardShowTitleBadge',
+    'weiboCardShowInteractionCounts',
+    'weiboCardCollapsedMediaTypes',
+    'weiboCardSingleImageMaxWidth',
+    'weiboCardSingleVideoMaxWidth',
+    'weiboCardMultiMediaLayout',
+    'weiboCardMultiMediaGridLimit',
+    'weiboCardMultiMediaGridMaxWidth',
+    'weiboCardMultiMediaStripHeight',
+    'commentDensity',
+    'commentCardShowAvatar',
+    'commentCardShowTimestamp',
+    'commentCardShowPublishInfo',
+    'commentCardShowAuthorBadge',
+    'commentCardShowLikeCount',
+    'commentCardShowThreadLine',
+    'commentCardImageDisplay',
+    'commentCardCollapseRepliesByDefault',
+    'hotSearchType',
+    'feedInteractionMode',
+    'feedPrimaryActionOrder',
+    'feedToolbarButtonIds',
+    'browsingHistoryLimit',
+  ]),
+  imageGen: new Set([
+    'imageGenShowDataArea',
+    'imageGenShowFullImages',
+    'imageGenShowWeiboLink',
+    'imageGenTheme',
+    'imageGenCardStyle',
+  ]),
+  home: new Set(['firstLoadRedirect', 'homeTab', 'homeGroupId']),
+  features: new Set(['xbTopicPage', 'ratingEnabled']),
+  media: new Set([
+    'rememberPlaybackRate',
+    'playbackRate',
+    'videoQualityPreference',
+    'photoLoopEnabled',
+  ]),
+  themes: new Set([
+    'customThemeLightCss',
+    'customThemeDarkCss',
+    'selectedThemeType',
+    'selectedThemeId',
+    'userThemes',
+  ]),
+} as const
+
+export function defaultsFor(keys: readonly (keyof FlatAppSettings)[]): AppSettingsPatch {
+  const patch: AppSettingsPatch = {}
+  for (const key of keys) {
+    const group = (Object.keys(SETTING_GROUPS) as (keyof typeof SETTING_GROUPS)[]).find((name) =>
+      SETTING_GROUPS[name].has(key),
+    )
+    if (group) patch[group] = { ...patch[group], [key]: DEFAULT_FLAT_APP_SETTINGS[key] } as never
+  }
+  return patch
 }
 
 export function IllustrationPlaceholder({ children }: { children: React.ReactNode }) {
