@@ -47,7 +47,9 @@ jobs:
           CHROME_PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
           CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL: ${{ secrets.CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL }}
           CHROME_SERVICE_ACCOUNT_PRIVATE_KEY: ${{ secrets.CHROME_SERVICE_ACCOUNT_PRIVATE_KEY }}
-        run: bunx wxt submit --dry-run --chrome-zip .output/*-chrome.zip
+        run: |
+          CHROME_SERVICE_ACCOUNT_PRIVATE_KEY="${CHROME_SERVICE_ACCOUNT_PRIVATE_KEY//\\n/$'\n'}"
+          bunx wxt submit --dry-run --chrome-zip .output/*-chrome.zip
 
   release:
     if: ${{ !inputs.chrome_auth_check }}
@@ -180,6 +182,7 @@ jobs:
           EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
           EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
         run: |
+          CHROME_SERVICE_ACCOUNT_PRIVATE_KEY="${CHROME_SERVICE_ACCOUNT_PRIVATE_KEY//\\n/$'\n'}"
           bunx wxt submit \
             --chrome-zip .output/*-chrome.zip \
             --firefox-zip .output/*-firefox.zip \
