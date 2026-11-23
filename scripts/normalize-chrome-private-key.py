@@ -7,6 +7,7 @@ if key.startswith("{") or key.startswith('"'):
 
 key = key.replace("\\n", "\n").strip().strip('"')
 if not key.startswith("-----BEGIN"):
-    sys.exit("CHROME_SERVICE_ACCOUNT_PRIVATE_KEY 不是 PEM 私钥")
+    head = "".join(ch if ch.isascii() and ch.isalnum() else "." for ch in key[:24])
+    sys.exit(f"CHROME_SERVICE_ACCOUNT_PRIVATE_KEY 不是 PEM 私钥，开头是 {head}")
 
 sys.stdout.write(key)
