@@ -300,7 +300,7 @@
       "Keep all surfaces achromatic at rest. Color is reserved for interactive feedback only.",
       "Use the system-ui font stack in the default layer. Keep explicit user-selected fonts isolated to the preference layer.",
       "Use tonal layering (background shade differences) to indicate elevation, not shadows.",
-      "Maintain the three-column responsive layout: navigation rail → main feed → right sidebar.",
+      "Keep the workspace layout: a collapsible navigation rail, one primary column tied to the address bar, then zero or more auxiliary columns. Hot search and followed supertopics are column types, not a fixed right sidebar.",
       "Use active:scale-[0.96] on action buttons for tactile press feedback.",
       "Apply backdrop-blur to sticky header elements (tabs) so content scrolls cleanly beneath them.",
       "Keep the action bar's chromatic hover colors consistent: sky-blue for reply, emerald for repost, rose for like."

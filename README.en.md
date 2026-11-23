@@ -73,6 +73,10 @@ the beautifully redesigned interface.
 9. 📅 **Browsing History** — The history is recorded locally.
 10. ⬇️ **Free to downloads** - Supports download and batch download of Weibo
     images and videos.
+11. 📰 **Multi-column workspace** — A navigation rail, one primary column tied to
+    the address bar, and auxiliary columns you can add, remove, and reorder.
+    Column width uses a preset or a custom number. Dragging a column's right
+    edge has a minimum width and no maximum.
 
 ## Credits
 

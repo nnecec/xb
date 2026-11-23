@@ -9,7 +9,7 @@
 **两层：**
 
 - **Default layer** — 产品默认体验：Silent Canvas、无品牌色、克制动效、系统 UI 字体。
-- **Preference layer** — 用户自选主题/字体/背景/页面可见性/Feed 模式/工具栏；不得反向污染默认设计决策。
+- **Preference layer** — 用户自选主题/字体/背景/页面可见性/列宽/Feed 模式/工具栏；不得反向污染默认设计决策。
 
 ## Colors
 
@@ -25,7 +25,8 @@
 
 ## Layout & Chrome
 
-- 三栏：左导航（可折叠为图标轨）→ 主 Feed → 可选右栏（热搜/超话可独立隐藏）。
+- 工作区：左导航（可折叠为图标轨）→ 主列 → 零到多条附加列。主列始终存在，并对应浏览器地址；附加列横向排列，可增删和排序。热搜、已关注超话作为列类型加入，不再是固定右栏。
+- 列宽来自设置里的预设或自定义数字。拖动列右侧边缘时，宽度只受 `CUSTOM_COLUMN_WIDTH_MIN`（300px）限制。
 - 粘性 Tab 可用 `backdrop-blur`；其余避免玻璃态默认化。
 
 ## Component Deviations (vs shadcn defaults)
@@ -43,7 +44,7 @@
 
 ## Rules (default layer)
 
-**Do：** OKLCH · 静止无彩 · 系统字体 · 明度分层 · 三栏布局 · 操作栏三色 hover 一致 · 评分/下载/生图视觉次要 · 设置页是控制面板不是营销页。
+**Do：** OKLCH · 静止无彩 · 系统字体 · 明度分层 · 导航加列工作区 · 操作栏三色 hover 一致 · 评分/下载/生图视觉次要 · 设置页是控制面板不是营销页。
 
 **Don't：** 默认品牌 accent · 纯黑白 token · 卡片/容器 drop shadow · 渐变字 · 彩色侧条边框 · 强制加载 UI 字体 · 滥用 glassmorphism · 仪表盘式重复卡片网格 · 流程首选弹窗 · 增强功能压过 Feed。
 
