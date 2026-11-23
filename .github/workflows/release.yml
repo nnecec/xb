@@ -48,7 +48,7 @@ jobs:
           CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL: ${{ secrets.CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL }}
           CHROME_SERVICE_ACCOUNT_PRIVATE_KEY: ${{ secrets.CHROME_SERVICE_ACCOUNT_PRIVATE_KEY }}
         run: |
-          CHROME_SERVICE_ACCOUNT_PRIVATE_KEY="$(python3 -c 'import os; print(os.environ["CHROME_SERVICE_ACCOUNT_PRIVATE_KEY"].replace("\\n", "\n").strip().strip("\""), end="")')"
+          CHROME_SERVICE_ACCOUNT_PRIVATE_KEY="$(python3 scripts/normalize-chrome-private-key.py)"
           bunx wxt submit --dry-run --chrome-zip .output/*-chrome.zip
 
   release:
@@ -182,7 +182,7 @@ jobs:
           EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
           EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
         run: |
-          CHROME_SERVICE_ACCOUNT_PRIVATE_KEY="$(python3 -c 'import os; print(os.environ["CHROME_SERVICE_ACCOUNT_PRIVATE_KEY"].replace("\\n", "\n").strip().strip("\""), end="")')"
+          CHROME_SERVICE_ACCOUNT_PRIVATE_KEY="$(python3 scripts/normalize-chrome-private-key.py)"
           bunx wxt submit \
             --chrome-zip .output/*-chrome.zip \
             --firefox-zip .output/*-firefox.zip \
