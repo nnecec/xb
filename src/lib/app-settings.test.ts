@@ -378,10 +378,14 @@ describe('app-settings', () => {
     expect(normalizeAppSettings({ columnWidth: 'huge' as never }).navigation.columnWidth).toBe(
       'standard',
     )
-    expect(normalizeAppSettings({ customColumnWidth: 301 }).navigation.customColumnWidth).toBe(300)
-    expect(normalizeAppSettings({ customColumnWidth: 311 }).navigation.customColumnWidth).toBe(320)
+    expect(normalizeAppSettings({ customColumnWidth: 301 }).navigation.customColumnWidth).toBe(301)
+    expect(normalizeAppSettings({ customColumnWidth: 311.4 }).navigation.customColumnWidth).toBe(
+      311,
+    )
     expect(normalizeAppSettings({ customColumnWidth: 720 }).navigation.customColumnWidth).toBe(720)
-    expect(normalizeAppSettings({ customColumnWidth: 800 }).navigation.customColumnWidth).toBe(720)
+    expect(normalizeAppSettings({ customColumnWidth: 1600 }).navigation.customColumnWidth).toBe(
+      1600,
+    )
     expect(normalizeAppSettings({ customColumnWidth: 0 }).navigation.customColumnWidth).toBe(300)
     expect(
       normalizeAppSettings({ customColumnWidth: 'wide' as never }).navigation.customColumnWidth,

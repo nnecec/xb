@@ -124,7 +124,8 @@ describe('SettingsDialog', () => {
     expect(screen.queryByText('设置搜索')).not.toBeInTheDocument()
   })
 
-  it('always shows multi-column width settings and reveals the custom slider', () => {
+  it('always shows multi-column width settings and reveals the custom number input', async () => {
+    const user = userEvent.setup()
     mockSettings.navigation.columnWidth = 'custom'
     mockSettings.navigation.customColumnWidth = 500
 
@@ -132,10 +133,27 @@ describe('SettingsDialog', () => {
 
     expect(screen.getByRole('button', { name: '显示' })).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('combobox', { name: '列宽度' })).toHaveTextContent('自定义')
-    expect(screen.getByRole('slider', { name: '自定义列宽度' })).toHaveValue(500)
-    expect(screen.getByText('500px')).toBeInTheDocument()
+    const input = screen.getByRole('spinbutton', { name: '自定义列宽度' })
+    expect(input).toHaveValue(500)
+    expect(input).toHaveAttribute('min', '300')
+    expect(input).not.toHaveAttribute('max')
+    expect(screen.queryByRole('slider', { name: '自定义列宽度' })).not.toBeInTheDocument()
     expect(screen.queryByRole('switch', { name: '启用多列模式' })).not.toBeInTheDocument()
     expect(screen.queryByRole('combobox', { name: '内容宽度' })).not.toBeInTheDocument()
+
+    await user.clear(input)
+    await user.type(input, '1200')
+    await user.tab()
+    expect(mockUpdateSettings).toHaveBeenCalledWith({
+      navigation: { customColumnWidth: 1200 },
+    })
+
+    await user.clear(input)
+    await user.type(input, '100')
+    await user.tab()
+    expect(mockUpdateSettings).toHaveBeenCalledWith({
+      navigation: { customColumnWidth: 300 },
+    })
   })
 
   it('forgets dragged column widths after confirming reset', async () => {

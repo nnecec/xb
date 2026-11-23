@@ -276,11 +276,11 @@ describe('workspace store', () => {
     const store = createWorkspaceStore(storage)
     await store.getState().hydrate()
 
-    expect(store.getState().auxiliaryColumns[0]).toMatchObject({ width: 720 })
+    expect(store.getState().auxiliaryColumns[0]).toMatchObject({ width: 9999 })
     expect(store.getState().columnWidths).toEqual({ explore: 300 })
     await store.getState().setColumnWidth('column', 1000)
-    expect(store.getState().auxiliaryColumns[0]).toMatchObject({ width: 720 })
-    expect(store.getState().columnWidths).toEqual({ explore: 720 })
+    expect(store.getState().auxiliaryColumns[0]).toMatchObject({ width: 1000 })
+    expect(store.getState().columnWidths).toEqual({ explore: 1000 })
   })
 
   it('migrates legacy saved width aliases for newly added saved columns', async () => {

@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,6 +12,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -20,9 +23,8 @@ import {
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import {
-  CUSTOM_COLUMN_WIDTH_MAX,
+  clampColumnWidth,
   CUSTOM_COLUMN_WIDTH_MIN,
-  CUSTOM_COLUMN_WIDTH_STEP,
   type FlatAppSettings,
   type ColumnWidth,
   type MotionPreference,
@@ -31,7 +33,6 @@ import { type AppSettingsStoreState, useAppSettings, useShallow } from '@/lib/ap
 import { useWorkspace } from '@/lib/weibo/workspace/workspace-store'
 
 import {
-  CommitSlider,
   defaultsFor,
   Field,
   OptionPills,
@@ -55,14 +56,54 @@ const WIDTH_OPTIONS = [
   { value: 'custom', label: '自定义' },
 ] as const
 
+function CustomColumnWidthInput({
+  label,
+  value,
+  onCommit,
+}: {
+  label: string
+  value: number
+  onCommit: (value: number) => void
+}) {
+  const [draft, setDraft] = useState<string | null>(null)
+  const shown = draft ?? String(value)
+
+  const commit = () => {
+    const numeric = Number(shown)
+    setDraft(null)
+    if (!Number.isFinite(numeric)) return
+    const next = clampColumnWidth(numeric)
+    if (next !== value) onCommit(next)
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <Input
+        type="number"
+        inputMode="numeric"
+        min={CUSTOM_COLUMN_WIDTH_MIN}
+        step={1}
+        aria-label={label}
+        value={shown}
+        className="w-24 font-mono tabular-nums"
+        onChange={(event) => setDraft(event.target.value)}
+        onBlur={commit}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') {
+            event.currentTarget.blur()
+          }
+        }}
+      />
+      <span className="text-muted-foreground text-xs">px</span>
+    </div>
+  )
+}
+
 function WidthControl({
   label,
   description,
   value,
   customValue,
-  customMin,
-  customMax,
-  customStep,
   customLabel,
   onValueChange,
   onCustomValueChange,
@@ -71,18 +112,13 @@ function WidthControl({
   description: string
   value: string
   customValue: number
-  customMin: number
-  customMax: number
-  customStep: number
   customLabel: string
   onValueChange: (value: string) => void
   onCustomValueChange: (value: number) => void
 }) {
   return (
     <Field label={label} description={description}>
-      <div
-        className={`flex min-w-0 flex-col items-end gap-2 ${value === 'custom' ? 'w-72' : 'w-fit'}`}
-      >
+      <div className="flex min-w-0 items-center justify-end gap-2">
         <Select value={value} onValueChange={onValueChange}>
           <SelectTrigger className="w-fit" aria-label={label}>
             <SelectValue />
@@ -98,16 +134,11 @@ function WidthControl({
           </SelectContent>
         </Select>
         {value === 'custom' ? (
-          <div className="w-full pt-1">
-            <CommitSlider
-              label={customLabel}
-              value={customValue}
-              min={customMin}
-              max={customMax}
-              step={customStep}
-              onCommit={onCustomValueChange}
-            />
-          </div>
+          <CustomColumnWidthInput
+            label={customLabel}
+            value={customValue}
+            onCommit={onCustomValueChange}
+          />
         ) : null}
       </div>
     </Field>
@@ -141,9 +172,6 @@ export function SettingsDisplaySection({
           description="调整多列模式下每一列的宽度"
           value={settings.columnWidth}
           customValue={settings.customColumnWidth}
-          customMin={CUSTOM_COLUMN_WIDTH_MIN}
-          customMax={CUSTOM_COLUMN_WIDTH_MAX}
-          customStep={CUSTOM_COLUMN_WIDTH_STEP}
           customLabel="自定义列宽度"
           onValueChange={(value) =>
             void updateSettings({

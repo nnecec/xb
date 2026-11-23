@@ -2,7 +2,7 @@ import { useStore } from 'zustand'
 import { createStore, type StoreApi } from 'zustand/vanilla'
 
 import {
-  CUSTOM_COLUMN_WIDTH_MAX,
+  clampColumnWidth,
   CUSTOM_COLUMN_WIDTH_MIN,
   type AppSettingsStorageArea,
   type HomeTab,
@@ -100,7 +100,7 @@ export function normalizeCanvasScrollLeft(value: unknown): number {
 export function normalizeColumnWidth(value: unknown, fallback = CUSTOM_COLUMN_WIDTH_MIN): number {
   const numeric = typeof value === 'number' ? value : Number.NaN
   if (!Number.isFinite(numeric)) return fallback
-  return Math.round(Math.min(CUSTOM_COLUMN_WIDTH_MAX, Math.max(CUSTOM_COLUMN_WIDTH_MIN, numeric)))
+  return clampColumnWidth(numeric)
 }
 
 export interface WorkspaceStoreOptions {

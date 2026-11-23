@@ -24,11 +24,7 @@ import {
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
-import {
-  COLUMN_WIDTH_PX,
-  CUSTOM_COLUMN_WIDTH_MAX,
-  CUSTOM_COLUMN_WIDTH_MIN,
-} from '@/lib/app-settings'
+import { clampColumnWidth, COLUMN_WIDTH_PX, CUSTOM_COLUMN_WIDTH_MIN } from '@/lib/app-settings'
 import { AuxiliaryColumnView } from '@/lib/weibo/workspace/auxiliary-column'
 import { type AuxiliaryColumn } from '@/lib/weibo/workspace/workspace-store'
 
@@ -358,8 +354,6 @@ export function SortableColumnCanvas({
   }, [])
 
   const columns = activeColumnId || isSavingOrder ? displayedColumns : auxiliaryColumns
-  const clampColumnWidth = (width: number) =>
-    Math.round(Math.min(CUSTOM_COLUMN_WIDTH_MAX, Math.max(CUSTOM_COLUMN_WIDTH_MIN, width)))
 
   useEffect(() => {
     if (mainResizeStartRef.current) return
@@ -402,15 +396,13 @@ export function SortableColumnCanvas({
 
   const handleMainResizeKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLButtonElement>) => {
-      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
+      if (!['ArrowLeft', 'ArrowRight', 'Home'].includes(event.key)) return
       event.preventDefault()
       const previousWidth = mainColumnWidthRef.current
       const nextWidth =
         event.key === 'Home'
           ? CUSTOM_COLUMN_WIDTH_MIN
-          : event.key === 'End'
-            ? CUSTOM_COLUMN_WIDTH_MAX
-            : clampColumnWidth(previousWidth + (event.key === 'ArrowRight' ? 10 : -10))
+          : clampColumnWidth(previousWidth + (event.key === 'ArrowRight' ? 10 : -10))
       mainColumnWidthRef.current = nextWidth
       setMainColumnWidth(nextWidth)
       void onMainWidthChange?.(nextWidth)
@@ -525,7 +517,6 @@ export function SortableColumnCanvas({
               aria-orientation="vertical"
               aria-label="调整主列宽"
               aria-valuemin={CUSTOM_COLUMN_WIDTH_MIN}
-              aria-valuemax={CUSTOM_COLUMN_WIDTH_MAX}
               aria-valuenow={mainColumnWidth}
               data-column-control
               className="hover:bg-primary/20 focus-visible:bg-primary/20 absolute top-0 right-0 z-10 h-full w-2 cursor-col-resize touch-none border-0 bg-transparent p-0 outline-none focus-visible:ring-2 focus-visible:ring-inset"

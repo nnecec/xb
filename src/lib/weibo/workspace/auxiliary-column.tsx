@@ -14,7 +14,7 @@ import {
 } from 'react'
 
 import { Button } from '@/components/ui/button'
-import { CUSTOM_COLUMN_WIDTH_MAX, CUSTOM_COLUMN_WIDTH_MIN } from '@/lib/app-settings'
+import { clampColumnWidth, CUSTOM_COLUMN_WIDTH_MIN } from '@/lib/app-settings'
 import { useAppShellContext } from '@/lib/weibo/app/app-shell-context'
 import { PageRuntimeProvider, type PageRuntime } from '@/lib/weibo/app/page-runtime'
 import { HotSearchCard } from '@/lib/weibo/components/hotsearch-list'
@@ -281,8 +281,6 @@ export function AuxiliaryColumnView({
     setColumnWidth(nextWidth)
   }, [column.width, columnWidthPx])
 
-  const clampColumnWidth = (width: number) =>
-    Math.round(Math.min(CUSTOM_COLUMN_WIDTH_MAX, Math.max(CUSTOM_COLUMN_WIDTH_MIN, width)))
   const finishResize = useCallback(async () => {
     const resize = resizeStartRef.current
     if (!resize) return
@@ -326,21 +324,13 @@ export function AuxiliaryColumnView({
     setColumnWidth(nextWidth)
   }
   const handleResizeKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
-    if (
-      event.key !== 'ArrowLeft' &&
-      event.key !== 'ArrowRight' &&
-      event.key !== 'Home' &&
-      event.key !== 'End'
-    )
-      return
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'Home') return
     event.preventDefault()
     const previousWidth = columnWidthRef.current
     const nextWidth =
       event.key === 'Home'
         ? CUSTOM_COLUMN_WIDTH_MIN
-        : event.key === 'End'
-          ? CUSTOM_COLUMN_WIDTH_MAX
-          : clampColumnWidth(previousWidth + (event.key === 'ArrowRight' ? 10 : -10))
+        : clampColumnWidth(previousWidth + (event.key === 'ArrowRight' ? 10 : -10))
     columnWidthRef.current = nextWidth
     setColumnWidth(nextWidth)
     const requestId = ++resizeRequestIdRef.current
@@ -421,7 +411,6 @@ export function AuxiliaryColumnView({
         aria-orientation="vertical"
         aria-label={`调整${columnSourceTitle(column.source)}列宽`}
         aria-valuemin={CUSTOM_COLUMN_WIDTH_MIN}
-        aria-valuemax={CUSTOM_COLUMN_WIDTH_MAX}
         aria-valuenow={columnWidth}
         data-column-control
         className="focus-visible:ring-ring hover:after:bg-primary/20 focus-visible:after:bg-primary/20 absolute top-0 right-0 z-10 h-full w-2 cursor-col-resize touch-none border-0 bg-transparent p-0 outline-none after:absolute after:inset-y-0 after:right-[3px] after:w-px after:transition-colors after:duration-150 after:content-[''] focus-visible:ring-2 focus-visible:ring-inset"

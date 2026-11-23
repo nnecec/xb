@@ -82,7 +82,6 @@ export type LineHeightClass =
 export type ColumnWidth = 'narrower' | 'narrow' | 'standard' | 'wide' | 'wider' | 'custom'
 
 export const CUSTOM_COLUMN_WIDTH_MIN = 300
-export const CUSTOM_COLUMN_WIDTH_MAX = 720
 
 /** 主列与辅助列共用的标准宽度，其余预设以此为基准。 */
 const STANDARD_COLUMN_WIDTH_PX = 480
@@ -92,11 +91,15 @@ export const COLUMN_WIDTH_PX = {
   narrow: STANDARD_COLUMN_WIDTH_PX - 40,
   standard: STANDARD_COLUMN_WIDTH_PX,
   wide: STANDARD_COLUMN_WIDTH_PX + 60,
-  wider: Math.min(CUSTOM_COLUMN_WIDTH_MAX, STANDARD_COLUMN_WIDTH_PX + 140),
+  wider: STANDARD_COLUMN_WIDTH_PX + 140,
 } as const satisfies Record<Exclude<ColumnWidth, 'custom'>, number>
 
-export const CUSTOM_COLUMN_WIDTH_STEP = 20
 export const DEFAULT_CUSTOM_COLUMN_WIDTH = COLUMN_WIDTH_PX.standard
+
+/** 列宽只限制最小值，自定义输入和拖拽共用这一规则。 */
+export function clampColumnWidth(width: number) {
+  return Math.round(Math.max(CUSTOM_COLUMN_WIDTH_MIN, width))
+}
 
 export type HomeTab = 'for-you' | 'following' | 'special-follow' | 'friend-circle'
 
@@ -690,6 +693,12 @@ function isWeiboCardMultiMediaGridLimit(value: unknown): value is WeiboCardMulti
   return WEIBO_CARD_MULTI_MEDIA_GRID_LIMIT_OPTIONS.includes(value as WeiboCardMultiMediaGridLimit)
 }
 
+function normalizeCustomColumnWidth(value: unknown, fallback: number) {
+  const numeric = typeof value === 'number' ? value : Number.NaN
+  if (!Number.isFinite(numeric)) return fallback
+  return clampColumnWidth(numeric)
+}
+
 function normalizeSteppedNumber(
   value: unknown,
   min: number,
@@ -1042,11 +1051,8 @@ function normalizeFlatAppSettings(value: unknown): FlatAppSettings {
     columnWidth: isColumnWidth(candidate.columnWidth)
       ? candidate.columnWidth
       : DEFAULT_FLAT_APP_SETTINGS.columnWidth,
-    customColumnWidth: normalizeSteppedNumber(
+    customColumnWidth: normalizeCustomColumnWidth(
       candidate.customColumnWidth,
-      CUSTOM_COLUMN_WIDTH_MIN,
-      CUSTOM_COLUMN_WIDTH_MAX,
-      CUSTOM_COLUMN_WIDTH_STEP,
       DEFAULT_FLAT_APP_SETTINGS.customColumnWidth,
     ),
     theme: isAppTheme(candidate.theme) ? candidate.theme : DEFAULT_FLAT_APP_SETTINGS.theme,

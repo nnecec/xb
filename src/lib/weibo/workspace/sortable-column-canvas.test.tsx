@@ -161,13 +161,15 @@ describe('sortable column canvas', () => {
 
     const handle = screen.getByRole('separator', { name: '调整主列宽' })
     expect(handle).toHaveAttribute('aria-valuenow', '600')
+    expect(handle).toHaveAttribute('aria-valuemin', '300')
+    expect(handle).not.toHaveAttribute('aria-valuemax')
     fireEvent.pointerDown(handle, { button: 0, isPrimary: true, pointerId: 1, clientX: 100 })
-    fireEvent.pointerMove(handle, { pointerId: 1, clientX: 200 })
+    fireEvent.pointerMove(handle, { pointerId: 1, clientX: 900 })
     fireEvent.pointerUp(handle, { pointerId: 1 })
-    expect(handle).toHaveAttribute('aria-valuenow', '700')
-    expect(onMainWidthChange).toHaveBeenCalledWith(700)
-    fireEvent.keyDown(handle, { key: 'End' })
-    expect(handle).toHaveAttribute('aria-valuenow', '720')
+    expect(handle).toHaveAttribute('aria-valuenow', '1400')
+    expect(onMainWidthChange).toHaveBeenCalledWith(1400)
+    fireEvent.keyDown(handle, { key: 'Home' })
+    expect(handle).toHaveAttribute('aria-valuenow', '300')
   })
 
   it('scrolls the canvas by one column from the corner buttons', () => {

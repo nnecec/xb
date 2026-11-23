@@ -302,7 +302,7 @@ describe('AuxiliaryColumnView navigation', () => {
 
     const handle = screen.getByRole('separator', { name: '调整我关注的列宽' })
     expect(handle).toHaveAttribute('aria-valuemin', '300')
-    expect(handle).toHaveAttribute('aria-valuemax', '720')
+    expect(handle).not.toHaveAttribute('aria-valuemax')
     expect(handle).toHaveAttribute('aria-valuenow', '420')
     fireEvent.pointerDown(handle, { button: 0, isPrimary: true, pointerId: 1, clientX: 100 })
     fireEvent.pointerMove(handle, { pointerId: 1, clientX: 260 })
@@ -323,10 +323,8 @@ describe('AuxiliaryColumnView navigation', () => {
     expect(handle).toHaveAttribute('aria-valuenow', '300')
     fireEvent.keyDown(handle, { key: 'ArrowLeft' })
     expect(handle).toHaveAttribute('aria-valuenow', '300')
-    fireEvent.keyDown(handle, { key: 'End' })
-    expect(handle).toHaveAttribute('aria-valuenow', '720')
     fireEvent.keyDown(handle, { key: 'ArrowRight' })
-    expect(handle).toHaveAttribute('aria-valuenow', '720')
+    expect(handle).toHaveAttribute('aria-valuenow', '310')
   })
 
   it('opens profiles, topics, follows, and notifications inside the column', async () => {
