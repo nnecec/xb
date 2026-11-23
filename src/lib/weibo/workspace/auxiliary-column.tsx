@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button'
 import { clampColumnWidth, CUSTOM_COLUMN_WIDTH_MIN } from '@/lib/app-settings'
 import { useAppShellContext } from '@/lib/weibo/app/app-shell-context'
 import { PageRuntimeProvider, type PageRuntime } from '@/lib/weibo/app/page-runtime'
-import { HotSearchCard } from '@/lib/weibo/components/hotsearch-list'
+import { HotSearchCard, HOT_SEARCH_TYPES } from '@/lib/weibo/components/hotsearch-list'
 import { SearchCard } from '@/lib/weibo/components/search-card'
 import { StatusCardHostProvider, type StatusCardHost } from '@/lib/weibo/components/status-card'
 import { SuperTopicCard } from '@/lib/weibo/components/super-topic-card'
@@ -146,6 +146,7 @@ export function AuxiliaryColumnView({
   const savedFocusByDepthRef = useRef<Array<HTMLElement | null>>([])
   const setColumnLastLocation = useWorkspace((state) => state.setColumnLastLocation)
   const setColumnSearch = useWorkspace((state) => state.setColumnSearch)
+  const setHotSearchType = useWorkspace((state) => state.setHotSearchType)
   const [searchQuery, setSearchQuery] = useState(column.searchQuery ?? '')
   const [searchActiveQuery, setSearchActiveQuery] = useState(column.searchActiveQuery ?? '')
   const readingKey = JSON.stringify([column.source, column.lastLocation, column.lastBaseLocation])
@@ -168,9 +169,7 @@ export function AuxiliaryColumnView({
         })
   const locationStack = reading.stack
   const page = reading.page
-  const [hotSearchType] = useState(
-    column.source.kind === 'hot-search' ? (column.source.type ?? 'hot') : 'hot',
-  )
+  const hotSearchType = column.source.kind === 'hot-search' ? (column.source.type ?? 'hot') : 'hot'
   const rememberScroll = useCallback((depth: number) => {
     const rootNode = scrollRootRef.current?.getRootNode()
     savedScrollByDepthRef.current[depth] = scrollRootRef.current?.scrollTop ?? 0
@@ -507,6 +506,12 @@ export function AuxiliaryColumnView({
                     <>
                       <TimelineTopBar
                         title={columnSourceTitle({ kind: 'hot-search', type: hotSearchType })}
+                        titleValue={hotSearchType}
+                        titleOptions={HOT_SEARCH_TYPES}
+                        onTitleChange={(type) => {
+                          if (type === hotSearchType) return
+                          void setHotSearchType(column.id, type)
+                        }}
                       />
                       <HotSearchCard
                         type={hotSearchType}

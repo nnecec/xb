@@ -72,6 +72,7 @@ export interface WorkspaceStoreState extends WorkspaceSnapshot {
     baseLocation?: ColumnNavigationLocation | null,
   ) => Promise<void>
   setColumnSearch: (columnId: string, query: string, activeQuery: string) => Promise<void>
+  setHotSearchType: (columnId: string, type: HotSearchType) => Promise<void>
   setColumnWidth: (columnId: string, width: number) => Promise<void>
   resetColumnWidths: () => Promise<void>
   setCanvasScrollLeft: (scrollLeft: number) => Promise<void>
@@ -611,6 +612,19 @@ export function createWorkspaceStore(
               ...(activeQuery
                 ? { searchActiveQuery: activeQuery }
                 : { searchActiveQuery: undefined }),
+            }
+          }),
+        }))
+      },
+      async setHotSearchType(columnId, type) {
+        await updateAndPersist((snapshot) => ({
+          ...snapshot,
+          auxiliaryColumns: snapshot.auxiliaryColumns.map((column) => {
+            if (column.id !== columnId || column.source.kind !== 'hot-search') return column
+            if ((column.source.type ?? 'hot') === type) return column
+            return {
+              ...column,
+              source: { kind: 'hot-search', ...(type === 'hot' ? {} : { type }) },
             }
           }),
         }))

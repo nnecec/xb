@@ -19,7 +19,7 @@ import { useAppSettings, useShallow } from '@/lib/app-settings-store'
 import { hotSearchQueryOptions } from '@/lib/weibo/data/weibo-data'
 import { useColumnPageRefresh } from '@/lib/weibo/workspace/column-page-toolbar'
 
-const HOT_SEARCH_TYPES: { value: HotSearchType; label: string }[] = [
+export const HOT_SEARCH_TYPES: { value: HotSearchType; label: string }[] = [
   { value: 'hot', label: '热搜' },
   { value: 'mine', label: '我的' },
   { value: 'entertainment', label: '文娱' },

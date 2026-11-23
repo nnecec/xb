@@ -368,6 +368,20 @@ describe('workspace store', () => {
     ])
   })
 
+  it('remembers the hot search type selected for one column', async () => {
+    const store = createWorkspaceStore(createStorageArea(), { createId: () => 'hot-column' })
+    await store.getState().addColumn({ kind: 'hot-search' })
+    await store.getState().setHotSearchType('hot-column', 'life')
+
+    expect(store.getState().auxiliaryColumns[0]?.source).toEqual({
+      kind: 'hot-search',
+      type: 'life',
+    })
+
+    await store.getState().setHotSearchType('hot-column', 'hot')
+    expect(store.getState().auxiliaryColumns[0]?.source).toEqual({ kind: 'hot-search' })
+  })
+
   it('supports an explicit default width when no per-kind width exists', async () => {
     const store = createWorkspaceStore(createStorageArea(), { createId: () => 'column' })
     await store.getState().addColumn({ kind: 'explore' }, 610)

@@ -3,6 +3,7 @@ import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortabl
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { useStore } from 'zustand'
 
 import type { AppSettingsStorageArea } from '@/lib/app-settings'
 import {
@@ -178,9 +179,15 @@ vi.mock('@/lib/weibo/pages/follow-fans-page', async () => {
   }
 })
 
-vi.mock('@/lib/weibo/components/hotsearch-list', () => ({
-  HotSearchCard: () => <p>热搜列表</p>,
-}))
+vi.mock('@/lib/weibo/components/hotsearch-list', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/weibo/components/hotsearch-list')>(
+    '@/lib/weibo/components/hotsearch-list',
+  )
+  return {
+    ...actual,
+    HotSearchCard: ({ type }: { type?: string }) => <p>热搜列表 {type}</p>,
+  }
+})
 vi.mock('@/lib/weibo/pages/explore-page', () => ({ ExplorePage: () => null }))
 vi.mock('@/lib/weibo/pages/liked-statuses-page', () => ({ LikedStatusesPage: () => null }))
 vi.mock('@/lib/weibo/pages/history-page', () => ({ HistoryPage: () => null }))
@@ -267,7 +274,7 @@ describe('AuxiliaryColumnView navigation', () => {
     expect(screen.getByText('话题 测试话题')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: '返回' }))
-    expect(screen.getByText('热搜列表')).toBeInTheDocument()
+    expect(screen.getByText('热搜列表 hot')).toBeInTheDocument()
     await waitFor(() =>
       expect(workspace.getState().auxiliaryColumns[0]?.lastLocation).toBeUndefined(),
     )
@@ -275,7 +282,56 @@ describe('AuxiliaryColumnView navigation', () => {
     unmount()
     const restored = workspace.getState().auxiliaryColumns[0]!
     renderColumn(restored.source, { lastLocation: restored.lastLocation })
-    expect(screen.getByText('热搜列表')).toBeInTheDocument()
+    expect(screen.getByText('热搜列表 hot')).toBeInTheDocument()
+  })
+
+  it('switches a hot search column type from the title menu and keeps it', async () => {
+    const user = userEvent.setup()
+    await workspace.getState().addColumn({ kind: 'hot-search' })
+
+    function LiveHotSearchColumn() {
+      const column = useStore(
+        workspace,
+        (state) =>
+          state.auxiliaryColumns[0] ?? { id: 'missing', source: { kind: 'hot-search' as const } },
+      )
+      return (
+        <AuxiliaryColumnView
+          column={column}
+          columnWidthPx={420}
+          index={0}
+          columnCount={1}
+          sortingDisabled
+          shouldReduceMotion
+          onMove={vi.fn()}
+          onRemove={vi.fn()}
+        />
+      )
+    }
+
+    render(
+      <AppShellContextProvider value={shellContext}>
+        <DndContext>
+          <SortableContext
+            items={[workspace.getState().auxiliaryColumns[0]?.id ?? 'missing']}
+            strategy={horizontalListSortingStrategy}
+          >
+            <LiveHotSearchColumn />
+          </SortableContext>
+        </DndContext>
+      </AppShellContextProvider>,
+    )
+
+    expect(screen.getByText('热搜列表 hot')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '热搜' }))
+    await user.click(screen.getByRole('menuitem', { name: '文娱' }))
+
+    await waitFor(() =>
+      expect(workspace.getState().auxiliaryColumns[0]?.source).toEqual({
+        kind: 'hot-search',
+        type: 'entertainment',
+      }),
+    )
   })
 
   it('renders an accessible resize handle and persists pointer width changes', async () => {
