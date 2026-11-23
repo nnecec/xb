@@ -48,20 +48,7 @@ jobs:
           CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL: ${{ secrets.CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL }}
           CHROME_SERVICE_ACCOUNT_PRIVATE_KEY: ${{ secrets.CHROME_SERVICE_ACCOUNT_PRIVATE_KEY }}
         run: |
-          python3 - << 'PY'
-          import os
-          key = os.environ["CHROME_SERVICE_ACCOUNT_PRIVATE_KEY"]
-          print(
-              "key-shape",
-              "len", len(key),
-              "newlines", key.count("\n"),
-              "literal-backslash-n", key.count("\\n"),
-              "begin", key.lstrip().startswith("-----BEGIN"),
-              "json", key.lstrip().startswith("{"),
-              "quoted", key.lstrip().startswith('"'),
-          )
-          PY
-          CHROME_SERVICE_ACCOUNT_PRIVATE_KEY="${CHROME_SERVICE_ACCOUNT_PRIVATE_KEY//\\n/$'\n'}"
+          CHROME_SERVICE_ACCOUNT_PRIVATE_KEY="$(python3 -c 'import os; print(os.environ["CHROME_SERVICE_ACCOUNT_PRIVATE_KEY"].replace("\\n", "\n").strip().strip("\""), end="")')"
           bunx wxt submit --dry-run --chrome-zip .output/*-chrome.zip
 
   release:
@@ -195,7 +182,7 @@ jobs:
           EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
           EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
         run: |
-          CHROME_SERVICE_ACCOUNT_PRIVATE_KEY="${CHROME_SERVICE_ACCOUNT_PRIVATE_KEY//\\n/$'\n'}"
+          CHROME_SERVICE_ACCOUNT_PRIVATE_KEY="$(python3 -c 'import os; print(os.environ["CHROME_SERVICE_ACCOUNT_PRIVATE_KEY"].replace("\\n", "\n").strip().strip("\""), end="")')"
           bunx wxt submit \
             --chrome-zip .output/*-chrome.zip \
             --firefox-zip .output/*-firefox.zip \
