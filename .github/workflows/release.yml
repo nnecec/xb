@@ -1,17 +1,10 @@
 name: Release
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       dry_run:
         description: 'Dry run（只预览版本和 changelog，不实际发布）'
-        type: boolean
-        default: false
-      chrome_auth_check:
-        description: '只校验 Chrome Web Store API v2 凭据，不发布、不上传'
         type: boolean
         default: false
 
@@ -20,39 +13,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  chrome-auth-check:
-    if: inputs.chrome_auth_check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.4.5
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Zip Chrome extension
-        run: bun run zip
-
-      - name: Check Chrome Web Store API v2 credentials
-        env:
-          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
-          CHROME_API_VERSION: ${{ secrets.CHROME_API_VERSION }}
-          CHROME_PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
-          CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL: ${{ secrets.CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL }}
-          CHROME_SERVICE_ACCOUNT_PRIVATE_KEY: ${{ secrets.CHROME_SERVICE_ACCOUNT_PRIVATE_KEY }}
-        run: |
-          CHROME_SERVICE_ACCOUNT_PRIVATE_KEY="$(python3 scripts/normalize-chrome-private-key.py)"
-          bunx wxt submit --dry-run --chrome-zip .output/*-chrome.zip
-
   release:
-    if: ${{ !inputs.chrome_auth_check }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
