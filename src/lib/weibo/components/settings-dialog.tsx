@@ -203,10 +203,13 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
   function handleSelectPresetTheme(presetKey: string) {
     const preset = CUSTOM_THEME_PRESETS.find((item) => item.key === presetKey)
     void trackedUpdateSettings({
-      ...(preset
-        ? { customThemeLightCss: preset.lightCss, customThemeDarkCss: preset.darkCss }
-        : {}),
-      themes: { selectedThemeType: 'preset', selectedThemeId: presetKey },
+      themes: {
+        selectedThemeType: 'preset',
+        selectedThemeId: presetKey,
+        ...(preset
+          ? { customThemeLightCss: preset.lightCss, customThemeDarkCss: preset.darkCss }
+          : {}),
+      },
     })
   }
 
@@ -247,19 +250,21 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
   function handleDeleteUserTheme(themeId: string) {
     const defaultPreset = CUSTOM_THEME_PRESETS.find((item) => item.key === 'default')
     void trackedUpdateSettings({
-      ...(selectedThemeType === 'custom' && selectedThemeId === themeId
-        ? {
-            selectedThemeType: 'preset',
-            selectedThemeId: 'default',
-            ...(defaultPreset
-              ? {
-                  customThemeLightCss: defaultPreset.lightCss,
-                  customThemeDarkCss: defaultPreset.darkCss,
-                }
-              : {}),
-          }
-        : {}),
-      themes: { userThemes: userThemes.filter((item) => item.id !== themeId) },
+      themes: {
+        userThemes: userThemes.filter((item) => item.id !== themeId),
+        ...(selectedThemeType === 'custom' && selectedThemeId === themeId
+          ? {
+              selectedThemeType: 'preset' as const,
+              selectedThemeId: 'default',
+              ...(defaultPreset
+                ? {
+                    customThemeLightCss: defaultPreset.lightCss,
+                    customThemeDarkCss: defaultPreset.darkCss,
+                  }
+                : {}),
+            }
+          : {}),
+      },
     })
   }
 
@@ -271,8 +276,10 @@ export function SettingsDialog({ open, onOpenChange, forceMount = false }: Setti
       ...defaultsFor(THEME_SETTING_KEYS),
       ...(defaultPreset
         ? {
-            customThemeLightCss: defaultPreset.lightCss,
-            customThemeDarkCss: defaultPreset.darkCss,
+            themes: {
+              customThemeLightCss: defaultPreset.lightCss,
+              customThemeDarkCss: defaultPreset.darkCss,
+            },
           }
         : {}),
     })

@@ -7,6 +7,7 @@ import {
   DEFAULT_APP_SETTINGS,
   loadAppSettings,
   normalizeAppSettings,
+  normalizeAppSettingsPatch,
   persistAppSettings,
   type AppSettings,
   type AppSettingsPatch,
@@ -41,15 +42,16 @@ export function createAppSettingsStore(
     let persistQueue: Promise<unknown> = Promise.resolve()
 
     async function updateAndPersist(patch: AppSettingsPatch) {
+      const normalizedPatch = normalizeAppSettingsPatch(patch)
       const merge = (latest: AppSettings): AppSettings => ({
-        appearance: { ...latest.appearance, ...patch.appearance },
-        navigation: { ...latest.navigation, ...patch.navigation },
-        feed: { ...latest.feed, ...patch.feed },
-        imageGen: { ...latest.imageGen, ...patch.imageGen },
-        home: { ...latest.home, ...patch.home },
-        features: { ...latest.features, ...patch.features },
-        media: { ...latest.media, ...patch.media },
-        themes: { ...latest.themes, ...patch.themes },
+        appearance: { ...latest.appearance, ...normalizedPatch.appearance },
+        navigation: { ...latest.navigation, ...normalizedPatch.navigation },
+        feed: { ...latest.feed, ...normalizedPatch.feed },
+        imageGen: { ...latest.imageGen, ...normalizedPatch.imageGen },
+        home: { ...latest.home, ...normalizedPatch.home },
+        features: { ...latest.features, ...normalizedPatch.features },
+        media: { ...latest.media, ...normalizedPatch.media },
+        themes: { ...latest.themes, ...normalizedPatch.themes },
       })
       const next = merge(get())
       set(next)

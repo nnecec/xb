@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { APP_SETTINGS_STORAGE_KEY, DEFAULT_APP_SETTINGS } from '@/lib/app-settings'
 import { bindAppSettingsStorageSync, createAppSettingsStore } from '@/lib/app-settings-store'
+import { CUSTOM_THEME_PRESETS } from '@/lib/custom-theme'
 
 interface Deferred<T = void> {
   promise: Promise<T>
@@ -196,6 +197,36 @@ describe('app-settings-store', () => {
         userThemes: [{ ...theme, lightCss: ':root { --background: ivory; }' }],
         customThemeLightCss: ':root { --background: ivory; }',
         customThemeDarkCss: theme.darkCss,
+      },
+    })
+  })
+
+  it('keeps a selected preset theme when a later column width update is saved', async () => {
+    const storage = createStorageArea()
+    const store = createAppSettingsStore(storage)
+    await store.getState().hydrate()
+    const preset = CUSTOM_THEME_PRESETS.find((item) => item.key === 'twitter')
+    expect(preset).toBeDefined()
+
+    await store.getState().updateSettings({
+      themes: {
+        selectedThemeType: 'preset',
+        selectedThemeId: 'twitter',
+        customThemeLightCss: preset!.lightCss,
+        customThemeDarkCss: preset!.darkCss,
+      },
+    })
+    await store.getState().updateSettings({
+      navigation: { customColumnWidth: 640 },
+    })
+
+    expect(storage.read()).toMatchObject({
+      navigation: { customColumnWidth: 640 },
+      themes: {
+        selectedThemeType: 'preset',
+        selectedThemeId: 'twitter',
+        customThemeLightCss: preset!.lightCss,
+        customThemeDarkCss: preset!.darkCss,
       },
     })
   })

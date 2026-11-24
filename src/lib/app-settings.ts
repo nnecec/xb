@@ -376,6 +376,27 @@ export type AppSettingsPatch = {
   [K in keyof AppSettings]?: Partial<AppSettings[K]>
 }
 
+const APP_SETTINGS_GROUP_KEYS = [
+  'appearance',
+  'navigation',
+  'feed',
+  'imageGen',
+  'home',
+  'features',
+  'media',
+  'themes',
+] as const satisfies readonly (keyof AppSettings)[]
+
+/** 只保留设置分组。分组外的旧字段会被丢弃，避免一次保存静默丢失。 */
+export function normalizeAppSettingsPatch(patch: AppSettingsPatch): AppSettingsPatch {
+  const normalized: AppSettingsPatch = {}
+  for (const key of APP_SETTINGS_GROUP_KEYS) {
+    const groupPatch = patch[key]
+    if (groupPatch) normalized[key] = groupPatch
+  }
+  return normalized
+}
+
 type GenImageCardTheme = 'light' | 'dark'
 
 type CardStyle =
