@@ -1046,6 +1046,7 @@ export function normalizePlaybackSessionSettings(
 export function normalizeNavigationSettings(value: unknown): NavigationSettings {
   const result = normalizeFlatAppSettings(value)
   return {
+    shellLayout: result.shellLayout,
     columnWidth: result.columnWidth,
     customColumnWidth: result.customColumnWidth,
     showExplore: result.showExplore,

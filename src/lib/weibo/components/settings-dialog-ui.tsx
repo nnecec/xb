@@ -174,7 +174,7 @@ export function OptionPills<T extends string>({
 }: {
   label: string
   value: T
-  options: Array<{ value: T; label: string }>
+  options: ReadonlyArray<{ value: T; label: string }>
   onChange: (value: T) => void
   className?: string
 }) {
