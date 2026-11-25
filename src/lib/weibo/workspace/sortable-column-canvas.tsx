@@ -10,6 +10,7 @@ import {
   type Modifier,
 } from '@dnd-kit/core'
 import { arrayMove, horizontalListSortingStrategy, SortableContext } from '@dnd-kit/sortable'
+import { cn } from 'cn'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   useCallback,
@@ -24,7 +25,12 @@ import {
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
-import { clampColumnWidth, COLUMN_WIDTH_PX, CUSTOM_COLUMN_WIDTH_MIN } from '@/lib/app-settings'
+import {
+  clampColumnWidth,
+  COLUMN_WIDTH_PX,
+  CUSTOM_COLUMN_WIDTH_MIN,
+  type ShellLayout,
+} from '@/lib/app-settings'
 import { AuxiliaryColumnView } from '@/lib/weibo/workspace/auxiliary-column'
 import { type AuxiliaryColumn } from '@/lib/weibo/workspace/workspace-store'
 
@@ -282,6 +288,8 @@ export function reorderAuxiliaryColumns(
 
 export function SortableColumnCanvas({
   auxiliaryColumns,
+  shellLayout = 'threads',
+  leading,
   columnWidthPx = COLUMN_WIDTH_PX.standard,
   focusedColumnId,
   shouldReduceMotion,
@@ -296,6 +304,8 @@ export function SortableColumnCanvas({
   children,
 }: {
   auxiliaryColumns: AuxiliaryColumn[]
+  shellLayout?: ShellLayout
+  leading?: ReactNode
   columnWidthPx?: number
   focusedColumnId: string | null
   shouldReduceMotion: boolean
@@ -500,12 +510,19 @@ export function SortableColumnCanvas({
       <div
         ref={canvasRef}
         data-column-canvas
-        className="xb-column-scroll min-w-0 flex-1 overflow-x-auto overflow-y-hidden"
+        className={cn(
+          'min-w-0 flex-1 overflow-y-hidden',
+          shellLayout === 'x' ? 'overflow-x-hidden' : 'xb-column-scroll overflow-x-auto',
+        )}
       >
         <div
-          className="flex h-full w-max min-w-full justify-center-safe px-3"
+          className={cn(
+            'flex h-full w-max min-w-full px-3',
+            shellLayout === 'x' ? 'justify-center' : 'justify-center-safe',
+          )}
           style={{ gap: COLUMN_CANVAS_GAP_PX }}
         >
+          {leading}
           <section
             data-primary-column
             className="bg-background relative h-full shrink-0 overflow-hidden border-x"
@@ -559,12 +576,14 @@ export function SortableColumnCanvas({
           </SortableContext>
         </div>
       </div>
-      <ColumnScrollButtons
-        canvasRef={canvasRef}
-        columnWidthPx={columnWidthPx}
-        columnCount={columns.length}
-        shouldReduceMotion={shouldReduceMotion}
-      />
+      {shellLayout === 'threads' ? (
+        <ColumnScrollButtons
+          canvasRef={canvasRef}
+          columnWidthPx={columnWidthPx}
+          columnCount={columns.length}
+          shouldReduceMotion={shouldReduceMotion}
+        />
+      ) : null}
       <DragOverlay
         adjustScale={false}
         dropAnimation={

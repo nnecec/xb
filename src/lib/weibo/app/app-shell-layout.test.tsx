@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { APP_SETTINGS_STORAGE_KEY } from '@/lib/app-settings'
 import { getAppSettingsStore, resetAppSettingsStoreForTest } from '@/lib/app-settings-store'
+import { AppShellContextProvider } from '@/lib/weibo/app/app-shell-context'
 import {
   getContentColumnOffset,
   scheduleContentColumnAnimation,
@@ -217,5 +218,63 @@ describe('ShellFrame', () => {
 
     expect(fireEvent.wheel(main!, { deltaY: 30 })).toBe(true)
     expect(main!.scrollTop).toBe(42)
+  })
+
+  it('places the navigation beside the centered primary column in x layout', () => {
+    const store = getAppSettingsStore()
+    store.setState({
+      navigation: { ...store.getState().navigation, shellLayout: 'x' },
+    })
+    const mainRef = createRef<HTMLDivElement>()
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <AppShellContextProvider
+            value={{
+              composeTarget: null,
+              setComposeTarget: vi.fn(),
+              viewingProfileUserId: null,
+              onProfileUserIdChange: vi.fn(),
+              onHomeTabChange: vi.fn(),
+              refreshTimeline: vi.fn(),
+              onFollowGroupChange: vi.fn(),
+            }}
+          >
+            <ShellFrame
+              pageKind="home"
+              viewingProfileUserId={null}
+              rewriteEnabled
+              theme="system"
+              onRewriteEnabledChange={vi.fn()}
+              onThemeChange={vi.fn()}
+              onSettingsOpen={vi.fn()}
+              onComposeOpen={vi.fn()}
+              onColumnPickerOpen={vi.fn()}
+              auxiliaryColumns={[
+                {
+                  id: 'column-1',
+                  source: { kind: 'explore' },
+                },
+              ]}
+              mainRef={mainRef}
+            >
+              <div>center content</div>
+            </ShellFrame>
+          </AppShellContextProvider>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    const track = document.querySelector('[data-column-canvas] > div')
+    const navigation = screen.getByRole('navigation', { name: '主导航' })
+    const primaryColumn = document.querySelector('[data-primary-column]')
+    expect(track).toHaveClass('justify-center')
+    expect(document.querySelector('[data-column-canvas]')).toHaveClass('overflow-x-hidden')
+    expect(track?.firstElementChild).toContainElement(navigation)
+    expect(track?.children[1]).toBe(primaryColumn)
+    expect(screen.getByRole('button', { name: '列管理' })).toBeInTheDocument()
+    expect(document.querySelector('[data-auxiliary-column]')).toBeInTheDocument()
+    expect(screen.getByRole('separator', { name: '调整主列宽' })).toBeInTheDocument()
+    expect(navigation.closest('aside')).not.toHaveClass('border-r')
   })
 })

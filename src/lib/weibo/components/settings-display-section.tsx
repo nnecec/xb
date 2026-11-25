@@ -28,6 +28,7 @@ import {
   type FlatAppSettings,
   type ColumnWidth,
   type MotionPreference,
+  type ShellLayout,
 } from '@/lib/app-settings'
 import { type AppSettingsStoreState, useAppSettings, useShallow } from '@/lib/app-settings-store'
 import { useWorkspace } from '@/lib/weibo/workspace/workspace-store'
@@ -41,11 +42,17 @@ import {
 } from './settings-dialog-ui'
 
 const DISPLAY_SETTING_KEYS = [
+  'shellLayout',
   'columnWidth',
   'customColumnWidth',
   'motionPreference',
   'darkModeImageDim',
 ] as const satisfies readonly (keyof FlatAppSettings)[]
+
+const SHELL_LAYOUT_OPTIONS = [
+  { value: 'threads', label: 'Threads' },
+  { value: 'x', label: 'X' },
+] as const
 
 const WIDTH_OPTIONS = [
   { value: 'narrower', label: '更窄' },
@@ -152,6 +159,7 @@ export function SettingsDisplaySection({
 }) {
   const settings = useAppSettings(
     useShallow((state) => ({
+      shellLayout: state.navigation.shellLayout,
       columnWidth: state.navigation.columnWidth,
       customColumnWidth: state.navigation.customColumnWidth,
       motionPreference: state.appearance.motionPreference,
@@ -167,9 +175,25 @@ export function SettingsDisplaySection({
   return (
     <div className="flex flex-col">
       <SettingsPanel>
+        <Field
+          label="界面布局"
+          description="Threads 把导航固定在左侧，列可以横向滚动。X 让导航贴着主列并整体居中，超出的列不滚动"
+        >
+          <OptionPills
+            label="界面布局"
+            value={settings.shellLayout}
+            options={SHELL_LAYOUT_OPTIONS}
+            onChange={(value) =>
+              void updateSettings({
+                navigation: { shellLayout: value as ShellLayout },
+              })
+            }
+          />
+        </Field>
+
         <WidthControl
           label="列宽度"
-          description="调整多列模式下每一列的宽度"
+          description="调整每一列的宽度"
           value={settings.columnWidth}
           customValue={settings.customColumnWidth}
           customLabel="自定义列宽度"

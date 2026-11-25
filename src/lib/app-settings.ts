@@ -81,6 +81,9 @@ export type LineHeightClass =
 
 export type ColumnWidth = 'narrower' | 'narrow' | 'standard' | 'wide' | 'wider' | 'custom'
 
+/** threads：导航固定在窗口左侧，列横向排列。x：导航贴着主列，组合在窗口中居中。 */
+export type ShellLayout = 'threads' | 'x'
+
 export const CUSTOM_COLUMN_WIDTH_MIN = 300
 
 /** 主列与辅助列共用的标准宽度，其余预设以此为基准。 */
@@ -192,6 +195,7 @@ export const DEFAULT_WEIBO_CARD_SINGLE_IMAGE_MAX_WIDTH = 450
 export const DEFAULT_WEIBO_CARD_SINGLE_VIDEO_MAX_WIDTH = 650
 
 export interface FlatAppSettings {
+  shellLayout: ShellLayout
   columnWidth: ColumnWidth
   customColumnWidth: number
   theme: AppTheme
@@ -285,6 +289,7 @@ export interface AppearanceSettings extends Pick<
 
 export interface NavigationSettings extends Pick<
   FlatAppSettings,
+  | 'shellLayout'
   | 'columnWidth'
   | 'customColumnWidth'
   | 'showExplore'
@@ -427,6 +432,7 @@ export const DEFAULT_FLAT_APP_SETTINGS: FlatAppSettings = {
   fontWeightClass: 'font-normal',
   letterSpacingClass: 'tracking-normal',
   lineHeightClass: 'leading-relaxed',
+  shellLayout: 'threads',
   fontFamilyClass: 'font-sans',
   fontApplyScope: 'content',
   showExplore: true,
@@ -509,6 +515,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
     darkModeBgColor: DEFAULT_FLAT_APP_SETTINGS.darkModeBgColor,
   },
   navigation: {
+    shellLayout: DEFAULT_FLAT_APP_SETTINGS.shellLayout,
     columnWidth: DEFAULT_FLAT_APP_SETTINGS.columnWidth,
     customColumnWidth: DEFAULT_FLAT_APP_SETTINGS.customColumnWidth,
     showExplore: DEFAULT_FLAT_APP_SETTINGS.showExplore,
@@ -800,6 +807,10 @@ function isLineHeightClass(value: unknown): value is LineHeightClass {
   )
 }
 
+function isShellLayout(value: unknown): value is ShellLayout {
+  return value === 'threads' || value === 'x'
+}
+
 function isColumnWidth(value: unknown): value is ColumnWidth {
   return (
     value === 'narrower' ||
@@ -1069,6 +1080,9 @@ function normalizeFlatAppSettings(value: unknown): FlatAppSettings {
   const legacyCandidate = raw
 
   return {
+    shellLayout: isShellLayout(candidate.shellLayout)
+      ? candidate.shellLayout
+      : DEFAULT_FLAT_APP_SETTINGS.shellLayout,
     columnWidth: isColumnWidth(candidate.columnWidth)
       ? candidate.columnWidth
       : DEFAULT_FLAT_APP_SETTINGS.columnWidth,
@@ -1260,6 +1274,7 @@ export function normalizeAppSettings(value: unknown): AppSettings {
       darkModeBgColor: flat.darkModeBgColor,
     },
     navigation: {
+      shellLayout: flat.shellLayout,
       columnWidth: flat.columnWidth,
       customColumnWidth: flat.customColumnWidth,
       showExplore: flat.showExplore,

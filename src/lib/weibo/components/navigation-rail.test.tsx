@@ -108,6 +108,13 @@ describe('NavigationRail', () => {
     )
   }
 
+  it('centers both menus when the rail collapses below the xl breakpoint', () => {
+    renderNavigationRail()
+
+    expect(screen.getByRole('navigation', { name: '主导航' })).toHaveClass('items-center')
+    expect(screen.getByRole('group', { name: '界面控制' })).toHaveClass('justify-center')
+  })
+
   it('renders an accessible navigation landmark', () => {
     renderNavigationRail()
     expect(screen.getByRole('navigation', { name: '主导航' })).toBeInTheDocument()

@@ -21,7 +21,6 @@ import { CompassIcon } from '@/components/ui/compass'
 import { HistoryIcon } from '@/components/ui/history'
 import { HomeIcon } from '@/components/ui/home'
 import { MessageSquareMoreIcon } from '@/components/ui/message-square-more'
-import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { UserIcon } from '@/components/ui/user'
 import { ZapOffIcon } from '@/components/ui/zap-off'
@@ -167,7 +166,12 @@ function RailControl({
 }) {
   const shouldReduceMotion = useReducedMotion()
   const row = (
-    <div className="relative flex h-8 items-center justify-end">
+    <div
+      className={cn(
+        'relative flex h-8 items-center',
+        isCollapsed ? 'justify-center' : 'justify-end',
+      )}
+    >
       <motion.span
         aria-hidden={isCollapsed}
         animate={{ opacity: isCollapsed ? 0 : 1 }}
@@ -284,7 +288,8 @@ export function NavigationRail({
         animate={isXl && !shouldReduceMotion ? { width: isCollapsed ? 56 : 204 } : undefined}
         transition={{ duration: 0.24, ease: railEase }}
         className={cn(
-          'scrollbar-none flex h-full min-h-0 flex-col overflow-x-hidden overflow-y-auto border-r border-border bg-background/80 py-3 backdrop-blur-[2px] md:py-4 xl:py-5',
+          'scrollbar-none flex h-full min-h-0 flex-col overflow-x-hidden overflow-y-auto bg-background/80 py-3 backdrop-blur-[2px] md:py-4 xl:py-5',
+          isCollapsed && 'items-center',
           isXl ? 'px-3' : isCollapsed ? 'w-10 px-1 md:w-14' : 'w-[204px] px-3',
         )}
         style={isXl ? { width: isCollapsed ? 56 : 204 } : undefined}
@@ -300,8 +305,11 @@ export function NavigationRail({
           </Link>
         </div>
 
-        <nav aria-label="主导航" className="flex min-h-0 flex-1 flex-col">
-          <div className="flex flex-col gap-1">
+        <nav
+          aria-label="主导航"
+          className={cn('flex min-h-0 flex-1 flex-col', isCollapsed && 'w-full items-center')}
+        >
+          <div className={cn('flex flex-col gap-1', isCollapsed && 'items-center')}>
             <NavButton
               label="主页"
               ariaLabel="主页"
@@ -433,9 +441,12 @@ export function NavigationRail({
             )}
           </div>
 
-          <div role="group" aria-label="界面控制" className="mt-auto shrink-0 pt-4">
-            <Separator className="mb-3" />
-            <div className="flex flex-col gap-3">
+          <div
+            role="group"
+            aria-label="界面控制"
+            className={cn('mt-auto shrink-0 pt-4', isCollapsed && 'flex w-full justify-center')}
+          >
+            <div className={cn('flex flex-col gap-3', isCollapsed && 'items-center')}>
               {onColumnPickerOpen ? (
                 <RailControl label="列管理" isCollapsed={isCollapsed}>
                   <Button

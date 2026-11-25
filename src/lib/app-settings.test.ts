@@ -368,6 +368,11 @@ describe('app-settings', () => {
     expect(
       normalizeAppSettings({ commentCardShowPublishInfo: true }).feed.commentCardShowPublishInfo,
     ).toBe(true)
+    expect(normalizeAppSettings({}).navigation.shellLayout).toBe('threads')
+    expect(normalizeAppSettings({ shellLayout: 'x' }).navigation.shellLayout).toBe('x')
+    expect(normalizeAppSettings({ shellLayout: 'deck' as never }).navigation.shellLayout).toBe(
+      'threads',
+    )
     expect(normalizeAppSettings({ columnWidth: 'narrower' }).navigation.columnWidth).toBe(
       'narrower',
     )

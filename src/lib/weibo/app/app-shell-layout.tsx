@@ -131,6 +131,22 @@ export function ShellFrame({
   const columnWidthPx = useAppSettings((state) =>
     resolveColumnWidthPx(state.navigation.columnWidth, state.navigation.customColumnWidth),
   )
+  const shellLayout = useAppSettings((state) => state.navigation.shellLayout)
+  const navigationRail = (
+    <NavigationRail
+      pageKind={pageKind}
+      viewingProfileUserId={viewingProfileUserId}
+      rewriteEnabled={rewriteEnabled}
+      theme={theme}
+      onRewriteEnabledChange={onRewriteEnabledChange}
+      onThemeChange={onThemeChange}
+      onSettingsOpen={onSettingsOpen}
+      onComposeOpen={onComposeOpen}
+      onColumnPickerOpen={onColumnPickerOpen}
+      onPrimaryNavigate={() => onFocusAuxiliaryColumn?.(null)}
+      onSidebarCollapsedChange={onSidebarCollapsedChange ?? (() => undefined)}
+    />
+  )
   const shouldReduceMotion = useReducedMotion()
   const contentMainRef = useRef<HTMLElement | null>(null)
   const workspaceRef = useRef<HTMLDivElement | null>(null)
@@ -220,23 +236,15 @@ export function ShellFrame({
         >
           跳到主要内容
         </a>
-        <div className="h-screen shrink-0">
-          <NavigationRail
-            pageKind={pageKind}
-            viewingProfileUserId={viewingProfileUserId}
-            rewriteEnabled={rewriteEnabled}
-            theme={theme}
-            onRewriteEnabledChange={onRewriteEnabledChange}
-            onThemeChange={onThemeChange}
-            onSettingsOpen={onSettingsOpen}
-            onComposeOpen={onComposeOpen}
-            onColumnPickerOpen={onColumnPickerOpen}
-            onPrimaryNavigate={() => onFocusAuxiliaryColumn?.(null)}
-            onSidebarCollapsedChange={onSidebarCollapsedChange ?? (() => undefined)}
-          />
-        </div>
+        {shellLayout === 'threads' ? (
+          <div className="h-screen shrink-0">{navigationRail}</div>
+        ) : null}
         <SortableColumnCanvas
           auxiliaryColumns={auxiliaryColumns}
+          shellLayout={shellLayout}
+          leading={
+            shellLayout === 'x' ? <div className="h-full shrink-0">{navigationRail}</div> : null
+          }
           columnWidthPx={columnWidthPx}
           focusedColumnId={focusedColumnId ?? null}
           canvasScrollLeft={canvasScrollLeft}

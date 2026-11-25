@@ -196,6 +196,7 @@ describe('SettingsDialog', () => {
 
     expect(mockUpdateSettings).toHaveBeenCalledWith({
       navigation: {
+        shellLayout: DEFAULT_APP_SETTINGS.navigation.shellLayout,
         columnWidth: DEFAULT_APP_SETTINGS.navigation.columnWidth,
         customColumnWidth: DEFAULT_APP_SETTINGS.navigation.customColumnWidth,
       },
