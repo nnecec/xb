@@ -86,7 +86,7 @@ export function TimelineTopBar<TitleValue extends string = string>({
         }}
       >
         <h1 className="sr-only">{title}</h1>
-        <div className="relative flex min-h-16 items-center justify-between">
+        <div className="relative flex min-h-16 items-center justify-between px-3">
           <div className="flex min-w-0 items-center">
             {columnControls}
             {!columnControls && runtime.canGoBack ? (
@@ -141,16 +141,12 @@ export function TimelineTopBar<TitleValue extends string = string>({
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <div className="text-foreground truncate px-2 py-1 text-xl font-semibold">
-                {title}
-              </div>
+              <div className="text-foreground truncate py-1 text-xl font-semibold">{title}</div>
             )}
 
             <div className="flex h-full flex-col items-center justify-end gap-1">
               {description ? (
-                <p className="text-muted-foreground truncate px-2 text-xs leading-4">
-                  {description}
-                </p>
+                <p className="text-muted-foreground truncate text-xs leading-4">{description}</p>
               ) : null}
             </div>
           </div>

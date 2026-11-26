@@ -185,7 +185,7 @@ function StatusDetailTopBar({
           runtime.scrollToTop()
         }}
       >
-        <div className="relative flex min-h-16 items-center justify-between gap-3">
+        <div className="relative flex min-h-16 items-center justify-between gap-3 px-3">
           <div className="flex min-w-0 items-center gap-2">
             {columnControls}
             {!columnControls && canGoBack ? (

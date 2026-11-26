@@ -45,12 +45,11 @@ export function FavoritesPage({
   const isLoading = favoritesQuery.isLoading
   const isRefreshing = favoritesQuery.isFetching && !isFetchingNextPage && !isLoading
 
-  const wasRefreshingRef = useRef(false)
+  const scrollToTopAfterRefreshRef = useRef(false)
   useEffect(() => {
-    if (wasRefreshingRef.current && !isRefreshing) {
-      runtime.scrollToTop()
-    }
-    wasRefreshingRef.current = isRefreshing
+    if (!scrollToTopAfterRefreshRef.current || isRefreshing) return
+    scrollToTopAfterRefreshRef.current = false
+    runtime.scrollToTop()
   }, [isRefreshing, runtime])
 
   const handleSavedListChange = (value: string) => {
@@ -72,7 +71,10 @@ export function FavoritesPage({
             ? onSavedListChange(value as 'favorites' | 'liked')
             : handleSavedListChange(value)
         }
-        onRefresh={() => void favoritesQuery.refetch()}
+        onRefresh={() => {
+          scrollToTopAfterRefreshRef.current = true
+          void favoritesQuery.refetch()
+        }}
         isRefreshing={isRefreshing}
       />
 

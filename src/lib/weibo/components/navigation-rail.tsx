@@ -395,7 +395,7 @@ export function NavigationRail({
                 label={
                   <span className="flex items-center gap-1">
                     私信
-                    <ArrowUpRightIcon data-icon="inline-end" />
+                    <ArrowUpRightIcon className="size-[1em]" />
                   </span>
                 }
                 ariaLabel="私信"

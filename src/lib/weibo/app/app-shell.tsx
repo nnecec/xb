@@ -251,7 +251,7 @@ export function AppShell() {
             onWidthAuxiliaryColumn={(columnId, width) => setColumnWidth(columnId, width)}
             onMainWidthChange={(width) =>
               updateSettings({
-                navigation: { customColumnWidth: width },
+                navigation: { columnWidth: 'custom', customColumnWidth: width },
               })
             }
             onFocusAuxiliaryColumn={(columnId) => persistWorkspaceChange(focusColumn(columnId))}

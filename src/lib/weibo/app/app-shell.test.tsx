@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { APP_SETTINGS_STORAGE_KEY } from '@/lib/app-settings'
 import { getAppSettingsStore, resetAppSettingsStoreForTest } from '@/lib/app-settings-store'
 import { AppShell } from '@/lib/weibo/app/app-shell'
+import { resolveColumnWidthPx } from '@/lib/weibo/app/column-width'
 import {
   loadFollowGroups,
   loadGroupTimeline,
@@ -224,6 +225,27 @@ describe('AppShell', () => {
     const auxiliaryColumnControl = screen.queryByRole('button', { name: '我关注的列操作' })
     if (auxiliaryColumnControl) await user.click(auxiliaryColumnControl)
     expect(screen.queryByRole('menuitem', { name: '向左移' })).not.toBeInTheDocument()
+  })
+
+  it('keeps a dragged primary column width after the shell reads settings again', () => {
+    getAppSettingsStore().setState({
+      navigation: {
+        ...getAppSettingsStore().getState().navigation,
+        columnWidth: 'standard',
+        customColumnWidth: 480,
+      },
+    })
+    renderWeiboShell(['/'])
+
+    const handle = screen.getByRole('separator', { name: '调整主列宽' })
+    fireEvent.pointerDown(handle, { button: 0, isPrimary: true, pointerId: 1, clientX: 100 })
+    fireEvent.pointerMove(handle, { pointerId: 1, clientX: 220 })
+    fireEvent.pointerUp(handle, { pointerId: 1 })
+
+    const navigation = getAppSettingsStore().getState().navigation
+    expect(navigation.columnWidth).toBe('custom')
+    expect(navigation.customColumnWidth).toBe(600)
+    expect(resolveColumnWidthPx(navigation.columnWidth, navigation.customColumnWidth)).toBe(600)
   })
 
   it('navigates to the special-follow timeline with the gid from allGroups', async () => {
